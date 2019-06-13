@@ -1,0 +1,9 @@
+# git ignore
+.*
+!.gitignore
+
+tags
+*.vim
+
+*.log
+log
