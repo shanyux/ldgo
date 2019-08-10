@@ -41,3 +41,33 @@ func TestStrMapReplace(t *testing.T) {
 	t.Logf("str: %s", s0)
 	t.Logf("res: %s", s1)
 }
+
+func testConvToFloat(t testing.TB, s string) {
+	f, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		t.Errorf("str to float fail. str:%s, err:%s", s, err.Error())
+		return
+	}
+	t.Logf("str to float succ. str:%s, float:%f", s, f)
+}
+
+func testConvToInt(t testing.TB, s string, base int) {
+	i, err := strconv.ParseInt(s, base, 64)
+	if err != nil {
+		t.Errorf("str to float fail. str:%s, base:%d, err:%s", s, base, err.Error())
+		return
+	}
+	t.Logf("str to float succ. str:%s, base:%d, float:%d", s, base, i)
+}
+
+func TestConvNumber(t *testing.T) {
+	testConvToFloat(t, ".1E3")
+	testConvToFloat(t, ".1e-3")
+	testConvToFloat(t, ".1e")
+	testConvToFloat(t, ".1e+1")
+	testConvToFloat(t, ".1e++1")
+	testConvToInt(t, "0123", 10)
+	testConvToInt(t, "0123", 8)
+	// testConvToInt(t, "0x123", 16)
+	testConvToInt(t, "0123", 10)
+}
