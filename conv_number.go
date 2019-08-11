@@ -30,13 +30,13 @@ var _ = sync.NewCond
 var _ = time.Now
 
 const (
-	_NUMBER_TYPE_NIL = iota
-	_NUMBER_TYPE_OCT
-	_NUMBER_TYPE_DEC
-	_NUMBER_TYPE_HEX
-	_NUMBER_TYPE_FLOAT
-	_NUMBER_TYPE_TRUE
-	_NUMBER_TYPE_FALSE
+	_NUMBER_TYPE_NIL   = 0
+	_NUMBER_TYPE_OCT   = 'o'
+	_NUMBER_TYPE_DEC   = 'i'
+	_NUMBER_TYPE_HEX   = 'x'
+	_NUMBER_TYPE_FLOAT = 'f'
+	_NUMBER_TYPE_TRUE  = 'T'
+	_NUMBER_TYPE_FALSE = 'F'
 )
 
 type convNumberReader struct {
@@ -44,7 +44,7 @@ type convNumberReader struct {
 	pos      int
 	begin    int
 	end      int
-	typNum   int
+	typNum   byte
 	negative bool
 }
 
@@ -258,7 +258,7 @@ func (that *convNumberReader) GetString() string {
 	return BytesToStr(that.buff[that.begin:that.end])
 }
 
-func testStringNumberType(b []byte) (int, bool, string) {
+func testStringNumberType(b []byte) (byte, bool, string) {
 	if len(b) == 0 {
 		return _NUMBER_TYPE_NIL, false, ""
 	}
@@ -270,7 +270,7 @@ func testStringNumberType(b []byte) (int, bool, string) {
 	that.StripSpace()
 	that.TestNumberType()
 	s := that.GetString()
-	log.Printf("str:%s, type:%d, sub:%s", b, that.typNum, s)
+	// log.Printf("str:%s, type:%c, sub:%s", b, that.typNum, s)
 	return that.typNum, that.negative, s
 }
 
@@ -307,6 +307,29 @@ func convStrToHex(s string) (int64, error) {
 
 func convStrToFloat(s string) (float64, error) {
 	return strconv.ParseFloat(s, 64)
+}
+
+func convBool(b []byte) (bool, error) {
+	typNum, _, str := testStringNumberType(b)
+	switch typNum {
+	case _NUMBER_TYPE_TRUE:
+		return true, nil
+	case _NUMBER_TYPE_FALSE:
+		return false, nil
+	case _NUMBER_TYPE_OCT:
+		d, err := convStrToOct(str)
+		return d != 0, err
+	case _NUMBER_TYPE_DEC:
+		d, err := convStrToDec(str)
+		return d != 0, err
+	case _NUMBER_TYPE_HEX:
+		d, err := convStrToHex(str)
+		return d != 0, err
+	case _NUMBER_TYPE_FLOAT:
+		f, err := convStrToFloat(str)
+		return int64(f) != 0, err
+	}
+	return false, _ERR_INVALID_SYNTAX
 }
 
 func convInt(b []byte) (int64, error) {
