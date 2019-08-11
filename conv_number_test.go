@@ -54,9 +54,10 @@ func testConvUint(t testing.TB, s string, r uint64) {
 func testConvFloat(t testing.TB, s string, r float64) {
 	n, _ := convFloat(StrToBytes(s))
 	if n == r {
-		t.Logf("conv str to float succ. s:%s, n:%g", s, n)
+		t.Logf("conv str to float succ. s:%s, n:%s", s, strconv.FormatFloat(n, 'f', -1, 64))
 	} else {
-		t.Errorf("conv str to float fail. s:%s, n:%f, expected:%f", s, n, r)
+		t.Errorf("conv str to float fail. s:%s, n:%s, expected:%s", s,
+			strconv.FormatFloat(n, 'f', -1, 64), strconv.FormatFloat(r, 'f', -1, 64))
 	}
 }
 
