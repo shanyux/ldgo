@@ -71,3 +71,22 @@ func TestConvNumber(t *testing.T) {
 	// testConvToInt(t, "0x123", 16)
 	testConvToInt(t, "0123", 10)
 }
+
+func TestStrIMapReplace(t *testing.T) {
+	s0 := "a}{{a}{abc}{b}{}.{{a}}"
+	m0 := map[string]string{
+		"a": "A",
+		"b": "B",
+	}
+	s1 := StrIMapReplace(s0, m0, "{", "}")
+	t.Logf("str: %s", s0)
+	t.Logf("res: %s", s1)
+
+	m1 := map[string]int{
+		"a": 1,
+		"b": 2,
+	}
+	s2 := StrIMapReplace(s0, m1, "{", "}")
+	t.Logf("str: %s", s0)
+	t.Logf("res: %s", s2)
+}

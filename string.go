@@ -12,6 +12,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 	"sync"
@@ -84,4 +85,30 @@ func StrMapReplace(_s string, m map[string]string, _l string, _r string) string 
 		s = s[epos+len(r):]
 	}
 	return builder.String()
+}
+
+func StrIMapReplace(s string, _m interface{}, l string, r string) string {
+	if _m, ok := _m.(map[string]string); ok {
+		return StrMapReplace(s, _m, l, r)
+	}
+
+	val := reflect.ValueOf(_m)
+	for val.Kind() == reflect.Ptr {
+		if val.IsNil() {
+			return ""
+		}
+		val = val.Elem()
+	}
+	if val.Kind() != reflect.Map {
+		return ""
+	}
+	m := make(map[string]string, val.Len())
+
+	for it := val.MapRange(); it.Next(); {
+		k := it.Key().Interface()
+		v := it.Value().Interface()
+		m[AsString(k)] = AsString(v)
+	}
+
+	return StrMapReplace(s, m, l, r)
 }
