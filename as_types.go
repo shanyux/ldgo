@@ -144,6 +144,27 @@ func AsUint64(val interface{}, def ...uint64) uint64 {
 	return 0
 }
 
+func AsFloat32(val interface{}, def ...float32) float32 {
+	v, err := ToFloat32(val)
+	if err == nil {
+		return v
+	}
+	if len(def) > 0 {
+		return def[0]
+	}
+	return 0
+}
+func AsFloat64(val interface{}, def ...float64) float64 {
+	v, err := ToFloat64(val)
+	if err == nil {
+		return v
+	}
+	if len(def) > 0 {
+		return def[0]
+	}
+	return 0
+}
+
 func AsString(val interface{}, def ...string) string {
 	v, err := ToString(val)
 	if err == nil {
