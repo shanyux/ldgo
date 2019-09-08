@@ -34,12 +34,14 @@ var _ = testing.Main
 func TestStrMapReplace(t *testing.T) {
 	s0 := "a}{{a}{abc}{b}{}.{{a}}"
 	m := map[string]string{
-		"a": "A",
-		"b": "B",
+		"a":   "A",
+		"b":   "B",
+		"env": "test",
 	}
 	s1 := StrMapReplace(s0, m, "{", "}")
 	t.Logf("str: %s", s0)
 	t.Logf("res: %s", s1)
+	t.Logf("path: %s", StrMapReplace("./config_{env}.ini", m, "{", "}"))
 }
 
 func testConvToFloat(t testing.TB, s string) {

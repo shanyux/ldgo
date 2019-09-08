@@ -47,37 +47,33 @@ func RandString(n int) string {
 	return BytesToStr(b)
 }
 
-func StrMapReplace(_s string, m map[string]string, _l string, _r string) string {
+func StrMapReplace(s string, m map[string]string, l string, r string) string {
 	if len(m) == 0 {
-		return _s
+		return s
 	}
-
-	s := StrToBytes(_s)
-	l := StrToBytes(_l)
-	r := StrToBytes(_r)
 
 	builder := &strings.Builder{}
 	builder.Grow(len(s))
 	for len(s) > 0 {
-		bpos := bytes.Index(s, l)
+		bpos := strings.Index(s, l)
 		if bpos < 0 {
-			builder.Write(s)
+			builder.WriteString(s)
 			break
 		}
-		builder.Write(s[:bpos])
+		builder.WriteString(s[:bpos])
 		s = s[bpos+len(l):]
 
-		epos := bytes.Index(s, r)
+		epos := strings.Index(s, r)
 		if epos < 0 {
-			builder.Write(l)
-			builder.Write(s)
+			builder.WriteString(l)
+			builder.WriteString(s)
 			break
 		}
 
 		key := s[:epos]
-		val, ok := m[BytesToStr(key)]
+		val, ok := m[key]
 		if !ok {
-			builder.Write(l)
+			builder.WriteString(l)
 			continue
 		}
 
