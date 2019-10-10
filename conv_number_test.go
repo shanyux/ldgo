@@ -104,4 +104,9 @@ func TestConvFloat(t *testing.T) {
 	testConvFloat(t, "--0X123", 0x123)
 	testConvFloat(t, "-+-0x123", 0x123)
 	testConvFloat(t, "-+-0xeFaB", 0xeFaB)
+	testConvFloat(t, "0.30129", 0.30129)
+	testConvFloat(t, "0.30129e3", 301.29)
+}
+
+func TestXXX(t *testing.T) {
 }

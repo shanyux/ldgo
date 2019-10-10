@@ -178,7 +178,27 @@ func (that *convNumberReader) TestNumberType() {
 	switch that.Peek() {
 	case '0':
 		that.Next()
-		if c := that.Peek(); c == 'x' || c == 'X' {
+		switch c := that.Peek(); c {
+		case '.':
+			// 0.123
+			that.MarkBegin()
+			that.Next()
+			that.ReadDecimal()
+			if c := that.Peek(); c == 'e' || c == 'E' {
+				that.Next()
+				if !that.ReadExponentiation() {
+					that.typNum = _NUMBER_TYPE_NIL
+					return
+				}
+				that.ReadDecimal()
+			}
+			that.typNum = _NUMBER_TYPE_FLOAT
+			that.MarkEnd()
+			return
+
+		case 'x':
+			fallthrough
+		case 'X':
 			// 0x123
 			that.Next()
 			that.MarkBegin()
@@ -187,7 +207,8 @@ func (that *convNumberReader) TestNumberType() {
 			}
 			that.MarkEnd()
 			that.typNum = _NUMBER_TYPE_HEX
-		} else {
+
+		default:
 			// 0123
 			that.MarkBegin()
 			that.ReadOctal()
