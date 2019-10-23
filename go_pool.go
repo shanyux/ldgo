@@ -29,6 +29,7 @@ var _ = time.Now
 
 type GoPool interface {
 	Go(fn func(done <-chan struct{}))
+	GoN(n int, fn func(done <-chan struct{}))
 	Stop()
 	Wait()
 }
@@ -64,4 +65,20 @@ func (that *goPool) Go(fn func(done <-chan struct{})) {
 
 		fn(that.done)
 	}()
+}
+
+func (that *goPool) GoN(n int, fn func(done <-chan struct{})) {
+	fnGo := func() {
+		defer func() {
+			if err := recover(); err != nil {
+			}
+			that.wg.Done()
+		}()
+
+		fn(that.done)
+	}
+	that.wg.Add(n)
+	for i := 0; i < n; i++ {
+		go fnGo()
+	}
 }

@@ -28,7 +28,7 @@ var _ = sync.NewCond
 var _ = time.Now
 
 type AsyncPool interface {
-	Async(fn func())
+	Async() chan<- func()
 	Stop()
 	Wait()
 }
@@ -60,8 +60,8 @@ func (that *asyncPool) Stop() {
 	})
 }
 
-func (that *asyncPool) Async(fn func()) {
-	that.ch <- fn
+func (that *asyncPool) Async() chan<- func() {
+	return that.ch
 }
 
 func (that *asyncPool) main() {
