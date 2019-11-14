@@ -68,15 +68,14 @@ func (that *asyncPool) main() {
 	defer that.wg.Done()
 
 	for fn := range that.ch {
-		that.withRecover(fn)
+		that.doWithRecover(fn)
 	}
 }
 
-func (that *asyncPool) withRecover(fn func()) {
+func (that *asyncPool) doWithRecover(fn func()) {
 	defer func() {
 		if err := recover(); err != nil {
 		}
-		that.wg.Done()
 	}()
 
 	fn()

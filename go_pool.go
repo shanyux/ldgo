@@ -55,20 +55,21 @@ func (that *goPool) Stop() {
 }
 
 func (that *goPool) Go(fn func(done <-chan struct{})) {
+	fnGo := that.withRecover(fn)
 	that.wg.Add(1)
-	go func() {
-		defer func() {
-			if err := recover(); err != nil {
-			}
-			that.wg.Done()
-		}()
-
-		fn(that.done)
-	}()
+	go fnGo()
 }
 
 func (that *goPool) GoN(n int, fn func(done <-chan struct{})) {
-	fnGo := func() {
+	fnGo := that.withRecover(fn)
+	that.wg.Add(n)
+	for i := 0; i < n; i++ {
+		go fnGo()
+	}
+}
+
+func (that *goPool) withRecover(fn func(done <-chan none)) func() {
+	return func() {
 		defer func() {
 			if err := recover(); err != nil {
 			}
@@ -76,9 +77,5 @@ func (that *goPool) GoN(n int, fn func(done <-chan struct{})) {
 		}()
 
 		fn(that.done)
-	}
-	that.wg.Add(n)
-	for i := 0; i < n; i++ {
-		go fnGo()
 	}
 }
