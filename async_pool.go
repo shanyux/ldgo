@@ -27,15 +27,22 @@ var _ = strings.Replace
 var _ = sync.NewCond
 var _ = time.Now
 
+type AsyncPoolConfig struct {
+	GoroutineNum int
+	ChannelSize  int
+}
+
 type AsyncPool interface {
 	Async() chan<- func()
-	Stop()
+	Close()
 	Wait()
 }
 
-func NewAsyncPool(num int) AsyncPool {
+func NewAsyncPool(cfg *AsyncPoolConfig) AsyncPool {
+	size := cfg.ChannelSize
+	num := cfg.GoroutineNum
 	ap := &asyncPool{
-		ch: make(chan func(), 256),
+		ch: make(chan func(), size),
 	}
 
 	ap.wg.Add(num)
@@ -54,7 +61,7 @@ type asyncPool struct {
 
 func (that *asyncPool) Wait() { that.wg.Wait() }
 
-func (that *asyncPool) Stop() {
+func (that *asyncPool) Close() {
 	that.once.Do(func() {
 		close(that.ch)
 	})
