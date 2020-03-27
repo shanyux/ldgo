@@ -32,8 +32,28 @@ var _ = strings.Replace
 var _ = sync.NewCond
 var _ = time.Now
 
-func BytesToStr(b []byte) string { return *(*string)(unsafe.Pointer(&b)) }
-func StrToBytes(s string) []byte { return *(*[]byte)(unsafe.Pointer(&s)) }
+func BytesToStr(b []byte) string {
+	if b == nil {
+		return ""
+	}
+	return *(*string)(unsafe.Pointer(&b))
+}
+
+func StrToBytes(s string) []byte {
+	return []byte(s)
+}
+
+// StrToBytesUnsafe the result may not be modified
+func StrToBytesUnsafe(s string) []byte {
+	// return *(*[]byte)(unsafe.Pointer(&s))
+	sh := (*reflect.StringHeader)(unsafe.Pointer(&s))
+	bh := reflect.SliceHeader{
+		Data: sh.Data,
+		Len:  sh.Len,
+		Cap:  sh.Len,
+	}
+	return *(*[]byte)(unsafe.Pointer(&bh))
+}
 
 var _RAND_STRING_LETTERS = StrToBytes("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
