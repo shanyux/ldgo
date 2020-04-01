@@ -34,7 +34,7 @@ var _ = time.Now
 var _ = testing.Main
 
 func testConvInt(t testing.TB, s string, r int64) {
-	n, _ := convInt(StrToBytes(s))
+	n, _ := convInt(StrToBytesUnsafe(s))
 	if n == r {
 		t.Logf("conv str to int succ. s:%s, n:%d", s, n)
 	} else {
@@ -43,7 +43,7 @@ func testConvInt(t testing.TB, s string, r int64) {
 }
 
 func testConvUint(t testing.TB, s string, r uint64) {
-	n, _ := convUint(StrToBytes(s))
+	n, _ := convUint(StrToBytesUnsafe(s))
 	if n == r {
 		t.Logf("conv str to uint succ. s:%s, n:%d", s, n)
 	} else {
@@ -52,7 +52,7 @@ func testConvUint(t testing.TB, s string, r uint64) {
 }
 
 func testConvFloat(t testing.TB, s string, r float64) {
-	n, _ := convFloat(StrToBytes(s))
+	n, _ := convFloat(StrToBytesUnsafe(s))
 	if n == r {
 		t.Logf("conv str to float succ. s:%s, n:%s", s, strconv.FormatFloat(n, 'f', -1, 64))
 	} else {

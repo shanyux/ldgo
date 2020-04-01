@@ -66,7 +66,7 @@ func ToBool(_v interface{}) (bool, error) {
 	case []byte:
 		return convBool(v)
 	case string:
-		return convBool(StrToBytes(v))
+		return convBool(StrToBytesUnsafe(v))
 	}
 	return false, _ERR_UNKOWN_TYPE
 }
@@ -126,7 +126,7 @@ func ToInt64(_v interface{}) (int64, error) {
 	case []byte:
 		return convInt(v)
 	case string:
-		return convInt(StrToBytes(v))
+		return convInt(StrToBytesUnsafe(v))
 	}
 	return 0, _ERR_UNKOWN_TYPE
 }
@@ -186,7 +186,7 @@ func ToUint64(_v interface{}) (uint64, error) {
 	case []byte:
 		return convUint(v)
 	case string:
-		return convUint(StrToBytes(v))
+		return convUint(StrToBytesUnsafe(v))
 	}
 	return 0, _ERR_UNKOWN_TYPE
 }
@@ -234,7 +234,7 @@ func ToFloat64(_v interface{}) (float64, error) {
 	case []byte:
 		return convFloat(v)
 	case string:
-		return convFloat(StrToBytes(v))
+		return convFloat(StrToBytesUnsafe(v))
 	}
 	return 0, _ERR_UNKOWN_TYPE
 }
@@ -272,7 +272,7 @@ func ToString(_v interface{}) (string, error) {
 		return strconv.FormatFloat(float64(v), 'f', -1, 64), nil
 
 	case []byte:
-		return BytesToStr(v), nil
+		return BytesToStrUnsafe(v), nil
 	case string:
 		return v, nil
 	}

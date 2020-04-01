@@ -33,6 +33,9 @@ var _ = sync.NewCond
 var _ = time.Now
 
 func BytesToStr(b []byte) string {
+	return BytesToStrUnsafe(b)
+}
+func BytesToStrUnsafe(b []byte) string {
 	if b == nil {
 		return ""
 	}
@@ -55,7 +58,7 @@ func StrToBytesUnsafe(s string) []byte {
 	return *(*[]byte)(unsafe.Pointer(&bh))
 }
 
-var _RAND_STRING_LETTERS = StrToBytes("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+var _RAND_STRING_LETTERS = StrToBytesUnsafe("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
 func RandString(n int) string {
 	letters := _RAND_STRING_LETTERS
@@ -64,7 +67,7 @@ func RandString(n int) string {
 		b[i] = letters[rand.Intn(len(letters))]
 	}
 
-	return BytesToStr(b)
+	return BytesToStrUnsafe(b)
 }
 
 func StrMapReplace(s string, m map[string]string, l string, r string) string {
@@ -97,7 +100,7 @@ func StrMapReplace(s string, m map[string]string, l string, r string) string {
 			continue
 		}
 
-		builder.Write(StrToBytes(val))
+		builder.WriteString(val)
 		s = s[epos+len(r):]
 	}
 	return builder.String()
