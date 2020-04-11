@@ -10,12 +10,12 @@ import (
 	"log"
 	"math"
 	"os"
-	"reflect"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
-	"unsafe"
+
+	"github.com/distroy/ldgo/core"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -32,16 +32,6 @@ var _ = strings.Replace
 var _ = sync.NewCond
 var _ = time.Now
 
-func strToBytesUnsafe(s string) []byte {
-	sh := (*reflect.StringHeader)(unsafe.Pointer(&s))
-	bh := reflect.SliceHeader{
-		Data: sh.Data,
-		Len:  sh.Len,
-		Cap:  sh.Len,
-	}
-	return *(*[]byte)(unsafe.Pointer(&bh))
-}
-
 func NewLogger(opts ...Option) Logger {
 	options := newOptions()
 	for _, opt := range opts {
@@ -50,8 +40,8 @@ func NewLogger(opts ...Option) Logger {
 
 	var level zapcore.Level
 
-	if err := level.UnmarshalText(strToBytesUnsafe(options.level)); err != nil {
-		level.UnmarshalText(strToBytesUnsafe("info"))
+	if err := level.UnmarshalText(core.StrToBytesUnsafe(options.level)); err != nil {
+		level.UnmarshalText(core.StrToBytesUnsafe("info"))
 	}
 
 	encoder := zapcore.EncoderConfig{

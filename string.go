@@ -17,7 +17,8 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"unsafe"
+
+	"github.com/distroy/ldgo/core"
 )
 
 // Always reference these packages, just in case the auto-generated code below doesn't.
@@ -33,29 +34,20 @@ var _ = sync.NewCond
 var _ = time.Now
 
 func BytesToStr(b []byte) string {
-	return BytesToStrUnsafe(b)
+	return core.BytesToStr(b)
 }
+
 func BytesToStrUnsafe(b []byte) string {
-	if b == nil {
-		return ""
-	}
-	return *(*string)(unsafe.Pointer(&b))
+	return core.BytesToStrUnsafe(b)
 }
 
 func StrToBytes(s string) []byte {
-	return []byte(s)
+	return core.StrToBytes(s)
 }
 
 // StrToBytesUnsafe the result may not be modified
 func StrToBytesUnsafe(s string) []byte {
-	// return *(*[]byte)(unsafe.Pointer(&s))
-	sh := (*reflect.StringHeader)(unsafe.Pointer(&s))
-	bh := reflect.SliceHeader{
-		Data: sh.Data,
-		Len:  sh.Len,
-		Cap:  sh.Len,
-	}
-	return *(*[]byte)(unsafe.Pointer(&bh))
+	return core.StrToBytesUnsafe(s)
 }
 
 var _RAND_STRING_LETTERS = StrToBytesUnsafe("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
