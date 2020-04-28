@@ -29,6 +29,11 @@ var _ = sync.NewCond
 var _ = time.Now
 var _ = testing.Main
 
+func testSearchInt64(t testing.TB, l []int64, x int64) {
+	n := SearchInt64(l, x)
+	t.Logf("%5d pos: %d", x, n)
+}
+
 func TestSortInt64(t *testing.T) {
 	l := []int64{223, 562, 424, 642, 123, 496, 623, 845, 375}
 	if IsSortedInt64(l) {
@@ -39,11 +44,11 @@ func TestSortInt64(t *testing.T) {
 	if !IsSortedInt64(l) {
 		t.Fatal("is not sorted: ", l)
 	}
+	t.Log("size: ", len(l))
 	t.Log("sorted: ", l)
 
-	n := SearchInt64(l, 223)
-	t.Log("223 pos: ", n)
-
-	n = SearchInt64(l, 300)
-	t.Log("300 pos: ", n)
+	testSearchInt64(t, l, 223)
+	testSearchInt64(t, l, 300)
+	testSearchInt64(t, l, 1)
+	testSearchInt64(t, l, 10000)
 }
