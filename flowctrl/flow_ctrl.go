@@ -5,28 +5,14 @@
 package flowctrl
 
 import (
-	"bytes"
-	"fmt"
-	"log"
-	"math"
-	"os"
-	"strconv"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 )
 
-// Always reference these packages, just in case the auto-generated code below doesn't.
-var _ = bytes.NewBuffer
-var _ = fmt.Sprintf
-var _ = log.New
-var _ = math.Abs
-var _ = os.Exit
-var _ = strconv.Itoa
-var _ = strings.Replace
-var _ = sync.NewCond
-var _ = time.Now
+var (
+	_Pool = &sync.Pool{New: func() interface{} { return newFlowCtrlCall() }}
+)
 
 type FlowCtrl interface {
 	Close()
@@ -44,7 +30,6 @@ func New(limit int64, interval ...time.Duration) FlowCtrl {
 
 	fc := &flowCtrl{}
 	fc.limit = limit
-	fc.free.New = func() interface{} { return newFlowCtrlCall() }
 	fc.wait = newFlowCtrlWait()
 	fc.done = make(chan struct{})
 
@@ -55,7 +40,6 @@ func New(limit int64, interval ...time.Duration) FlowCtrl {
 type flowCtrl struct {
 	once  sync.Once
 	done  chan struct{}
-	free  sync.Pool
 	limit int64
 	flow  int64
 	wait  *flowCtrlWait
@@ -84,13 +68,13 @@ func (that *flowCtrl) tickerGoroutine(interval time.Duration) {
 }
 
 func (that *flowCtrl) popCall() *flowCtrlCall {
-	c := that.free.Get().(*flowCtrlCall)
-	c.n = 0
+	c := _Pool.Get().(*flowCtrlCall)
 	return c
 }
 
 func (that *flowCtrl) pushCall(c *flowCtrlCall) {
-	that.free.Put(c)
+	c.n = 0
+	_Pool.Put(c)
 }
 
 func (that *flowCtrl) Apply(n int64) int64 {
