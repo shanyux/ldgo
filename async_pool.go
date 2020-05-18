@@ -5,27 +5,10 @@
 package ldgo
 
 import (
-	"bytes"
-	"fmt"
 	"log"
-	"math"
-	"os"
-	"strconv"
-	"strings"
+	"runtime/debug"
 	"sync"
-	"time"
 )
-
-// Always reference these packages, just in case the auto-generated code below doesn't.
-var _ = bytes.NewBuffer
-var _ = fmt.Sprintf
-var _ = log.New
-var _ = math.Abs
-var _ = os.Exit
-var _ = strconv.Itoa
-var _ = strings.Replace
-var _ = sync.NewCond
-var _ = time.Now
 
 type AsyncPoolConfig struct {
 	GoroutineNum int
@@ -82,6 +65,7 @@ func (that *asyncPool) main() {
 func (that *asyncPool) doWithRecover(fn func()) {
 	defer func() {
 		if err := recover(); err != nil {
+			log.Println(err, BytesToStrUnsafe(debug.Stack()))
 		}
 	}()
 
