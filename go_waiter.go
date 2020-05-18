@@ -25,8 +25,9 @@ func Go(fn func()) Waiter {
 func GoN(n int, fn func()) Waiter {
 	pool := &goWaiter{}
 	fnGo := pool.withRecover(fn)
+	pool.wg.Add(n)
 	for i := 0; i < n; i++ {
-		fnGo()
+		go fnGo()
 	}
 	return pool
 }
