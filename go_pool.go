@@ -7,59 +7,79 @@ package ldgo
 import (
 	"log"
 	"runtime/debug"
-	"sync"
 )
 
 type GoPool interface {
 	Go(fn func(done <-chan struct{}))
 	GoN(n int, fn func(done <-chan struct{}))
+	Run(fn func())
+	RunN(n int, fn func())
 	Stop()
 	Wait()
 }
 
 func NewGoPool() GoPool {
-	return &goPool{
-		done: make(chan struct{}),
+	return goPool{
+		done: newDoneWait(),
 	}
+}
+
+func GoGo(fn func(done <-chan struct{})) GoPool { return GoGoN(1, fn) }
+func GoRun(fn func()) GoPool                    { return GoRunN(1, fn) }
+
+func GoGoN(n int, fn func(done <-chan struct{})) GoPool {
+	pool := NewGoPool()
+	pool.GoN(n, fn)
+	return pool
+}
+
+func GoRunN(n int, fn func()) GoPool {
+	pool := NewGoPool()
+	pool.RunN(n, fn)
+	return pool
 }
 
 type goPool struct {
-	wg   sync.WaitGroup
-	once sync.Once
-	done chan struct{}
+	done *doneWait
 }
 
-func (that *goPool) Wait() { that.wg.Wait() }
+func (that goPool) Stop() { that.done.Stop() }
+func (that goPool) Wait() { that.done.Wait() }
 
-func (that *goPool) Stop() {
-	that.once.Do(func() {
-		close(that.done)
-	})
-}
+func (that goPool) Go(fn func(done <-chan none)) { that.GoN(1, fn) }
+func (that goPool) Run(fn func())                { that.RunN(1, fn) }
 
-func (that *goPool) Go(fn func(done <-chan struct{})) {
-	fnGo := that.withRecover(fn)
-	that.wg.Add(1)
-	go fnGo()
-}
-
-func (that *goPool) GoN(n int, fn func(done <-chan struct{})) {
-	fnGo := that.withRecover(fn)
-	that.wg.Add(n)
-	for i := 0; i < n; i++ {
-		go fnGo()
-	}
-}
-
-func (that *goPool) withRecover(fn func(done <-chan none)) func() {
-	return func() {
+func (that goPool) GoN(n int, fn func(done <-chan none)) {
+	fnGo := func() {
 		defer func() {
 			if err := recover(); err != nil {
 				log.Println(err, BytesToStrUnsafe(debug.Stack()))
 			}
-			that.wg.Done()
+			that.done.Done()
 		}()
 
-		fn(that.done)
+		fn(that.done.Chan())
+	}
+	that.run(n, fnGo)
+}
+
+func (that goPool) RunN(n int, fn func()) {
+	fnGo := func() {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Println(err, BytesToStrUnsafe(debug.Stack()))
+			}
+			that.done.Done()
+		}()
+
+		fn()
+	}
+	that.run(n, fnGo)
+}
+
+func (that goPool) run(n int, fn func()) {
+	that.done.Add(n)
+	for i := 0; i < n; i++ {
+		go fn()
 	}
 }
