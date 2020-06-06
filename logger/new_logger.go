@@ -5,8 +5,6 @@
 package logger
 
 import (
-	"time"
-
 	"github.com/distroy/ldgo/core"
 
 	"go.uber.org/zap"
@@ -34,7 +32,7 @@ func NewLogger(opts ...Option) Logger {
 		StacktraceKey:  "stacktrace",
 		LineEnding:     zapcore.DefaultLineEnding,
 		EncodeLevel:    zapcore.LowercaseLevelEncoder,
-		EncodeTime:     TimeEncoder,
+		EncodeTime:     zapcore.ISO8601TimeEncoder,
 		EncodeDuration: zapcore.SecondsDurationEncoder,
 		EncodeCaller:   zapcore.ShortCallerEncoder,
 	}
@@ -58,8 +56,4 @@ func NewLogger(opts ...Option) Logger {
 	zlog := zap.New(core, defaultOptions...)
 
 	return newLogger(newLoggerWrap(zlog))
-}
-
-func TimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-	enc.AppendString(t.Format("2006-01-02 15:04:05.000"))
 }

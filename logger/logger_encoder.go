@@ -299,21 +299,21 @@ func (enc *loggerEncoder) clone() *loggerEncoder {
 }
 
 func (enc *loggerEncoder) EncodeEntry(ent zapcore.Entry, fields []zapcore.Field) (*buffer.Buffer, error) {
-	final := enc.clone()
-	addTimestamp(final, &ent)
-	addLogLevel(final, &ent)
-	addRequestID(final)
-	addLoggerName(final, &ent)
+	clone := enc.clone()
+	addTimestamp(clone, &ent)
+	addLogLevel(clone, &ent)
+	addRequestID(clone)
+	addLoggerName(clone, &ent)
 
-	addCaller(final, &ent)
-	addMsg(final, &ent)
-	addBuffer(enc, final)
-	addFields(final, fields)
-	final.closeOpenNamespaces()
-	addStacktrace(final, &ent)
-	addLineEnding(final)
-	ret := final.buf
-	encoderPool.put(final)
+	addCaller(clone, &ent)
+	addMsg(clone, &ent)
+	addBuffer(enc, clone)
+	addFields(clone, fields)
+	clone.closeOpenNamespaces()
+	addStacktrace(clone, &ent)
+	addLineEnding(clone)
+	ret := clone.buf
+	encoderPool.put(clone)
 	return ret, nil
 }
 
@@ -458,7 +458,9 @@ func addTimestamp(enc *loggerEncoder, ent *zapcore.Entry) {
 		return
 	}
 	if enc.TimeKey != "" {
-		enc.buf.AppendString(ent.Time.Format("2006-01-02 15:04:05.000"))
+		// s := enc.E
+		enc.EncodeTime(ent.Time, enc)
+		// enc.buf.AppendString(ent.Time.Format("2006-01-02 15:04:05.000"))
 	}
 }
 func addLogLevel(enc *loggerEncoder, ent *zapcore.Entry) {
