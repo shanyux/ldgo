@@ -13,19 +13,25 @@ import (
 	"go.uber.org/zap"
 )
 
-type CancelFunc = func()
+var (
+	DefaultLogger = logger.Default
+
+	background = ctx{Context: context.Background()}
+)
+
+func Background() Context { return background }
+
+type CancelFunc = context.CancelFunc
 
 type Context interface {
 	context.Context
 
-	Root() Context
-
+	WithValue(key, val interface{}) Context
 	WithCancel() (Context, CancelFunc)
 	WithDeadline(deadline time.Time) (Context, CancelFunc)
 
-	Clone() Context
-
-	Logger(log ...logger.Logger) logger.Logger
+	WithLogger(l logger.Logger) Context
+	GetLogger() logger.Logger
 
 	With(field ...zap.Field) Context
 	LogSync()
@@ -42,73 +48,71 @@ type Context interface {
 }
 
 func NewContext(c context.Context, fields ...zap.Field) Context {
-	if c != nil {
-		switch _c := c.(type) {
-		case ctx:
-			return _c.With(fields...)
-		case *ctx:
-			return _c.With(fields...)
-		}
-	}
 	if c == nil {
-		c = context.Background()
+		return Background().With(fields...)
 	}
-
-	return &ctx{
-		Context: c,
-		log:     newLogger(DefaultLogger.With(fields...)),
+	switch _c := c.(type) {
+	case ctx:
+		return _c.With(fields...)
+	case *ctx:
+		return _c.With(fields...)
 	}
-}
-
-func newContext(c context.Context, _c *ctx) *ctx {
-	return &ctx{
-		Context: c,
-		log:     _c.log,
-		root:    _c.first(),
-	}
+	return newContext(c).With(fields...)
 }
 
 type ctx struct {
 	context.Context
-	log
-
-	root *ctx
 }
 
-func (that *ctx) Root() Context { return that.first() }
-func (that *ctx) first() *ctx {
-	if that.root != nil {
-		return that.root
+func newContext(c context.Context) ctx { return ctx{Context: c} }
+
+func (c ctx) WithValue(key, val interface{}) Context {
+	return newContext(context.WithValue(c.Context, key, val))
+}
+
+func (c ctx) With(fields ...zap.Field) Context {
+	return newContext(logger.NewContext(c.Context, c.logger().With(fields...)))
+}
+
+func (c ctx) WithDeadline(deadline time.Time) (Context, CancelFunc) {
+	ctx, cancel := context.WithDeadline(c.Context, deadline)
+	return newContext(ctx), cancel
+}
+
+func (c ctx) WithCancel() (Context, CancelFunc) {
+	ctx, cancel := context.WithCancel(c.Context)
+	return newContext(ctx), cancel
+}
+
+func (c ctx) WithLogger(l logger.Logger) Context {
+	return newContext(logger.NewContext(c.Context, l))
+}
+
+func (c ctx) GetLogger() logger.Logger {
+	return c.logger()
+}
+
+func (c ctx) logger() logger.Logger {
+	l := logger.FromContext(c)
+	if l == nil || l == logger.Default {
+		l = DefaultLogger
 	}
-	return that
+	return l
 }
 
-func (that *ctx) Clone() Context { return that.clone() }
-func (that *ctx) clone() *ctx {
-	ctx := *that
-	ctx.root = that.first()
-	return &ctx
-}
+func (c ctx) zCore() *zap.Logger         { return c.logger().Core() }
+func (c ctx) zSugar() *zap.SugaredLogger { return c.logger().Sugar() }
 
-func (that *ctx) With(fields ...zap.Field) Context {
-	ctx := that.clone()
-	ctx.log = ctx.log.With(fields...)
-	return ctx
-}
+func (c ctx) LogSync() { c.logger().Sync() }
 
-func (that *ctx) WithDeadline(deadline time.Time) (Context, CancelFunc) {
-	ctx, cancel := context.WithDeadline(that.Context, deadline)
-	return newContext(ctx, that), cancel
-}
+func (c ctx) LogD(msg string, fields ...zap.Field) { c.zCore().Debug(msg, fields...) }
+func (c ctx) LogI(msg string, fields ...zap.Field) { c.zCore().Info(msg, fields...) }
+func (c ctx) LogW(msg string, fields ...zap.Field) { c.zCore().Warn(msg, fields...) }
+func (c ctx) LogE(msg string, fields ...zap.Field) { c.zCore().Error(msg, fields...) }
+func (c ctx) LogF(msg string, fields ...zap.Field) { c.zCore().Fatal(msg, fields...) }
 
-func (that *ctx) WithCancel() (Context, CancelFunc) {
-	ctx, cancel := context.WithCancel(that.Context)
-	return newContext(ctx, that), cancel
-}
-
-func (that *ctx) Logger(log ...logger.Logger) logger.Logger {
-	if len(log) != 0 && log[0] != nil {
-		that.log = newLogger(log[0])
-	}
-	return that.log.Logger
-}
+func (c ctx) LogDf(fmt string, args ...interface{}) { c.zSugar().Debugf(fmt, args...) }
+func (c ctx) LogIf(fmt string, args ...interface{}) { c.zSugar().Infof(fmt, args...) }
+func (c ctx) LogWf(fmt string, args ...interface{}) { c.zSugar().Warnf(fmt, args...) }
+func (c ctx) LogEf(fmt string, args ...interface{}) { c.zSugar().Errorf(fmt, args...) }
+func (c ctx) LogFf(fmt string, args ...interface{}) { c.zSugar().Fatalf(fmt, args...) }
