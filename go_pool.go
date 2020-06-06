@@ -24,16 +24,16 @@ func NewGoPool() GoPool {
 	}
 }
 
-func GoGo(fn func(done <-chan struct{})) GoPool { return GoGoN(1, fn) }
-func GoRun(fn func()) GoPool                    { return GoRunN(1, fn) }
+func GoPoolGo(fn func(done <-chan struct{})) GoPool { return GoPoolGoN(1, fn) }
+func GoPoolRun(fn func()) GoPool                    { return GoPoolRunN(1, fn) }
 
-func GoGoN(n int, fn func(done <-chan struct{})) GoPool {
+func GoPoolGoN(n int, fn func(done <-chan struct{})) GoPool {
 	pool := NewGoPool()
 	pool.GoN(n, fn)
 	return pool
 }
 
-func GoRunN(n int, fn func()) GoPool {
+func GoPoolRunN(n int, fn func()) GoPool {
 	pool := NewGoPool()
 	pool.RunN(n, fn)
 	return pool
