@@ -4,31 +4,6 @@
 
 package ldgo
 
-import (
-	"bytes"
-	"context"
-	"errors"
-	"fmt"
-	"log"
-	"os"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
-)
-
-// Always reference these packages, just in case the auto-generated code below doesn't.
-var _ = bytes.NewBuffer
-var _ = context.Canceled
-var _ = errors.New
-var _ = fmt.Sprintf
-var _ = log.New
-var _ = os.Exit
-var _ = strconv.Itoa
-var _ = strings.Replace
-var _ = sync.NewCond
-var _ = time.Now
-
 func IsDigit(c byte) bool { return c >= '0' && c <= '9' }
 func IsLower(c byte) bool { return c >= 'a' && c <= 'z' }
 func IsUpper(c byte) bool { return c >= 'A' && c <= 'Z' }

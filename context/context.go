@@ -5,31 +5,13 @@
 package context
 
 import (
-	"bytes"
 	"context"
-	"fmt"
-	"math"
-	"os"
-	"strconv"
-	"strings"
-	"sync"
 	"time"
 
 	"github.com/distroy/ldgo/logger"
 
 	"go.uber.org/zap"
 )
-
-// Always reference these packages, just in case the auto-generated code below doesn't.
-var _ = bytes.NewBuffer
-var _ = context.Canceled
-var _ = fmt.Sprintf
-var _ = math.Abs
-var _ = os.Exit
-var _ = strconv.Itoa
-var _ = strings.Replace
-var _ = sync.NewCond
-var _ = time.Now
 
 type CancelFunc = func()
 
