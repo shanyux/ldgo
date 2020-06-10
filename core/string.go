@@ -10,26 +10,22 @@ import (
 )
 
 func BytesToStr(b []byte) string {
-	return BytesToStrUnsafe(b)
+	return string(b)
 }
 
 func StrToBytes(s string) []byte {
 	return []byte(s)
 }
 
+// BytesToStrUnsafe the source bytes cannot free
 func BytesToStrUnsafe(b []byte) string {
 	if b == nil {
 		return ""
 	}
-	bh := (*reflect.SliceHeader)(unsafe.Pointer(&b))
-	sh := reflect.StringHeader{
-		Data: bh.Data,
-		Len:  bh.Len,
-	}
-	return *(*string)(unsafe.Pointer(&sh))
+	return *(*string)(unsafe.Pointer(&b))
 }
 
-// StrToBytesUnsafe the result may not be modified
+// StrToBytesUnsafe the result bytes cannot be modified and the source string cannot free
 func StrToBytesUnsafe(s string) []byte {
 	// return *(*[]byte)(unsafe.Pointer(&s))
 	sh := (*reflect.StringHeader)(unsafe.Pointer(&s))

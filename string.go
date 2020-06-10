@@ -15,6 +15,7 @@ func BytesToStr(b []byte) string {
 	return core.BytesToStr(b)
 }
 
+// BytesToStrUnsafe the source bytes cannot free
 func BytesToStrUnsafe(b []byte) string {
 	return core.BytesToStrUnsafe(b)
 }
@@ -23,7 +24,7 @@ func StrToBytes(s string) []byte {
 	return core.StrToBytes(s)
 }
 
-// StrToBytesUnsafe the result may not be modified
+// StrToBytesUnsafe the result bytes cannot be modified and the source string cannot free
 func StrToBytesUnsafe(s string) []byte {
 	return core.StrToBytesUnsafe(s)
 }

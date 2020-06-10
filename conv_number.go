@@ -164,12 +164,13 @@ func (that *convNumberReader) TestNumberType() {
 			that.Next()
 			that.ReadDecimal()
 			if c := that.Peek(); c == 'e' || c == 'E' {
+				// 0.123e123
 				that.Next()
 				if !that.ReadExponentiation() {
 					that.typNum = _NUMBER_TYPE_NIL
 					return
 				}
-				that.ReadDecimal()
+				// that.ReadDecimal()
 			}
 			that.typNum = _NUMBER_TYPE_FLOAT
 			that.MarkEnd()
@@ -187,12 +188,26 @@ func (that *convNumberReader) TestNumberType() {
 			that.MarkEnd()
 			that.typNum = _NUMBER_TYPE_HEX
 
+		case 'o':
+			fallthrough
+		case 'O':
+			// 0o123
+			that.Next()
+			that.MarkBegin()
+			if !that.ReadOctal() {
+				return
+			}
+			that.MarkEnd()
+			that.typNum = _NUMBER_TYPE_HEX
+
 		default:
 			// 0123
 			that.MarkBegin()
-			that.ReadOctal()
+			// that.ReadOctal()
+			that.ReadDecimal()
 			that.MarkEnd()
-			that.typNum = _NUMBER_TYPE_OCT
+			// that.typNum = _NUMBER_TYPE_OCT
+			that.typNum = _NUMBER_TYPE_DEC
 		}
 
 	case '1':
@@ -297,7 +312,9 @@ func convStrToHex(s string) (int64, error) {
 	for _, c := range s {
 		n *= 16
 		if c >= 'A' {
-			n += uint64((c&0xdf)-'A') + 10
+			// n += uint64((c&0xdf)-'A') + 10
+			c = (c & 0xdf) - 'A'
+			n += uint64(c) + 10
 		} else {
 			n += uint64(c) - '0'
 		}
