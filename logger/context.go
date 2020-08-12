@@ -14,7 +14,10 @@ const (
 
 var (
 	Default = NewLogger()
+	console = NewLogger()
 )
+
+func Console() Logger { return console }
 
 func NewContext(ctx context.Context, l Logger) context.Context {
 	return context.WithValue(ctx, _ContextKeyLogger, l)

@@ -17,9 +17,11 @@ var (
 	DefaultLogger = logger.Default
 
 	background = ctx{Context: context.Background()}
+	console    = Background().WithLogger(logger.Console())
 )
 
 func Background() Context { return background }
+func Console() Context    { return console }
 
 type CancelFunc = context.CancelFunc
 
