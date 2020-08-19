@@ -17,3 +17,9 @@ func IsSortedString(a []string) bool { return sort.IsSorted(SortSliceString(a)) 
 func SearchString(a []string, x string) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
+
+func SortStrings(a []string)          { sort.Sort(SortSliceString(a)) }
+func IsSortedStrings(a []string) bool { return sort.IsSorted(SortSliceString(a)) }
+func SearchStrings(a []string, x string) int {
+	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
+}
