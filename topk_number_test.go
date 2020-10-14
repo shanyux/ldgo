@@ -5,33 +5,34 @@
 package ldgo
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 	"time"
+
+	"github.com/smartystreets/goconvey/convey"
 )
 
 func testTopkInt(t testing.TB, n, k int) {
-	rand.Seed(time.Now().UnixNano())
-	origin := make([]int, 0, n)
-	topk := make([]int, 0, k)
+	name := fmt.Sprintf("n:%d k:%d", n, k)
+	convey.Convey(name, t, func() {
+		rand.Seed(time.Now().UnixNano())
+		origin := make([]int, 0, n)
+		topk := make([]int, 0, k)
 
-	for i := 0; i < n; i++ {
-		x := rand.Intn(100)
-		origin = append(origin, x)
-		topk, _ = TopkIntsAdd(topk, k, x)
-	}
-
-	SortInts(origin)
-	SortInts(topk)
-	size := MinInt(n, k)
-	for i := 0; i < size; i++ {
-		if origin[i] != topk[i] {
-			origin = origin[:size]
-			t.Errorf("%s fail. n:%d, k:%d, output:%v, expected:%v", t.Name(), n, k, topk, origin)
-			return
+		for i := 0; i < n; i++ {
+			x := rand.Intn(100)
+			origin = append(origin, x)
+			topk, _ = TopkIntsAdd(topk, k, x)
 		}
-	}
-	t.Logf("%s succ. n:%d, k:%d, output:%v", t.Name(), n, k, topk)
+
+		SortInts(origin)
+		SortInts(topk)
+
+		size := MinInt(n, k)
+		origin = origin[:size]
+		convey.So(topk, convey.ShouldResemble, origin)
+	})
 }
 
 func TestTopkInt(t *testing.T) {
