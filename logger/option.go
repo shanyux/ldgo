@@ -18,7 +18,7 @@ const (
 
 func newOptions() *options {
 	return &options{
-		writer:         os.Stdout,
+		writer:         os.Stderr,
 		level:          LOG_LEVEL,
 		enableCaller:   LOG_ENABLE_CALLER,
 		encoderBuilder: NewLoggerEncoder,
