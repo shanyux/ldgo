@@ -5,84 +5,85 @@
 package ldgo
 
 import (
-	"strconv"
 	"testing"
+
+	"github.com/smartystreets/goconvey/convey"
 )
 
-func testConvInt(t testing.TB, s string, r int64) {
-	n, _ := convInt(StrToBytesUnsafe(s))
-	if n == r {
-		t.Logf("conv str to int succ. s:%s, n:%d", s, n)
-	} else {
-		t.Errorf("conv str to int fail. s:%s, n:%d, expected:%d", s, n, r)
-	}
+func test_ConvInt(s string, r int64) {
+	convey.Convey(s, func() {
+		n, _ := convInt(StrToBytesUnsafe(s))
+		convey.So(n, convey.ShouldEqual, r)
+	})
 }
 
-func testConvUint(t testing.TB, s string, r uint64) {
-	n, _ := convUint(StrToBytesUnsafe(s))
-	if n == r {
-		t.Logf("conv str to uint succ. s:%s, n:%d", s, n)
-	} else {
-		t.Errorf("conv str to uint fail. s:%s, n:%d, expected:%d", s, n, r)
-	}
+func test_ConvUint(s string, r uint64) {
+	convey.Convey(s, func() {
+		n, _ := convUint(StrToBytesUnsafe(s))
+		convey.So(n, convey.ShouldEqual, r)
+	})
 }
 
-func testConvFloat(t testing.TB, s string, r float64) {
-	n, _ := convFloat(StrToBytesUnsafe(s))
-	if n == r {
-		t.Logf("conv str to float succ. s:%s, n:%s", s, strconv.FormatFloat(n, 'f', -1, 64))
-	} else {
-		t.Errorf("conv str to float fail. s:%s, n:%s, expected:%s", s,
-			strconv.FormatFloat(n, 'f', -1, 64), strconv.FormatFloat(r, 'f', -1, 64))
-	}
+func test_ConvFloat(s string, r float64) {
+	convey.Convey(s, func() {
+		n, _ := convFloat(StrToBytesUnsafe(s))
+		convey.So(n, convey.ShouldEqual, r)
+	})
 }
 
-func TestConvInt(t *testing.T) {
-	testConvInt(t, "123", 123)
-	testConvInt(t, "123.1", 123)
-	testConvInt(t, ".1", 0)
-	testConvInt(t, "0123", 0123)
-	testConvInt(t, "+-0123", -0123)
-	testConvInt(t, "123e+1", 1230)
-	testConvInt(t, "123e1", 1230)
-	testConvInt(t, "123e-1", 12)
-	testConvInt(t, "0x123", 0x123)
-	testConvInt(t, "--0X123", 0x123)
-	testConvInt(t, "-+-0x123", 0x123)
-	testConvInt(t, "-+-0xeFaB", 0xeFaB)
+func Test_ConvInt(t *testing.T) {
+	convey.Convey("", t, func() {
+		test_ConvInt("123", 123)
+		test_ConvInt("123.1", 123)
+		test_ConvInt(".1", 0)
+		test_ConvInt("0123", 123)
+		test_ConvInt("0o123", 0123)
+		test_ConvInt("0O123", 0123)
+		test_ConvInt("+-0o123", -0123)
+		test_ConvInt("123e+1", 1230)
+		test_ConvInt("123e1", 1230)
+		test_ConvInt("123e-1", 12)
+		test_ConvInt("0x123", 0x123)
+		test_ConvInt("--0X123", 0x123)
+		test_ConvInt("-+-0x123", 0x123)
+		test_ConvInt("-+-0xeFaB", 0xeFaB)
+	})
 }
 
-func TestConvUint(t *testing.T) {
-	testConvUint(t, "123", 123)
-	testConvUint(t, "123.1", 123)
-	testConvUint(t, ".1", 0)
-	testConvUint(t, "0123", 0123)
-	// testConvUint(t, "+-0123", uint64(int64(-0123)))
-	testConvUint(t, "123e+1", 1230)
-	testConvUint(t, "123e1", 1230)
-	testConvUint(t, "123e-1", 12)
-	testConvUint(t, "0x123", 0x123)
-	testConvUint(t, "--0X123", 0x123)
-	testConvUint(t, "-+-0x123", 0x123)
-	testConvUint(t, "-+-0xeFaB", 0xeFaB)
+func Test_ConvUint(t *testing.T) {
+	convey.Convey("", t, func() {
+		test_ConvUint("123", 123)
+		test_ConvUint("123.1", 123)
+		test_ConvUint(".1", 0)
+		test_ConvUint("0123", 123)
+		test_ConvUint("0o123", 0123)
+		// testConvUint("+-0123", uint64(int64(-0123)))
+		test_ConvUint("123e+1", 1230)
+		test_ConvUint("123e1", 1230)
+		test_ConvUint("123e-1", 12)
+		test_ConvUint("0x123", 0x123)
+		test_ConvUint("--0X123", 0x123)
+		test_ConvUint("-+-0x123", 0x123)
+		test_ConvUint("-+-0xeFaB", 0xeFaB)
+	})
 }
 
-func TestConvFloat(t *testing.T) {
-	testConvFloat(t, "123", 123)
-	testConvFloat(t, "123.1", 123.1)
-	testConvFloat(t, ".1", 0.1)
-	testConvFloat(t, "0123", 0123)
-	// testConvFloat(t, "+-0123", uint64(int64(-0123)))
-	testConvFloat(t, "123e+1", 1230)
-	testConvFloat(t, "123e1", 1230)
-	testConvFloat(t, "123e-1", 12.3)
-	testConvFloat(t, "0x123", 0x123)
-	testConvFloat(t, "--0X123", 0x123)
-	testConvFloat(t, "-+-0x123", 0x123)
-	testConvFloat(t, "-+-0xeFaB", 0xeFaB)
-	testConvFloat(t, "0.30129", 0.30129)
-	testConvFloat(t, "0.30129e3", 301.29)
-}
-
-func TestXXX(t *testing.T) {
+func Test_ConvFloat(t *testing.T) {
+	convey.Convey("", t, func() {
+		test_ConvFloat("123", 123)
+		test_ConvFloat("123.1", 123.1)
+		test_ConvFloat(".1", 0.1)
+		test_ConvFloat("0123", 123)
+		test_ConvFloat("0o123", 0123)
+		// testConvFloat("+-0123", uint64(int64(-0123)))
+		test_ConvFloat("123e+1", 1230)
+		test_ConvFloat("123e1", 1230)
+		test_ConvFloat("123e-1", 12.3)
+		test_ConvFloat("0x123", 0x123)
+		test_ConvFloat("--0X123", 0x123)
+		test_ConvFloat("-+-0x123", 0x123)
+		test_ConvFloat("-+-0xeFaB", 0xeFaB)
+		test_ConvFloat("0.30129", 0.30129)
+		test_ConvFloat("0.30129e3", 301.29)
+	})
 }

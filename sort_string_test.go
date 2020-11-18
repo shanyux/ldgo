@@ -4,18 +4,27 @@
 
 package ldgo
 
-import "testing"
+import (
+	"testing"
 
-func TestSortString(t *testing.T) {
-	l := []string{"223", "562", "424", "642", "223", "abc", "aab", "22", "cbd", "abc"}
-	if IsSortedString(l) {
-		t.Fatal("is sorted: ", l)
-	}
+	"github.com/smartystreets/goconvey/convey"
+)
 
-	SortString(l)
-	if !IsSortedString(l) {
-		t.Fatal("is not sorted: ", l)
-	}
-	t.Log("size: ", len(l))
-	t.Log("sorted: ", l)
+func Test_SortStrings(t *testing.T) {
+	convey.Convey("", t, func() {
+		l := []string{"223", "562", "424", "642", "223", "abc", "aab", "22", "cbd", "abc"}
+		convey.So(IsSortedStrings(l), convey.ShouldBeFalse)
+
+		SortString(l)
+
+		convey.So(IsSortedStrings(l), convey.ShouldBeTrue)
+		convey.So(l, convey.ShouldResemble, []string{
+			"22", "223", "223", "424", "562", "642", "aab", "abc", "abc", "cbd",
+		})
+
+		convey.So(SearchStrings(l, ""), convey.ShouldEqual, 0)
+		convey.So(SearchStrings(l, "123"), convey.ShouldEqual, 0)
+		convey.So(SearchStrings(l, "24"), convey.ShouldEqual, 3)
+		convey.So(SearchStrings(l, "zzz"), convey.ShouldEqual, 10)
+	})
 }

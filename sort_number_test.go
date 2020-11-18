@@ -6,29 +6,25 @@ package ldgo
 
 import (
 	"testing"
+
+	"github.com/smartystreets/goconvey/convey"
 )
 
-func testSearchInt64(t testing.TB, l []int64, x int64) {
-	n := SearchInt64(l, x)
-	t.Logf("%5d pos: %d", x, n)
-}
+func Test_SortInt64s(t *testing.T) {
+	convey.Convey("", t, func() {
+		l := []int64{223, 562, 424, 642, 223, 123, 496, 623, 845, 375}
 
-func TestSortInt64(t *testing.T) {
-	l := []int64{223, 562, 424, 642, 223, 123, 496, 623, 845, 375}
-	if IsSortedInt64(l) {
-		t.Fatal("is sorted: ", l)
-	}
+		SortInt64(l)
 
-	SortInt64(l)
-	if !IsSortedInt64(l) {
-		t.Fatal("is not sorted: ", l)
-	}
-	t.Log("size: ", len(l))
-	t.Log("sorted: ", l)
+		convey.So(IsSortedInt64s(l), convey.ShouldBeTrue)
+		convey.So(l, convey.ShouldResemble, []int64{
+			123, 223, 223, 375, 424, 496, 562, 623, 642, 845,
+		})
 
-	testSearchInt64(t, l, 123)
-	testSearchInt64(t, l, 223)
-	testSearchInt64(t, l, 300)
-	testSearchInt64(t, l, 1)
-	testSearchInt64(t, l, 10000)
+		convey.So(SearchInt64s(l, 0), convey.ShouldEqual, 0)
+		convey.So(SearchInt64s(l, 123), convey.ShouldEqual, 0)
+		convey.So(SearchInt64s(l, 223), convey.ShouldEqual, 1)
+		convey.So(SearchInt64s(l, 300), convey.ShouldEqual, 3)
+		convey.So(SearchInt64s(l, 10000), convey.ShouldEqual, 10)
+	})
 }

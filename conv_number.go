@@ -108,9 +108,7 @@ func (that *convNumberReader) ReadHexadecimal() bool {
 
 func (that *convNumberReader) ReadExponentiation() bool {
 	switch that.Peek() {
-	case '-':
-		fallthrough
-	case '+':
+	case '-', '+':
 		that.Next()
 	}
 	return that.ReadDecimal()
@@ -118,23 +116,17 @@ func (that *convNumberReader) ReadExponentiation() bool {
 
 func (that *convNumberReader) TestNumberType() {
 	switch that.Peek() {
-	case 't':
-		fallthrough
-	case 'T':
+	case 't', 'T':
 		if that.ReadString("true") {
 			that.typNum = _NUMBER_TYPE_TRUE
 		}
 		return
-	case 'f':
-		fallthrough
-	case 'F':
+	case 'f', 'F':
 		if that.ReadString("false") {
 			that.typNum = _NUMBER_TYPE_FALSE
 		}
 		return
-	case 'n':
-		fallthrough
-	case 'N':
+	case 'n', 'N':
 		if that.ReadString("null") {
 			that.typNum = _NUMBER_TYPE_FALSE
 		}
@@ -176,9 +168,7 @@ func (that *convNumberReader) TestNumberType() {
 			that.MarkEnd()
 			return
 
-		case 'x':
-			fallthrough
-		case 'X':
+		case 'x', 'X':
 			// 0x123
 			that.Next()
 			that.MarkBegin()
@@ -188,9 +178,7 @@ func (that *convNumberReader) TestNumberType() {
 			that.MarkEnd()
 			that.typNum = _NUMBER_TYPE_HEX
 
-		case 'o':
-			fallthrough
-		case 'O':
+		case 'o', 'O':
 			// 0o123
 			that.Next()
 			that.MarkBegin()
@@ -198,7 +186,7 @@ func (that *convNumberReader) TestNumberType() {
 				return
 			}
 			that.MarkEnd()
-			that.typNum = _NUMBER_TYPE_HEX
+			that.typNum = _NUMBER_TYPE_OCT
 
 		default:
 			// 0123
@@ -210,23 +198,7 @@ func (that *convNumberReader) TestNumberType() {
 			that.typNum = _NUMBER_TYPE_DEC
 		}
 
-	case '1':
-		fallthrough
-	case '2':
-		fallthrough
-	case '3':
-		fallthrough
-	case '4':
-		fallthrough
-	case '5':
-		fallthrough
-	case '6':
-		fallthrough
-	case '7':
-		fallthrough
-	case '8':
-		fallthrough
-	case '9':
+	case '1', '2', '3', '4', '5', '6', '7', '8', '9':
 		that.MarkBegin()
 		that.Next()
 		that.typNum = _NUMBER_TYPE_DEC
