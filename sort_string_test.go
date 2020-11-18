@@ -15,7 +15,7 @@ func Test_SortStrings(t *testing.T) {
 		l := []string{"223", "562", "424", "642", "223", "abc", "aab", "22", "cbd", "abc"}
 		convey.So(IsSortedStrings(l), convey.ShouldBeFalse)
 
-		SortString(l)
+		SortStrings(l)
 
 		convey.So(IsSortedStrings(l), convey.ShouldBeTrue)
 		convey.So(l, convey.ShouldResemble, []string{

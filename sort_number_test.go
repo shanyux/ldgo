@@ -14,7 +14,7 @@ func Test_SortInt64s(t *testing.T) {
 	convey.Convey("", t, func() {
 		l := []int64{223, 562, 424, 642, 223, 123, 496, 623, 845, 375}
 
-		SortInt64(l)
+		SortInt64s(l)
 
 		convey.So(IsSortedInt64s(l), convey.ShouldBeTrue)
 		convey.So(l, convey.ShouldResemble, []int64{

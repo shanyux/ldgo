@@ -10,15 +10,15 @@ import (
 	"sort"
 )
 
-type sortReflect struct {
+type sortStruct struct {
 	Size     int
 	Array    reflect.Value
 	LessFunc reflect.Value
 }
 
-func (s sortReflect) Len() int { return s.Size }
+func (s sortStruct) Len() int { return s.Size }
 
-func (s sortReflect) Swap(i, j int) {
+func (s sortStruct) Swap(i, j int) {
 	if i == j {
 		return
 	}
@@ -29,7 +29,7 @@ func (s sortReflect) Swap(i, j int) {
 	b.Set(reflect.ValueOf(t))
 }
 
-func (s sortReflect) Less(i, j int) bool {
+func (s sortStruct) Less(i, j int) bool {
 	args := [2]reflect.Value{s.Array.Index(i), s.Array.Index(j)}
 	res := s.LessFunc.Call(args[:])
 	return res[0].Bool()
@@ -72,7 +72,7 @@ func Sort(slice interface{}, lessFunc interface{}) {
 		panic(fmt.Sprintf("parameter of less func must be bool, type: %s", typ))
 	}
 
-	sort.Sort(sortReflect{
+	sort.Sort(sortStruct{
 		Size:     aVal.Len(),
 		Array:    aVal,
 		LessFunc: fVal,
