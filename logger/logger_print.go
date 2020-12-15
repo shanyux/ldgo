@@ -20,6 +20,16 @@ const (
 	_FATAL  = zapcore.FatalLevel
 )
 
+type printWrap struct {
+	args []interface{}
+}
+
+func (w printWrap) String() string {
+	return sprintln(w.args)
+}
+
+func pw(args []interface{}) fmt.Stringer { return printWrap{args: args} }
+
 func sprintln(args []interface{}) string {
 	if len(args) == 0 {
 		return ""

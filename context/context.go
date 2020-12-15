@@ -14,14 +14,14 @@ import (
 )
 
 var (
-	DefaultLogger = logger.Default
-
-	background = ctx{Context: context.Background()}
-	console    = Background().WithLogger(logger.Console())
+	defaultContext = ctx{Context: context.Background()}
+	consoleContext = Default().WithLogger(logger.Console())
 )
 
-func Background() Context { return background }
-func Console() Context    { return console }
+func defaultLogger() logger.Logger { return logger.Default }
+
+func Default() Context { return defaultContext }
+func Console() Context { return consoleContext }
 
 type CancelFunc = context.CancelFunc
 
@@ -51,7 +51,7 @@ type Context interface {
 
 func NewContext(c context.Context, fields ...zap.Field) Context {
 	if c == nil {
-		return Background().With(fields...)
+		return Default().With(fields...)
 	}
 	switch _c := c.(type) {
 	case ctx:
@@ -97,7 +97,7 @@ func (c ctx) GetLogger() logger.Logger {
 func (c ctx) logger() logger.Logger {
 	l := logger.FromContext(c)
 	if l == nil || l == logger.Default {
-		l = DefaultLogger
+		l = defaultLogger()
 	}
 	return l
 }

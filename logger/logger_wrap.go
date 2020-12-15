@@ -91,74 +91,45 @@ func (l loggerWrap) Enabled(lvl zapcore.Level) bool { return l.enabled(lvl) }
 func (l loggerWrap) Core() *zap.Logger         { return l.log }
 func (l loggerWrap) Sugar() *zap.SugaredLogger { return l.sugar }
 
-func (l loggerWrap) emptyFunc(args ...interface{})  {}
 func (l loggerWrap) enabled(lvl zapcore.Level) bool { return l.log.Core().Enabled(lvl) }
-func (l loggerWrap) f(lvl zapcore.Level) func(args ...interface{}) {
-	if l.enabled(lvl) {
-		switch lvl {
-		case _DEBUG:
-			return l.sugar.Debug
-		case _INFO:
-			return l.sugar.Info
-		case _WARN:
-			return l.sugar.Warn
-		case _ERROR:
-			return l.sugar.Error
-		case _DPANIC:
-			return l.sugar.DPanic
-		case _PANIC:
-			return l.sugar.Panic
-		case _FATAL:
-			return l.sugar.Fatal
-		}
-	}
-	return l.emptyFunc
-}
 
-func (l loggerWrap) s(lvl zapcore.Level, args []interface{}) string {
-	if !l.enabled(lvl) {
-		return ""
-	}
-	return sprintln(args)
-}
-
-func (l loggerWrap) Debug(args ...interface{})              { l.f(_DEBUG)(l.s(_DEBUG, args)) }
-func (l loggerWrap) Debugln(args ...interface{})            { l.f(_DEBUG)(l.s(_DEBUG, args)) }
+func (l loggerWrap) Debug(args ...interface{})              { l.sugar.Debug(pw(args)) }
+func (l loggerWrap) Debugln(args ...interface{})            { l.sugar.Debug(pw(args)) }
 func (l loggerWrap) Debugf(fmt string, args ...interface{}) { l.sugar.Debugf(fmt, args...) }
 func (l loggerWrap) Debugz(fmt string, fields ...zap.Field) { l.log.Debug(fmt, fields...) }
 
-func (l loggerWrap) Info(args ...interface{})              { l.f(_INFO)(l.s(_INFO, args)) }
-func (l loggerWrap) Infoln(args ...interface{})            { l.f(_INFO)(l.s(_INFO, args)) }
+func (l loggerWrap) Info(args ...interface{})              { l.sugar.Info(pw(args)) }
+func (l loggerWrap) Infoln(args ...interface{})            { l.sugar.Info(pw(args)) }
 func (l loggerWrap) Infof(fmt string, args ...interface{}) { l.sugar.Infof(fmt, args...) }
 func (l loggerWrap) Infoz(fmt string, fields ...zap.Field) { l.log.Info(fmt, fields...) }
 
-func (l loggerWrap) Print(args ...interface{})              { l.f(_INFO)(l.s(_INFO, args)) }
-func (l loggerWrap) Println(args ...interface{})            { l.f(_INFO)(l.s(_INFO, args)) }
+func (l loggerWrap) Print(args ...interface{})              { l.sugar.Info(pw(args)) }
+func (l loggerWrap) Println(args ...interface{})            { l.sugar.Info(pw(args)) }
 func (l loggerWrap) Printf(fmt string, args ...interface{}) { l.sugar.Infof(fmt, args...) }
 func (l loggerWrap) Printz(fmt string, fields ...zap.Field) { l.log.Info(fmt, fields...) }
 
-func (l loggerWrap) Log(args ...interface{})              { l.f(_INFO)(l.s(_INFO, args)) }
-func (l loggerWrap) Logln(args ...interface{})            { l.f(_INFO)(l.s(_INFO, args)) }
+func (l loggerWrap) Log(args ...interface{})              { l.sugar.Info(pw(args)) }
+func (l loggerWrap) Logln(args ...interface{})            { l.sugar.Info(pw(args)) }
 func (l loggerWrap) Logf(fmt string, args ...interface{}) { l.sugar.Infof(fmt, args...) }
 func (l loggerWrap) Logz(fmt string, fields ...zap.Field) { l.log.Info(fmt, fields...) }
 
-func (l loggerWrap) Warn(args ...interface{})              { l.f(_WARN)(l.s(_WARN, args)) }
-func (l loggerWrap) Warnln(args ...interface{})            { l.f(_WARN)(l.s(_WARN, args)) }
+func (l loggerWrap) Warn(args ...interface{})              { l.sugar.Warn(pw(args)) }
+func (l loggerWrap) Warnln(args ...interface{})            { l.sugar.Warn(pw(args)) }
 func (l loggerWrap) Warnf(fmt string, args ...interface{}) { l.sugar.Warnf(fmt, args...) }
 func (l loggerWrap) Warnz(fmt string, fields ...zap.Field) { l.log.Warn(fmt, fields...) }
 
-func (l loggerWrap) Warning(args ...interface{})              { l.f(_WARN)(l.s(_WARN, args)) }
-func (l loggerWrap) Warningln(args ...interface{})            { l.f(_WARN)(l.s(_WARN, args)) }
+func (l loggerWrap) Warning(args ...interface{})              { l.sugar.Warn(pw(args)) }
+func (l loggerWrap) Warningln(args ...interface{})            { l.sugar.Warn(pw(args)) }
 func (l loggerWrap) Warningf(fmt string, args ...interface{}) { l.sugar.Warnf(fmt, args...) }
 func (l loggerWrap) Warningz(fmt string, fields ...zap.Field) { l.log.Warn(fmt, fields...) }
 
-func (l loggerWrap) Error(args ...interface{})              { l.f(_ERROR)(l.s(_ERROR, args)) }
-func (l loggerWrap) Errorln(args ...interface{})            { l.f(_ERROR)(l.s(_ERROR, args)) }
+func (l loggerWrap) Error(args ...interface{})              { l.sugar.Error(pw(args)) }
+func (l loggerWrap) Errorln(args ...interface{})            { l.sugar.Error(pw(args)) }
 func (l loggerWrap) Errorf(fmt string, args ...interface{}) { l.sugar.Errorf(fmt, args...) }
 func (l loggerWrap) Errorz(fmt string, fields ...zap.Field) { l.log.Error(fmt, fields...) }
 
-func (l loggerWrap) Fatal(args ...interface{})              { l.f(_FATAL)(l.s(_FATAL, args)) }
-func (l loggerWrap) Fatalln(args ...interface{})            { l.f(_FATAL)(l.s(_FATAL, args)) }
+func (l loggerWrap) Fatal(args ...interface{})              { l.sugar.Fatal(pw(args)) }
+func (l loggerWrap) Fatalln(args ...interface{})            { l.sugar.Fatal(pw(args)) }
 func (l loggerWrap) Fatalf(fmt string, args ...interface{}) { l.sugar.Fatalf(fmt, args...) }
 func (l loggerWrap) Fatalz(fmt string, fields ...zap.Field) { l.log.Fatal(fmt, fields...) }
 
