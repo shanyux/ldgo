@@ -23,14 +23,17 @@ func defaultLogger() logger.Logger { return logger.Default }
 func Default() Context { return defaultContext }
 func Console() Context { return consoleContext }
 
-type CancelFunc = context.CancelFunc
+type cancelFunc = context.CancelFunc
 
 type Context interface {
 	context.Context
 
 	WithValue(key, val interface{}) Context
-	WithCancel() (Context, CancelFunc)
-	WithDeadline(deadline time.Time) (Context, CancelFunc)
+
+	TryCancel() bool
+	WithCancel() Context
+	WithDeadline(deadline time.Time) Context
+	WithTimeout(timeout time.Duration) Context
 
 	WithLogger(l logger.Logger) Context
 	GetLogger() logger.Logger
@@ -64,30 +67,63 @@ func NewContext(c context.Context, fields ...zap.Field) Context {
 
 type ctx struct {
 	context.Context
+
+	cancel cancelFunc
 }
 
 func newContext(c context.Context) ctx { return ctx{Context: c} }
 
 func (c ctx) WithValue(key, val interface{}) Context {
-	return newContext(context.WithValue(c.Context, key, val))
+	c.Context = context.WithValue(c.Context, key, val)
+	return c
 }
 
 func (c ctx) With(fields ...zap.Field) Context {
-	return newContext(logger.NewContext(c.Context, c.logger().With(fields...)))
+	c.Context = logger.NewContext(c.Context, c.logger().With(fields...))
+	return c
 }
 
-func (c ctx) WithDeadline(deadline time.Time) (Context, CancelFunc) {
-	ctx, cancel := context.WithDeadline(c.Context, deadline)
-	return newContext(ctx), cancel
+func (c ctx) TryCancel() bool {
+	if c.cancel == nil {
+		return false
+	}
+
+	c.cancel()
+	return true
 }
 
-func (c ctx) WithCancel() (Context, CancelFunc) {
+func (c ctx) WithDeadline(d time.Time) Context {
+	if c.cancel != nil {
+		if cur, ok := c.Deadline(); ok && cur.Before(d) {
+			// The current deadline is already sooner than the new one.
+			return c
+		}
+	}
+
+	ctx, cancel := context.WithDeadline(c.Context, d)
+	c.Context = ctx
+	c.cancel = cancel
+	return c
+}
+
+func (c ctx) WithTimeout(t time.Duration) Context {
+	return c.WithDeadline(time.Now().Add(t))
+}
+
+func (c ctx) WithCancel() Context {
+	if c.cancel != nil {
+		return c
+	}
+
 	ctx, cancel := context.WithCancel(c.Context)
-	return newContext(ctx), cancel
+	c.Context = ctx
+	c.cancel = cancel
+	return c
 }
 
 func (c ctx) WithLogger(l logger.Logger) Context {
-	return newContext(logger.NewContext(c.Context, l))
+	c.Context = logger.NewContext(c.Context, l)
+	return c
 }
 
 func (c ctx) GetLogger() logger.Logger {
