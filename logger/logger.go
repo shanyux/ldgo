@@ -24,24 +24,29 @@ type Logger interface {
 	With(fields ...zap.Field) Logger
 	WithOptions(opts ...zap.Option) Logger
 
-	Debug(msg string, fields ...zap.Field)
+	// Debugf formats according to a format specifier and print the logger
 	Debugf(fmt string, args ...interface{})
+	Debug(msg string, fields ...zap.Field)
 	Debugln(args ...interface{})
 
-	Info(msg string, fields ...zap.Field)
+	// Infof formats according to a format specifier and print the logger
 	Infof(fmt string, args ...interface{})
+	Info(msg string, fields ...zap.Field)
 	Infoln(args ...interface{})
 
-	Warn(msg string, fields ...zap.Field)
+	// Warnf formats according to a format specifier and print the logger
 	Warnf(fmt string, args ...interface{})
+	Warn(msg string, fields ...zap.Field)
 	Warnln(args ...interface{})
 
-	Error(msg string, fields ...zap.Field)
+	// Errorf formats according to a format specifier and print the logger
 	Errorf(fmt string, args ...interface{})
+	Error(msg string, fields ...zap.Field)
 	Errorln(args ...interface{})
 
-	Fatal(msg string, fields ...zap.Field)
+	// Fatalf formats according to a format specifier and print the logger
 	Fatalf(fmt string, args ...interface{})
+	Fatal(msg string, fields ...zap.Field)
 	Fatalln(args ...interface{})
 }
 
