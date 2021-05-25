@@ -10,6 +10,7 @@ var _KeyLockerDataPool = &sync.Pool{New: func() interface{} { return &keyLockerD
 
 type KeyLocker interface {
 	Lock(key interface{})
+	TryLock(key interface{}) bool
 	Unlock(key interface{})
 }
 
@@ -30,43 +31,66 @@ type keyLocker struct {
 }
 
 func (kl *keyLocker) Lock(key interface{}) {
+	kl.locker.Lock()
 	d := kl.add(key)
+	kl.locker.Unlock()
+
 	d.locker.Lock()
 }
 
 func (kl *keyLocker) Unlock(key interface{}) {
+	kl.locker.Lock()
 	d := kl.sub(key)
-	d.locker.Unlock()
+	kl.locker.Unlock()
+
+	if d != nil {
+		d.locker.Unlock()
+	}
 }
 
-func (kl *keyLocker) add(key interface{}) *keyLockerData {
+func (kl *keyLocker) TryLock(key interface{}) bool {
 	kl.locker.Lock()
 
+	if d := kl.get(key); d != nil {
+		kl.locker.Unlock()
+		return false
+	}
+
+	d := kl.new(key)
+	d.count++
+	kl.locker.Unlock()
+
+	d.locker.Lock()
+	return true
+}
+
+func (kl *keyLocker) get(key interface{}) *keyLockerData {
 	if kl.keys == nil {
 		kl.keys = make(map[interface{}]*keyLockerData, 1)
 	}
 
-	d := kl.keys[key]
+	return kl.keys[key]
+}
+
+func (kl *keyLocker) new(key interface{}) *keyLockerData {
+	d := _KeyLockerDataPool.Get().(*keyLockerData)
+	d.count = 0
+	kl.keys[key] = d
+	return d
+}
+
+func (kl *keyLocker) add(key interface{}) *keyLockerData {
+	d := kl.get(key)
 	if d == nil {
-		d = _KeyLockerDataPool.Get().(*keyLockerData)
-		d.count = 0
+		d = kl.new(key)
 	}
 
 	d.count++
-	kl.locker.Unlock()
-
 	return d
 }
 
 func (kl *keyLocker) sub(key interface{}) *keyLockerData {
-	kl.locker.Lock()
-	defer kl.locker.Unlock()
-
-	if kl.keys == nil {
-		return nil
-	}
-
-	d := kl.keys[key]
+	d := kl.get(key)
 	if d == nil {
 		return nil
 	}
