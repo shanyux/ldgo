@@ -2,7 +2,7 @@
  * Copyright (C) distroy
  */
 
-package logger
+package ldlogger
 
 import "context"
 
@@ -13,10 +13,11 @@ const (
 )
 
 var (
-	Default = NewLogger()
-	console = NewLogger()
+	defLogger = NewLogger()
+	console   = NewLogger()
 )
 
+func Default() Logger { return defLogger }
 func Console() Logger { return console }
 
 func NewContext(ctx context.Context, l Logger) context.Context {
@@ -28,5 +29,5 @@ func FromContext(ctx context.Context) Logger {
 	if ok {
 		return l
 	}
-	return Default
+	return Default()
 }

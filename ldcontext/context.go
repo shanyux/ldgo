@@ -2,23 +2,22 @@
  * Copyright (C) distroy
  */
 
-package context
+package ldcontext
 
 import (
 	"context"
 	"time"
 
-	"github.com/distroy/ldgo/logger"
-
+	"github.com/distroy/ldgo/ldlogger"
 	"go.uber.org/zap"
 )
 
 var (
 	defaultContext = ctx{Context: context.Background()}
-	consoleContext = Default().WithLogger(logger.Console())
+	consoleContext = Default().WithLogger(ldlogger.Console())
 )
 
-func defaultLogger() logger.Logger { return logger.Default }
+func defaultLogger() ldlogger.Logger { return ldlogger.Default }
 
 func Default() Context { return defaultContext }
 func Console() Context { return consoleContext }
@@ -35,8 +34,8 @@ type Context interface {
 	WithDeadline(deadline time.Time) Context
 	WithTimeout(timeout time.Duration) Context
 
-	WithLogger(l logger.Logger) Context
-	GetLogger() logger.Logger
+	WithLogger(l ldlogger.Logger) Context
+	GetLogger() ldlogger.Logger
 
 	With(field ...zap.Field) Context
 	LogSync()
@@ -79,7 +78,7 @@ func (c ctx) WithValue(key, val interface{}) Context {
 }
 
 func (c ctx) With(fields ...zap.Field) Context {
-	c.Context = logger.NewContext(c.Context, c.logger().With(fields...))
+	c.Context = ldlogger.NewContext(c.Context, c.logger().With(fields...))
 	return c
 }
 
@@ -121,18 +120,18 @@ func (c ctx) WithCancel() Context {
 	return c
 }
 
-func (c ctx) WithLogger(l logger.Logger) Context {
-	c.Context = logger.NewContext(c.Context, l)
+func (c ctx) WithLogger(l ldlogger.Logger) Context {
+	c.Context = ldlogger.NewContext(c.Context, l)
 	return c
 }
 
-func (c ctx) GetLogger() logger.Logger {
+func (c ctx) GetLogger() ldlogger.Logger {
 	return c.logger()
 }
 
-func (c ctx) logger() logger.Logger {
-	l := logger.FromContext(c)
-	if l == nil || l == logger.Default {
+func (c ctx) logger() ldlogger.Logger {
+	l := ldlogger.FromContext(c)
+	if l == nil || l == ldlogger.Default {
 		l = defaultLogger()
 	}
 	return l

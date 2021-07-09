@@ -2,7 +2,7 @@
  * Copyright (C) distroy
  */
 
-package logger
+package ldlogger
 
 import (
 	"go.uber.org/zap"
