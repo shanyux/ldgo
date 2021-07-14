@@ -4,8 +4,8 @@
 
 package ldgo
 
-import "github.com/distroy/ldgo/ldcore"
+import "github.com/distroy/ldgo/ldsync"
 
-type Done = ldcore.Done
+type Done = ldsync.Done
 
-func NewDone() Done { return ldcore.NewDone() }
+func NewDone() Done { return ldsync.NewDone() }

@@ -4,12 +4,10 @@
 
 package ldgo
 
-import (
-	"github.com/distroy/ldgo/ldcore"
-)
+import "github.com/distroy/ldgo/ldsync"
 
-type KeyLocker = ldcore.KeyLocker
+type KeyLocker = ldsync.KeyLocker
 
 func NewKeyLocker() KeyLocker {
-	return ldcore.NewKeyLocker()
+	return ldsync.NewKeyLocker()
 }

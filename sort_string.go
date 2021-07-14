@@ -5,13 +5,13 @@
 package ldgo
 
 import (
-	"github.com/distroy/ldgo/ldcore"
+	"github.com/distroy/ldgo/ldsort"
 )
 
-type SortSliceString = ldcore.SortSliceString
+type SortSliceString = ldsort.SortSliceString
 
-func SortStrings(a []string)          { ldcore.SortStrings(a) }
-func IsSortedStrings(a []string) bool { return ldcore.IsSortedStrings(a) }
+func SortStrings(a []string)          { ldsort.SortStrings(a) }
+func IsSortedStrings(a []string) bool { return ldsort.IsSortedStrings(a) }
 func SearchStrings(a []string, x string) int {
-	return ldcore.SearchStrings(a, x)
+	return ldsort.SearchStrings(a, x)
 }

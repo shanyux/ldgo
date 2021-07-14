@@ -4,12 +4,10 @@
 
 package ldgo
 
-import (
-	"github.com/distroy/ldgo/ldcore"
-)
+import "github.com/distroy/ldgo/ldsync"
 
-type DoneWait = ldcore.DoneWait
+type DoneWait = ldsync.DoneWait
 
 func NewDoneWait() DoneWait {
-	return ldcore.NewDoneWait()
+	return ldsync.NewDoneWait()
 }

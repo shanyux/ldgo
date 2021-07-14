@@ -5,7 +5,7 @@
 package ldlogger
 
 import (
-	"github.com/distroy/ldgo/ldcore"
+	"github.com/distroy/ldgo/ldconv"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -18,8 +18,8 @@ func NewLogger(opts ...Option) Logger {
 
 	var level zapcore.Level
 
-	if err := level.UnmarshalText(ldcore.StrToBytesUnsafe(options.level)); err != nil {
-		level.UnmarshalText(ldcore.StrToBytesUnsafe("info"))
+	if err := level.UnmarshalText(ldconv.StrToBytesUnsafe(options.level)); err != nil {
+		level.UnmarshalText(ldconv.StrToBytesUnsafe("info"))
 	}
 
 	encoder := zapcore.EncoderConfig{

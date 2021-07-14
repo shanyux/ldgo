@@ -4,10 +4,10 @@
 
 package ldgo
 
-import "github.com/distroy/ldgo/ldcore"
+import "github.com/distroy/ldgo/ldtopk"
 
-type TopkInterface = ldcore.TopkInterface
+type TopkInterface = ldtopk.TopkInterface
 
 func TopkAdd(b TopkInterface, k int, x interface{}) bool {
-	return ldcore.TopkAdd(b, k, x)
+	return ldtopk.TopkAdd(b, k, x)
 }

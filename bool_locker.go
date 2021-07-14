@@ -7,9 +7,9 @@ package ldgo
 import (
 	"sync"
 
-	"github.com/distroy/ldgo/ldcore"
+	"github.com/distroy/ldgo/ldsync"
 )
 
 func NewBoolLocker(b bool) sync.Locker {
-	return ldcore.NewBoolLocker(b)
+	return ldsync.NewBoolLocker(b)
 }

@@ -4,13 +4,11 @@
 
 package ldgo
 
-import (
-	"github.com/distroy/ldgo/ldcore"
-)
+import "github.com/distroy/ldgo/ldgopool"
 
-type AsyncPoolConfig = ldcore.AsyncPoolConfig
-type AsyncPool = ldcore.AsyncPool
+type AsyncPoolConfig = ldgopool.AsyncPoolConfig
+type AsyncPool = ldgopool.AsyncPool
 
 func NewAsyncPool(cfg *AsyncPoolConfig) AsyncPool {
-	return ldcore.NewAsyncPool(cfg)
+	return ldgopool.NewAsyncPool(cfg)
 }
