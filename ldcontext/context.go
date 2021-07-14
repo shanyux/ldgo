@@ -17,7 +17,7 @@ var (
 	consoleContext = Default().WithLogger(ldlogger.Console())
 )
 
-func defaultLogger() ldlogger.Logger { return ldlogger.Default }
+func defaultLogger() ldlogger.Logger { return ldlogger.Default() }
 
 func Default() Context { return defaultContext }
 func Console() Context { return consoleContext }
@@ -131,7 +131,7 @@ func (c ctx) GetLogger() ldlogger.Logger {
 
 func (c ctx) logger() ldlogger.Logger {
 	l := ldlogger.FromContext(c)
-	if l == nil || l == ldlogger.Default {
+	if l == nil || l == ldlogger.Default() {
 		l = defaultLogger()
 	}
 	return l
