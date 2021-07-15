@@ -5,8 +5,6 @@
 package ldconv
 
 import (
-	"math/big"
-
 	"github.com/distroy/ldgo/ldbyte"
 )
 
@@ -296,13 +294,8 @@ func convStrToHex(s string) (int64, error) {
 	return int64(n), nil
 }
 
-func convStrToFloat(s string) (*big.Float, error) {
-	f := &big.Float{}
-	f, _, err := f.Parse(s, 0)
-	if f == nil {
-		f = bigFloatZero()
-	}
-	return f, err
+func convStrToFloat(s string) (decimalNumber, error) {
+	return newDecimalFromFloatStr(s)
 }
 
 func convBool(b []byte) (bool, error) {
@@ -323,7 +316,7 @@ func convBool(b []byte) (bool, error) {
 		return d != 0, err
 	case _NUMBER_TYPE_FLOAT:
 		f, err := convStrToFloat(str)
-		return f.Cmp(bigFloatZero()) != 0, err
+		return !f.IsZero(), err
 	}
 	return false, _ERR_INVALID_SYNTAX
 }
@@ -356,9 +349,9 @@ func convInt(b []byte) (int64, error) {
 	case _NUMBER_TYPE_FLOAT:
 		f, err := convStrToFloat(str)
 		if negative {
-			f = f.Neg(f)
+			f = f.Neg()
 		}
-		i, _ := f.Int64()
+		i, _ := f.BigFloat().Int64()
 		return i, err
 	}
 	return 0, _ERR_INVALID_SYNTAX
@@ -392,48 +385,34 @@ func convUint(b []byte) (uint64, error) {
 	case _NUMBER_TYPE_FLOAT:
 		f, err := convStrToFloat(str)
 		if negative {
-			f = f.Neg(f)
+			f = f.Neg()
 		}
-		i, _ := f.Uint64()
+		i, _ := f.BigFloat().Uint64()
 		return i, err
 	}
 	return 0, _ERR_INVALID_SYNTAX
 }
 
-func convFloat(b []byte) (*big.Float, error) {
+func convFloat(b []byte) (decimalNumber, error) {
 	typNum, negative, str := testStringNumberType(b)
-
-	f := &big.Float{}
 
 	switch typNum {
 	case _NUMBER_TYPE_TRUE:
-		return f.SetInt64(1), nil
+		return newDecimalFromInt(1), nil
 	case _NUMBER_TYPE_FALSE:
-		return f.SetInt64(0), nil
+		return newDecimalFromInt(0), nil
 	case _NUMBER_TYPE_OCT:
-		d, err := convStrToOct(str)
-		if negative {
-			return f.SetInt64(-d), err
-		}
-		return f.SetUint64(uint64(d)), err
+		return newDecimalFromIntStr(str, negative, 8)
 	case _NUMBER_TYPE_DEC:
-		d, err := convStrToDec(str)
-		if negative {
-			return f.SetInt64(-d), err
-		}
-		return f.SetUint64(uint64(d)), err
+		return newDecimalFromIntStr(str, negative, 10)
 	case _NUMBER_TYPE_HEX:
-		d, err := convStrToHex(str)
-		if negative {
-			return f.SetInt64(-d), err
-		}
-		return f.SetUint64(uint64(d)), err
+		return newDecimalFromIntStr(str, negative, 16)
 	case _NUMBER_TYPE_FLOAT:
 		f, err := convStrToFloat(str)
 		if negative {
-			return f.Neg(f), err
+			return f.Neg(), err
 		}
 		return f, err
 	}
-	return bigFloatZero(), _ERR_INVALID_SYNTAX
+	return newDecimalZero(), _ERR_INVALID_SYNTAX
 }

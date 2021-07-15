@@ -44,9 +44,14 @@ func ToBool(_v interface{}) (bool, error) {
 		return v != 0, nil
 
 	case big.Float:
-		return v.Cmp(bigFloatZero()) != 0, nil
+		return v.Cmp(newBigFloatZero()) != 0, nil
 	case *big.Float:
-		return v.Cmp(bigFloatZero()) != 0, nil
+		return v.Cmp(newBigFloatZero()) != 0, nil
+
+	case decimalNumber:
+		return !v.IsZero(), nil
+	case *decimalNumber:
+		return !v.IsZero(), nil
 
 	case []byte:
 		return convBool(v)
@@ -115,6 +120,11 @@ func ToInt64(_v interface{}) (int64, error) {
 		r, _ := v.Int64()
 		return r, nil
 
+	case decimalNumber:
+		return v.BigInt().Int64(), nil
+	case *decimalNumber:
+		return v.BigInt().Int64(), nil
+
 	case []byte:
 		return convInt(v)
 	case string:
@@ -182,6 +192,11 @@ func ToUint64(_v interface{}) (uint64, error) {
 		r, _ := v.Uint64()
 		return uint64(r), nil
 
+	case decimalNumber:
+		return v.BigInt().Uint64(), nil
+	case *decimalNumber:
+		return v.BigInt().Uint64(), nil
+
 	case []byte:
 		return convUint(v)
 	case string:
@@ -237,6 +252,13 @@ func ToFloat64(_v interface{}) (float64, error) {
 		r, _ := v.Float64()
 		return r, nil
 
+	case decimalNumber:
+		r, _ := v.BigFloat().Float64()
+		return r, nil
+	case *decimalNumber:
+		r, _ := v.BigFloat().Float64()
+		return r, nil
+
 	case []byte:
 		f, err := convFloat(v)
 		r, _ := f.Float64()
@@ -286,6 +308,11 @@ func ToString(_v interface{}) (string, error) {
 	case *big.Float:
 		return v.String(), nil
 
+	case decimalNumber:
+		return v.String(), nil
+	case *decimalNumber:
+		return v.String(), nil
+
 	case []byte:
 		return BytesToStrUnsafe(v), nil
 	case string:
@@ -293,53 +320,114 @@ func ToString(_v interface{}) (string, error) {
 	}
 	return "", _ERR_UNKOWN_TYPE
 }
-
-func ToBigFloat(_v interface{}) (*big.Float, error) {
+func toBigFloat(_v interface{}) (*big.Float, error) {
 	f := &big.Float{}
 	switch v := _v.(type) {
 	case bool:
 		if v {
-			f.SetInt64(1)
+			return f.SetInt64(1), nil
 		} else {
-			f.SetInt64(0)
+			return f.SetInt64(0), nil
 		}
 
 	case int:
-		f.SetInt64(int64(v))
+		return f.SetInt64(int64(v)), nil
 	case int8:
-		f.SetInt64(int64(v))
+		return f.SetInt64(int64(v)), nil
 	case int16:
-		f.SetInt64(int64(v))
+		return f.SetInt64(int64(v)), nil
 	case int32:
-		f.SetInt64(int64(v))
+		return f.SetInt64(int64(v)), nil
 	case int64:
-		f.SetInt64(v)
+		return f.SetInt64(v), nil
 
 	case uint:
-		f.SetUint64(uint64(v))
+		return f.SetUint64(uint64(v)), nil
 	case uint8:
-		f.SetUint64(uint64(v))
+		return f.SetUint64(uint64(v)), nil
 	case uint16:
-		f.SetUint64(uint64(v))
+		return f.SetUint64(uint64(v)), nil
 	case uint32:
-		f.SetUint64(uint64(v))
+		return f.SetUint64(uint64(v)), nil
 	case uint64:
-		f.SetUint64(v)
+		return f.SetUint64(v), nil
 
 	case float32:
-		f.SetFloat64(float64(v))
+		return f.SetFloat64(float64(v)), nil
 	case float64:
-		f.SetFloat64(v)
+		return f.SetFloat64(v), nil
 
 	case big.Float:
-		f = &v
+		return &v, nil
 	case *big.Float:
-		f = v
+		return v, nil
+
+	case decimalNumber:
+		return v.BigFloat(), nil
+	case *decimalNumber:
+		return v.BigFloat(), nil
+
+	case []byte:
+		d, err := convFloat(v)
+		return d.BigFloat(), err
+	case string:
+		d, err := convFloat(StrToBytesUnsafe(v))
+		return d.BigFloat(), err
+	}
+
+	return newBigFloatZero(), _ERR_UNKOWN_TYPE
+}
+
+func toDecimal(_v interface{}) (decimalNumber, error) {
+	switch v := _v.(type) {
+	case bool:
+		if v {
+			return newDecimalFromInt(1), nil
+		} else {
+			return newDecimalZero(), nil
+		}
+
+	case int:
+		return newDecimalFromInt(int64(v)), nil
+	case int8:
+		return newDecimalFromInt(int64(v)), nil
+	case int16:
+		return newDecimalFromInt(int64(v)), nil
+	case int32:
+		return newDecimalFromInt(int64(v)), nil
+	case int64:
+		return newDecimalFromInt(v), nil
+
+	case uint:
+		return newDecimalFromUint(uint64(v)), nil
+	case uint8:
+		return newDecimalFromUint(uint64(v)), nil
+	case uint16:
+		return newDecimalFromUint(uint64(v)), nil
+	case uint32:
+		return newDecimalFromUint(uint64(v)), nil
+	case uint64:
+		return newDecimalFromUint(v), nil
+
+	case float32:
+		return newDecimalFromFloat(float64(v)), nil
+	case float64:
+		return newDecimalFromFloat(v), nil
+
+	case big.Float:
+		return newDecimalFromBigFloat(&v), nil
+	case *big.Float:
+		return newDecimalFromBigFloat(v), nil
+
+	case decimalNumber:
+		return v, nil
+	case *decimalNumber:
+		return *v, nil
 
 	case []byte:
 		return convFloat(v)
 	case string:
 		return convFloat(StrToBytesUnsafe(v))
 	}
-	return bigFloatZero(), _ERR_UNKOWN_TYPE
+	return newDecimalZero(), _ERR_UNKOWN_TYPE
 }
