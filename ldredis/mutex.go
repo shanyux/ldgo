@@ -36,7 +36,7 @@ type mutex struct {
 	events        chan MutexEvent
 	ctx           ldcontext.Context
 	key           string
-	val           string
+	token         string
 	interval      time.Duration
 	timeout       time.Duration
 	lastHeartbeat time.Time
@@ -46,7 +46,6 @@ type mutex struct {
 func NewMutex(redis Redis) Mutex {
 	return &mutex{
 		redis:    redis,
-		events:   make(chan MutexEvent, 1),
 		interval: 10 * time.Second,
 		timeout:  2 * time.Minute,
 	}
@@ -91,9 +90,11 @@ func (that *mutex) Lock(ctx ldcontext.Context, key string) error {
 		return ErrMutexLocking
 	}
 
+	that.locked = true
 	that.ctx = ctx
 	that.key = key
-	that.val = val
+	that.token = val
+	that.events = make(chan MutexEvent, 1)
 
 	go that.goroutine(ctx, key, val)
 
@@ -108,18 +109,13 @@ func (that *mutex) Unlock(ctx ldcontext.Context) error {
 		return nil
 	}
 
+	cli := that.redis.Client()
+	key := that.key
+	val := that.token
+
 	ctx.LogD("redis mutex will be unlock")
 	that.locked = false
 	that.ctx.TryCancel()
-
-	select {
-	case <-that.events:
-	default:
-	}
-
-	cli := that.redis.Client()
-	key := that.key
-	val := that.val
 
 	if err := that.checkToken(ctx, key, val); err != nil {
 		return err
@@ -137,9 +133,11 @@ func (that *mutex) Unlock(ctx ldcontext.Context) error {
 func (that *mutex) goroutine(ctx ldcontext.Context, key, val string) {
 	ticker := time.NewTicker(that.interval)
 	defer func() {
-		that.locked = false
 		ticker.Stop()
 		ctx.TryCancel()
+		close(that.events)
+		that.events = nil
+		that.locked = false
 	}()
 
 	that.lastHeartbeat = time.Now()
@@ -159,7 +157,7 @@ func (that *mutex) heartbeat(ctx ldcontext.Context, now time.Time, key, val stri
 	case nil:
 		that.lastHeartbeat = now
 	case ErrMutexNotExists, ErrMutexNotMatch:
-		that.del(ctx)
+		that.doHeartbeatError(ctx)
 	default:
 		that.checkHeartbeatTime(ctx)
 	}
@@ -203,14 +201,19 @@ func (that *mutex) checkHeartbeatTime(ctx ldcontext.Context) {
 	}
 
 	ctx.LogW("redis mutex fail too much")
-	that.del(ctx)
+	that.doHeartbeatError(ctx)
 }
 
-func (that *mutex) del(ctx ldcontext.Context) {
+func (that *mutex) doHeartbeatError(ctx ldcontext.Context) {
+	defer func() {
+		that.ctx.TryCancel()
+	}()
 	select {
 	case <-ctx.Done():
-		return
+		break
 	case that.events <- MutexEvent_Deleted:
+		break
+	default:
+		break
 	}
-	that.ctx.TryCancel()
 }
