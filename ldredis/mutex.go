@@ -18,6 +18,11 @@ const (
 	MutexEvent_Deleted MutexEvent = iota + 1
 )
 
+const (
+	_MUTEX_MIN_INTERVAL = time.Second
+	_MUTEX_MIN_TIMEOUT  = 10 * time.Second
+)
+
 type Mutex interface {
 	SetRedis(redis Redis) Mutex
 	SetInterval(time.Duration) Mutex
@@ -46,8 +51,8 @@ type mutex struct {
 func NewMutex(redis Redis) Mutex {
 	return &mutex{
 		redis:    redis,
-		interval: 10 * time.Second,
-		timeout:  2 * time.Minute,
+		interval: 5 * time.Second,
+		timeout:  55 * time.Minute,
 	}
 }
 
@@ -56,12 +61,36 @@ func (that *mutex) SetRedis(redis Redis) Mutex {
 	return that
 }
 func (that *mutex) SetInterval(d time.Duration) Mutex {
+	if d < _MUTEX_MIN_INTERVAL {
+		d = _MUTEX_MIN_INTERVAL
+	}
 	that.interval = d
+
+	if timeout := that.getMinTimeout(d); that.timeout < timeout {
+		that.timeout = timeout
+	}
 	return that
 }
+
 func (that *mutex) SetTimeout(d time.Duration) Mutex {
-	that.timeout = d
+	that.timeout = that.getMinTimeout(d)
 	return that
+}
+
+func (that *mutex) getMinTimeout(d time.Duration) time.Duration {
+	if d < _MUTEX_MIN_TIMEOUT {
+		d = _MUTEX_MIN_TIMEOUT
+	}
+
+	if t := that.interval * 3; d < t {
+		d = t
+	}
+
+	return d
+}
+
+func (that *mutex) getExpiration() time.Duration {
+	return that.interval + that.timeout
 }
 
 func (that *mutex) Key() string               { return that.key }
@@ -79,7 +108,7 @@ func (that *mutex) Lock(ctx ldcontext.Context, key string) error {
 	cli := that.redis.Client()
 	val := uuid.New().String()
 
-	cmd := cli.SetNX(key, val, that.timeout)
+	cmd := cli.SetNX(key, val, that.getExpiration())
 	if err := cmd.Err(); err != nil {
 		ctx.LogE("redis mutex setnx fail", zap.Error(err))
 		return err
@@ -166,7 +195,7 @@ func (that *mutex) heartbeat(ctx ldcontext.Context, now time.Time, key, val stri
 func (that *mutex) checkToken(ctx ldcontext.Context, key, val string) error {
 	cli := that.redis.Client()
 	{
-		cmd := cli.Expire(key, that.timeout)
+		cmd := cli.Expire(key, that.getExpiration())
 		if err := cmd.Err(); err != nil {
 			ctx.LogE("redis mutex expire fail", zap.Error(err))
 			return err
