@@ -91,21 +91,23 @@ func (w *wrapHandler) getOutConv0() outConvType {
 
 func (w *wrapHandler) returnError(c Context, g *gin.Context, err Error) {
 	response := &commResponse{
-		Sequence: GetSequence(c),
-		Cost:     time.Since(GetBeginTime(c)).String(),
+		Sequence: GetSequence(g),
+		Cost:     time.Since(GetBeginTime(g)).String(),
 		ErrCode:  err.Code(),
 		ErrMsg:   err.Error(),
 	}
+
 	g.Set(GIN_KEY_RESPONSE, response)
 	g.JSON(err.Status(), response)
 }
 
 func (w *wrapHandler) returnResponse(c Context, g *gin.Context, rsp interface{}) {
 	response := &commResponse{
-		Sequence: GetSequence(c),
-		Cost:     time.Since(GetBeginTime(c)).String(),
+		Sequence: GetSequence(g),
+		Cost:     time.Since(GetBeginTime(g)).String(),
 		Data:     rsp,
 	}
+
 	g.Set(GIN_KEY_RESPONSE, response)
 	g.JSON(http.StatusOK, response)
 }
@@ -144,6 +146,8 @@ func (w *wrapHandler) getOutConv2(outTypes []reflect.Type) outConvType {
 			}
 
 			i := outs[0].Interface()
+			g.Set(GIN_KEY_RENDERER, i)
+
 			render := i.(Renderer)
 			render.Render(c)
 		}
@@ -158,6 +162,8 @@ func (w *wrapHandler) getOutConv2(outTypes []reflect.Type) outConvType {
 			}
 
 			i := outs[0].Interface()
+			g.Set(GIN_KEY_RENDERER, i)
+
 			render := i.(GinRenderer)
 			render.Render(g)
 		}
@@ -201,11 +207,14 @@ func (w *wrapHandler) getInConv(t reflect.Type) inConvType {
 
 	return func(c Context, g *gin.Context) (reflect.Value, Error) {
 		v := reflect.New(t)
+
 		for _, f := range convs {
 			if err := f(c, g, v); err != nil {
 				return v, err
 			}
 		}
+
+		g.Set(GIN_KEY_REQUEST, v.Interface())
 		return v, nil
 	}
 }
@@ -214,29 +223,19 @@ func (w *wrapHandler) getParserFunc(t reflect.Type) func(Context, *gin.Context, 
 	if t.Implements(_TYPE_OF_PARSER) {
 		return func(c Context, g *gin.Context, v reflect.Value) Error {
 			paser, _ := v.Interface().(Parser)
-			if err := paser.Parse(c); err != nil {
-				return err
-			}
-			return nil
+			return paser.Parse(c)
 		}
 	}
 
 	if t.Implements(_TYPE_OF_GIN_PARSER) {
 		return func(c Context, g *gin.Context, v reflect.Value) Error {
 			paser, _ := v.Interface().(GinParser)
-			if err := paser.Parse(g); err != nil {
-				return err
-			}
-			return nil
+			return paser.Parse(g)
 		}
 	}
 
 	return func(c Context, g *gin.Context, v reflect.Value) Error {
-		err := decodeHttpRequest(c, g, v.Interface())
-		if err != nil {
-			return commError{error: err}
-		}
-		return nil
+		return decodeHttpRequest(c, g, v.Interface())
 	}
 }
 
@@ -244,22 +243,14 @@ func (w *wrapHandler) getValidatorFunc(t reflect.Type) func(Context, *gin.Contex
 	if t.Implements(_TYPE_OF_VALIDATER) {
 		return func(c Context, g *gin.Context, v reflect.Value) Error {
 			validator, _ := v.Interface().(Validator)
-			if err := validator.Validate(c); err != nil {
-				return err
-			}
-
-			return nil
+			return validator.Validate(c)
 		}
 	}
 
 	if t.Implements(_TYPE_OF_GIN_VALIDATER) {
 		return func(c Context, g *gin.Context, v reflect.Value) Error {
 			validator, _ := v.Interface().(GinValidator)
-			if err := validator.Validate(g); err != nil {
-				return err
-			}
-
-			return nil
+			return validator.Validate(g)
 		}
 	}
 

@@ -18,12 +18,20 @@ type ctxKeyType int
 
 const (
 	ctxKey_GinContext ctxKeyType = iota
-	ctxKey_Sequence
-	ctxKey_BeginTime
 )
 
 const (
-	GIN_KEY_CONTEXT  = "x-gin-context"
+	GIN_HEADER_SEQUENCE = "x-gin-sequence"
+)
+
+const (
+	GIN_KEY_BEGIN_TIME = "x-gin-begin-time"
+	GIN_KEY_SEQUENCE   = "x-gin-sequence"
+	GIN_KEY_CONTEXT    = "x-gin-context"
+
+	GIN_KEY_ERROR    = "x-gin-error"
+	GIN_KEY_REQUEST  = "x-gin-request"
+	GIN_KEY_RENDERER = "x-gin-renderer"
 	GIN_KEY_RESPONSE = "x-gin-response"
 )
 
@@ -38,15 +46,16 @@ type Context interface {
 
 func newContext(g *gin.Context) Context {
 	c := ldcontext.NewContext(g)
-
-	c = c.WithValue(ctxKey_BeginTime, time.Now())
 	c = c.WithValue(ctxKey_GinContext, g)
+
+	now := time.Now()
+	g.Set(GIN_KEY_BEGIN_TIME, now)
 
 	uuid, _ := uuid.NewRandom()
 	seq := hex.EncodeToString(uuid[:])
 	c = c.With(zap.String("sequence", seq))
-	c = c.WithValue(ctxKey_Sequence, seq)
-	g.Header("x-gin-sequence", seq)
+	g.Header(GIN_HEADER_SEQUENCE, seq)
+	g.Set(GIN_KEY_SEQUENCE, seq)
 
 	g.Set(GIN_KEY_CONTEXT, c)
 
@@ -71,39 +80,19 @@ func GetGin(c Context) *gin.Context {
 	return t
 }
 
-func GetResposeByGin(g *gin.Context) *commResponse {
+func GetBeginTime(g *gin.Context) time.Time  { return g.GetTime(GIN_KEY_BEGIN_TIME) }
+func GetSequence(g *gin.Context) string      { return g.GetString(GIN_KEY_SEQUENCE) }
+func GetRequest(g *gin.Context) interface{}  { return g.Value(GIN_KEY_REQUEST) }
+func GetRenderer(g *gin.Context) interface{} { return g.Value(GIN_KEY_RENDERER) }
+
+func GetError(g *gin.Context) Error {
+	v := g.Value(GIN_KEY_REQUEST)
+	err, _ := v.(Error)
+	return err
+}
+
+func GetResponse(g *gin.Context) *commResponse {
 	v := g.Value(GIN_KEY_CONTEXT)
 	rsp, _ := v.(*commResponse)
 	return rsp
-}
-
-func GetRespose(c Context) *commResponse {
-	return GetResposeByGin(GetGin(c))
-}
-
-func GetBeginTimeByGin(g *gin.Context) time.Time {
-	return GetBeginTime(GetContext(g))
-}
-
-func GetBeginTime(c Context) time.Time {
-	v := c.Value(ctxKey_BeginTime)
-	t, ok := v.(time.Time)
-	if !ok {
-		return time.Time{}
-	}
-	return t
-}
-
-func GetSequenceByGin(g *gin.Context) string {
-	return GetSequence(GetContext(g))
-}
-
-func GetSequence(c Context) string {
-
-	v := c.Value(ctxKey_Sequence)
-	t, ok := v.(string)
-	if !ok {
-		return ""
-	}
-	return t
 }

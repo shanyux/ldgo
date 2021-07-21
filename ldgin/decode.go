@@ -5,32 +5,27 @@
 package ldgin
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
 
-func decodeHttpRequest(ctx Context, c *gin.Context, req interface{}) error {
+func decodeHttpRequest(ctx Context, c *gin.Context, req interface{}) Error {
 	reqV := reflect.ValueOf(req)
-	if reqV.Kind() != reflect.Ptr {
-		ctx.LogE("input request type must be pointer to struct", zap.String("type", reqV.Kind().String()))
-		return fmt.Errorf("input request type must be pointer to struct")
-	}
-	reqV = reqV.Elem()
-	if reqV.Kind() != reflect.Struct {
-		ctx.LogE("input request type must be pointer to struct", zap.String("type", reqV.Kind().String()))
-		return fmt.Errorf("input request type must be pointer to struct")
+	if reqV.Kind() != reflect.Ptr || reqV.Elem().Kind() != reflect.Struct {
+		ctx.LogE("input request type must be pointer to struct", zap.Stringer("type", reqV.Kind()))
+		return ERR_INVALID_REQUEST_TYPE
 	}
 
+	reqV = reqV.Elem()
 	reqT := reqV.Type()
 
 	if fields := getStructFieldsByTag(reqT, "form"); len(fields) != 0 {
 		reqNew := reflect.New(reqV.Type())
 		if err := c.ShouldBindQuery(reqNew.Interface()); err != nil {
 			ctx.LogE("ShouldBindQuery() fail", zap.Error(err))
-			return err
+			return ERR_PARSE_REQUEST_FAIL
 		}
 
 		fillHttpRequestByFeilds(reqV, reqNew.Elem(), fields)
@@ -40,7 +35,7 @@ func decodeHttpRequest(ctx Context, c *gin.Context, req interface{}) error {
 		reqNew := reflect.New(reqV.Type())
 		if err := c.ShouldBindJSON(reqNew.Interface()); err != nil {
 			ctx.LogE("ShouldBindJSON() fail", zap.Error(err))
-			return err
+			return ERR_PARSE_REQUEST_FAIL
 		}
 
 		fillHttpRequestByFeilds(reqV, reqNew.Elem(), fields)
@@ -50,7 +45,7 @@ func decodeHttpRequest(ctx Context, c *gin.Context, req interface{}) error {
 		reqNew := reflect.New(reqV.Type())
 		if err := c.ShouldBindUri(reqNew.Interface()); err != nil {
 			ctx.LogE("ShouldBindUri() fail", zap.Error(err))
-			return err
+			return ERR_PARSE_REQUEST_FAIL
 		}
 
 		fillHttpRequestByFeilds(reqV, reqNew.Elem(), fields)

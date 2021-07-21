@@ -5,7 +5,6 @@
 package ldgin
 
 import (
-	"net/http"
 	"reflect"
 
 	"github.com/gin-gonic/gin"
@@ -97,13 +96,6 @@ type Error interface {
 	Status() int
 	Code() int
 }
-
-type commError struct {
-	error
-}
-
-func (commError) Status() int { return http.StatusOK }
-func (commError) Code() int   { return -1 }
 
 type commResponse struct {
 	ErrCode  int         `json:"code"`
