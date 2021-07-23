@@ -6,6 +6,8 @@ package ldcontext
 
 import (
 	"context"
+	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/distroy/ldgo/ldlogger"
@@ -72,8 +74,22 @@ type ctx struct {
 
 func newContext(c context.Context) ctx { return ctx{Context: c} }
 
+func (c ctx) String() string {
+	return c.parentName() + ".WithLogger"
+}
+
+func (c ctx) parentName() string {
+	p := c.Context
+	if s, ok := p.(fmt.Stringer); ok {
+		return s.String()
+	}
+	return reflect.TypeOf(p).String()
+}
+
 func (c ctx) WithValue(key, val interface{}) Context {
-	c.Context = context.WithValue(c.Context, key, val)
+	if key != nil && val != nil {
+		c.Context = context.WithValue(c.Context, key, val)
+	}
 	return c
 }
 
