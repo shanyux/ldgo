@@ -13,29 +13,29 @@ import (
 )
 
 func Wrap(f Handler) func(c *gin.Context) {
-	w := wrap(f)
-	return w.Handler
+	w := wrapHandler(f)
+	return w.Do
 }
 
 type (
-	inConvType  = func(Context, *gin.Context) (reflect.Value, Error)
-	outConvType = func(Context, *gin.Context, []reflect.Value)
+	inConvType  = func(Context) (reflect.Value, Error)
+	outConvType = func(Context, []reflect.Value)
 )
 
-type wrapHandler struct {
+type handler struct {
 	Type    reflect.Type
 	Value   reflect.Value
 	InConvs []inConvType
 	outConv outConvType
 }
 
-func wrap(f Handler) *wrapHandler {
+func wrapHandler(f Handler) *handler {
 	t := reflect.TypeOf(f)
 	if t.Kind() != reflect.Func {
 		panic("handler should be a function")
 	}
 
-	w := &wrapHandler{
+	w := &handler{
 		Type:  t,
 		Value: reflect.ValueOf(f),
 	}
@@ -43,13 +43,13 @@ func wrap(f Handler) *wrapHandler {
 	switch t.NumIn() {
 	case 1:
 		inType := t.In(0)
-		if !inType.Implements(_TYPE_OF_CONTEXT) && !inType.Implements(_TYPE_OF_GIN_CONTEXT) {
+		if !w.isType(_TYPE_OF_CONTEXT, inType) && !w.isType(_TYPE_OF_GIN_CONTEXT, inType) {
 			panic("handler input parameter type should be `ldgin.Context` or `*gin.Context`")
 		}
 
 	case 2:
 		inType := t.In(0)
-		if !inType.Implements(_TYPE_OF_CONTEXT) && !inType.Implements(_TYPE_OF_GIN_CONTEXT) {
+		if !w.isType(_TYPE_OF_CONTEXT, inType) && !w.isType(_TYPE_OF_GIN_CONTEXT, inType) {
 			panic("handler first input parameter type should be `ldgin.Context` or `*gin.Context`")
 		}
 
@@ -85,185 +85,205 @@ func wrap(f Handler) *wrapHandler {
 	return w
 }
 
-func (w *wrapHandler) getOutConv0() outConvType {
-	return func(c1 Context, c2 *gin.Context, v []reflect.Value) {}
-}
-
-func (w *wrapHandler) returnError(c Context, g *gin.Context, err Error) {
-	response := &commResponse{
-		Sequence: GetSequence(g),
-		Cost:     time.Since(GetBeginTime(g)).String(),
+func (w *handler) returnError(c Context, e interface{}) {
+	err, ok := e.(Error)
+	if !ok {
+		err = commError{
+			message: e.(error).Error(),
+			status:  http.StatusOK,
+			code:    -1,
+		}
+	}
+	response := &CommResponse{
+		Sequence: c.Sequence(),
+		Cost:     time.Since(c.BeginTime()).String(),
 		ErrCode:  err.Code(),
 		ErrMsg:   err.Error(),
+		Data:     struct{}{},
 	}
 
-	g.Set(GIN_KEY_RESPONSE, response)
-	g.JSON(err.Status(), response)
+	c.Set(GIN_KEY_RESPONSE, response)
+	c.JSON(err.Status(), response)
 }
 
-func (w *wrapHandler) returnResponse(c Context, g *gin.Context, rsp interface{}) {
-	response := &commResponse{
-		Sequence: GetSequence(g),
-		Cost:     time.Since(GetBeginTime(g)).String(),
+func (w *handler) returnResponse(c Context, rsp interface{}) {
+	if rsp == nil {
+		rsp = struct{}{}
+	}
+
+	response := &CommResponse{
+		Sequence: c.Sequence(),
+		Cost:     time.Since(c.BeginTime()).String(),
 		Data:     rsp,
 	}
 
-	g.Set(GIN_KEY_RESPONSE, response)
-	g.JSON(http.StatusOK, response)
+	c.Set(GIN_KEY_RESPONSE, response)
+	c.JSON(http.StatusOK, response)
 }
 
-func (w *wrapHandler) getOutConv1(outType reflect.Type) outConvType {
-	if !outType.Implements(_TYPE_OF_ERROR) {
-		panic("handler output parameter type should be `ldgin.Error`")
+func (w *handler) getOutConv0() outConvType {
+	return func(c Context, v []reflect.Value) {}
+}
+
+func (w *handler) getOutConv1(outType reflect.Type) outConvType {
+	errType := outType
+	if !w.isType(errType, _TYPE_OF_ERROR) && !w.isType(errType, _TYPE_OF_COMM_ERROR) {
+		panic("handler output parameter type should be `ldgin.Error` or `error`")
 	}
 
-	return func(c Context, g *gin.Context, outs []reflect.Value) {
-		i := outs[0].Interface()
-		err := i.(Error)
-		if err != nil {
-			w.returnError(c, g, err)
+	return func(c Context, outs []reflect.Value) {
+		out0 := outs[0].Interface()
+		if err := out0; err != nil {
+			w.returnError(c, err)
 			return
 		}
 
-		w.returnResponse(c, g, nil)
+		w.returnResponse(c, nil)
 	}
 }
 
-func (w *wrapHandler) getOutConv2(outTypes []reflect.Type) outConvType {
+func (w *handler) getOutConv2(outTypes []reflect.Type) outConvType {
 	rspType := outTypes[0]
 	errType := outTypes[1]
 
-	if !errType.Implements(_TYPE_OF_ERROR) {
-		panic("handler second output parameter type should be `ldgin.Error`")
+	if !w.isType(errType, _TYPE_OF_ERROR) && !w.isType(errType, _TYPE_OF_COMM_ERROR) {
+		panic("handler second output parameter type should be `ldgin.Error` or `error`")
 	}
 
-	if rspType.Implements(_TYPE_OF_RENDERER) {
-		return func(c Context, g *gin.Context, outs []reflect.Value) {
-			err := outs[1].Interface().(Error)
-			if err != nil {
-				w.returnError(c, g, err)
+	if w.isType(rspType, _TYPE_OF_RENDERER) {
+		return func(c Context, outs []reflect.Value) {
+			out0 := outs[0].Interface()
+			out1 := outs[1].Interface()
+
+			if err := out1; err != nil {
+				w.returnError(c, err)
 				return
 			}
 
-			i := outs[0].Interface()
-			g.Set(GIN_KEY_RENDERER, i)
+			c.Set(GIN_KEY_RENDERER, out0)
 
-			render := i.(Renderer)
+			render := out0.(Renderer)
 			render.Render(c)
 		}
 	}
 
-	if rspType.Implements(_TYPE_OF_GIN_RENDERER) {
-		return func(c Context, g *gin.Context, outs []reflect.Value) {
-			err := outs[1].Interface().(Error)
-			if err != nil {
-				w.returnError(c, g, err)
+	if w.isType(rspType, _TYPE_OF_GIN_RENDERER) {
+		return func(c Context, outs []reflect.Value) {
+			out0 := outs[0].Interface()
+			out1 := outs[1].Interface()
+
+			if err := out1; err != nil {
+				w.returnError(c, err)
 				return
 			}
 
-			i := outs[0].Interface()
-			g.Set(GIN_KEY_RENDERER, i)
+			c.Set(GIN_KEY_RENDERER, out0)
 
-			render := i.(GinRenderer)
-			render.Render(g)
+			render := out0.(GinRenderer)
+			render.Render(c.Gin())
 		}
 	}
 
-	return func(c Context, g *gin.Context, outs []reflect.Value) {
-		err := outs[1].Interface().(Error)
-		if err != nil {
-			w.returnError(c, g, err)
+	return func(c Context, outs []reflect.Value) {
+		out0 := outs[0].Interface()
+		out1 := outs[1].Interface()
+
+		if err := out1; err != nil {
+			w.returnError(c, err)
 			return
 		}
 
-		rsp := outs[0].Interface()
-		w.returnResponse(c, g, rsp)
+		w.returnResponse(c, out0)
 	}
 }
 
-func (w *wrapHandler) getInConv(t reflect.Type) inConvType {
+func (w *handler) getInConv(t reflect.Type) inConvType {
 	switch {
-	case t.Implements(_TYPE_OF_CONTEXT):
-		return func(c Context, g *gin.Context) (reflect.Value, Error) {
+	case w.isType(_TYPE_OF_CONTEXT, t):
+		return func(c Context) (reflect.Value, Error) {
 			return reflect.ValueOf(c), nil
 		}
 
-	case t.Implements(_TYPE_OF_GIN_CONTEXT):
-		return func(c Context, g *gin.Context) (reflect.Value, Error) {
-			return reflect.ValueOf(g), nil
-		}
-
-	case t.Implements(_TYPE_OF_GIN_CONTEXT):
-		return func(c Context, g *gin.Context) (reflect.Value, Error) {
-			return reflect.ValueOf(g), nil
+	case w.isType(_TYPE_OF_GIN_CONTEXT, t):
+		return func(c Context) (reflect.Value, Error) {
+			return reflect.ValueOf(c.Gin()), nil
 		}
 	}
 
-	convs := make([]func(Context, *gin.Context, reflect.Value) Error, 0, 2)
+	convs := make([]func(Context, reflect.Value) Error, 0, 2)
 	convs = append(convs, w.getParserFunc(t))
 	if f := w.getValidatorFunc(t); f != nil {
 		convs = append(convs, f)
 	}
 
-	return func(c Context, g *gin.Context) (reflect.Value, Error) {
-		v := reflect.New(t)
+	return func(c Context) (reflect.Value, Error) {
+		v := reflect.New(t.Elem())
 
 		for _, f := range convs {
-			if err := f(c, g, v); err != nil {
+			if err := f(c, v); err != nil {
 				return v, err
 			}
 		}
 
-		g.Set(GIN_KEY_REQUEST, v.Interface())
+		c.Set(GIN_KEY_REQUEST, v.Interface())
 		return v, nil
 	}
 }
+func (w *handler) isType(child, parent reflect.Type) bool {
+	if child == parent {
+		return true
+	}
+	if parent.Kind() == reflect.Interface && child.Implements(parent) {
+		return true
+	}
+	return false
+}
 
-func (w *wrapHandler) getParserFunc(t reflect.Type) func(Context, *gin.Context, reflect.Value) Error {
-	if t.Implements(_TYPE_OF_PARSER) {
-		return func(c Context, g *gin.Context, v reflect.Value) Error {
+func (w *handler) getParserFunc(t reflect.Type) func(Context, reflect.Value) Error {
+	if w.isType(t, _TYPE_OF_PARSER) {
+		return func(c Context, v reflect.Value) Error {
 			paser, _ := v.Interface().(Parser)
 			return paser.Parse(c)
 		}
 	}
 
-	if t.Implements(_TYPE_OF_GIN_PARSER) {
-		return func(c Context, g *gin.Context, v reflect.Value) Error {
+	if w.isType(t, _TYPE_OF_GIN_PARSER) {
+		return func(c Context, v reflect.Value) Error {
 			paser, _ := v.Interface().(GinParser)
-			return paser.Parse(g)
+			return paser.Parse(c.Gin())
 		}
 	}
 
-	return func(c Context, g *gin.Context, v reflect.Value) Error {
-		return decodeHttpRequest(c, g, v.Interface())
+	return func(c Context, v reflect.Value) Error {
+		return shouldBind(c, v.Interface())
 	}
 }
 
-func (w *wrapHandler) getValidatorFunc(t reflect.Type) func(Context, *gin.Context, reflect.Value) Error {
-	if t.Implements(_TYPE_OF_VALIDATER) {
-		return func(c Context, g *gin.Context, v reflect.Value) Error {
+func (w *handler) getValidatorFunc(t reflect.Type) func(Context, reflect.Value) Error {
+	if w.isType(t, _TYPE_OF_VALIDATER) {
+		return func(c Context, v reflect.Value) Error {
 			validator, _ := v.Interface().(Validator)
 			return validator.Validate(c)
 		}
 	}
 
-	if t.Implements(_TYPE_OF_GIN_VALIDATER) {
-		return func(c Context, g *gin.Context, v reflect.Value) Error {
+	if w.isType(t, _TYPE_OF_GIN_VALIDATER) {
+		return func(c Context, v reflect.Value) Error {
 			validator, _ := v.Interface().(GinValidator)
-			return validator.Validate(g)
+			return validator.Validate(c.Gin())
 		}
 	}
 
 	return nil
 }
 
-func (w *wrapHandler) Handler(g *gin.Context) {
+func (w *handler) Do(g *gin.Context) {
 	c := GetContext(g)
 	ins := make([]reflect.Value, 0, len(w.InConvs))
 	for _, conv := range w.InConvs {
-		v, err := conv(c, g)
+		v, err := conv(c)
 		if err != nil {
-			w.returnError(c, g, err)
+			w.returnError(c, err)
 			return
 		}
 		ins = append(ins, v)
@@ -274,5 +294,5 @@ func (w *wrapHandler) Handler(g *gin.Context) {
 		return
 	}
 
-	w.outConv(c, g, outs)
+	w.outConv(c, outs)
 }

@@ -5,29 +5,8 @@
 package ldgin
 
 import (
-	"reflect"
-
+	"github.com/distroy/ldgo/ldcontext"
 	"github.com/gin-gonic/gin"
-)
-
-var (
-	_TYPE_OF_GIN_CONTEXT = reflect.TypeOf((*gin.Context)(nil))
-	_TYPE_OF_CONTEXT     = reflect.TypeOf((*Context)(nil)).Elem()
-
-	_TYPE_OF_COMM_ERROR = reflect.TypeOf((*error)(nil)).Elem()
-	_TYPE_OF_ERROR      = reflect.TypeOf((*Error)(nil)).Elem()
-
-	_TYPE_OF_PARSER          = reflect.TypeOf((*Parser)(nil))
-	_TYPE_OF_VALIDATER       = reflect.TypeOf((*Validator)(nil))
-	_TYPE_OF_PARSE_VALIDATOR = reflect.TypeOf((*ParseValidator)(nil))
-
-	_TYPE_OF_GIN_PARSER          = reflect.TypeOf((*GinParser)(nil))
-	_TYPE_OF_GIN_VALIDATER       = reflect.TypeOf((*GinValidator)(nil))
-	_TYPE_OF_GIN_PARSE_VALIDATOR = reflect.TypeOf((*GinParseValidator)(nil))
-
-	_TYPE_OF_RENDERER = reflect.TypeOf((*Renderer)(nil))
-
-	_TYPE_OF_GIN_RENDERER = reflect.TypeOf((*GinRenderer)(nil))
 )
 
 type Parser interface {
@@ -97,10 +76,15 @@ type Error interface {
 	Code() int
 }
 
-type commResponse struct {
+type CommResponse struct {
 	ErrCode  int         `json:"code"`
 	ErrMsg   string      `json:"msg"`
 	Cost     string      `json:"cost"`
 	Sequence string      `json:"sequence"`
 	Data     interface{} `json:"data"`
 }
+
+type (
+	ginContext = gin.Context
+	ldContext  = ldcontext.Context
+)
