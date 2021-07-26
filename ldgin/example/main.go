@@ -6,48 +6,83 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/distroy/ldgo/ldcontext"
 	"github.com/distroy/ldgo/ldgin"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 var (
-	ERR_TEST1 = ldgin.NewError(http.StatusOK, 1, "test 1")
+	ERR_TEST_ONE_ERROR = ldgin.NewError(http.StatusOK, 1, "test 1")
 )
 
-func test1(ctx ldgin.Context) ldgin.Error {
-	return ERR_TEST1
+func testOneError(ctx ldgin.Context) ldgin.Error {
+	return ERR_TEST_ONE_ERROR
 }
 
-type test2Req struct {
+type testBindReq struct {
 	Uri      string `uri:"uri"`
 	Query1   string `form:"query1"`
 	Query2   int64  `form:"query2"`
 	Language string `header:"accept-language"`
 }
 
-func test2(ctx context.Context, req *test2Req) (*test2Req, ldgin.Error) {
+func testBind(ctx context.Context, req *testBindReq) (*testBindReq, ldgin.Error) {
 	return req, nil
 }
 
-type test3Renderer struct {
-}
+type testRenderer struct{}
 
-func (_ *test3Renderer) Render(ctx ldgin.Context) {
+func (_ *testRenderer) Render(ctx ldgin.Context) {
 	ctx.JSON(http.StatusOK, "abc")
 }
 
-func test3(ctx ldgin.Context) (*test3Renderer, ldgin.Error) {
-	return &test3Renderer{}, nil
+func testRender(ctx ldgin.Context) (*testRenderer, ldgin.Error) {
+	return &testRenderer{}, nil
+}
+
+type testValidateReq struct {
+	Valid int64 `form:"valid"`
+}
+
+func (req *testValidateReq) Validate(ctx ldgin.Context) ldgin.Error {
+	if req.Valid != 0 {
+		return ldgin.NewError(http.StatusOK, 111, fmt.Sprintf("invalid requet. valid=%v", req.Valid))
+	}
+	return nil
+}
+
+func testValidate(ctx ldgin.Context, req *testValidateReq) ldgin.Error {
+	return nil
+}
+
+type testParseReq struct {
+	Query1 string `form:"query1"`
+	Query2 int64  `form:"query2"`
+}
+
+func (req *testParseReq) Parse(ctx ldgin.Context) ldgin.Error {
+	if err := ctx.ShouldBindQuery(req); err != nil {
+		ctx.LogI("ShouldBindQuery() fail", zap.Error(err))
+		return ldgin.ERR_PARSE_REQUEST_FAIL
+	}
+	return nil
+}
+
+func testParse(ctx ldgin.Context, req *testParseReq) (*testParseReq, ldgin.Error) {
+	return req, nil
 }
 
 func initRouter(ctx ldcontext.Context, r gin.IRouter) {
-	r.GET("/test1/:xxx", ldgin.Wrap(test1))
-	r.GET("/test2/:uri", ldgin.Wrap(test2))
-	r.GET("/test3/:renderer", ldgin.Wrap(test3))
+	r.GET("/test/one_error", ldgin.Wrap(testOneError))
+	r.GET("/test/bind/:uri", ldgin.Wrap(testBind))
+	r.GET("/test/render/", ldgin.Wrap(testRender))
+	r.GET("/test/validate", ldgin.Wrap(testValidate))
+	r.GET("/test/parse", ldgin.Wrap(testParse))
 }
 
 func main() {
