@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// shouldBind will decode query/json/uri/header
+// shouldBind will decode header/uri/json/query(form)
 func shouldBind(ctx Context, req interface{}) Error {
 	g := ctx.Gin()
 

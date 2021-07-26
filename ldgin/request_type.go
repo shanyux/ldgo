@@ -79,10 +79,14 @@ func getStructFieldsByTag(objT reflect.Type, tag string) []reflect.StructField {
 	return fields
 }
 
-func fillHttpRequestByFeilds(req, reqNew reflect.Value, fields []reflect.StructField) {
+func fillHttpRequestByFeilds(dst, src reflect.Value, fields []reflect.StructField) {
 	for _, field := range fields {
-		req.Type().NumField()
-		val := req.FieldByIndex(field.Index)
-		val.Set(reqNew.FieldByIndex(field.Index))
+		dst.Type().NumField()
+		valSrc := src.FieldByIndex(field.Index)
+		if valSrc.IsZero() {
+			continue
+		}
+		valDst := dst.FieldByIndex(field.Index)
+		valDst.Set(valSrc)
 	}
 }
