@@ -5,6 +5,7 @@
 package ldgin
 
 import (
+	"context"
 	"encoding/hex"
 	"time"
 
@@ -30,7 +31,15 @@ func GetContext(g *gin.Context) Context {
 
 }
 
-func GetGin(c ldcontext.Context) *gin.Context {
+func GetGin(c context.Context) *gin.Context {
+	if g, ok := c.(*gin.Context); ok && g != nil {
+		return g
+	}
+
+	if v, ok := c.(Context); ok {
+		return v.Gin()
+	}
+
 	v := c.Value(_CTX_KEY_GIN_CONTEXT)
 	g, _ := v.(*gin.Context)
 	return g
