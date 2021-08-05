@@ -8,14 +8,14 @@ import (
 	"sort"
 )
 
-type SortSliceInt []int
+type Ints []int
 
-func (s SortSliceInt) Len() int           { return len(s) }
-func (s SortSliceInt) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s SortSliceInt) Less(i, j int) bool { return s[i] < s[j] }
+func (s Ints) Len() int           { return len(s) }
+func (s Ints) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s Ints) Less(i, j int) bool { return s[i] < s[j] }
 
-func SortInts(a []int)          { sort.Sort(SortSliceInt(a)) }
-func IsSortedInts(a []int) bool { return sort.IsSorted(SortSliceInt(a)) }
+func SortInts(a []int)          { sort.Sort(Ints(a)) }
+func IsSortedInts(a []int) bool { return sort.IsSorted(Ints(a)) }
 func SearchInts(a []int, x int) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
@@ -26,14 +26,14 @@ func IndexInts(a []int, x int) int {
 	return -1
 }
 
-type SortSliceInt64 []int64
+type Int64s []int64
 
-func (s SortSliceInt64) Len() int           { return len(s) }
-func (s SortSliceInt64) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s SortSliceInt64) Less(i, j int) bool { return s[i] < s[j] }
+func (s Int64s) Len() int           { return len(s) }
+func (s Int64s) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s Int64s) Less(i, j int) bool { return s[i] < s[j] }
 
-func SortInt64s(a []int64)          { sort.Sort(SortSliceInt64(a)) }
-func IsSortedInt64s(a []int64) bool { return sort.IsSorted(SortSliceInt64(a)) }
+func SortInt64s(a []int64)          { sort.Sort(Int64s(a)) }
+func IsSortedInt64s(a []int64) bool { return sort.IsSorted(Int64s(a)) }
 func SearchInt64s(a []int64, x int64) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
@@ -44,14 +44,14 @@ func IndexInt64s(a []int64, x int64) int {
 	return -1
 }
 
-type SortSliceInt32 []int32
+type Int32s []int32
 
-func (s SortSliceInt32) Len() int           { return len(s) }
-func (s SortSliceInt32) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s SortSliceInt32) Less(i, j int) bool { return s[i] < s[j] }
+func (s Int32s) Len() int           { return len(s) }
+func (s Int32s) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s Int32s) Less(i, j int) bool { return s[i] < s[j] }
 
-func SortInt32s(a []int32)          { sort.Sort(SortSliceInt32(a)) }
-func IsSortedInt32s(a []int32) bool { return sort.IsSorted(SortSliceInt32(a)) }
+func SortInt32s(a []int32)          { sort.Sort(Int32s(a)) }
+func IsSortedInt32s(a []int32) bool { return sort.IsSorted(Int32s(a)) }
 func SearchInt32s(a []int32, x int32) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
@@ -62,14 +62,14 @@ func IndexInt32s(a []int32, x int32) int {
 	return -1
 }
 
-type SortSliceInt16 []int16
+type Int16s []int16
 
-func (s SortSliceInt16) Len() int           { return len(s) }
-func (s SortSliceInt16) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s SortSliceInt16) Less(i, j int) bool { return s[i] < s[j] }
+func (s Int16s) Len() int           { return len(s) }
+func (s Int16s) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s Int16s) Less(i, j int) bool { return s[i] < s[j] }
 
-func SortInt16s(a []int16)          { sort.Sort(SortSliceInt16(a)) }
-func IsSortedInt16s(a []int16) bool { return sort.IsSorted(SortSliceInt16(a)) }
+func SortInt16s(a []int16)          { sort.Sort(Int16s(a)) }
+func IsSortedInt16s(a []int16) bool { return sort.IsSorted(Int16s(a)) }
 func SearchInt16s(a []int16, x int16) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
@@ -80,14 +80,14 @@ func IndexInt16s(a []int16, x int16) int {
 	return -1
 }
 
-type SortSliceInt8 []int8
+type Int8s []int8
 
-func (s SortSliceInt8) Len() int           { return len(s) }
-func (s SortSliceInt8) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s SortSliceInt8) Less(i, j int) bool { return s[i] < s[j] }
+func (s Int8s) Len() int           { return len(s) }
+func (s Int8s) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s Int8s) Less(i, j int) bool { return s[i] < s[j] }
 
-func SortInt8s(a []int8)          { sort.Sort(SortSliceInt8(a)) }
-func IsSortedInt8s(a []int8) bool { return sort.IsSorted(SortSliceInt8(a)) }
+func SortInt8s(a []int8)          { sort.Sort(Int8s(a)) }
+func IsSortedInt8s(a []int8) bool { return sort.IsSorted(Int8s(a)) }
 func SearchInt8s(a []int8, x int8) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
@@ -98,14 +98,14 @@ func IndexInt8s(a []int8, x int8) int {
 	return -1
 }
 
-type SortSliceUint []uint
+type Uints []uint
 
-func (s SortSliceUint) Len() int           { return len(s) }
-func (s SortSliceUint) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s SortSliceUint) Less(i, j int) bool { return s[i] < s[j] }
+func (s Uints) Len() int           { return len(s) }
+func (s Uints) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s Uints) Less(i, j int) bool { return s[i] < s[j] }
 
-func SortUints(a []uint)          { sort.Sort(SortSliceUint(a)) }
-func IsSortedUints(a []uint) bool { return sort.IsSorted(SortSliceUint(a)) }
+func SortUints(a []uint)          { sort.Sort(Uints(a)) }
+func IsSortedUints(a []uint) bool { return sort.IsSorted(Uints(a)) }
 func SearchUints(a []uint, x uint) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
@@ -116,14 +116,14 @@ func IndexUints(a []uint, x uint) int {
 	return -1
 }
 
-type SortSliceUint64 []uint64
+type Uint64s []uint64
 
-func (s SortSliceUint64) Len() int           { return len(s) }
-func (s SortSliceUint64) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s SortSliceUint64) Less(i, j int) bool { return s[i] < s[j] }
+func (s Uint64s) Len() int           { return len(s) }
+func (s Uint64s) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s Uint64s) Less(i, j int) bool { return s[i] < s[j] }
 
-func SortUint64s(a []uint64)          { sort.Sort(SortSliceUint64(a)) }
-func IsSortedUint64s(a []uint64) bool { return sort.IsSorted(SortSliceUint64(a)) }
+func SortUint64s(a []uint64)          { sort.Sort(Uint64s(a)) }
+func IsSortedUint64s(a []uint64) bool { return sort.IsSorted(Uint64s(a)) }
 func SearchUint64s(a []uint64, x uint64) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
@@ -134,14 +134,14 @@ func IndexUint64s(a []uint64, x uint64) int {
 	return -1
 }
 
-type SortSliceUint32 []uint32
+type Uint32s []uint32
 
-func (s SortSliceUint32) Len() int           { return len(s) }
-func (s SortSliceUint32) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s SortSliceUint32) Less(i, j int) bool { return s[i] < s[j] }
+func (s Uint32s) Len() int           { return len(s) }
+func (s Uint32s) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s Uint32s) Less(i, j int) bool { return s[i] < s[j] }
 
-func SortUint32s(a []uint32)          { sort.Sort(SortSliceUint32(a)) }
-func IsSortedUint32s(a []uint32) bool { return sort.IsSorted(SortSliceUint32(a)) }
+func SortUint32s(a []uint32)          { sort.Sort(Uint32s(a)) }
+func IsSortedUint32s(a []uint32) bool { return sort.IsSorted(Uint32s(a)) }
 func SearchUint32s(a []uint32, x uint32) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
@@ -152,14 +152,14 @@ func IndexUint32s(a []uint32, x uint32) int {
 	return -1
 }
 
-type SortSliceUint16 []uint16
+type Uint16s []uint16
 
-func (s SortSliceUint16) Len() int           { return len(s) }
-func (s SortSliceUint16) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s SortSliceUint16) Less(i, j int) bool { return s[i] < s[j] }
+func (s Uint16s) Len() int           { return len(s) }
+func (s Uint16s) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s Uint16s) Less(i, j int) bool { return s[i] < s[j] }
 
-func SortUint16s(a []uint16)          { sort.Sort(SortSliceUint16(a)) }
-func IsSortedUint16s(a []uint16) bool { return sort.IsSorted(SortSliceUint16(a)) }
+func SortUint16s(a []uint16)          { sort.Sort(Uint16s(a)) }
+func IsSortedUint16s(a []uint16) bool { return sort.IsSorted(Uint16s(a)) }
 func SearchUint16s(a []uint16, x uint16) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
@@ -170,14 +170,14 @@ func IndexUint16s(a []uint16, x uint16) int {
 	return -1
 }
 
-type SortSliceUint8 []uint8
+type Uint8s []uint8
 
-func (s SortSliceUint8) Len() int           { return len(s) }
-func (s SortSliceUint8) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s SortSliceUint8) Less(i, j int) bool { return s[i] < s[j] }
+func (s Uint8s) Len() int           { return len(s) }
+func (s Uint8s) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s Uint8s) Less(i, j int) bool { return s[i] < s[j] }
 
-func SortUint8s(a []uint8)          { sort.Sort(SortSliceUint8(a)) }
-func IsSortedUint8s(a []uint8) bool { return sort.IsSorted(SortSliceUint8(a)) }
+func SortUint8s(a []uint8)          { sort.Sort(Uint8s(a)) }
+func IsSortedUint8s(a []uint8) bool { return sort.IsSorted(Uint8s(a)) }
 func SearchUint8s(a []uint8, x uint8) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
@@ -188,14 +188,14 @@ func IndexUint8s(a []uint8, x uint8) int {
 	return -1
 }
 
-type SortSliceFloat64 []float64
+type Float64s []float64
 
-func (s SortSliceFloat64) Len() int           { return len(s) }
-func (s SortSliceFloat64) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s SortSliceFloat64) Less(i, j int) bool { return s[i] < s[j] }
+func (s Float64s) Len() int           { return len(s) }
+func (s Float64s) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s Float64s) Less(i, j int) bool { return s[i] < s[j] }
 
-func SortFloat64s(a []float64)          { sort.Sort(SortSliceFloat64(a)) }
-func IsSortedFloat64s(a []float64) bool { return sort.IsSorted(SortSliceFloat64(a)) }
+func SortFloat64s(a []float64)          { sort.Sort(Float64s(a)) }
+func IsSortedFloat64s(a []float64) bool { return sort.IsSorted(Float64s(a)) }
 func SearchFloat64s(a []float64, x float64) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
@@ -206,14 +206,14 @@ func IndexFloat64s(a []float64, x float64) int {
 	return -1
 }
 
-type SortSliceFloat32 []float32
+type Float32s []float32
 
-func (s SortSliceFloat32) Len() int           { return len(s) }
-func (s SortSliceFloat32) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s SortSliceFloat32) Less(i, j int) bool { return s[i] < s[j] }
+func (s Float32s) Len() int           { return len(s) }
+func (s Float32s) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s Float32s) Less(i, j int) bool { return s[i] < s[j] }
 
-func SortFloat32s(a []float32)          { sort.Sort(SortSliceFloat32(a)) }
-func IsSortedFloat32s(a []float32) bool { return sort.IsSorted(SortSliceFloat32(a)) }
+func SortFloat32s(a []float32)          { sort.Sort(Float32s(a)) }
+func IsSortedFloat32s(a []float32) bool { return sort.IsSorted(Float32s(a)) }
 func SearchFloat32s(a []float32, x float32) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
