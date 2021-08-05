@@ -18,7 +18,7 @@ func SearchStrings(a []string, x string) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
 func IndexStrings(a []string, x string) int {
-	if idx := SearchStrings(a, x); idx < len(a) || a[idx] == x {
+	if idx := SearchStrings(a, x); idx < len(a) && a[idx] == x {
 		return idx
 	}
 	return -1

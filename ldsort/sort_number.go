@@ -20,7 +20,7 @@ func SearchInts(a []int, x int) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
 func IndexInts(a []int, x int) int {
-	if idx := SearchInts(a, x); idx < len(a) || a[idx] == x {
+	if idx := SearchInts(a, x); idx < len(a) && a[idx] == x {
 		return idx
 	}
 	return -1
@@ -38,7 +38,7 @@ func SearchInt64s(a []int64, x int64) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
 func IndexInt64s(a []int64, x int64) int {
-	if idx := SearchInt64s(a, x); idx < len(a) || a[idx] == x {
+	if idx := SearchInt64s(a, x); idx < len(a) && a[idx] == x {
 		return idx
 	}
 	return -1
@@ -56,7 +56,7 @@ func SearchInt32s(a []int32, x int32) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
 func IndexInt32s(a []int32, x int32) int {
-	if idx := SearchInt32s(a, x); idx < len(a) || a[idx] == x {
+	if idx := SearchInt32s(a, x); idx < len(a) && a[idx] == x {
 		return idx
 	}
 	return -1
@@ -74,7 +74,7 @@ func SearchInt16s(a []int16, x int16) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
 func IndexInt16s(a []int16, x int16) int {
-	if idx := SearchInt16s(a, x); idx < len(a) || a[idx] == x {
+	if idx := SearchInt16s(a, x); idx < len(a) && a[idx] == x {
 		return idx
 	}
 	return -1
@@ -92,7 +92,7 @@ func SearchInt8s(a []int8, x int8) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
 func IndexInt8s(a []int8, x int8) int {
-	if idx := SearchInt8s(a, x); idx < len(a) || a[idx] == x {
+	if idx := SearchInt8s(a, x); idx < len(a) && a[idx] == x {
 		return idx
 	}
 	return -1
@@ -110,7 +110,7 @@ func SearchUints(a []uint, x uint) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
 func IndexUints(a []uint, x uint) int {
-	if idx := SearchUints(a, x); idx < len(a) || a[idx] == x {
+	if idx := SearchUints(a, x); idx < len(a) && a[idx] == x {
 		return idx
 	}
 	return -1
@@ -128,7 +128,7 @@ func SearchUint64s(a []uint64, x uint64) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
 func IndexUint64s(a []uint64, x uint64) int {
-	if idx := SearchUint64s(a, x); idx < len(a) || a[idx] == x {
+	if idx := SearchUint64s(a, x); idx < len(a) && a[idx] == x {
 		return idx
 	}
 	return -1
@@ -146,7 +146,7 @@ func SearchUint32s(a []uint32, x uint32) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
 func IndexUint32s(a []uint32, x uint32) int {
-	if idx := SearchUint32s(a, x); idx < len(a) || a[idx] == x {
+	if idx := SearchUint32s(a, x); idx < len(a) && a[idx] == x {
 		return idx
 	}
 	return -1
@@ -164,7 +164,7 @@ func SearchUint16s(a []uint16, x uint16) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
 func IndexUint16s(a []uint16, x uint16) int {
-	if idx := SearchUint16s(a, x); idx < len(a) || a[idx] == x {
+	if idx := SearchUint16s(a, x); idx < len(a) && a[idx] == x {
 		return idx
 	}
 	return -1
@@ -182,7 +182,7 @@ func SearchUint8s(a []uint8, x uint8) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
 func IndexUint8s(a []uint8, x uint8) int {
-	if idx := SearchUint8s(a, x); idx < len(a) || a[idx] == x {
+	if idx := SearchUint8s(a, x); idx < len(a) && a[idx] == x {
 		return idx
 	}
 	return -1
@@ -200,7 +200,7 @@ func SearchFloat64s(a []float64, x float64) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
 func IndexFloat64s(a []float64, x float64) int {
-	if idx := SearchFloat64s(a, x); idx < len(a) || a[idx] == x {
+	if idx := SearchFloat64s(a, x); idx < len(a) && a[idx] == x {
 		return idx
 	}
 	return -1
@@ -218,7 +218,7 @@ func SearchFloat32s(a []float32, x float32) int {
 	return sort.Search(len(a), func(i int) bool { return a[i] >= x })
 }
 func IndexFloat32s(a []float32, x float32) int {
-	if idx := SearchFloat32s(a, x); idx < len(a) || a[idx] == x {
+	if idx := SearchFloat32s(a, x); idx < len(a) && a[idx] == x {
 		return idx
 	}
 	return -1
