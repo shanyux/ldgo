@@ -62,7 +62,7 @@ func Sort(slice interface{}, lessFunc interface{}) {
 	type0 := fType.In(0)
 	type1 := fType.In(1)
 	if type0 != type1 || !(type0 == eType || (type0.Kind()) == reflect.Interface && eType.Implements(type0)) {
-		panic(fmt.Sprintf("2 parameters of less func must be %s or implements %s", eType, eType))
+		panic(fmt.Sprintf("second parameters of less func must be or implements %s", eType))
 	}
 
 	if n := fType.NumOut(); n != 1 {
