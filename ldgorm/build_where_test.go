@@ -8,13 +8,14 @@ import (
 	"testing"
 
 	"github.com/distroy/ldgo/ldhook"
+	"github.com/jinzhu/gorm"
 	"github.com/smartystreets/goconvey/convey"
 )
 
 type testSelectWhere struct {
 	VersionId FieldWhere `gormwhere:"name:version_id;"`
-	ChannelId FieldWhere `gormwhere:"name:channel_id;index:2;notempty"`
-	ProjectId FieldWhere `gormwhere:"name:project_id;index:1"`
+	ChannelId FieldWhere `gormwhere:"name:channel_id;order:2;notempty"`
+	ProjectId FieldWhere `gormwhere:"name:project_id;order:1"`
 	Type      FieldWhere `gormwhere:"name:type;"`
 }
 
@@ -27,8 +28,8 @@ func Test_BuildWhere(t *testing.T) {
 		var wheres []testGormWhere
 		patches.Applys([]ldhook.Hook{
 			ldhook.FuncHook{
-				Target: (*DB).Where,
-				Double: func(db *DB, query interface{}, args ...interface{}) *DB {
+				Target: (*gorm.DB).Where,
+				Double: func(db *gorm.DB, query interface{}, args ...interface{}) *gorm.DB {
 					wheres = append(wheres, testGormWhere{
 						Query: query,
 						Args:  args,

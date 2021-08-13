@@ -179,8 +179,8 @@ func Test_Gt(t *testing.T) {
 		var wheres []testGormWhere
 		patches.Applys([]ldhook.Hook{
 			ldhook.FuncHook{
-				Target: (*DB).Where,
-				Double: func(db *DB, query interface{}, args ...interface{}) *DB {
+				Target: (*gorm.DB).Where,
+				Double: func(db *gorm.DB, query interface{}, args ...interface{}) *gorm.DB {
 					wheres = append(wheres, testGormWhere{
 						Query: query,
 						Args:  args,
@@ -247,8 +247,8 @@ func Test_Lt(t *testing.T) {
 		var wheres []testGormWhere
 		patches.Applys([]ldhook.Hook{
 			ldhook.FuncHook{
-				Target: (*DB).Where,
-				Double: func(db *DB, query interface{}, args ...interface{}) *DB {
+				Target: (*gorm.DB).Where,
+				Double: func(db *gorm.DB, query interface{}, args ...interface{}) *gorm.DB {
 					wheres = append(wheres, testGormWhere{
 						Query: query,
 						Args:  args,
@@ -315,8 +315,8 @@ func Test_Gte(t *testing.T) {
 		var wheres []testGormWhere
 		patches.Applys([]ldhook.Hook{
 			ldhook.FuncHook{
-				Target: (*DB).Where,
-				Double: func(db *DB, query interface{}, args ...interface{}) *DB {
+				Target: (*gorm.DB).Where,
+				Double: func(db *gorm.DB, query interface{}, args ...interface{}) *gorm.DB {
 					wheres = append(wheres, testGormWhere{
 						Query: query,
 						Args:  args,
@@ -383,8 +383,8 @@ func Test_Lte(t *testing.T) {
 		var wheres []testGormWhere
 		patches.Applys([]ldhook.Hook{
 			ldhook.FuncHook{
-				Target: (*DB).Where,
-				Double: func(db *DB, query interface{}, args ...interface{}) *DB {
+				Target: (*gorm.DB).Where,
+				Double: func(db *gorm.DB, query interface{}, args ...interface{}) *gorm.DB {
 					wheres = append(wheres, testGormWhere{
 						Query: query,
 						Args:  args,
@@ -437,6 +437,158 @@ func Test_Lte(t *testing.T) {
 			cond := Lte((*string)(nil))
 			cond.buildGorm(nil, field)
 			convey.So(wheres, convey.ShouldBeNil)
+		})
+	})
+}
+
+func Test_Equal(t *testing.T) {
+	convey.Convey(t.Name(), t, func() {
+		const field = "field"
+
+		patches := ldhook.NewPatches()
+		defer patches.Reset()
+
+		var wheres []testGormWhere
+		patches.Applys([]ldhook.Hook{
+			ldhook.FuncHook{
+				Target: (*gorm.DB).Where,
+				Double: func(db *gorm.DB, query interface{}, args ...interface{}) *gorm.DB {
+					wheres = append(wheres, testGormWhere{
+						Query: query,
+						Args:  args,
+					})
+					return db
+				},
+			},
+		})
+
+		convey.Convey("Equal(nil)", func() {
+			cond := Equal(nil)
+			cond.buildGorm(nil, field)
+			convey.So(wheres, convey.ShouldBeNil)
+		})
+
+		convey.Convey("Equal(int)", func() {
+			cond := Equal(0)
+			cond.buildGorm(nil, field)
+			convey.So(wheres, convey.ShouldResemble, []testGormWhere{
+				{Query: field + " = ?", Args: []interface{}{0}},
+			})
+		})
+		convey.Convey("Equal(string)", func() {
+			cond := Equal("abc")
+			cond.buildGorm(nil, field)
+			convey.So(wheres, convey.ShouldResemble, []testGormWhere{
+				{Query: field + " = ?", Args: []interface{}{"abc"}},
+			})
+		})
+		convey.Convey("Equal(*int)", func() {
+			cond := Equal(proto.Int32(0))
+			cond.buildGorm(nil, field)
+			convey.So(wheres, convey.ShouldResemble, []testGormWhere{
+				{Query: field + " = ?", Args: []interface{}{int32(0)}},
+			})
+		})
+		convey.Convey("Equal(*int(nil))", func() {
+			cond := Equal((*int)(nil))
+			cond.buildGorm(nil, field)
+			convey.So(wheres, convey.ShouldBeNil)
+		})
+		convey.Convey("Equal(*string)", func() {
+			cond := Equal(proto.String("abc"))
+			cond.buildGorm(nil, field)
+			convey.So(wheres, convey.ShouldResemble, []testGormWhere{
+				{Query: field + " = ?", Args: []interface{}{"abc"}},
+			})
+		})
+		convey.Convey("Equal(*string(nil))", func() {
+			cond := Equal((*string)(nil))
+			cond.buildGorm(nil, field)
+			convey.So(wheres, convey.ShouldBeNil)
+		})
+	})
+}
+
+func Test_In(t *testing.T) {
+	convey.Convey(t.Name(), t, func() {
+		const field = "field"
+
+		patches := ldhook.NewPatches()
+		defer patches.Reset()
+
+		var wheres []testGormWhere
+		patches.Applys([]ldhook.Hook{
+			ldhook.FuncHook{
+				Target: (*gorm.DB).Where,
+				Double: func(db *gorm.DB, query interface{}, args ...interface{}) *gorm.DB {
+					wheres = append(wheres, testGormWhere{
+						Query: query,
+						Args:  args,
+					})
+					return db
+				},
+			},
+		})
+
+		convey.Convey("In(nil)", func() {
+			cond := In(nil)
+			cond.buildGorm(nil, field)
+			convey.So(wheres, convey.ShouldBeNil)
+		})
+		convey.Convey("In(int)", func() {
+			convey.So(func() { In(0) }, convey.ShouldPanic)
+		})
+		convey.Convey("In([3]int)", func() {
+			cond := In([3]int{310, 320, 330})
+			cond.buildGorm(nil, field)
+			convey.So(wheres, convey.ShouldResemble, []testGormWhere{
+				{Query: field + " IN (?)", Args: []interface{}{[3]int{310, 320, 330}}},
+			})
+		})
+		convey.Convey("In([]int)", func() {
+			cond := In([]int{310, 320, 330})
+			cond.buildGorm(nil, field)
+			convey.So(wheres, convey.ShouldResemble, []testGormWhere{
+				{Query: field + " IN (?)", Args: []interface{}{[]int{310, 320, 330}}},
+			})
+		})
+	})
+}
+
+func Test_Like(t *testing.T) {
+	convey.Convey(t.Name(), t, func() {
+		const field = "field"
+
+		patches := ldhook.NewPatches()
+		defer patches.Reset()
+
+		var wheres []testGormWhere
+		patches.Applys([]ldhook.Hook{
+			ldhook.FuncHook{
+				Target: (*gorm.DB).Where,
+				Double: func(db *gorm.DB, query interface{}, args ...interface{}) *gorm.DB {
+					wheres = append(wheres, testGormWhere{
+						Query: query,
+						Args:  args,
+					})
+					return db
+				},
+			},
+		})
+
+		convey.Convey("Like(abc)", func() {
+			cond := Like("abc")
+			cond.buildGorm(nil, field)
+			convey.So(wheres, convey.ShouldResemble, []testGormWhere{
+				{Query: field + " LIKE ?", Args: []interface{}{"abc"}},
+			})
+		})
+		convey.Convey("Like(%abc%)", func() {
+			cond := Like("%abc%")
+			cond.buildGorm(nil, field)
+			convey.So(wheres, convey.ShouldResemble, []testGormWhere{
+				{Query: field + " LIKE ?", Args: []interface{}{"%abc%"}},
+			})
 		})
 	})
 }

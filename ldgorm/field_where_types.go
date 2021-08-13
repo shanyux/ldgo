@@ -1,0 +1,142 @@
+/*
+ * Copyright (C) distroy
+ */
+
+package ldgorm
+
+import (
+	"reflect"
+
+	"github.com/jinzhu/gorm"
+)
+
+type FieldWhere interface {
+	isEmpty() bool
+	buildGorm(db *gorm.DB, field string) *gorm.DB
+
+	And(b FieldWhere) FieldWhere
+	Or(b FieldWhere) FieldWhere
+}
+
+func getWhereValue(v interface{}) (interface{}, bool) {
+	if v == nil {
+		return nil, false
+	}
+	val := reflect.ValueOf(v)
+	if val.Kind() == reflect.Ptr {
+		if val.IsNil() {
+			return nil, false
+		}
+		return val.Elem().Interface(), true
+	}
+
+	return v, true
+}
+
+type fieldWhereEmpty struct{}
+
+func (_ fieldWhereEmpty) isEmpty() bool               { return true }
+func (_ fieldWhereEmpty) And(b FieldWhere) FieldWhere { return b }
+func (_ fieldWhereEmpty) Or(b FieldWhere) FieldWhere  { return b }
+
+func (_ fieldWhereEmpty) buildGorm(db *gorm.DB, field string) *gorm.DB {
+	return db
+}
+
+type fieldWhereBase struct{}
+
+func (_ fieldWhereBase) isEmpty() bool { return false }
+
+type fieldWhereTreeNode struct {
+	Or    bool       `json:"or"`
+	Where FieldWhere `json:"where"`
+}
+
+type fieldWhereTree struct {
+	fieldWhereBase
+
+	Wheres []fieldWhereTreeNode `json:"wheres"`
+}
+
+func (that fieldWhereTree) buildGorm(db *gorm.DB, field string) *gorm.DB {
+	root := db
+
+	db = that.Wheres[0].Where.buildGorm(root, field)
+	for _, w := range that.Wheres[1:] {
+		tmp := w.Where.buildGorm(root, field)
+		if w.Or {
+			db = db.Or(tmp)
+		} else {
+			db = db.Where(tmp)
+		}
+	}
+
+	return db
+}
+
+func (that fieldWhereTree) And(b FieldWhere) FieldWhere {
+	if b.isEmpty() {
+		return that
+	}
+
+	that.Wheres = append(that.Wheres, fieldWhereTreeNode{
+		Or:    false,
+		Where: b,
+	})
+	return that
+}
+
+func (that fieldWhereTree) Or(b FieldWhere) FieldWhere {
+	if b.isEmpty() {
+		return that
+	}
+
+	that.Wheres = append(that.Wheres, fieldWhereTreeNode{
+		Or:    true,
+		Where: b,
+	})
+	return that
+}
+
+type fieldWhere struct {
+	fieldWhereBase
+
+	Query  string        `json:"query"`
+	Values []interface{} `json:"values"`
+}
+
+func (that fieldWhere) buildGorm(db *gorm.DB, field string) *gorm.DB {
+	return db.Where(field+that.Query, that.Values...)
+}
+
+func (that fieldWhere) toTree() fieldWhereTree {
+	return fieldWhereTree{
+		Wheres: []fieldWhereTreeNode{{
+			Where: that,
+		}},
+	}
+}
+
+func (that fieldWhere) And(b FieldWhere) FieldWhere {
+	return that.toTree().And(b)
+}
+
+func (that fieldWhere) Or(b FieldWhere) FieldWhere {
+	return that.toTree().Or(b)
+}
+
+func newFieldWhere(query string, values ...interface{}) FieldWhere {
+	return fieldWhere{
+		Query:  query,
+		Values: values,
+	}
+}
+
+func newFieldWhereWithCheck(query string, value interface{}) FieldWhere {
+	val, isSet := getWhereValue(value)
+	if !isSet {
+		return fieldWhereEmpty{}
+	}
+
+	return newFieldWhere(query, val)
+}

@@ -10,73 +10,118 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/distroy/ldgo/ldconv"
+	"github.com/jinzhu/gorm"
 )
 
-const _GORM_WHERE_TAG = "gormwhere"
+const _WHERE_TAG = "gormwhere"
 
-type fieldWhereInfo struct {
-	Condition  FieldWhere
-	Value      reflect.Value
-	Tags       map[string]string
-	Name       string
-	Index      int32
-	FieldIndex int
-	NotEmpty   bool
-}
+var (
+	_WHERE_FIELD_TYPE = reflect.TypeOf((*FieldWhere)(nil)).Elem()
 
-type sortSliceFieldInfo []*fieldWhereInfo
+	whereCache = &sync.Map{}
+)
 
-func (s sortSliceFieldInfo) Len() int      { return len(s) }
-func (s sortSliceFieldInfo) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
-func (s sortSliceFieldInfo) Less(i, j int) bool {
-	if s[i].Index != s[j].Index {
-		return s[i].Index < s[j].Index
-	}
-	return s[i].FieldIndex < s[j].FieldIndex
-}
-
-func BuildWhere(db *DB, cond interface{}) *DB {
+func BuildWhere(db *gorm.DB, cond interface{}) *gorm.DB {
 	if cond == nil {
 		return db
 	}
 
 	val := reflect.ValueOf(cond)
+	w := getWhereInfo(val.Type())
+
+	return w.buildWhere(db, val)
+}
+
+type whereReflect struct {
+	Fields []*fieldWhereReflect
+}
+
+type fieldWhereReflect struct {
+	Tags       map[string]string
+	Name       string
+	Order      int32
+	FieldOrder int
+	NotEmpty   bool
+}
+
+func (w *whereReflect) buildWhere(db *gorm.DB, val reflect.Value) *gorm.DB {
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()
 	}
 
-	if val.Kind() != reflect.Struct {
-		panic(fmt.Sprintf("the condtion must be struct"))
-	}
+	root := db
 
-	fields := make([]*fieldWhereInfo, 0, val.NumField())
-	for i, n := 0, val.NumField(); i < n; i++ {
-		f := getFieldInfo(val, i)
-		if f == nil {
-			continue
-		}
-		if cond := f.Condition; cond == nil || cond.isEmpty() {
+	for _, f := range w.Fields {
+		fw, _ := val.Field(f.FieldOrder).Interface().(FieldWhere)
+		if fw == nil || fw.isEmpty() {
 			if f.NotEmpty {
-				panic(fmt.Sprintf("the condtion field must not be empty. %s", f.Name))
+				panic(fmt.Sprintf("the where field must not be empty. %s", f.Name))
 			}
 			continue
 		}
-		fields = append(fields, f)
-	}
-	sort.Sort(sortSliceFieldInfo(fields))
 
-	for _, f := range fields {
-		db = f.Condition.buildGorm(db, f.Name)
+		db = fw.buildGorm(root, f.Name)
 	}
-
 	return db
 }
 
-func getFieldInfo(obj reflect.Value, i int) *fieldWhereInfo {
-	field := obj.Type().Field(i)
-	tag, ok := field.Tag.Lookup(_GORM_WHERE_TAG)
+type sortSliceFieldInfo []*fieldWhereReflect
+
+func (s sortSliceFieldInfo) Len() int      { return len(s) }
+func (s sortSliceFieldInfo) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+func (s sortSliceFieldInfo) Less(i, j int) bool {
+	if s[i].Order != s[j].Order {
+		return s[i].Order < s[j].Order
+	}
+	return s[i].FieldOrder < s[j].FieldOrder
+}
+
+func getWhereInfo(typ reflect.Type) *whereReflect {
+	if typ.Kind() == reflect.Ptr {
+		typ = typ.Elem()
+	}
+
+	if typ.Kind() != reflect.Struct {
+		panic(fmt.Sprintf("the where type must be struct or pointer to struct. %s", typ))
+	}
+
+	cache := whereCache
+	if v, _ := cache.Load(typ); v != nil {
+		reqT, _ := v.(*whereReflect)
+		if reqT != nil {
+			return reqT
+		}
+	}
+
+	fields := make([]*fieldWhereReflect, 0, typ.NumField())
+	for i, n := 0, typ.NumField(); i < n; i++ {
+		f := getWhereFieldInfo(typ, i)
+		if f == nil {
+			continue
+		}
+
+		fields = append(fields, f)
+	}
+
+	if len(fields) == 0 {
+		panic("struct must have at least one where field")
+	}
+
+	sort.Sort(sortSliceFieldInfo(fields))
+	w := &whereReflect{
+		Fields: fields,
+	}
+
+	cache.Store(typ, w)
+	return w
+}
+
+func getWhereFieldInfo(typ reflect.Type, i int) *fieldWhereReflect {
+	field := typ.Field(i)
+	tag, ok := field.Tag.Lookup(_WHERE_TAG)
 	if !ok {
 		return nil
 	}
@@ -84,33 +129,32 @@ func getFieldInfo(obj reflect.Value, i int) *fieldWhereInfo {
 		return nil
 	}
 
-	tags := parseTagString(tag)
+	tags := parseWhereTagString(tag)
 	if _, ok := tags["-"]; ok {
 		return nil
 	}
-	name, _ := tags["NAME"]
+	name, _ := tags["name"]
 	if len(name) == 0 {
 		return nil
 	}
 
-	index, _ := tags["INDEX"]
-	_, notEmpty := tags["NOTEMPTY"]
+	if !field.Type.Implements(_WHERE_FIELD_TYPE) {
+		panic("where field type must be `ldgorm.FieldWhere`")
+	}
 
-	value := obj.Field(i)
-	cond, _ := value.Interface().(FieldWhere)
+	order, _ := tags["order"]
+	_, notEmpty := tags["notempty"]
 
-	return &fieldWhereInfo{
-		Condition:  cond,
-		Value:      value,
+	return &fieldWhereReflect{
 		Tags:       tags,
 		Name:       name,
-		Index:      ldconv.AsInt32(index, math.MaxInt32),
-		FieldIndex: i,
+		Order:      ldconv.AsInt32(order, math.MaxInt32),
+		FieldOrder: i,
 		NotEmpty:   notEmpty,
 	}
 }
 
-func parseTagString(tag string) map[string]string {
+func parseWhereTagString(tag string) map[string]string {
 	tagList := strings.Split(tag, ";")
 	m := make(map[string]string)
 	for _, v := range tagList {
@@ -119,7 +163,7 @@ func parseTagString(tag string) map[string]string {
 		}
 
 		l := strings.SplitN(v, ":", 2)
-		k := strings.TrimSpace(strings.ToUpper(l[0]))
+		k := strings.TrimSpace(strings.ToLower(l[0]))
 		if len(k) == 0 {
 			continue
 		}
