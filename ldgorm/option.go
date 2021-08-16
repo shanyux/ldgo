@@ -1,5 +1,5 @@
 /*
- * Copyright (C) Shopee
+ * Copyright (C) distroy
  */
 
 package ldgorm
@@ -11,6 +11,13 @@ import (
 
 type Option interface {
 	buildGorm(db *gorm.DB) *gorm.DB
+}
+
+func ApplyOptions(db *gorm.DB, opts ...Option) *gorm.DB {
+	for _, opt := range opts {
+		db = opt.buildGorm(db)
+	}
+	return db
 }
 
 type pagingOption struct {

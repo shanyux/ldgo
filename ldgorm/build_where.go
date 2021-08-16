@@ -9,7 +9,6 @@ import (
 	"math"
 	"reflect"
 	"sort"
-	"strings"
 	"sync"
 
 	"github.com/distroy/ldgo/ldconv"
@@ -40,7 +39,7 @@ type whereReflect struct {
 }
 
 type fieldWhereReflect struct {
-	Tags       map[string]string
+	Tags       tagMap
 	Name       string
 	Order      int32
 	FieldOrder int
@@ -90,9 +89,9 @@ func getWhereInfo(typ reflect.Type) *whereReflect {
 
 	cache := whereCache
 	if v, _ := cache.Load(typ); v != nil {
-		reqT, _ := v.(*whereReflect)
-		if reqT != nil {
-			return reqT
+		tmp, _ := v.(*whereReflect)
+		if tmp != nil {
+			return tmp
 		}
 	}
 
@@ -129,11 +128,12 @@ func getWhereFieldInfo(typ reflect.Type, i int) *fieldWhereReflect {
 		return nil
 	}
 
-	tags := parseWhereTagString(tag)
+	tags := parseTagString(tag)
 	if _, ok := tags["-"]; ok {
 		return nil
 	}
-	name, _ := tags["name"]
+
+	name := tags.Get("name")
 	if len(name) == 0 {
 		return nil
 	}
@@ -142,8 +142,8 @@ func getWhereFieldInfo(typ reflect.Type, i int) *fieldWhereReflect {
 		panic("where field type must be `ldgorm.FieldWhere`")
 	}
 
-	order, _ := tags["order"]
-	_, notEmpty := tags["notempty"]
+	order := tags.Get("order")
+	notEmpty := tags.Has("notempty")
 
 	return &fieldWhereReflect{
 		Tags:       tags,
@@ -152,27 +152,4 @@ func getWhereFieldInfo(typ reflect.Type, i int) *fieldWhereReflect {
 		FieldOrder: i,
 		NotEmpty:   notEmpty,
 	}
-}
-
-func parseWhereTagString(tag string) map[string]string {
-	tagList := strings.Split(tag, ";")
-	m := make(map[string]string)
-	for _, v := range tagList {
-		if len(v) == 0 {
-			continue
-		}
-
-		l := strings.SplitN(v, ":", 2)
-		k := strings.TrimSpace(strings.ToLower(l[0]))
-		if len(k) == 0 {
-			continue
-		}
-
-		v := k
-		if len(l) >= 2 {
-			v = l[1]
-		}
-		m[k] = v
-	}
-	return m
 }
