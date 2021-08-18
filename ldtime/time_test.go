@@ -1,5 +1,5 @@
 /*
- * Copyright (C) Shopee
+ * Copyright (C) distroy
  */
 
 package ldtime
