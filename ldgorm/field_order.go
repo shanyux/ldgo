@@ -4,7 +4,11 @@
 
 package ldgorm
 
-import "github.com/jinzhu/gorm"
+import (
+	"fmt"
+
+	"github.com/jinzhu/gorm"
+)
 
 type FieldOrder interface {
 	buildGorm(db *gorm.DB, field string) *gorm.DB
@@ -30,9 +34,9 @@ func NewFieldOrder(i int) FieldOrder {
 func (that fieldOrder) getOrder() int { return that.OrderNum }
 
 func (that fieldOrder) buildGorm(db *gorm.DB, field string) *gorm.DB {
-	exp := field
+	exp := fmt.Sprintf("`%s`", field)
 	if that.IsDesc {
-		exp = field + " DESC"
+		exp = fmt.Sprintf("`%s` DESC", field)
 	}
 
 	db = db.Order(exp)

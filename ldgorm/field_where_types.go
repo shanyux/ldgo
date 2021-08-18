@@ -5,6 +5,7 @@
 package ldgorm
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/jinzhu/gorm"
@@ -122,7 +123,7 @@ type fieldWhere struct {
 
 func (that fieldWhere) buildWhere(field string) whereResult {
 	return whereResult{
-		Query: field + that.Query,
+		Query: fmt.Sprintf("`%s`%s", field, that.Query),
 		Args:  that.Values,
 	}
 }

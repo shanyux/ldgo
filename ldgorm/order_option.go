@@ -150,8 +150,12 @@ func getOrderFieldReflect(typ reflect.Type, i int) *fieldOrderReflect {
 		return nil
 	}
 
-	name := tags.Get("name")
+	name := tags.Get("column")
 	if len(name) == 0 {
+		name = tags.Get("name")
+		if len(name) == 0 {
+			return nil
+		}
 		return nil
 	}
 
