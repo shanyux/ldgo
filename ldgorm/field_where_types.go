@@ -12,10 +12,11 @@ import (
 
 type FieldWhere interface {
 	isEmpty() bool
-	buildGorm(db *gorm.DB, field string) *gorm.DB
 
 	And(b FieldWhere) FieldWhere
 	Or(b FieldWhere) FieldWhere
+
+	buildWhere(field string) whereResult
 }
 
 func getWhereValue(v interface{}) (interface{}, bool) {
@@ -33,15 +34,21 @@ func getWhereValue(v interface{}) (interface{}, bool) {
 	return v, true
 }
 
+type whereResult struct {
+	Query string
+	Args  []interface{}
+}
+
+func (r whereResult) IsValid() bool { return len(r.Query) != 0 }
+
 type fieldWhereEmpty struct{}
 
 func (_ fieldWhereEmpty) isEmpty() bool               { return true }
 func (_ fieldWhereEmpty) And(b FieldWhere) FieldWhere { return b }
 func (_ fieldWhereEmpty) Or(b FieldWhere) FieldWhere  { return b }
 
-func (_ fieldWhereEmpty) buildGorm(db *gorm.DB, field string) *gorm.DB {
-	return db
-}
+func (_ fieldWhereEmpty) buildGorm(db *gorm.DB, field string) *gorm.DB { return db }
+func (_ fieldWhereEmpty) buildWhere(field string) whereResult          { return whereResult{} }
 
 type fieldWhereBase struct{}
 
@@ -58,20 +65,28 @@ type fieldWhereTree struct {
 	Wheres []fieldWhereTreeNode `json:"wheres"`
 }
 
-func (that fieldWhereTree) buildGorm(db *gorm.DB, field string) *gorm.DB {
-	root := db
-
-	db = that.Wheres[0].Where.buildGorm(root, field)
-	for _, w := range that.Wheres[1:] {
-		tmp := w.Where.buildGorm(root, field)
-		if w.Or {
-			db = db.Or(tmp)
-		} else {
-			db = db.Where(tmp)
-		}
+func (that fieldWhereTree) buildWhere(field string) whereResult {
+	res := that.Wheres[0].Where.buildWhere(field)
+	if len(that.Wheres) == 1 {
+		return res
 	}
 
-	return db
+	res.Query = "(" + res.Query
+
+	for _, w := range that.Wheres[1:] {
+		tmp := w.Where.buildWhere(field)
+		symbol := " AND "
+		if w.Or {
+			symbol = " OR "
+		}
+
+		res.Query = res.Query + symbol + tmp.Query
+		res.Args = append(res.Args, tmp.Args...)
+	}
+
+	res.Query = res.Query + ")"
+
+	return res
 }
 
 func (that fieldWhereTree) And(b FieldWhere) FieldWhere {
@@ -105,8 +120,11 @@ type fieldWhere struct {
 	Values []interface{} `json:"values"`
 }
 
-func (that fieldWhere) buildGorm(db *gorm.DB, field string) *gorm.DB {
-	return db.Where(field+that.Query, that.Values...)
+func (that fieldWhere) buildWhere(field string) whereResult {
+	return whereResult{
+		Query: field + that.Query,
+		Args:  that.Values,
+	}
 }
 
 func (that fieldWhere) toTree() fieldWhereTree {

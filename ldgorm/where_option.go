@@ -6,6 +6,7 @@ package ldgorm
 
 import (
 	"reflect"
+	"strings"
 
 	"github.com/jinzhu/gorm"
 )
@@ -13,17 +14,23 @@ import (
 type WhereOption interface {
 	Option
 
-	And(o WhereOption) WhereOption
-	Or(o WhereOption) WhereOption
+	And(where interface{}) WhereOption
+	Or(where interface{}) WhereOption
+
+	buildWhere() whereResult
 }
 
-func Where(cond interface{}) WhereOption {
-	if cond == nil {
-		return nil
+func Where(where interface{}) WhereOption {
+	if where == nil {
+		panic("the where type must not be nil")
 	}
 
-	val := reflect.ValueOf(cond)
-	w := getWhereInfo(val.Type())
+	if w, ok := where.(WhereOption); ok {
+		return w
+	}
+
+	val := reflect.ValueOf(where)
+	w := getWhereReflect(val.Type())
 
 	return &whereOption{
 		Value: val,
@@ -37,8 +44,11 @@ type whereOption struct {
 }
 
 func (that *whereOption) buildGorm(db *gorm.DB) *gorm.DB {
-	root := db
-	return that.Where.buildWhere(root, that.Value)
+	return that.Where.buildGorm(db, that.Value)
+}
+
+func (that *whereOption) buildWhere() whereResult {
+	return that.Where.buildWhere(that.Value)
 }
 
 func (that *whereOption) toTree() whereOptionTree {
@@ -49,11 +59,11 @@ func (that *whereOption) toTree() whereOptionTree {
 	}
 }
 
-func (that *whereOption) And(o WhereOption) WhereOption {
+func (that *whereOption) And(o interface{}) WhereOption {
 	return that.toTree().And(o)
 }
 
-func (that *whereOption) Or(o WhereOption) WhereOption {
+func (that *whereOption) Or(o interface{}) WhereOption {
 	return that.toTree().Or(o)
 }
 
@@ -66,34 +76,54 @@ type whereOptionTree struct {
 	Wheres []whereOptionTreeNode `json:"wheres"`
 }
 
-func (that whereOptionTree) buildGorm(db *gorm.DB) *gorm.DB {
-	root := db
+func (that whereOptionTree) buildWhere() whereResult {
+	res := that.Wheres[0].Where.buildWhere()
+	if len(that.Wheres) == 1 {
+		return res
+	}
 
-	db = that.Wheres[0].Where.buildGorm(root)
+	res.Query = "(" + res.Query
+
 	for _, w := range that.Wheres[1:] {
-		tmp := w.Where.buildGorm(root)
+		tmp := w.Where.buildWhere()
+		symbol := " AND "
 		if w.Or {
-			db = db.Or(tmp)
-		} else {
-			db = db.Where(tmp)
+			symbol = " OR "
 		}
+
+		res.Query = res.Query + symbol + tmp.Query
+		res.Args = append(res.Args, tmp.Args...)
+	}
+
+	res.Query = res.Query + ")"
+	return res
+}
+
+func (that whereOptionTree) buildGorm(db *gorm.DB) *gorm.DB {
+	res := that.buildWhere()
+	if strings.HasPrefix(res.Query, "(") && strings.HasSuffix(res.Query, ")") {
+		res.Query = res.Query[1 : len(res.Query)-1]
+	}
+
+	if res.IsValid() {
+		db = db.Where(res.Query, res.Args...)
 	}
 
 	return db
 }
 
-func (that whereOptionTree) And(o WhereOption) WhereOption {
-	return that.append(false, o)
+func (that whereOptionTree) And(where interface{}) WhereOption {
+	return that.append(false, where)
 }
 
-func (that whereOptionTree) Or(o WhereOption) WhereOption {
-	return that.append(true, o)
+func (that whereOptionTree) Or(where interface{}) WhereOption {
+	return that.append(true, where)
 }
 
-func (that whereOptionTree) append(or bool, o WhereOption) WhereOption {
+func (that whereOptionTree) append(or bool, where interface{}) WhereOption {
 	that.Wheres = append(that.Wheres, whereOptionTreeNode{
 		Or:    or,
-		Where: o,
+		Where: Where(where),
 	})
 
 	return that

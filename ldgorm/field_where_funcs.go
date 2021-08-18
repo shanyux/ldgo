@@ -73,7 +73,7 @@ func NotIn(value interface{}) FieldWhere {
 	val := reflect.ValueOf(value)
 	switch val.Kind() {
 	default:
-		panic("the condition value for in must be slice or array type")
+		panic("the where value for in must be slice or array type")
 
 	case reflect.Slice, reflect.Array:
 		break

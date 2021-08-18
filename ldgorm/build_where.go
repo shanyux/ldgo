@@ -9,6 +9,7 @@ import (
 	"math"
 	"reflect"
 	"sort"
+	"strings"
 	"sync"
 
 	"github.com/distroy/ldgo/ldconv"
@@ -23,15 +24,13 @@ var (
 	whereCache = &sync.Map{}
 )
 
-func BuildWhere(db *gorm.DB, cond interface{}) *gorm.DB {
-	if cond == nil {
+func BuildWhere(db *gorm.DB, where interface{}) *gorm.DB {
+	if where == nil {
 		return db
 	}
 
-	val := reflect.ValueOf(cond)
-	w := getWhereInfo(val.Type())
-
-	return w.buildWhere(db, val)
+	w := Where(where)
+	return w.buildGorm(db)
 }
 
 type whereReflect struct {
@@ -46,14 +45,13 @@ type fieldWhereReflect struct {
 	NotEmpty   bool
 }
 
-func (w *whereReflect) buildWhere(db *gorm.DB, val reflect.Value) *gorm.DB {
+func (that *whereReflect) buildWhere(val reflect.Value) whereResult {
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()
 	}
 
-	root := db
-
-	for _, f := range w.Fields {
+	wheres := make([]whereResult, 0, len(that.Fields))
+	for _, f := range that.Fields {
 		fw, _ := val.Field(f.FieldOrder).Interface().(FieldWhere)
 		if fw == nil || fw.isEmpty() {
 			if f.NotEmpty {
@@ -62,8 +60,38 @@ func (w *whereReflect) buildWhere(db *gorm.DB, val reflect.Value) *gorm.DB {
 			continue
 		}
 
-		db = fw.buildGorm(root, f.Name)
+		wheres = append(wheres, fw.buildWhere(f.Name))
 	}
+
+	switch len(wheres) {
+	case 0:
+		return whereResult{}
+	case 1:
+		return wheres[0]
+	}
+
+	res := wheres[0]
+
+	res.Query = "(" + res.Query
+	for _, tmp := range wheres[1:] {
+		res.Query = res.Query + " AND " + tmp.Query
+		res.Args = append(res.Args, tmp.Args...)
+	}
+	res.Query = res.Query + ")"
+
+	return res
+}
+
+func (that *whereReflect) buildGorm(db *gorm.DB, val reflect.Value) *gorm.DB {
+	res := that.buildWhere(val)
+	if strings.HasPrefix(res.Query, "(") && strings.HasSuffix(res.Query, ")") {
+		res.Query = res.Query[1 : len(res.Query)-1]
+	}
+
+	if res.IsValid() {
+		db = db.Where(res.Query, res.Args...)
+	}
+
 	return db
 }
 
@@ -78,13 +106,13 @@ func (s sortSliceFieldInfo) Less(i, j int) bool {
 	return s[i].FieldOrder < s[j].FieldOrder
 }
 
-func getWhereInfo(typ reflect.Type) *whereReflect {
+func getWhereReflect(typ reflect.Type) *whereReflect {
 	if typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
 	}
 
 	if typ.Kind() != reflect.Struct {
-		panic(fmt.Sprintf("the where type must be struct or pointer to struct. %s", typ))
+		panic(fmt.Sprintf("the where type must be `ldgorm.WhereOption` or struct or pointer to struct. %s", typ))
 	}
 
 	cache := whereCache
@@ -97,7 +125,7 @@ func getWhereInfo(typ reflect.Type) *whereReflect {
 
 	fields := make([]*fieldWhereReflect, 0, typ.NumField())
 	for i, n := 0, typ.NumField(); i < n; i++ {
-		f := getWhereFieldInfo(typ, i)
+		f := getFieldWhereReflect(typ, i)
 		if f == nil {
 			continue
 		}
@@ -106,7 +134,7 @@ func getWhereInfo(typ reflect.Type) *whereReflect {
 	}
 
 	if len(fields) == 0 {
-		panic("struct must have at least one where field")
+		panic("where struct must have at least one where field")
 	}
 
 	sort.Sort(sortSliceFieldInfo(fields))
@@ -118,7 +146,7 @@ func getWhereInfo(typ reflect.Type) *whereReflect {
 	return w
 }
 
-func getWhereFieldInfo(typ reflect.Type, i int) *fieldWhereReflect {
+func getFieldWhereReflect(typ reflect.Type, i int) *fieldWhereReflect {
 	field := typ.Field(i)
 	tag, ok := field.Tag.Lookup(_WHERE_TAG)
 	if !ok {
