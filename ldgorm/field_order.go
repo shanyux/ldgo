@@ -10,12 +10,12 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-type FieldOrder interface {
+type FieldOrderer interface {
 	buildGorm(db *gorm.DB, field string) *gorm.DB
 
-	Order(i int) FieldOrder
-	Desc() FieldOrder
-	Asc() FieldOrder
+	Order(i int) FieldOrderer
+	Desc() FieldOrderer
+	Asc() FieldOrderer
 
 	getOrder() int
 }
@@ -25,7 +25,7 @@ type fieldOrder struct {
 	IsDesc   bool
 }
 
-func NewFieldOrder(i int) FieldOrder {
+func FieldOrder(i int) FieldOrderer {
 	return fieldOrder{
 		OrderNum: i,
 	}
@@ -43,17 +43,17 @@ func (that fieldOrder) buildGorm(db *gorm.DB, field string) *gorm.DB {
 	return db
 }
 
-func (that fieldOrder) Order(i int) FieldOrder {
+func (that fieldOrder) Order(i int) FieldOrderer {
 	that.OrderNum = i
 	return that
 }
 
-func (that fieldOrder) Desc() FieldOrder {
+func (that fieldOrder) Desc() FieldOrderer {
 	that.IsDesc = true
 	return that
 }
 
-func (that fieldOrder) Asc() FieldOrder {
+func (that fieldOrder) Asc() FieldOrderer {
 	that.IsDesc = false
 	return that
 }

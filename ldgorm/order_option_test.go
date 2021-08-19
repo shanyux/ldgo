@@ -13,10 +13,10 @@ import (
 )
 
 type testOrderStruct struct {
-	ProjectId FieldOrder `gormorder:"column:project_id"`
-	ChannelId FieldOrder `gormorder:"column:channel_id"`
-	VersionId FieldOrder `gormorder:"column:version_id"`
-	Type      FieldOrder `gormorder:"column:type"`
+	ProjectId FieldOrderer `gormorder:"column:project_id"`
+	ChannelId FieldOrderer `gormorder:"column:channel_id"`
+	VersionId FieldOrderer `gormorder:"column:version_id"`
+	Type      FieldOrderer `gormorder:"column:type"`
 }
 
 func testGetOrderFromSql(scope *gorm.Scope) string {
@@ -43,8 +43,8 @@ func TestOrder(t *testing.T) {
 
 		convey.Convey("channel_id, version_id DESC", func() {
 			order := Order(&testOrderStruct{
-				ChannelId: NewFieldOrder(1).Asc(),
-				VersionId: NewFieldOrder(2).Desc(),
+				ChannelId: FieldOrder(1).Asc(),
+				VersionId: FieldOrder(2).Desc(),
 			})
 
 			ApplyOptions(gormDb, order).Find(&rows)
@@ -53,8 +53,8 @@ func TestOrder(t *testing.T) {
 
 		convey.Convey("channel_id DESC, type", func() {
 			order := Order(&testOrderStruct{
-				ChannelId: NewFieldOrder(1).Desc(),
-				Type:      NewFieldOrder(2),
+				ChannelId: FieldOrder(1).Desc(),
+				Type:      FieldOrder(2),
 			})
 
 			ApplyOptions(gormDb, order).Find(&rows)

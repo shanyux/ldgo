@@ -19,7 +19,7 @@ import (
 const _WHERE_TAG = "gormwhere"
 
 var (
-	_WHERE_FIELD_TYPE = reflect.TypeOf((*FieldWhere)(nil)).Elem()
+	_WHERE_FIELD_TYPE = reflect.TypeOf((*FieldWherer)(nil)).Elem()
 
 	whereCache = &sync.Map{}
 )
@@ -52,7 +52,7 @@ func (that *whereReflect) buildWhere(val reflect.Value) whereResult {
 
 	wheres := make([]whereResult, 0, len(that.Fields))
 	for _, f := range that.Fields {
-		fw, _ := val.Field(f.FieldOrder).Interface().(FieldWhere)
+		fw, _ := val.Field(f.FieldOrder).Interface().(FieldWherer)
 		if fw == nil || fw.isEmpty() {
 			if f.NotEmpty {
 				panic(fmt.Sprintf("the where field must not be empty. %s", f.Name))

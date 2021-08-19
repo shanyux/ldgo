@@ -6,13 +6,13 @@ package ldgorm
 
 import "reflect"
 
-func Equal(value interface{}) FieldWhere    { return newFieldWhereWithCheck(" = ?", value) }
-func NotEqual(value interface{}) FieldWhere { return newFieldWhereWithCheck(" <> ?", value) }
+func Equal(value interface{}) FieldWherer    { return newFieldWhereWithCheck(" = ?", value) }
+func NotEqual(value interface{}) FieldWherer { return newFieldWhereWithCheck(" <> ?", value) }
 
-func IsNull() FieldWhere    { return newFieldWhere(" IS NULL") }
-func IsNotNull() FieldWhere { return newFieldWhere(" IS NOT NULL") }
+func IsNull() FieldWherer    { return newFieldWhere(" IS NULL") }
+func IsNotNull() FieldWherer { return newFieldWhere(" IS NOT NULL") }
 
-func Between(min, max interface{}) FieldWhere {
+func Between(min, max interface{}) FieldWherer {
 	minVal, isMinSet := getWhereValue(min)
 	maxVal, isMaxSet := getWhereValue(max)
 	if !isMinSet && !isMaxSet {
@@ -31,20 +31,20 @@ func Between(min, max interface{}) FieldWhere {
 	return newFieldWhere(" BETWEEN ? AND ?", minVal, maxVal)
 }
 
-func Gt(value interface{}) FieldWhere {
+func Gt(value interface{}) FieldWherer {
 	return newFieldWhereWithCheck(" > ?", value)
 }
-func Lt(value interface{}) FieldWhere {
+func Lt(value interface{}) FieldWherer {
 	return newFieldWhereWithCheck(" < ?", value)
 }
-func Gte(value interface{}) FieldWhere {
+func Gte(value interface{}) FieldWherer {
 	return newFieldWhereWithCheck(" >= ?", value)
 }
-func Lte(value interface{}) FieldWhere {
+func Lte(value interface{}) FieldWherer {
 	return newFieldWhereWithCheck(" <= ?", value)
 }
 
-func In(value interface{}) FieldWhere {
+func In(value interface{}) FieldWherer {
 	if value == nil {
 		return fieldWhereEmpty{}
 	}
@@ -65,7 +65,7 @@ func In(value interface{}) FieldWhere {
 	return newFieldWhere(" IN (?)", value)
 }
 
-func NotIn(value interface{}) FieldWhere {
+func NotIn(value interface{}) FieldWherer {
 	if value == nil {
 		return fieldWhereEmpty{}
 	}
@@ -86,40 +86,40 @@ func NotIn(value interface{}) FieldWhere {
 	return newFieldWhere(" NOT IN (?)", value)
 }
 
-func Like(value string) FieldWhere {
+func Like(value string) FieldWherer {
 	return newFieldWhereWithCheck(" LIKE ?", value)
 }
 
-func LikePrefix(value string) FieldWhere {
+func LikePrefix(value string) FieldWherer {
 	value = value + "%"
 	return newFieldWhereWithCheck(" LIKE ?", value)
 }
 
-func LikeSuffix(value string) FieldWhere {
+func LikeSuffix(value string) FieldWherer {
 	value = "%" + value
 	return newFieldWhereWithCheck(" LIKE ?", value)
 }
 
-func LikeContain(value string) FieldWhere {
+func LikeContain(value string) FieldWherer {
 	value = "%" + value + "%"
 	return newFieldWhereWithCheck(" LIKE ?", value)
 }
 
-func NotLike(value string) FieldWhere {
+func NotLike(value string) FieldWherer {
 	return newFieldWhereWithCheck(" NOT LIKE ?", value)
 }
 
-func NotLikePrefix(value string) FieldWhere {
+func NotLikePrefix(value string) FieldWherer {
 	value = value + "%"
 	return newFieldWhereWithCheck(" NOT LIKE ?", value)
 }
 
-func NotLikeSuffix(value string) FieldWhere {
+func NotLikeSuffix(value string) FieldWherer {
 	value = "%" + value
 	return newFieldWhereWithCheck(" NOT LIKE ?", value)
 }
 
-func NotLikeContain(value string) FieldWhere {
+func NotLikeContain(value string) FieldWherer {
 	value = "%" + value + "%"
 	return newFieldWhereWithCheck(" NOT LIKE ?", value)
 }

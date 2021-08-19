@@ -16,7 +16,7 @@ import (
 const _ORDER_TAG = "gormorder"
 
 var (
-	_ORDER_FIELD_TYPE = reflect.TypeOf((*FieldOrder)(nil)).Elem()
+	_ORDER_FIELD_TYPE = reflect.TypeOf((*FieldOrderer)(nil)).Elem()
 
 	oderCache = &sync.Map{}
 )
@@ -61,7 +61,7 @@ func (that *orderReflect) buildOrder(db *gorm.DB, val reflect.Value) *gorm.DB {
 
 	fields := make([]fieldOrderTemp, 0, len(that.Fields))
 	for _, fRef := range that.Fields {
-		field, _ := val.Field(fRef.FieldOrder).Interface().(FieldOrder)
+		field, _ := val.Field(fRef.FieldOrder).Interface().(FieldOrderer)
 		if field == nil {
 			continue
 		}
@@ -81,7 +81,7 @@ func (that *orderReflect) buildOrder(db *gorm.DB, val reflect.Value) *gorm.DB {
 }
 
 type fieldOrderTemp struct {
-	Order  FieldOrder
+	Order  FieldOrderer
 	Relect *fieldOrderReflect
 }
 

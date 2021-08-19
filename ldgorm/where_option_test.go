@@ -15,10 +15,10 @@ import (
 )
 
 type testFilter struct {
-	VersionId FieldWhere `gormwhere:"column:version_id;"`
-	ChannelId FieldWhere `gormwhere:"column:channel_id;order:2;notempty"`
-	ProjectId FieldWhere `gormwhere:"column:project_id;order:1"`
-	Type      FieldWhere `gormwhere:"column:type;"`
+	VersionId FieldWherer `gormwhere:"column:version_id;"`
+	ChannelId FieldWherer `gormwhere:"column:channel_id;order:2;notempty"`
+	ProjectId FieldWherer `gormwhere:"column:project_id;order:1"`
+	Type      FieldWherer `gormwhere:"column:type;"`
 }
 
 type testTable struct {

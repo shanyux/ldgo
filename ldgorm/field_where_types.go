@@ -11,11 +11,11 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-type FieldWhere interface {
+type FieldWherer interface {
 	isEmpty() bool
 
-	And(b FieldWhere) FieldWhere
-	Or(b FieldWhere) FieldWhere
+	And(b FieldWherer) FieldWherer
+	Or(b FieldWherer) FieldWherer
 
 	buildWhere(field string) whereResult
 }
@@ -44,9 +44,9 @@ func (r whereResult) IsValid() bool { return len(r.Query) != 0 }
 
 type fieldWhereEmpty struct{}
 
-func (_ fieldWhereEmpty) isEmpty() bool               { return true }
-func (_ fieldWhereEmpty) And(b FieldWhere) FieldWhere { return b }
-func (_ fieldWhereEmpty) Or(b FieldWhere) FieldWhere  { return b }
+func (_ fieldWhereEmpty) isEmpty() bool                 { return true }
+func (_ fieldWhereEmpty) And(b FieldWherer) FieldWherer { return b }
+func (_ fieldWhereEmpty) Or(b FieldWherer) FieldWherer  { return b }
 
 func (_ fieldWhereEmpty) buildGorm(db *gorm.DB, field string) *gorm.DB { return db }
 func (_ fieldWhereEmpty) buildWhere(field string) whereResult          { return whereResult{} }
@@ -56,8 +56,8 @@ type fieldWhereBase struct{}
 func (_ fieldWhereBase) isEmpty() bool { return false }
 
 type fieldWhereTreeNode struct {
-	Or    bool       `json:"or"`
-	Where FieldWhere `json:"where"`
+	Or    bool        `json:"or"`
+	Where FieldWherer `json:"where"`
 }
 
 type fieldWhereTree struct {
@@ -90,7 +90,7 @@ func (that fieldWhereTree) buildWhere(field string) whereResult {
 	return res
 }
 
-func (that fieldWhereTree) And(b FieldWhere) FieldWhere {
+func (that fieldWhereTree) And(b FieldWherer) FieldWherer {
 	if b.isEmpty() {
 		return that
 	}
@@ -102,7 +102,7 @@ func (that fieldWhereTree) And(b FieldWhere) FieldWhere {
 	return that
 }
 
-func (that fieldWhereTree) Or(b FieldWhere) FieldWhere {
+func (that fieldWhereTree) Or(b FieldWherer) FieldWherer {
 	if b.isEmpty() {
 		return that
 	}
@@ -136,22 +136,22 @@ func (that fieldWhere) toTree() fieldWhereTree {
 	}
 }
 
-func (that fieldWhere) And(b FieldWhere) FieldWhere {
+func (that fieldWhere) And(b FieldWherer) FieldWherer {
 	return that.toTree().And(b)
 }
 
-func (that fieldWhere) Or(b FieldWhere) FieldWhere {
+func (that fieldWhere) Or(b FieldWherer) FieldWherer {
 	return that.toTree().Or(b)
 }
 
-func newFieldWhere(query string, values ...interface{}) FieldWhere {
+func newFieldWhere(query string, values ...interface{}) FieldWherer {
 	return fieldWhere{
 		Query:  query,
 		Values: values,
 	}
 }
 
-func newFieldWhereWithCheck(query string, value interface{}) FieldWhere {
+func newFieldWhereWithCheck(query string, value interface{}) FieldWherer {
 	val, isSet := getWhereValue(value)
 	if !isSet {
 		return fieldWhereEmpty{}
