@@ -10,7 +10,7 @@ import (
 	"github.com/smartystreets/goconvey/convey"
 )
 
-func Test_RandString(t *testing.T) {
+func TestRandString(t *testing.T) {
 	convey.Convey("", t, func() {
 		a := RandString(16)
 		b := RandString(16)

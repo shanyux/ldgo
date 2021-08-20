@@ -15,7 +15,7 @@ import (
 	"github.com/smartystreets/goconvey/convey"
 )
 
-func test_TopkInt(n, k int) {
+func testTopkInt(n, k int) {
 	name := fmt.Sprintf("n:%d k:%d", n, k)
 	convey.Convey(name, func() {
 		rand.Seed(time.Now().UnixNano())
@@ -37,10 +37,10 @@ func test_TopkInt(n, k int) {
 	})
 }
 
-func Test_TopkInt(t *testing.T) {
+func TestTopkInt(t *testing.T) {
 	convey.Convey("", t, func() {
-		test_TopkInt(10, 20)
-		test_TopkInt(100, 5)
-		test_TopkInt(100, 10)
+		testTopkInt(10, 20)
+		testTopkInt(100, 5)
+		testTopkInt(100, 10)
 	})
 }

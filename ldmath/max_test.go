@@ -10,7 +10,7 @@ import (
 	"github.com/smartystreets/goconvey/convey"
 )
 
-func Test_Max(t *testing.T) {
+func TestMax(t *testing.T) {
 	convey.Convey("", t, func() {
 		convey.So(MaxInt(3, 4), convey.ShouldEqual, 4)
 		convey.So(MaxInt8(3, 4), convey.ShouldEqual, int8(4))
@@ -20,7 +20,7 @@ func Test_Max(t *testing.T) {
 	})
 }
 
-func Test_Min(t *testing.T) {
+func TestMin(t *testing.T) {
 	convey.Convey("", t, func() {
 		convey.So(MinInt(3, 4), convey.ShouldEqual, 3)
 		convey.So(MinInt8(3, 4), convey.ShouldEqual, int8(3))

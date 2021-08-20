@@ -10,7 +10,7 @@ import (
 	"github.com/smartystreets/goconvey/convey"
 )
 
-func Test_SortInt64s(t *testing.T) {
+func TestSortInt64s(t *testing.T) {
 	convey.Convey("", t, func() {
 		l := []int64{223, 562, 424, 642, 223, 123, 496, 623, 845, 375}
 

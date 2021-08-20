@@ -10,7 +10,7 @@ import (
 	"github.com/smartystreets/goconvey/convey"
 )
 
-func Test_StrMapReplace(t *testing.T) {
+func TestStrMapReplace(t *testing.T) {
 	convey.Convey("", t, func() {
 		m := map[string]string{
 			"a":   "A",
@@ -23,7 +23,7 @@ func Test_StrMapReplace(t *testing.T) {
 	})
 }
 
-func Test_StrIMapReplace(t *testing.T) {
+func TestStrIMapReplace(t *testing.T) {
 	convey.Convey("", t, func() {
 		s0 := "a}{{a}{abc}{b}{}.{{a}}"
 		m0 := map[string]string{
