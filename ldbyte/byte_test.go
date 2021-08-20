@@ -10,7 +10,7 @@ import (
 	"github.com/smartystreets/goconvey/convey"
 )
 
-func Test_ByteToUpper(t *testing.T) {
+func TestByteToUpper(t *testing.T) {
 	convey.Convey("", t, func() {
 		b0 := byte('a')
 		b1 := byte('A')
@@ -23,7 +23,7 @@ func Test_ByteToUpper(t *testing.T) {
 	})
 }
 
-func Test_ByteToLower(t *testing.T) {
+func TestByteToLower(t *testing.T) {
 	convey.Convey("", t, func() {
 		b0 := byte('A')
 		b1 := byte('a')

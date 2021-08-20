@@ -10,7 +10,7 @@ import (
 	"github.com/smartystreets/goconvey/convey"
 )
 
-func Test_SortStrings(t *testing.T) {
+func TestSortStrings(t *testing.T) {
 	convey.Convey("", t, func() {
 		l := []string{"223", "562", "424", "642", "223", "abc", "aab", "22", "cbd", "abc"}
 		convey.So(IsSortedStrings(l), convey.ShouldBeFalse)
