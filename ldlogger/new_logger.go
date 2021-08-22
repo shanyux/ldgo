@@ -44,14 +44,13 @@ func NewLogger(opts ...Option) Logger {
 
 	// create options with priority for our opts
 	defaultOptions := []zap.Option{}
+	defaultOptions = append(defaultOptions, zap.AddCallerSkip(1))
 	if options.enableCaller {
 		// defaultOptions = append(defaultOptions, zap.AddStacktrace(level))
 		defaultOptions = append(defaultOptions, zap.AddCaller())
-		defaultOptions = append(defaultOptions, zap.AddCallerSkip(1))
 	}
 
 	core := zapcore.NewTee(zapCores...)
-
 	zlog := zap.New(core, defaultOptions...)
 
 	return newLogger(newLoggerWrap(zlog))
