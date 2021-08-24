@@ -16,6 +16,9 @@ import (
 	"go.uber.org/zap"
 )
 
+var _ context.Context = Context{}
+var _ ldcontext.Context = Context{}
+
 type Context struct {
 	*ginContext
 	ldContext
@@ -74,13 +77,12 @@ func (c Context) IsValid() bool {
 	return c == Context{}
 }
 
-func (c Context) Gin() *gin.Context          { return c.ginContext }
-func (c Context) context() ldcontext.Context { return c }
+func (c Context) Gin() *gin.Context { return c.ginContext }
 
-func (c Context) Request() interface{}  { return c.Gin().Value(GIN_KEY_REQUEST) }
-func (c Context) Renderer() interface{} { return c.Gin().Value(GIN_KEY_RENDERER) }
+func (c Context) GetRequest() interface{}  { return c.Gin().Value(GIN_KEY_REQUEST) }
+func (c Context) GetRenderer() interface{} { return c.Gin().Value(GIN_KEY_RENDERER) }
 
-func (c Context) BeginTime() time.Time {
+func (c Context) GetBeginTime() time.Time {
 	v := c.Value(_CTX_KEY_BEGIN_TIME)
 	t, _ := v.(time.Time)
 	return t
@@ -92,14 +94,14 @@ func (c Context) Sequence() string {
 	return t
 }
 
-func (c Context) Error() Error {
-	v := c.Gin().Value(GIN_KEY_REQUEST)
+func (c Context) GetError() Error {
+	v := c.Gin().Value(GIN_KEY_ERROR)
 	err, _ := v.(Error)
 	return err
 }
 
-func (c Context) Response() *CommResponse {
-	v := c.Gin().Value(GIN_KEY_CONTEXT)
+func (c Context) GetResponse() *CommResponse {
+	v := c.Gin().Value(GIN_KEY_RESPONSE)
 	rsp, _ := v.(*CommResponse)
 	return rsp
 }

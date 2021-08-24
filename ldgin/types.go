@@ -70,6 +70,13 @@ type Response interface{}
 // func (Context, Request) (Response, Error)
 type Handler interface{}
 
+// Midware must be:
+// func (*gin.Context)
+// func (*gin.Context, Request) Error
+// func (Context)
+// func (Context, Request) Error
+type Midware interface{}
+
 type Error interface {
 	error
 	Status() int
