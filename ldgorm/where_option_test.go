@@ -92,7 +92,7 @@ func TestWhereOption(t *testing.T) {
 			})
 			where := where1.And(where2)
 
-			where.buildGorm(gormDb).Find(&rows)
+			ApplyOptions(gormDb, where).Find(&rows)
 			convey.So(res, convey.ShouldResemble, whereResult{
 				Query: "((`project_id` = ? AND `channel_id` >= ?) AND ((`channel_id` < ? AND `version_id` > ?) OR (`channel_id` > ? AND `version_id` < ?)))",
 				Args:  []interface{}{10, 0, 100, 220, 200, 110},

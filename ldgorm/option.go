@@ -35,6 +35,9 @@ func (that pagingOption) buildGorm(db *gorm.DB) *gorm.DB {
 	return db
 }
 
+// Paging return the paging option
+// the first page is 1
+// if pagesize <= 0, it will query all rows
 func Paging(page int64, pagesize int64) Option {
 	return pagingOption{
 		Page:     page,
