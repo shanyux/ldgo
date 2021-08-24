@@ -170,7 +170,7 @@ func getFieldWhereReflect(typ reflect.Type, i int) *fieldWhereReflect {
 	}
 
 	if !field.Type.Implements(_WHERE_FIELD_TYPE) {
-		panic("where field type must be `ldgorm.FieldWhere`")
+		panic("where field type must be `ldgorm.FieldWherer`")
 	}
 
 	order := tags.Get("order")

@@ -160,7 +160,7 @@ func getOrderFieldReflect(typ reflect.Type, i int) *fieldOrderReflect {
 	}
 
 	if !field.Type.Implements(_ORDER_FIELD_TYPE) {
-		panic("order field type must be `ldgorm.FieldOrder`")
+		panic("order field type must be `ldgorm.FieldOrderer`")
 	}
 
 	return &fieldOrderReflect{
