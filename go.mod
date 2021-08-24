@@ -10,5 +10,4 @@ require (
 	github.com/shopspring/decimal v1.2.0
 	github.com/smartystreets/goconvey v1.6.4
 	go.uber.org/zap v1.18.1
-	google.golang.org/protobuf v1.27.1
 )
