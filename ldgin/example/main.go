@@ -78,12 +78,20 @@ func testParse(ctx ldgin.Context, req *testParseReq) (*testParseReq, ldgin.Error
 	return req, nil
 }
 
-func initRouter(ctx ldcontext.Context, r gin.IRouter) {
-	r.GET("/test/one_error", ldgin.Wrap(testOneError))
-	r.GET("/test/bind/:uri", ldgin.Wrap(testBind))
-	r.GET("/test/render/", ldgin.Wrap(testRender))
-	r.GET("/test/validate", ldgin.Wrap(testValidate))
-	r.GET("/test/parse", ldgin.Wrap(testParse))
+func testSucc(ctx ldgin.Context) ldgin.Error {
+	return nil
+}
+
+func initRouter(ctx ldcontext.Context, router gin.IRouter) {
+	r := ldgin.WrapGin(router)
+	r = r.Group("/test", midware1)
+	r = r.Use(midware2)
+	r.GET("/one_error", testOneError)
+	r.GET("/bind/:uri", testBind)
+	r.GET("/render/", testRender)
+	r.GET("/validate", testValidate)
+	r.GET("/parse", testParse)
+	r.GET("/midware_error", testSucc, midware3)
 }
 
 func main() {

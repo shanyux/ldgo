@@ -92,3 +92,30 @@ type (
 	ginContext = gin.Context
 	ldContext  = ldcontext.Context
 )
+
+// Router is http router
+type Router interface {
+	Group(relativePath string, midwares ...Midware) Router
+	Use(midwares ...Midware) Router
+
+	Handle(method, path string, handler Handler, midwares ...Midware) Router
+
+	GET(path string, handler Handler, midwares ...Midware) Router
+	POST(path string, handler Handler, midwares ...Midware) Router
+	DELETE(path string, handler Handler, midwares ...Midware) Router
+	PATCH(path string, handler Handler, midwares ...Midware) Router
+	PUT(path string, handler Handler, midwares ...Midware) Router
+	OPTIONS(path string, handler Handler, midwares ...Midware) Router
+	HEAD(path string, handler Handler, midwares ...Midware) Router
+
+	// StaticFile(string, string) Router
+	// Static(string, string) Router
+	// StaticFS(string, http.FileSystem) Router
+}
+
+type routerBase interface {
+	Group(relativePath string, midwares ...Midware) routerBase
+	Use(midwares ...Midware) routerBase
+
+	Handle(method, path string, handler Handler, midwares ...Midware) routerBase
+}

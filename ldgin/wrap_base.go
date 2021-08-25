@@ -41,6 +41,8 @@ func (w *wrapper) returnError(c Context, err Error) {
 
 	c.Set(GIN_KEY_RESPONSE, response)
 	c.JSON(err.Status(), response)
+	c.Abort()
+	// c.AbortWithStatusJSON(err.Status(), response)
 }
 
 func (w *wrapper) returnResponse(c Context, rsp interface{}) {
