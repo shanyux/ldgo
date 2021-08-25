@@ -38,7 +38,7 @@ func testBind(ctx context.Context, req *testBindReq) (*testBindReq, ldgin.Error)
 
 type testRenderer struct{}
 
-func (_ *testRenderer) Render(ctx ldgin.Context) {
+func (_ *testRenderer) Render(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, "abc")
 }
 
@@ -50,7 +50,7 @@ type testValidateReq struct {
 	Valid int64 `form:"valid"`
 }
 
-func (req *testValidateReq) Validate(ctx ldgin.Context) ldgin.Error {
+func (req *testValidateReq) Validate(ctx context.Context) ldgin.Error {
 	if req.Valid != 0 {
 		return lderr.NewError(http.StatusOK, 111, fmt.Sprintf("invalid requet. valid=%v", req.Valid))
 	}

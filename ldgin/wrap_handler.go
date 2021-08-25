@@ -90,7 +90,8 @@ func (w *handler) getOutConv2(outTypes []reflect.Type) outConvType {
 		panicf("%s second output parameter type should be `ldgin.Error` or `error`", w.Name)
 	}
 
-	if w.isType(rspType, _TYPE_OF_RENDERER) {
+	callRender := w.getRenderMethod(rspType)
+	if callRender != nil {
 		return func(c Context, outs []reflect.Value) {
 			out0 := outs[0].Interface()
 			out1 := outs[1].Interface()
@@ -101,26 +102,7 @@ func (w *handler) getOutConv2(outTypes []reflect.Type) outConvType {
 			}
 
 			c.Set(GIN_KEY_RENDERER, out0)
-
-			render := out0.(Renderer)
-			render.Render(c)
-		}
-	}
-
-	if w.isType(rspType, _TYPE_OF_GIN_RENDERER) {
-		return func(c Context, outs []reflect.Value) {
-			out0 := outs[0].Interface()
-			out1 := outs[1].Interface()
-
-			if err := out1; err != nil {
-				w.returnError(c, lderr.Wrap(err.(Error)))
-				return
-			}
-
-			c.Set(GIN_KEY_RENDERER, out0)
-
-			render := out0.(GinRenderer)
-			render.Render(c.Gin())
+			callRender(c, outs[0])
 		}
 	}
 
@@ -134,6 +116,48 @@ func (w *handler) getOutConv2(outTypes []reflect.Type) outConvType {
 		}
 
 		w.returnResponse(c, out0)
+	}
+}
+
+func (w handler) getRenderMethod(t reflect.Type) func(Context, reflect.Value) {
+	name := "Render"
+
+	m, ok := t.MethodByName(name)
+	if !ok {
+		return nil
+	}
+
+	mType := m.Type
+
+	outNum := mType.NumOut()
+	if outNum != 0 {
+		log().Warnf("output parameter count of renderer method should be 0. %s", m.Name)
+		return nil
+	}
+
+	inNum := mType.NumIn()
+	if inNum != 2 {
+		log().Warnf("input parameter count of renderer method should be 1. %s", m.Name)
+		return nil
+	}
+
+	inType := mType.In(1)
+	switch {
+	default:
+		log().Warnf("input parameter type of renderer method should be `ldgin.Context` or `*gin.Context`. %s", m.Name)
+		return nil
+
+	case w.isType(_TYPE_OF_CONTEXT, inType):
+		return func(c Context, v reflect.Value) {
+			ins := [2]reflect.Value{v, reflect.ValueOf(c)}
+			m.Func.Call(ins[:])
+		}
+
+	case w.isType(_TYPE_OF_GIN_CONTEXT, inType):
+		return func(c Context, v reflect.Value) {
+			ins := [2]reflect.Value{v, reflect.ValueOf(c.Gin())}
+			m.Func.Call(ins[:])
+		}
 	}
 }
 

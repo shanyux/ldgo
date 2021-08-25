@@ -19,13 +19,9 @@ type (
 	outConvType = func(Context, []reflect.Value)
 )
 
-// These routines end in 'f' and take a format string.
-
 func panicf(format string, a ...interface{}) {
 	panic(fmt.Sprintf(format, a...))
 }
-
-// These routines do not take a format string
 
 type wrapper struct {
 	Name    string
@@ -152,19 +148,65 @@ func (w *wrapper) isType(child, parent reflect.Type) bool {
 	return false
 }
 
-func (w *wrapper) getParserFunc(t reflect.Type) func(Context, reflect.Value) Error {
-	if w.isType(t, _TYPE_OF_PARSER) {
-		return func(c Context, v reflect.Value) Error {
-			paser, _ := v.Interface().(Parser)
-			return paser.Parse(c)
-		}
+func (w *wrapper) getReqMethodByName(t reflect.Type, name string) func(Context, reflect.Value) Error {
+	m, ok := t.MethodByName(name)
+	if !ok {
+		return nil
 	}
 
-	if w.isType(t, _TYPE_OF_GIN_PARSER) {
+	mType := m.Type
+
+	outNum := mType.NumOut()
+	if outNum != 1 {
+		log().Warnf("output parameter count of request method should be 1. %s", m.Name)
+		return nil
+	}
+
+	outType := mType.Out(0)
+	if !w.isType(outType, _TYPE_OF_ERROR) && !w.isType(outType, _TYPE_OF_COMM_ERROR) {
+		log().Warnf("output parameter type of request method should be `ldgin.Error` or `error`. %s", m.Name)
+		return nil
+	}
+
+	inNum := mType.NumIn()
+	if inNum != 2 {
+		log().Warnf("input parameter count of request method should be 1. %s", m.Name)
+		return nil
+	}
+
+	inType := mType.In(1)
+	switch {
+	default:
+		log().Warnf("input parameter type of request method should be `ldgin.Context` or `*gin.Context`. %s", m.Name)
+		return nil
+
+	case w.isType(_TYPE_OF_CONTEXT, inType):
 		return func(c Context, v reflect.Value) Error {
-			paser, _ := v.Interface().(GinParser)
-			return paser.Parse(c.Gin())
+			ins := [2]reflect.Value{v, reflect.ValueOf(c)}
+			outs := m.Func.Call(ins[:])
+			err := outs[0].Interface()
+			if err == nil {
+				return nil
+			}
+			return lderr.Wrap(err.(error))
 		}
+
+	case w.isType(_TYPE_OF_GIN_CONTEXT, inType):
+		return func(c Context, v reflect.Value) Error {
+			ins := [2]reflect.Value{v, reflect.ValueOf(c.Gin())}
+			outs := m.Func.Call(ins[:])
+			err := outs[0].Interface()
+			if err == nil {
+				return nil
+			}
+			return lderr.Wrap(err.(error))
+		}
+	}
+}
+
+func (w *wrapper) getParserFunc(t reflect.Type) func(Context, reflect.Value) Error {
+	if f := w.getReqMethodByName(t, "Parse"); f != nil {
+		return f
 	}
 
 	return func(c Context, v reflect.Value) Error {
@@ -173,18 +215,8 @@ func (w *wrapper) getParserFunc(t reflect.Type) func(Context, reflect.Value) Err
 }
 
 func (w *wrapper) getValidatorFunc(t reflect.Type) func(Context, reflect.Value) Error {
-	if w.isType(t, _TYPE_OF_VALIDATER) {
-		return func(c Context, v reflect.Value) Error {
-			validator, _ := v.Interface().(Validator)
-			return validator.Validate(c)
-		}
-	}
-
-	if w.isType(t, _TYPE_OF_GIN_VALIDATER) {
-		return func(c Context, v reflect.Value) Error {
-			validator, _ := v.Interface().(GinValidator)
-			return validator.Validate(c.Gin())
-		}
+	if f := w.getReqMethodByName(t, "Validate"); f != nil {
+		return f
 	}
 
 	return nil
