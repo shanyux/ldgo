@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/distroy/ldgo/lderr"
 	"github.com/gin-gonic/gin"
 )
 
@@ -33,15 +34,7 @@ type wrapper struct {
 	OutConv outConvType
 }
 
-func (w *wrapper) returnError(c Context, e interface{}) {
-	err, ok := e.(Error)
-	if !ok {
-		err = commError{
-			message: e.(error).Error(),
-			status:  http.StatusOK,
-			code:    -1,
-		}
-	}
+func (w *wrapper) returnError(c Context, err Error) {
 	response := &CommResponse{
 		Sequence: c.Sequence(),
 		Cost:     time.Since(c.GetBeginTime()).String(),
@@ -82,7 +75,7 @@ func (w *wrapper) getOutConv1(outType reflect.Type) outConvType {
 	return func(c Context, outs []reflect.Value) {
 		out0 := outs[0].Interface()
 		if err := out0; err != nil {
-			w.returnError(c, err)
+			w.returnError(c, lderr.Wrap(err.(error)))
 			return
 		}
 	}
@@ -199,6 +192,15 @@ func (w *wrapper) getValidatorFunc(t reflect.Type) func(Context, reflect.Value) 
 
 func (w *wrapper) call(g *gin.Context, h reflect.Value) {
 	c := GetContext(g)
+	defer func() {
+		if e := recover(); e != nil {
+			err, _ := e.(error)
+			if err == nil {
+				err = fmt.Errorf("%v", e)
+			}
+			w.returnError(c, lderr.Wrap(err))
+		}
+	}()
 
 	ins := make([]reflect.Value, 0, len(w.InConvs))
 	for _, conv := range w.InConvs {

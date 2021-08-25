@@ -11,17 +11,18 @@ import (
 	"net/http"
 
 	"github.com/distroy/ldgo/ldcontext"
+	"github.com/distroy/ldgo/lderr"
 	"github.com/distroy/ldgo/ldgin"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
 
 var (
-	ERR_TEST_ONE_ERROR = ldgin.NewError(http.StatusOK, 1, "test 1")
+	ErrTestOneError = lderr.NewError(http.StatusOK, 1, "test 1")
 )
 
 func testOneError(ctx ldgin.Context) ldgin.Error {
-	return ERR_TEST_ONE_ERROR
+	return ErrTestOneError
 }
 
 type testBindReq struct {
@@ -51,7 +52,7 @@ type testValidateReq struct {
 
 func (req *testValidateReq) Validate(ctx ldgin.Context) ldgin.Error {
 	if req.Valid != 0 {
-		return ldgin.NewError(http.StatusOK, 111, fmt.Sprintf("invalid requet. valid=%v", req.Valid))
+		return lderr.NewError(http.StatusOK, 111, fmt.Sprintf("invalid requet. valid=%v", req.Valid))
 	}
 	return nil
 }
@@ -68,7 +69,7 @@ type testParseReq struct {
 func (req *testParseReq) Parse(ctx ldgin.Context) ldgin.Error {
 	if err := ctx.ShouldBindQuery(req); err != nil {
 		ctx.LogI("ShouldBindQuery() fail", zap.Error(err))
-		return ldgin.ERR_PARSE_REQUEST_FAIL
+		return lderr.ErrParseRequest
 	}
 	return nil
 }

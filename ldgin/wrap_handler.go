@@ -7,6 +7,7 @@ package ldgin
 import (
 	"reflect"
 
+	"github.com/distroy/ldgo/lderr"
 	"github.com/gin-gonic/gin"
 )
 
@@ -42,7 +43,7 @@ func wrapHandler(f Handler) *handler {
 		panicf("%s should be a function", w.Name)
 	}
 
-	w.InConvs = w.getInConvs(t)
+	w.InConvs = w.getAllInConvs(t)
 
 	switch t.NumOut() {
 	case 0:
@@ -73,7 +74,7 @@ func (w *handler) getOutConv1(outType reflect.Type) outConvType {
 	return func(c Context, outs []reflect.Value) {
 		out0 := outs[0].Interface()
 		if err := out0; err != nil {
-			w.returnError(c, err)
+			w.returnError(c, lderr.Wrap(err.(Error)))
 			return
 		}
 
@@ -95,7 +96,7 @@ func (w *handler) getOutConv2(outTypes []reflect.Type) outConvType {
 			out1 := outs[1].Interface()
 
 			if err := out1; err != nil {
-				w.returnError(c, err)
+				w.returnError(c, lderr.Wrap(err.(Error)))
 				return
 			}
 
@@ -112,7 +113,7 @@ func (w *handler) getOutConv2(outTypes []reflect.Type) outConvType {
 			out1 := outs[1].Interface()
 
 			if err := out1; err != nil {
-				w.returnError(c, err)
+				w.returnError(c, lderr.Wrap(err.(Error)))
 				return
 			}
 
@@ -128,7 +129,7 @@ func (w *handler) getOutConv2(outTypes []reflect.Type) outConvType {
 		out1 := outs[1].Interface()
 
 		if err := out1; err != nil {
-			w.returnError(c, err)
+			w.returnError(c, lderr.Wrap(err.(Error)))
 			return
 		}
 

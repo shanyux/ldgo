@@ -6,8 +6,11 @@ package ldgin
 
 import (
 	"github.com/distroy/ldgo/ldcontext"
+	"github.com/distroy/ldgo/lderr"
 	"github.com/gin-gonic/gin"
 )
+
+type Error = lderr.Error
 
 type Parser interface {
 	Parse(Context) Error
@@ -76,12 +79,6 @@ type Handler interface{}
 // func (Context)
 // func (Context, Request) Error
 type Midware interface{}
-
-type Error interface {
-	error
-	Status() int
-	Code() int
-}
 
 type CommResponse struct {
 	ErrCode  int         `json:"code"`
