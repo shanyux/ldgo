@@ -31,10 +31,18 @@ func TestSortInt64s(t *testing.T) {
 
 func TestUniqInt64s(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
+		convey.Convey("nil", func() {
+			l := UniqInt64s(nil)
+			convey.So(l, convey.ShouldBeNil)
+		})
 
 		convey.Convey("[123]", func() {
 			l := []int64{123}
+
 			SortInt64s(l)
+			convey.So(l, convey.ShouldResemble, []int64{123})
+
+			l = UniqInt64s(l)
 			convey.So(l, convey.ShouldResemble, []int64{123})
 		})
 
