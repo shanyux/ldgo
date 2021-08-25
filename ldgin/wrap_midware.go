@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// WrapHandler returns then gin Handler
+// WrapMidware returns then gin Handler
 func WrapMidware(f Midware) func(c *gin.Context) {
 	w := wrapMidware(f)
 	return w.Do
