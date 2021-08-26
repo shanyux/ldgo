@@ -26,6 +26,10 @@ func (w routerWapper) Use(midwares ...Midware) Router {
 	return w
 }
 
+func (w routerWapper) BasePath() string {
+	return w.router.BasePath()
+}
+
 func (w routerWapper) Handle(method, path string, h Handler, ms ...Midware) Router {
 	w.router = w.router.Handle(method, path, h, ms...)
 	return w

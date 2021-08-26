@@ -13,9 +13,6 @@ import (
 
 func WrapGin(router gin.IRouter) Router {
 	return wrapRouter(&ginWapper{
-		ginWapperBase: ginWapperBase{
-			basePath: "/",
-		},
 		router: router,
 	})
 }
@@ -23,6 +20,13 @@ func WrapGin(router gin.IRouter) Router {
 type ginWapperBase struct {
 	basePath string
 	midwares []gin.HandlerFunc
+}
+
+func (w *ginWapperBase) BasePath() string {
+	if len(w.basePath) != 0 {
+		return w.basePath
+	}
+	return "/"
 }
 
 func (w *ginWapperBase) combineMidwares(midwares []Midware) []gin.HandlerFunc {
@@ -53,10 +57,14 @@ func (w *ginWapperBase) combineHandlerMidwares(handler Handler, midwares []Midwa
 }
 
 func (w *ginWapperBase) calculateAbsolutePath(relativePath string) string {
-	absolutePath := w.basePath
+	absolutePath := w.BasePath()
 
 	if relativePath == "" {
 		return absolutePath
+	}
+
+	if !strings.HasPrefix(relativePath, "/") {
+		relativePath = "/" + relativePath
 	}
 
 	finalPath := path.Join(absolutePath, relativePath)

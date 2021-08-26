@@ -23,7 +23,21 @@ func panicf(format string, a ...interface{}) {
 	panic(fmt.Sprintf(format, a...))
 }
 
+type wrapperBase struct{}
+
+func (w wrapperBase) isType(child, parent reflect.Type) bool {
+	if child == parent {
+		return true
+	}
+	if parent.Kind() == reflect.Interface && child.Implements(parent) {
+		return true
+	}
+	return false
+}
+
 type wrapper struct {
+	wrapperBase
+
 	Name    string
 	Type    reflect.Type
 	InConvs []inConvType
@@ -138,16 +152,6 @@ func (w *wrapper) getInConv(t reflect.Type) inConvType {
 		c.Set(GIN_KEY_REQUEST, v.Interface())
 		return v, nil
 	}
-}
-
-func (w *wrapper) isType(child, parent reflect.Type) bool {
-	if child == parent {
-		return true
-	}
-	if parent.Kind() == reflect.Interface && child.Implements(parent) {
-		return true
-	}
-	return false
 }
 
 func (w *wrapper) getReqMethodByName(t reflect.Type, name string) func(Context, reflect.Value) Error {
