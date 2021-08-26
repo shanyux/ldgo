@@ -86,7 +86,7 @@ func (w *gormWapper) panicTxLevelLessZero() {
 	panic("tx level must not be less than zero")
 }
 
-func (w *gormWapper) panicNotInSubTx() {
+func (w *gormWapper) panicSubTxCommittedOrRollbacked() {
 	panic("sub tx can not be committed or rollbacked again")
 }
 
@@ -179,12 +179,10 @@ func (w *gormWapper) Begin() GormDb {
 
 	w = w.clone()
 
-	if w.txLevel > 0 {
-		w.txLevel++
-		return w
+	if w.txLevel == 0 {
+		w.db = w.db.Begin()
 	}
 
-	w.db = w.db.Begin()
 	w.inSubTx = true
 	w.txLevel++
 	return w
@@ -192,7 +190,7 @@ func (w *gormWapper) Begin() GormDb {
 
 func (w *gormWapper) Commit() GormDb {
 	if !w.inSubTx {
-		return w
+		w.panicSubTxCommittedOrRollbacked()
 	}
 
 	w = w.clone()
@@ -203,7 +201,7 @@ func (w *gormWapper) Commit() GormDb {
 	}
 
 	if w.txLevel == 0 {
-		w.db = w.db.Rollback()
+		w.db = w.db.Commit()
 	}
 
 	w.inSubTx = false
@@ -212,7 +210,7 @@ func (w *gormWapper) Commit() GormDb {
 
 func (w *gormWapper) Rollback() GormDb {
 	if !w.inSubTx {
-		return w
+		w.panicSubTxCommittedOrRollbacked()
 	}
 
 	w = w.clone()
@@ -243,7 +241,7 @@ func (w *gormWapper) RollbackUnlessCommitted() GormDb {
 	}
 
 	if w.txLevel == 0 {
-		w.db = w.db.Rollback()
+		w.db = w.db.RollbackUnlessCommitted()
 	}
 
 	w.inSubTx = false
