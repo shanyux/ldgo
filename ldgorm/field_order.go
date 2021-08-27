@@ -9,7 +9,7 @@ import (
 )
 
 type FieldOrderer interface {
-	buildGorm(db GormDb, field string) GormDb
+	buildGorm(db *GormDb, field string) *GormDb
 
 	Order(i int) FieldOrderer
 	Desc() FieldOrderer
@@ -31,7 +31,7 @@ func FieldOrder(i int) FieldOrderer {
 
 func (that fieldOrder) getOrder() int { return that.OrderNum }
 
-func (that fieldOrder) buildGorm(db GormDb, field string) GormDb {
+func (that fieldOrder) buildGorm(db *GormDb, field string) *GormDb {
 	exp := fmt.Sprintf("`%s`", field)
 	if that.IsDesc {
 		exp = fmt.Sprintf("`%s` DESC", field)

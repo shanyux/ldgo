@@ -30,7 +30,7 @@ type testTable struct {
 
 func (_ *testTable) TableName() string { return "test_table" }
 
-func testGetGorm() GormDb {
+func testGetGorm() *GormDb {
 	db, _ := gorm.Open("sqlite3", ":memory:")
 	// convey.So(err, convey.ShouldBeNil)
 	db.LogMode(false)

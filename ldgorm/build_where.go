@@ -23,7 +23,7 @@ var (
 	whereCache = &sync.Map{}
 )
 
-func BuildWhere(db GormDb, where interface{}) GormDb {
+func BuildWhere(db *GormDb, where interface{}) *GormDb {
 	if where == nil {
 		return db
 	}
@@ -81,7 +81,7 @@ func (that *whereReflect) buildWhere(val reflect.Value) whereResult {
 	return res
 }
 
-func (that *whereReflect) buildGorm(db GormDb, val reflect.Value) GormDb {
+func (that *whereReflect) buildGorm(db *GormDb, val reflect.Value) *GormDb {
 	res := that.buildWhere(val)
 	if strings.HasPrefix(res.Query, "(") && strings.HasSuffix(res.Query, ")") {
 		res.Query = res.Query[1 : len(res.Query)-1]

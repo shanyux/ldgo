@@ -41,7 +41,7 @@ type whereOption struct {
 	Where *whereReflect
 }
 
-func (that *whereOption) buildGorm(db GormDb) GormDb {
+func (that *whereOption) buildGorm(db *GormDb) *GormDb {
 	return that.Where.buildGorm(db, that.Value)
 }
 
@@ -97,7 +97,7 @@ func (that whereOptionTree) buildWhere() whereResult {
 	return res
 }
 
-func (that whereOptionTree) buildGorm(db GormDb) GormDb {
+func (that whereOptionTree) buildGorm(db *GormDb) *GormDb {
 	res := that.buildWhere()
 	if strings.HasPrefix(res.Query, "(") && strings.HasSuffix(res.Query, ")") {
 		res.Query = res.Query[1 : len(res.Query)-1]
