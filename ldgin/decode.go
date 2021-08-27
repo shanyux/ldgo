@@ -7,6 +7,7 @@ package ldgin
 import (
 	"reflect"
 
+	"github.com/distroy/ldgo/lderr"
 	"go.uber.org/zap"
 )
 
@@ -17,7 +18,7 @@ func shouldBind(ctx Context, req interface{}) Error {
 	reqV := reflect.ValueOf(req)
 	if reqV.Kind() != reflect.Ptr || reqV.Elem().Kind() != reflect.Struct {
 		ctx.LogE("input request type must be pointer to struct", zap.Stringer("type", reqV.Kind()))
-		return ERR_INVALID_REQUEST_TYPE
+		return lderr.ErrInvalidRequestType
 	}
 
 	reqV = reqV.Elem()
@@ -28,7 +29,7 @@ func shouldBind(ctx Context, req interface{}) Error {
 		if err := g.ShouldBindQuery(reqNew.Interface()); err != nil {
 			ctx.LogE("ShouldBindQuery() fail", zap.Error(err))
 			delRequest(reqT, reqNew)
-			return ERR_PARSE_REQUEST_FAIL
+			return lderr.ErrParseRequest
 		}
 
 		fillHttpRequestByFeilds(reqV, reqNew.Elem(), fields)
@@ -40,7 +41,7 @@ func shouldBind(ctx Context, req interface{}) Error {
 		if err := g.ShouldBindJSON(reqNew.Interface()); err != nil {
 			ctx.LogE("ShouldBindJSON() fail", zap.Error(err))
 			delRequest(reqT, reqNew)
-			return ERR_PARSE_REQUEST_FAIL
+			return lderr.ErrParseRequest
 		}
 
 		fillHttpRequestByFeilds(reqV, reqNew.Elem(), fields)
@@ -52,7 +53,7 @@ func shouldBind(ctx Context, req interface{}) Error {
 		if err := g.ShouldBindUri(reqNew.Interface()); err != nil {
 			ctx.LogE("ShouldBindUri() fail", zap.Error(err))
 			delRequest(reqT, reqNew)
-			return ERR_PARSE_REQUEST_FAIL
+			return lderr.ErrParseRequest
 		}
 
 		fillHttpRequestByFeilds(reqV, reqNew.Elem(), fields)
@@ -64,7 +65,7 @@ func shouldBind(ctx Context, req interface{}) Error {
 		if err := g.ShouldBindHeader(reqNew.Interface()); err != nil {
 			ctx.LogE("ShouldBindHeader() fail", zap.Error(err))
 			delRequest(reqT, reqNew)
-			return ERR_PARSE_REQUEST_FAIL
+			return lderr.ErrParseRequest
 		}
 
 		fillHttpRequestByFeilds(reqV, reqNew.Elem(), fields)

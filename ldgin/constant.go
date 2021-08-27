@@ -32,6 +32,11 @@ const (
 )
 
 var (
+	_TYPE_OF_INTERFACE = reflect.TypeOf((*interface{})(nil)).Elem()
+
+	_TYPE_OF_GIN_HANDLER       = reflect.TypeOf((*gin.HandlerFunc)(nil)).Elem()
+	_TYPE_OF_GIN_HANDLER_CHAIN = reflect.TypeOf((*gin.HandlersChain)(nil)).Elem()
+
 	_TYPE_OF_GIN_CONTEXT = reflect.TypeOf((*gin.Context)(nil))
 	_TYPE_OF_CONTEXT     = reflect.TypeOf((*Context)(nil)).Elem()
 
