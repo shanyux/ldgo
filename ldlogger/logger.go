@@ -8,9 +8,9 @@ import (
 	"go.uber.org/zap"
 )
 
-func newLogger(log loggerWrap) logger {
+func newLogger(log wrapper) logger {
 	return logger{
-		loggerWrap: log,
+		wrapper: log,
 	}
 }
 
@@ -54,7 +54,7 @@ func GetLogger(log *zap.Logger, fields ...zap.Field) Logger {
 }
 
 func GetWrapper(l Logger) LoggerWrapper {
-	return loggerWrap{
+	return wrapper{
 		log:   l.Core(),
 		sugar: l.Sugar(),
 	}
@@ -74,7 +74,7 @@ func WithOptions(l Logger, opts ...zap.Option) Logger {
 }
 
 type logger struct {
-	loggerWrap
+	wrapper
 }
 
 func (l logger) Debug(msg string, fields ...zap.Field) { l.log.Debug(msg, fields...) }
