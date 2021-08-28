@@ -52,8 +52,8 @@ func (that *whereReflect) buildWhere(val reflect.Value) whereResult {
 
 	wheres := make([]whereResult, 0, len(that.Fields))
 	for _, f := range that.Fields {
-		fw, _ := val.Field(f.FieldOrder).Interface().(FieldWherer)
-		if fw == nil || fw.isEmpty() {
+		fw, ok := val.Field(f.FieldOrder).Interface().(FieldWherer)
+		if !ok || fw.isEmpty() {
 			if f.NotEmpty {
 				panic(fmt.Sprintf("the where field must not be empty. %s", f.Name))
 			}
@@ -117,8 +117,8 @@ func getWhereReflect(typ reflect.Type) *whereReflect {
 
 	cache := whereCache
 	if v, _ := cache.Load(typ); v != nil {
-		tmp, _ := v.(*whereReflect)
-		if tmp != nil {
+		tmp, ok := v.(*whereReflect)
+		if ok {
 			return tmp
 		}
 	}

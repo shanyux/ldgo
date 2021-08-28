@@ -61,8 +61,8 @@ func (that *orderReflect) buildOrder(db *gorm.DB, val reflect.Value) *gorm.DB {
 
 	fields := make([]fieldOrderTemp, 0, len(that.Fields))
 	for _, fRef := range that.Fields {
-		field, _ := val.Field(fRef.FieldOrder).Interface().(FieldOrderer)
-		if field == nil {
+		field, ok := val.Field(fRef.FieldOrder).Interface().(FieldOrderer)
+		if !ok {
 			continue
 		}
 		fields = append(fields, fieldOrderTemp{
@@ -107,8 +107,8 @@ func getOrderReflect(typ reflect.Type) *orderReflect {
 
 	cache := oderCache
 	if v, _ := cache.Load(typ); v != nil {
-		tmp, _ := v.(*orderReflect)
-		if tmp != nil {
+		tmp, ok := v.(*orderReflect)
+		if ok {
 			return tmp
 		}
 	}
