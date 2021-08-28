@@ -9,15 +9,12 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-type LoggerWrap interface {
+type LoggerWrapper interface {
 	Sync()
 	Enabled(lvl zapcore.Level) bool
 
 	Core() *zap.Logger
 	Sugar() *zap.SugaredLogger
-
-	With(fields ...zap.Field) LoggerWrap
-	WithOptions(opts ...zap.Option) LoggerWrap
 
 	// Debugf formats according to a format specifier and print the logger
 	Debugf(fmt string, args ...interface{})
@@ -70,7 +67,7 @@ type LoggerWrap interface {
 	V(v int) bool
 }
 
-func newLoggerWrap(log *zap.Logger) loggerWrap {
+func newLoggerWrapper(log *zap.Logger) loggerWrap {
 	return loggerWrap{
 		log:   log,
 		sugar: log.Sugar(),
@@ -80,16 +77,6 @@ func newLoggerWrap(log *zap.Logger) loggerWrap {
 type loggerWrap struct {
 	log   *zap.Logger
 	sugar *zap.SugaredLogger
-}
-
-func (l loggerWrap) With(fields ...zap.Field) LoggerWrap {
-	log := l.log.With(fields...)
-	return newLoggerWrap(log)
-}
-
-func (l loggerWrap) WithOptions(opts ...zap.Option) LoggerWrap {
-	log := l.log.WithOptions(opts...)
-	return newLoggerWrap(log)
 }
 
 func (l loggerWrap) Sync() { l.log.Sync() }

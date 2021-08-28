@@ -17,12 +17,8 @@ func newLogger(log loggerWrap) logger {
 type Logger interface {
 	Sync()
 
-	Wrap() LoggerWrap
 	Core() *zap.Logger
 	Sugar() *zap.SugaredLogger
-
-	With(fields ...zap.Field) Logger
-	WithOptions(opts ...zap.Option) Logger
 
 	// Debugf formats according to a format specifier and print the logger
 	Debugf(fmt string, args ...interface{})
@@ -54,24 +50,32 @@ func GetLogger(log *zap.Logger, fields ...zap.Field) Logger {
 	if len(fields) > 0 {
 		log = log.With(fields...)
 	}
-	return newLogger(newLoggerWrap(log))
+	return newLogger(newLoggerWrapper(log))
+}
+
+func GetWrapper(l Logger) LoggerWrapper {
+	return loggerWrap{
+		log:   l.Core(),
+		sugar: l.Sugar(),
+	}
+}
+
+func With(l Logger, fields ...zap.Field) Logger {
+	if len(fields) == 0 {
+		return l
+	}
+	log := l.Core().With(fields...)
+	return newLogger(newLoggerWrapper(log))
+}
+
+func WithOptions(l Logger, opts ...zap.Option) Logger {
+	log := l.Core().WithOptions(opts...)
+	return newLogger(newLoggerWrapper(log))
 }
 
 type logger struct {
 	loggerWrap
 }
-
-func (l logger) With(fields ...zap.Field) Logger {
-	log := l.log.With(fields...)
-	return newLogger(newLoggerWrap(log))
-}
-
-func (l logger) WithOptions(opts ...zap.Option) Logger {
-	log := l.log.WithOptions(opts...)
-	return newLogger(newLoggerWrap(log))
-}
-
-func (l logger) Wrap() LoggerWrap { return l.loggerWrap }
 
 func (l logger) Debug(msg string, fields ...zap.Field) { l.log.Debug(msg, fields...) }
 func (l logger) Info(msg string, fields ...zap.Field)  { l.log.Info(msg, fields...) }

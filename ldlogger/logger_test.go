@@ -30,30 +30,31 @@ func TestLogger(t *testing.T) {
 		}
 
 		writer := bytes.NewBuffer(nil)
-		l := NewLogger(Writer(writer)).With(zap.String("abc", "xxx"))
+		l := NewLogger(Writer(writer))
+		l = With(l, zap.String("abc", "xxx"))
 
 		convey.Convey("error", func() {
 			l.Error("error message")
 			convey.So(writer.String(), convey.ShouldEqual,
-				"2021-08-22T13:30:58.000+0800|ERROR|-|ldlogger/logger_test.go:36|error message,abc=xxx\n")
+				"2021-08-22T13:30:58.000+0800|ERROR|-|ldlogger/logger_test.go:37|error message,abc=xxx\n")
 		})
 
 		convey.Convey("warn", func() {
 			l.Warn("warn message")
 			convey.So(writer.String(), convey.ShouldEqual,
-				"2021-08-22T13:30:58.000+0800|WARN|-|ldlogger/logger_test.go:42|warn message,abc=xxx\n")
+				"2021-08-22T13:30:58.000+0800|WARN|-|ldlogger/logger_test.go:43|warn message,abc=xxx\n")
 		})
 
 		convey.Convey("info", func() {
 			l.Info("info message")
 			convey.So(writer.String(), convey.ShouldEqual,
-				"2021-08-22T13:30:58.000+0800|INFO|-|ldlogger/logger_test.go:48|info message,abc=xxx\n")
+				"2021-08-22T13:30:58.000+0800|INFO|-|ldlogger/logger_test.go:49|info message,abc=xxx\n")
 		})
 
 		convey.Convey("infoln", func() {
 			l.Infoln("infoln message", &LoggerValue{Name: "abc"})
 			convey.So(writer.String(), convey.ShouldEqual,
-				"2021-08-22T13:30:58.000+0800|INFO|-|ldlogger/logger_test.go:54|infoln message &{abc},abc=xxx\n")
+				"2021-08-22T13:30:58.000+0800|INFO|-|ldlogger/logger_test.go:55|infoln message &{abc},abc=xxx\n")
 		})
 	})
 }
