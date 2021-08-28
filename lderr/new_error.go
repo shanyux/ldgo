@@ -28,7 +28,7 @@ func NewError(status, code int, message string) Error {
 }
 
 func Wrap(err error, def ...Error) Error {
-	if v, _ := err.(Error); v != nil {
+	if v, ok := err.(Error); ok {
 		return v
 	}
 
@@ -50,8 +50,8 @@ func GetCode(code int) Error {
 		return nil
 	}
 
-	err, _ := v.(Error)
-	if err == nil {
+	err, ok := v.(Error)
+	if !ok {
 		return nil
 	}
 	return err
