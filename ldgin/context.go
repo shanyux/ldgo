@@ -35,14 +35,14 @@ func GetGin(c context.Context) *gin.Context {
 }
 
 func GetBeginTime(c context.Context) time.Time {
-	if ctx := getCtxByCtx(c); ctx != nil {
+	if ctx := getCtxByCommCtx(c); ctx != nil {
 		return ctx.beginTime
 	}
 	return time.Time{}
 }
 
 func GetSequence(c context.Context) string {
-	if ctx := getCtxByCtx(c); ctx != nil {
+	if ctx := getCtxByCommCtx(c); ctx != nil {
 		return ctx.sequence
 	}
 	return ""
@@ -68,22 +68,27 @@ func newSequence(g *gin.Context) string {
 	return hex.EncodeToString(uuid[:])
 }
 
-func getCtxByCtx(c context.Context) *Context {
-	var v interface{}
-	if g, ok := c.(*gin.Context); ok {
-		v = g.Value(GinKeyContext)
-	} else {
-		v = c.Value(ctxKeyContext)
+func getCtxByCommCtx(child context.Context) *Context {
+	if g, ok := child.(*gin.Context); ok {
+		return getCtxByGinCtx(g)
 	}
 
-	r, _ := v.(*Context)
+	r, _ := child.Value(ctxKeyContext).(*Context)
 	return r
 }
 
+func getCtxByGinCtx(g *gin.Context) *Context {
+	c, ok := g.Value(GinKeyContext).(*Context)
+	if ok {
+		return c
+	}
+
+	return nil
+}
+
 func newCtxIfNotExists(g *gin.Context) *Context {
-	v := g.Value(GinKeyContext)
-	c, ok := v.(*Context)
-	if !ok {
+	c := getCtxByGinCtx(g)
+	if c == nil {
 		c = newContext(g)
 	}
 	return c

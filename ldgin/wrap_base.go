@@ -48,8 +48,8 @@ type wrapper struct {
 
 func (w *wrapper) returnError(c *Context, err Error) {
 	response := &CommResponse{
-		Sequence: GetSequence(c),
-		Cost:     time.Since(GetBeginTime(c)).String(),
+		Sequence: c.sequence,
+		Cost:     time.Since(c.beginTime).String(),
 		ErrCode:  err.Code(),
 		ErrMsg:   err.Error(),
 		Data:     struct{}{},
@@ -67,8 +67,8 @@ func (w *wrapper) returnResponse(c *Context, rsp interface{}) {
 	}
 
 	response := &CommResponse{
-		Sequence: GetSequence(c),
-		Cost:     time.Since(GetBeginTime(c)).String(),
+		Sequence: c.sequence,
+		Cost:     time.Since(c.beginTime).String(),
 		Data:     rsp,
 	}
 
@@ -231,10 +231,10 @@ func (w *wrapper) getValidatorFunc(t reflect.Type) func(*Context, reflect.Value)
 }
 
 func (w *wrapper) call(g *gin.Context, h reflect.Value) {
-	c := GetContext(g)
+	c := newCtxIfNotExists(g)
 	defer func() {
 		if e := recover(); e != nil {
-			seq := GetSequence(c)
+			seq := c.sequence
 
 			const size = 64 << 10
 			buf := make([]byte, size)
@@ -247,7 +247,7 @@ func (w *wrapper) call(g *gin.Context, h reflect.Value) {
 			if !ok {
 				err = fmt.Errorf("%v", e)
 			}
-			w.returnError(c, lderr.Wrap(err))
+			w.returnError(c, lderr.Wrap(err, lderr.ErrServicePanic))
 		}
 	}()
 
