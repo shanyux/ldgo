@@ -26,8 +26,8 @@ type requestType struct {
 
 func getRequestType(t reflect.Type) *requestType {
 	if v, _ := requestTypes.Load(t); v != nil {
-		reqT, _ := v.(*requestType)
-		if reqT != nil {
+		reqT, ok := v.(*requestType)
+		if ok {
 			return reqT
 		}
 	}

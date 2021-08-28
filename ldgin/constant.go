@@ -13,45 +13,41 @@ import (
 type ctxKeyType int
 
 const (
-	_CTX_KEY_GIN_CONTEXT ctxKeyType = iota
-	_CTX_KEY_BEGIN_TIME
-	_CTX_KEY_SEQUENCE
+	ctxKeyContext ctxKeyType = iota
 )
 
 const (
-	GIN_HEADER_SEQUENCE = "x-ldgin-sequence"
+	GinHeaderSequence = "x-ldgin-sequence"
 )
 
 const (
-	GIN_KEY_CONTEXT = "x-ldgin-context"
-
-	GIN_KEY_ERROR    = "x-ldgin-error"
-	GIN_KEY_REQUEST  = "x-ldgin-request"
-	GIN_KEY_RENDERER = "x-ldgin-renderer"
-	GIN_KEY_RESPONSE = "x-ldgin-response"
+	GinKeyContext  = "x-ldgin-context"
+	GinKeyError    = "x-ldgin-error"
+	GinKeyRequest  = "x-ldgin-request"
+	GinKeyRenderer = "x-ldgin-renderer"
+	GinKeyResponse = "x-ldgin-response"
 )
 
 var (
-	_TYPE_OF_INTERFACE = reflect.TypeOf((*interface{})(nil)).Elem()
+	typeOfInterface = reflect.TypeOf((*interface{})(nil)).Elem()
 
-	_TYPE_OF_GIN_HANDLER       = reflect.TypeOf((*gin.HandlerFunc)(nil)).Elem()
-	_TYPE_OF_GIN_HANDLER_CHAIN = reflect.TypeOf((*gin.HandlersChain)(nil)).Elem()
+	typeOfGinHandlerFunc   = reflect.TypeOf((*gin.HandlerFunc)(nil)).Elem()
+	typeOfGinHandlersChain = reflect.TypeOf((*gin.HandlersChain)(nil)).Elem()
 
-	_TYPE_OF_GIN_CONTEXT = reflect.TypeOf((*gin.Context)(nil))
-	_TYPE_OF_CONTEXT     = reflect.TypeOf((*Context)(nil)).Elem()
+	typeOfGinContext = reflect.TypeOf((*gin.Context)(nil))
+	typeOfContext    = reflect.TypeOf((*Context)(nil))
 
-	_TYPE_OF_COMM_ERROR = reflect.TypeOf((*error)(nil)).Elem()
-	_TYPE_OF_ERROR      = reflect.TypeOf((*Error)(nil)).Elem()
+	typeOfCommError = reflect.TypeOf((*error)(nil)).Elem()
+	typeOfError     = reflect.TypeOf((*Error)(nil)).Elem()
 
-	_TYPE_OF_PARSER          = reflect.TypeOf((*Parser)(nil)).Elem()
-	_TYPE_OF_VALIDATER       = reflect.TypeOf((*Validator)(nil)).Elem()
-	_TYPE_OF_PARSE_VALIDATOR = reflect.TypeOf((*ParseValidator)(nil)).Elem()
+	typeOfParser         = reflect.TypeOf((*Parser)(nil)).Elem()
+	typeOfValidator      = reflect.TypeOf((*Validator)(nil)).Elem()
+	typeOfParseValidator = reflect.TypeOf((*ParseValidator)(nil)).Elem()
 
-	_TYPE_OF_GIN_PARSER          = reflect.TypeOf((*GinParser)(nil)).Elem()
-	_TYPE_OF_GIN_VALIDATER       = reflect.TypeOf((*GinValidator)(nil)).Elem()
-	_TYPE_OF_GIN_PARSE_VALIDATOR = reflect.TypeOf((*GinParseValidator)(nil)).Elem()
+	typeOfGinParser         = reflect.TypeOf((*GinParser)(nil)).Elem()
+	typeOfGinValidator      = reflect.TypeOf((*GinValidator)(nil)).Elem()
+	typeOfGinParseValidator = reflect.TypeOf((*GinParseValidator)(nil)).Elem()
 
-	_TYPE_OF_RENDERER = reflect.TypeOf((*Renderer)(nil)).Elem()
-
-	_TYPE_OF_GIN_RENDERER = reflect.TypeOf((*GinRenderer)(nil)).Elem()
+	typeOfRenderer    = reflect.TypeOf((*Renderer)(nil)).Elem()
+	typeOfGinRenderer = reflect.TypeOf((*GinRenderer)(nil)).Elem()
 )

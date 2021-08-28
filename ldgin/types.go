@@ -89,8 +89,8 @@ type CommResponse struct {
 }
 
 type (
-	ginContext = gin.Context
-	ldContext  = ldcontext.Context
+	ginCtx = gin.Context
+	ldCtx  = ldcontext.Context
 )
 
 // Router is http router
