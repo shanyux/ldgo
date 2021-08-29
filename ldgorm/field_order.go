@@ -6,12 +6,10 @@ package ldgorm
 
 import (
 	"fmt"
-
-	"github.com/jinzhu/gorm"
 )
 
 type FieldOrderer interface {
-	buildGorm(db *gorm.DB, field string) *gorm.DB
+	buildGorm(db *GormDb, field string) *GormDb
 
 	Order(i int) FieldOrderer
 	Desc() FieldOrderer
@@ -33,7 +31,7 @@ func FieldOrder(i int) FieldOrderer {
 
 func (that fieldOrder) getOrder() int { return that.OrderNum }
 
-func (that fieldOrder) buildGorm(db *gorm.DB, field string) *gorm.DB {
+func (that fieldOrder) buildGorm(db *GormDb, field string) *GormDb {
 	exp := fmt.Sprintf("`%s`", field)
 	if that.IsDesc {
 		exp = fmt.Sprintf("`%s` DESC", field)

@@ -13,7 +13,6 @@ import (
 	"sync"
 
 	"github.com/distroy/ldgo/ldconv"
-	"github.com/jinzhu/gorm"
 )
 
 const _WHERE_TAG = "gormwhere"
@@ -24,7 +23,7 @@ var (
 	whereCache = &sync.Map{}
 )
 
-func BuildWhere(db *gorm.DB, where interface{}) *gorm.DB {
+func BuildWhere(db *GormDb, where interface{}) *GormDb {
 	if where == nil {
 		return db
 	}
@@ -82,7 +81,7 @@ func (that *whereReflect) buildWhere(val reflect.Value) whereResult {
 	return res
 }
 
-func (that *whereReflect) buildGorm(db *gorm.DB, val reflect.Value) *gorm.DB {
+func (that *whereReflect) buildGorm(db *GormDb, val reflect.Value) *GormDb {
 	res := that.buildWhere(val)
 	if strings.HasPrefix(res.Query, "(") && strings.HasSuffix(res.Query, ")") {
 		res.Query = res.Query[1 : len(res.Query)-1]

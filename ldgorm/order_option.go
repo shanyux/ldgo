@@ -9,8 +9,6 @@ import (
 	"reflect"
 	"sort"
 	"sync"
-
-	"github.com/jinzhu/gorm"
 )
 
 const _ORDER_TAG = "gormorder"
@@ -40,7 +38,7 @@ type orderOption struct {
 	Order *orderReflect
 }
 
-func (that *orderOption) buildGorm(db *gorm.DB) *gorm.DB {
+func (that *orderOption) buildGorm(db *GormDb) *GormDb {
 	return that.Order.buildOrder(db, that.Value)
 }
 
@@ -54,7 +52,7 @@ type orderReflect struct {
 	Fields []*fieldOrderReflect
 }
 
-func (that *orderReflect) buildOrder(db *gorm.DB, val reflect.Value) *gorm.DB {
+func (that *orderReflect) buildOrder(db *GormDb, val reflect.Value) *GormDb {
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()
 	}

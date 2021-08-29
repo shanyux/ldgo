@@ -6,14 +6,13 @@ package ldgorm
 
 import (
 	"github.com/distroy/ldgo/ldmath"
-	"github.com/jinzhu/gorm"
 )
 
 type Option interface {
-	buildGorm(db *gorm.DB) *gorm.DB
+	buildGorm(db *GormDb) *GormDb
 }
 
-func ApplyOptions(db *gorm.DB, opts ...Option) *gorm.DB {
+func ApplyOptions(db *GormDb, opts ...Option) *GormDb {
 	for _, opt := range opts {
 		db = opt.buildGorm(db)
 	}
@@ -25,7 +24,7 @@ type pagingOption struct {
 	Pagesize int64
 }
 
-func (that pagingOption) buildGorm(db *gorm.DB) *gorm.DB {
+func (that pagingOption) buildGorm(db *GormDb) *GormDb {
 	if that.Pagesize > 0 {
 		that.Page = ldmath.MaxInt64(1, that.Page)
 		offset := (that.Page - 1) * that.Pagesize
