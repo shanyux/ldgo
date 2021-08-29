@@ -53,5 +53,5 @@ func NewLogger(opts ...Option) Logger {
 	core := zapcore.NewTee(zapCores...)
 	zlog := zap.New(core, defaultOptions...)
 
-	return newLogger(newLoggerWrap(zlog))
+	return newLogger(newLoggerWrapper(zlog))
 }

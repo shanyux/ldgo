@@ -21,7 +21,7 @@ var (
 	ErrTestOneError = lderr.NewError(http.StatusOK, 1, "test 1")
 )
 
-func testOneError(ctx ldgin.Context) ldgin.Error {
+func testOneError(ctx *ldgin.Context) ldgin.Error {
 	return ErrTestOneError
 }
 
@@ -42,7 +42,7 @@ func (_ *testRenderer) Render(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, "abc")
 }
 
-func testRender(ctx ldgin.Context) (*testRenderer, ldgin.Error) {
+func testRender(ctx *ldgin.Context) (*testRenderer, ldgin.Error) {
 	return &testRenderer{}, nil
 }
 
@@ -57,7 +57,7 @@ func (req *testValidateReq) Validate(ctx context.Context) ldgin.Error {
 	return nil
 }
 
-func testValidate(ctx ldgin.Context, req *testValidateReq) ldgin.Error {
+func testValidate(ctx *ldgin.Context, req *testValidateReq) ldgin.Error {
 	return nil
 }
 
@@ -66,25 +66,34 @@ type testParseReq struct {
 	Query2 int64  `form:"query2"`
 }
 
-func (req *testParseReq) Parse(ctx ldgin.Context) ldgin.Error {
+func (req *testParseReq) Parse(ctx *ldgin.Context) ldgin.Error {
 	if err := ctx.ShouldBindQuery(req); err != nil {
-		ctx.LogI("ShouldBindQuery() fail", zap.Error(err))
+		ctx.LogE("ShouldBindQuery() fail", zap.Error(err))
 		return lderr.ErrParseRequest
 	}
 	return nil
 }
 
-func testParse(ctx ldgin.Context, req *testParseReq) (*testParseReq, ldgin.Error) {
+func testParse(ctx *ldgin.Context, req *testParseReq) (*testParseReq, ldgin.Error) {
 	return req, nil
 }
 
-func testSucc(ctx ldgin.Context) ldgin.Error {
+func testSucc(ctx *ldgin.Context) ldgin.Error {
+	return nil
+}
+
+func testPanic(c context.Context) ldgin.Error {
+	var p *int
+	*p = 1
 	return nil
 }
 
 func initRouter(ctx ldcontext.Context, router gin.IRouter) {
 	r := ldgin.WrapGin(router)
+
 	r = r.Group("/test", midware1)
+	r.GET("panic", testPanic)
+
 	r = r.Use(midware2)
 	r.GET("/one_error", testOneError)
 	r.GET("/bind/:uri", testBind)

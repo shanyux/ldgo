@@ -35,6 +35,7 @@ func (w *GormDb) clone() *GormDb {
 	return &c
 }
 
+// New clone a new db connection without search conditions
 func (w *GormDb) New() *GormDb {
 	w = w.clone()
 	w.gormDb = w.gormDb.New()
@@ -54,7 +55,7 @@ func (w *GormDb) Set(db *gorm.DB) *GormDb {
 func (w *GormDb) WithLogger(l ldlogger.Logger) *GormDb {
 	w = w.clone()
 	w.gormDb = w.gormDb.LogMode(true)
-	w.gormDb.SetLogger(l.Wrap())
+	w.gormDb.SetLogger(ldlogger.GetWrapper(l))
 	return w
 }
 

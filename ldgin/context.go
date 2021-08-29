@@ -10,28 +10,16 @@ import (
 	"time"
 
 	"github.com/distroy/ldgo/ldcontext"
-	"github.com/distroy/ldgo/ldlogger"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
-var _ context.Context = Context{}
-var _ ldcontext.Context = Context{}
+var _ context.Context = &Context{}
+var _ ldcontext.Context = &Context{}
 
-type Context struct {
-	*ginContext
-	ldContext
-}
-
-func GetContext(g *gin.Context) Context {
-	v := g.Value(GIN_KEY_CONTEXT)
-	c, ok := v.(Context)
-	if !ok {
-		c = newContext(g)
-	}
-	return c
-
+func GetContext(g *gin.Context) *Context {
+	return newCtxIfNotExists(g)
 }
 
 func GetGin(c context.Context) *gin.Context {
@@ -39,13 +27,40 @@ func GetGin(c context.Context) *gin.Context {
 		return g
 	}
 
-	if v, ok := c.(Context); ok {
+	if v, ok := c.Value(ctxKeyContext).(*Context); ok {
 		return v.Gin()
 	}
 
-	v := c.Value(_CTX_KEY_GIN_CONTEXT)
-	g, _ := v.(*gin.Context)
-	return g
+	return nil
+}
+
+func GetBeginTime(c context.Context) time.Time {
+	if ctx := getCtxByCommCtx(c); ctx != nil {
+		return ctx.beginTime
+	}
+	return time.Time{}
+}
+
+func GetSequence(c context.Context) string {
+	if ctx := getCtxByCommCtx(c); ctx != nil {
+		return ctx.sequence
+	}
+	return ""
+}
+
+func GetRequest(c context.Context) interface{}  { return GetGin(c).Value(GinKeyRequest) }
+func GetRenderer(c context.Context) interface{} { return GetGin(c).Value(GinKeyRenderer) }
+
+func GetError(c context.Context) Error {
+	v := GetGin(c).Value(GinKeyError)
+	r, _ := v.(Error)
+	return r
+}
+
+func GetResponse(c context.Context) *CommResponse {
+	v := GetGin(c).Value(GinKeyResponse)
+	r, _ := v.(*CommResponse)
+	return r
 }
 
 func newSequence(g *gin.Context) string {
@@ -53,96 +68,80 @@ func newSequence(g *gin.Context) string {
 	return hex.EncodeToString(uuid[:])
 }
 
-func newContext(g *gin.Context) Context {
-	c := ldcontext.NewContext(g)
-	c = c.WithValue(_CTX_KEY_GIN_CONTEXT, g)
-
-	now := time.Now()
-	c = c.WithValue(_CTX_KEY_BEGIN_TIME, now)
-
-	seq := newSequence(g)
-	c = c.With(zap.String("sequence", seq))
-	g.Header(GIN_HEADER_SEQUENCE, seq)
-	c = c.WithValue(_CTX_KEY_SEQUENCE, seq)
-
-	ctx := Context{
-		ginContext: g,
-		ldContext:  c,
+func getCtxByCommCtx(child context.Context) *Context {
+	if g, ok := child.(*gin.Context); ok {
+		return getCtxByGinCtx(g)
 	}
-	g.Set(GIN_KEY_CONTEXT, ctx)
-	return ctx
+
+	r, _ := child.Value(ctxKeyContext).(*Context)
+	return r
 }
 
-func (c Context) IsValid() bool {
-	return c == Context{}
+func getCtxByGinCtx(g *gin.Context) *Context {
+	c, ok := g.Value(GinKeyContext).(*Context)
+	if ok {
+		return c
+	}
+
+	return nil
 }
 
-func (c Context) Gin() *gin.Context { return c.ginContext }
-
-func (c Context) GetRequest() interface{}  { return c.Gin().Value(GIN_KEY_REQUEST) }
-func (c Context) GetRenderer() interface{} { return c.Gin().Value(GIN_KEY_RENDERER) }
-
-func (c Context) GetBeginTime() time.Time {
-	v := c.Value(_CTX_KEY_BEGIN_TIME)
-	t, _ := v.(time.Time)
-	return t
-}
-
-func (c Context) Sequence() string {
-	v := c.Value(_CTX_KEY_SEQUENCE)
-	t, _ := v.(string)
-	return t
-}
-
-func (c Context) GetError() Error {
-	v := c.Gin().Value(GIN_KEY_ERROR)
-	err, _ := v.(Error)
-	return err
-}
-
-func (c Context) GetResponse() *CommResponse {
-	v := c.Gin().Value(GIN_KEY_RESPONSE)
-	rsp, _ := v.(*CommResponse)
-	return rsp
-}
-
-func (c Context) Copy() Context {
-	c.ginContext = c.Gin().Copy()
-	c.ldContext = c.ldContext.WithValue(_CTX_KEY_GIN_CONTEXT, c.ginContext)
+func newCtxIfNotExists(g *gin.Context) *Context {
+	c := getCtxByGinCtx(g)
+	if c == nil {
+		c = newContext(g)
+	}
 	return c
 }
 
-func (c Context) Err() error                      { return c.ldContext.Err() }
-func (c Context) Done() <-chan struct{}           { return c.ldContext.Done() }
-func (c Context) Deadline() (time.Time, bool)     { return c.ldContext.Deadline() }
-func (c Context) Value(k interface{}) interface{} { return c.ldContext.Value(k) }
+func newContext(g *gin.Context) *Context {
+	now := time.Now()
+	seq := newSequence(g)
 
-func (c Context) With(fields ...zap.Field) ldcontext.Context {
-	c.ldContext = c.ldContext.With(fields...)
+	ctx := ldcontext.NewContext(g, zap.String("sequence", seq))
+
+	c := &Context{
+		ginCtx:    g,
+		ldCtx:     ctx,
+		beginTime: now,
+		sequence:  seq,
+	}
+
+	g.Header(GinHeaderSequence, seq)
+	g.Set(GinKeyContext, c)
 	return c
 }
 
-func (c Context) WithLogger(l ldlogger.Logger) ldcontext.Context {
-	c.ldContext = c.ldContext.WithLogger(l)
+type Context struct {
+	*ginCtx
+	ldCtx
+
+	beginTime time.Time
+	sequence  string
+}
+
+func (c *Context) String() string { return ldcontext.ContextName(c.ldCtx) + ".WithGin" }
+
+func (c *Context) clone() *Context {
+	copy := *c
+	return &copy
+}
+
+func (c *Context) Copy() *Context {
+	c = c.clone()
+	c.ginCtx = c.ginCtx.Copy()
 	return c
 }
 
-func (c Context) WithValue(k, v interface{}) ldcontext.Context {
-	c.ldContext = c.ldContext.WithValue(k, v)
-	return c
-}
+func (c *Context) Gin() *gin.Context { return c.ginCtx }
 
-func (c Context) WithCancel() ldcontext.Context {
-	c.ldContext = c.ldContext.WithCancel()
-	return c
-}
+func (c *Context) Err() error                  { return c.ldCtx.Err() }
+func (c *Context) Done() <-chan struct{}       { return c.ldCtx.Done() }
+func (c *Context) Deadline() (time.Time, bool) { return c.ldCtx.Deadline() }
 
-func (c Context) WithDeadline(deadline time.Time) ldcontext.Context {
-	c.ldContext = c.ldContext.WithDeadline(deadline)
-	return c
-}
-
-func (c Context) WithTimeout(timeout time.Duration) ldcontext.Context {
-	c.ldContext = c.ldContext.WithTimeout(timeout)
-	return c
+func (c *Context) Value(key interface{}) interface{} {
+	if key == ctxKeyContext {
+		return c
+	}
+	return c.ldCtx.Value(key)
 }

@@ -12,7 +12,7 @@ import (
 )
 
 // shouldBind will decode header/uri/json/query(form)
-func shouldBind(ctx Context, req interface{}) Error {
+func shouldBind(ctx *Context, req interface{}) Error {
 	g := ctx.Gin()
 
 	reqV := reflect.ValueOf(req)

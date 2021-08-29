@@ -5,6 +5,7 @@
 package ldgin
 
 import (
+	"log"
 	"reflect"
 
 	"github.com/distroy/ldgo/lderr"
@@ -67,11 +68,11 @@ func wrapHandler(f Handler) *handler {
 
 func (w *handler) getOutConv1(outType reflect.Type) outConvType {
 	errType := outType
-	if !w.isType(errType, _TYPE_OF_ERROR) && !w.isType(errType, _TYPE_OF_COMM_ERROR) {
+	if !w.isType(errType, typeOfError) && !w.isType(errType, typeOfCommError) {
 		panicf("%s output parameter type should be `ldgin.Error` or `error`", w.Name)
 	}
 
-	return func(c Context, outs []reflect.Value) {
+	return func(c *Context, outs []reflect.Value) {
 		out0 := outs[0].Interface()
 		if err := out0; err != nil {
 			w.returnError(c, lderr.Wrap(err.(Error)))
@@ -86,13 +87,13 @@ func (w *handler) getOutConv2(outTypes []reflect.Type) outConvType {
 	rspType := outTypes[0]
 	errType := outTypes[1]
 
-	if !w.isType(errType, _TYPE_OF_ERROR) && !w.isType(errType, _TYPE_OF_COMM_ERROR) {
+	if !w.isType(errType, typeOfError) && !w.isType(errType, typeOfCommError) {
 		panicf("%s second output parameter type should be `ldgin.Error` or `error`", w.Name)
 	}
 
 	callRender := w.getRenderMethod(rspType)
 	if callRender != nil {
-		return func(c Context, outs []reflect.Value) {
+		return func(c *Context, outs []reflect.Value) {
 			out0 := outs[0].Interface()
 			out1 := outs[1].Interface()
 
@@ -101,12 +102,12 @@ func (w *handler) getOutConv2(outTypes []reflect.Type) outConvType {
 				return
 			}
 
-			c.Set(GIN_KEY_RENDERER, out0)
+			c.Set(GinKeyRenderer, out0)
 			callRender(c, outs[0])
 		}
 	}
 
-	return func(c Context, outs []reflect.Value) {
+	return func(c *Context, outs []reflect.Value) {
 		out0 := outs[0].Interface()
 		out1 := outs[1].Interface()
 
@@ -119,7 +120,7 @@ func (w *handler) getOutConv2(outTypes []reflect.Type) outConvType {
 	}
 }
 
-func (w handler) getRenderMethod(t reflect.Type) func(Context, reflect.Value) {
+func (w handler) getRenderMethod(t reflect.Type) func(*Context, reflect.Value) {
 	name := "Render"
 
 	m, ok := t.MethodByName(name)
@@ -131,30 +132,30 @@ func (w handler) getRenderMethod(t reflect.Type) func(Context, reflect.Value) {
 
 	outNum := mType.NumOut()
 	if outNum != 0 {
-		log().Warnf("output parameter count of renderer method should be 0. %s", m.Name)
+		log.Printf("output parameter count of renderer method should be 0. %s", m.Name)
 		return nil
 	}
 
 	inNum := mType.NumIn()
 	if inNum != 2 {
-		log().Warnf("input parameter count of renderer method should be 1. %s", m.Name)
+		log.Printf("input parameter count of renderer method should be 1. %s", m.Name)
 		return nil
 	}
 
 	inType := mType.In(1)
 	switch {
 	default:
-		log().Warnf("input parameter type of renderer method should be `ldgin.Context` or `*gin.Context`. %s", m.Name)
+		log.Printf("input parameter type of renderer method should be `*ldgin.Context` or `*gin.Context`. %s", m.Name)
 		return nil
 
-	case w.isType(_TYPE_OF_CONTEXT, inType):
-		return func(c Context, v reflect.Value) {
+	case w.isType(typeOfContext, inType):
+		return func(c *Context, v reflect.Value) {
 			ins := [2]reflect.Value{v, reflect.ValueOf(c)}
 			m.Func.Call(ins[:])
 		}
 
-	case w.isType(_TYPE_OF_GIN_CONTEXT, inType):
-		return func(c Context, v reflect.Value) {
+	case w.isType(typeOfGinContext, inType):
+		return func(c *Context, v reflect.Value) {
 			ins := [2]reflect.Value{v, reflect.ValueOf(c.Gin())}
 			m.Func.Call(ins[:])
 		}

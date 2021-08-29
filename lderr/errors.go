@@ -11,6 +11,9 @@ var (
 	ErrUnkown       = NewError(http.StatusOK, -1, "unknown error")
 	ErrServicePanic = NewError(http.StatusServiceUnavailable, -2, "service panic")
 
+	ErrCtxCanceled         = NewError(http.StatusOK, -11, "context canceled")
+	ErrCtxDeadlineExceeded = NewError(http.StatusOK, -12, "context deadline exceeded")
+
 	ErrNonAuthoritativeInfo = NewError(http.StatusNonAuthoritativeInfo, -101, "http non authoritative info")
 	ErrUnauthorized         = NewError(http.StatusUnauthorized, -102, "http unauthorized")
 	ErrInternalServerError  = NewError(http.StatusInternalServerError, -103, "http internal server error")

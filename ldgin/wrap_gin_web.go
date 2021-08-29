@@ -50,11 +50,11 @@ func wrapGinWebRouter(r interface{}) *ginWebWapper {
 		panicf("1st and 2nd input parameter of router handle must be `string`. %s", methodName)
 	}
 
-	if typ := methodT.In(3); !_TYPE_OF_GIN_HANDLER.ConvertibleTo(typ) {
+	if typ := methodT.In(3); !typeOfGinHandlerFunc.ConvertibleTo(typ) {
 		panicf("3rd input parameter of router handle must be `interface{}`. %s", methodName)
 	}
 
-	if typ := methodT.In(4); !_TYPE_OF_GIN_HANDLER_CHAIN.ConvertibleTo(typ) {
+	if typ := methodT.In(4); !typeOfGinHandlersChain.ConvertibleTo(typ) {
 		panicf("3rd input parameter of router handle must be `[]func(*gin.Context)`. %s", methodName)
 	}
 

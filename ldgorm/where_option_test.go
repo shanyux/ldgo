@@ -35,8 +35,9 @@ func testGetGorm() *GormDb {
 	// convey.So(err, convey.ShouldBeNil)
 	db.LogMode(false)
 	db.CreateTable(&testTable{})
-	db.SetLogger(ldlogger.Console().WithOptions(zap.IncreaseLevel(zap.ErrorLevel)).Wrap())
-	return NewGorm(db)
+	log := ldlogger.WithOptions(ldlogger.Console(), zap.IncreaseLevel(zap.ErrorLevel))
+	db.SetLogger(ldlogger.GetWrapper(log))
+	return NewGormDb(db)
 }
 
 func testGetWhereFromSql(scope *gorm.Scope) string {
