@@ -10,8 +10,7 @@ import (
 )
 
 type bytesFromString struct {
-	Slice reflect.SliceHeader
-	Data  unsafe.Pointer
+	reflect.SliceHeader
 }
 
 func BytesToStr(b []byte) string {
@@ -35,12 +34,11 @@ func StrToBytesUnsafe(s string) []byte {
 	// return *(*[]byte)(unsafe.Pointer(&s))
 	sh := (*reflect.StringHeader)(unsafe.Pointer(&s))
 	bh := &bytesFromString{
-		Slice: reflect.SliceHeader{
+		SliceHeader: reflect.SliceHeader{
 			Data: sh.Data,
 			Len:  sh.Len,
 			Cap:  sh.Len,
 		},
-		Data: unsafe.Pointer(sh.Data),
 	}
 	return *(*[]byte)(unsafe.Pointer(bh))
 }
