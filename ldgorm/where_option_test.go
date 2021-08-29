@@ -30,13 +30,13 @@ type testTable struct {
 
 func (_ *testTable) TableName() string { return "test_table" }
 
-func testGetGorm() *gorm.DB {
+func testGetGorm() *GormDb {
 	db, _ := gorm.Open("sqlite3", ":memory:")
 	// convey.So(err, convey.ShouldBeNil)
 	db.LogMode(false)
 	db.CreateTable(&testTable{})
 	db.SetLogger(ldlogger.Console().WithOptions(zap.IncreaseLevel(zap.ErrorLevel)).Wrap())
-	return db
+	return NewGorm(db)
 }
 
 func testGetWhereFromSql(scope *gorm.Scope) string {
