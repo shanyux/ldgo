@@ -142,17 +142,6 @@ func AsFloat64(val interface{}, def ...float64) float64 {
 	return 0
 }
 
-func AsBigFloat64(val interface{}, def ...*big.Float) *big.Float {
-	v, err := ToBigFloat(val)
-	if err == nil {
-		return v
-	}
-	if len(def) > 0 {
-		return def[0]
-	}
-	return bigFloatZero()
-}
-
 func AsString(val interface{}, def ...string) string {
 	v, err := ToString(val)
 	if err == nil {
@@ -162,4 +151,26 @@ func AsString(val interface{}, def ...string) string {
 		return def[0]
 	}
 	return ""
+}
+
+func asBigFloat(val interface{}, def ...*big.Float) *big.Float {
+	v, err := toBigFloat(val)
+	if err == nil {
+		return v
+	}
+	if len(def) > 0 {
+		return def[0]
+	}
+	return newBigFloatZero()
+}
+
+func asDecimal(val interface{}, def ...decimalNumber) decimalNumber {
+	v, err := toDecimal(val)
+	if err == nil {
+		return v
+	}
+	if len(def) > 0 {
+		return def[0]
+	}
+	return newDecimalZero()
 }

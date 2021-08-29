@@ -16,6 +16,6 @@ var (
 	_BIG_FLOAT_ZERO = (&big.Float{}).SetInt64(0)
 )
 
-func bigFloatZero() *big.Float {
-	return (&big.Float{}).SetInt64(0)
+func newBigFloatZero() *big.Float {
+	return (&big.Float{}).Copy(_BIG_FLOAT_ZERO)
 }

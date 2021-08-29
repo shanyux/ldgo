@@ -16,7 +16,7 @@ type testCloneStruct struct {
 	Struct *testCloneStruct
 }
 
-func Test_Clone(t *testing.T) {
+func TestClone(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
 		convey.Convey("*int", func() {
 			v0 := new(int)
@@ -67,7 +67,7 @@ func Test_Clone(t *testing.T) {
 	})
 }
 
-func Test_DeepClone(t *testing.T) {
+func TestDeepClone(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
 		convey.Convey("*int", func() {
 			v0 := new(int)
