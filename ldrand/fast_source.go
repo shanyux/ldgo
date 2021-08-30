@@ -33,22 +33,22 @@ var fastSourceLast4Bits [16]byte = [...]byte{
 }
 
 var fastSourceXor [16]uint64 = [...]uint64{
-	0x3b78bb846a443720,
-	0x772c3f9b061acda0,
+	0x3b78bb846a443726,
+	0x772c3f9b061acdac,
 	0x62dfa820aede2c50,
-	0xa51729651df84540,
-	0x93c695f2456306c0,
-	0x2aa1107ecc9b60f0,
-	0x19fd8406df31d830,
-	0xf0ea0719370c8f90,
-	0x418e4a4878a79b60,
-	0xe49476ea842fb1e0,
-	0x0c09febc20b9e3d0,
-	0xdf63eca7538d7280,
-	0x56b2d3cd92e65e70,
-	0xbe5552d1e952f900,
-	0xc83bc15ff1c0a4b0,
-	0x8d406d33bb751a10,
+	0xa51729651df84541,
+	0x93c695f2456306c5,
+	0x2aa1107ecc9b60f2,
+	0x19fd8406df31d838,
+	0xf0ea0719370c8f9e,
+	0x418e4a4878a79b6b,
+	0xe49476ea842fb1e4,
+	0x0c09febc20b9e3df,
+	0xdf63eca7538d728d,
+	0x56b2d3cd92e65e77,
+	0xbe5552d1e952f903,
+	0xc83bc15ff1c0a4ba,
+	0x8d406d33bb751a19,
 }
 
 func NewFastSource(seed int64) rand.Source64 {
