@@ -5,6 +5,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"math/rand"
 	"os"
@@ -19,22 +20,29 @@ func printf(format string, args ...interface{}) {
 }
 
 func main() {
-	r := rand.New(ldrand.NewFastSource(time.Now().Unix()))
-	printf("uint64:")
-	for i := 0; i < 50; i++ {
-		printf("%#0.16x", r.Uint64())
-	}
-	printf("")
+	seed := flag.Int64("name", time.Now().UnixNano(), "")
+	count := flag.Int("count", 10, "")
+	mod := flag.Int("mod", 0, "")
+	flag.Parse()
 
-	printf("uint32:")
-	for i := 0; i < 50; i++ {
-		printf("%#0.8x", r.Uint32())
-	}
-	printf("")
+	r := rand.New(ldrand.NewFastSource(*seed))
 
-	printf("mod 16:")
-	for i := 0; i < 50; i++ {
-		printf("%d", r.Intn(16))
+	switch *mod {
+	case 0:
+		printf("uint64:")
+		for i := 0; i < *count; i++ {
+			printf("%#0.16x", r.Uint64())
+		}
+	case -1:
+		printf("uint32:")
+		for i := 0; i < *count; i++ {
+			printf("%#0.8x", r.Uint32())
+		}
+
+	default:
+		printf("mod %d:", *mod)
+		for i := 0; i < *count; i++ {
+			printf("%d", r.Intn(*mod))
+		}
 	}
-	printf("")
 }
