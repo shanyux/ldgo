@@ -14,18 +14,18 @@ const (
 )
 
 var fastSourceLast4Bits [16]byte = [...]byte{
-	0x5,
+	0x6,
+	0xd,
 	0x1,
 	0x3,
 	0x0,
-	0x6,
+	0x7,
 	0xe,
 	0xf,
-	0x7,
+	0x5,
 	0xa,
 	0x2,
 	0x9,
-	0xd,
 	0x8,
 	0xb,
 	0x4,
@@ -58,13 +58,13 @@ func NewFastSource(seed int64) rand.Source64 {
 }
 
 type fastSource struct {
+	xor  [16]uint64
 	seed uint64
 }
 
 func (s *fastSource) Seed(seed int64) {
-	n := uint64(seed)
-	// initFastSource(seed, s.xor)
-	atomic.StoreUint64(&s.seed, s.next(&n))
+	n := initFastSourceXor(seed, s.xor[:])
+	atomic.StoreUint64(&s.seed, n)
 }
 
 func (s *fastSource) Int63() int64 {
@@ -72,15 +72,15 @@ func (s *fastSource) Int63() int64 {
 }
 
 func (s *fastSource) Uint64() uint64 {
-	return s.next(&s.seed)
+	return fastSourceNext(&s.seed, s.xor[:])
 }
 
-func (_ *fastSource) next(seed *uint64) uint64 {
+func fastSourceNext(seed *uint64, xor []uint64) uint64 {
 	n := atomic.AddUint64(seed, fastSourceStep)
 	b := n & 0xf
 
 	x := n
-	x = x ^ fastSourceXor[b]
+	x = x ^ xor[b]
 	x = x - (x & 0xf)
 
 	b = uint64(fastSourceLast4Bits[b]) ^ ((n >> 4) & 0xf) ^ ((n >> 8) & 0xf)
@@ -88,20 +88,23 @@ func (_ *fastSource) next(seed *uint64) uint64 {
 	return x
 }
 
-func initFastSource(seed int64, xor [16]uint64) {
+func initFastSourceXor(seed int64, xor []uint64) uint64 {
 	buf := [16]byte{}
 	for i := range buf {
 		buf[i] = byte(i)
 	}
 
-	r := rand.New(rand.NewSource(seed))
+	r := rand.New(&fastSource{
+		xor:  fastSourceXor,
+		seed: uint64(seed),
+	})
+
 	for i := 0; i < 16; i++ {
 		r.Shuffle(len(buf), func(i, j int) { buf[i], buf[j] = buf[j], buf[i] })
 		for j := range xor {
 			xor[j] = (xor[j] << 4) | uint64(buf[j])
 		}
 	}
-	// for i := range xor {
-	// 	xor[i] ^= fastSourceXor[i]
-	// }
+
+	return r.Uint64()
 }

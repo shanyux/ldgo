@@ -20,7 +20,7 @@ func printf(format string, args ...interface{}) {
 }
 
 func main() {
-	seed := flag.Int64("name", time.Now().UnixNano(), "")
+	seed := flag.Int64("seed", time.Now().UnixNano(), "")
 	count := flag.Int("count", 10, "")
 	mod := flag.Int("mod", 0, "")
 	flag.Parse()
