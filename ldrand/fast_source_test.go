@@ -26,6 +26,7 @@ import (
  */
 func BenchmarkRandGo(b *testing.B) {
 	rand.Seed(time.Now().UnixNano())
+	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			rand.Intn(100)
@@ -36,6 +37,7 @@ func BenchmarkRandGo(b *testing.B) {
 func BenchmarkRand(b *testing.B) {
 	// rand := newRandom()
 	r := rand.New(NewFastSource(rand.Int63()))
+	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			r.Intn(100)
@@ -53,7 +55,7 @@ func (t *testFastSource) Test() {
 	diff := t.Diff
 	name := fmt.Sprintf("mod=%d,scale=%d,diff=%d", mod, scale, diff)
 	convey.Convey(name, func() {
-		r := rand.New(NewFastSource(rand.Int63()))
+		r := rand.New(NewFastSource(time.Now().UnixNano()))
 
 		counts := make([]int, mod)
 		for i := 0; i < mod*scale; i++ {
@@ -72,6 +74,8 @@ func (t *testFastSource) Test() {
 
 func Test_fastSource(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
+		r := rand.New(NewFastSource(time.Now().UnixNano()))
+
 		(&testFastSource{
 			Mod:   100,
 			Scale: 100000,
@@ -93,7 +97,6 @@ func Test_fastSource(t *testing.T) {
 			const diff = 200
 
 			countsPer4Bits := [16][16]int{}
-			r := rand.New(NewFastSource(rand.Int63()))
 			for i := 0; i < scale*16; i++ {
 				v := r.Uint64()
 				for i := range countsPer4Bits {
@@ -115,7 +118,6 @@ func Test_fastSource(t *testing.T) {
 			const diff = 200
 
 			countsPer4Bits := [8][256]int{}
-			r := rand.New(NewFastSource(rand.Int63()))
 			for i := 0; i < scale*256; i++ {
 				v := r.Uint64()
 				for i := range countsPer4Bits {
@@ -129,6 +131,19 @@ func Test_fastSource(t *testing.T) {
 				ldsort.SortInts(v[:])
 				ctx.LogI("", zap.Int("postion", i), zap.Int("minCount", v[0]), zap.Int("maxCount", v[255]))
 				convey.So(v[255]-v[0], convey.ShouldBeLessThan, diff)
+			}
+		})
+
+		convey.Convey("check result if repeated", func() {
+			const times = 100 * 10000
+
+			m := make(map[uint64]struct{}, times)
+			for i := 0; i < times; i++ {
+				x := r.Uint64()
+				if _, ok := m[x]; ok {
+					t.Fatalf("number repeated. %d", x)
+				}
+				m[x] = struct{}{}
 			}
 		})
 	})
