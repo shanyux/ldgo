@@ -75,3 +75,34 @@ func Bytes(n int) []byte {
 	globalRand.Read(b)
 	return b
 }
+
+// A Rand is a source of random numbers.
+type Rand interface {
+	Int() int
+	Int31() int32
+	Int63() int64
+
+	Uint() uint
+	Uint32() uint32
+	Uint64() uint64
+
+	Intn(n int) int
+	Int31n(n int32) int32
+	Int63n(n int64) int64
+
+	// Float32 returns, as a float32, a pseudo-random number in [0.0,1.0).
+	Float32() float32
+	// Float64 returns, as a float64, a pseudo-random number in [0.0,1.0).
+	Float64() float64
+
+	Shuffle(n int, swap func(i, j int))
+
+	Read(p []byte) (int, error)
+}
+
+func New(src rand.Source) Rand {
+	if r, ok := src.(Rand); ok {
+		return r
+	}
+	return randWrapper{Rand: rand.New(src)}
+}

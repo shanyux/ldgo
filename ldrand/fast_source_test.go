@@ -36,7 +36,7 @@ func BenchmarkRandGo(b *testing.B) {
 
 func BenchmarkRand(b *testing.B) {
 	// rand := newRandom()
-	r := rand.New(NewFastSource(rand.Int63()))
+	r := New(NewFastSource(rand.Int63()))
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
@@ -55,7 +55,8 @@ func (t *testFastSource) Test() {
 	diff := t.Diff
 	name := fmt.Sprintf("mod=%d,scale=%d,diff=%d", mod, scale, diff)
 	convey.Convey(name, func() {
-		r := rand.New(NewFastSource(time.Now().UnixNano()))
+		r := New(NewFastSource(time.Now().UnixNano()))
+		ctx := ldcontext.Console()
 
 		counts := make([]int, mod)
 		for i := 0; i < mod*scale; i++ {
@@ -66,7 +67,6 @@ func (t *testFastSource) Test() {
 
 		ldsort.SortInts(counts)
 
-		ctx := ldcontext.Console()
 		ctx.LogI("", zap.Int("minCount", counts[0]), zap.Int("maxCount", counts[mod-1]))
 		convey.So(counts[mod-1]-counts[0], convey.ShouldBeLessThan, diff)
 	})
@@ -74,7 +74,8 @@ func (t *testFastSource) Test() {
 
 func Test_fastSource(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
-		r := rand.New(NewFastSource(time.Now().UnixNano()))
+		r := New(NewFastSource(time.Now().UnixNano()))
+		ctx := ldcontext.Console()
 
 		(&testFastSource{
 			Mod:   100,
@@ -84,17 +85,17 @@ func Test_fastSource(t *testing.T) {
 		(&testFastSource{
 			Mod:   16,
 			Scale: 100000,
-			Diff:  100,
+			Diff:  2000,
 		}).Test()
 		(&testFastSource{
 			Mod:   256,
 			Scale: 100000,
-			Diff:  100,
+			Diff:  2000,
 		}).Test()
 
 		convey.Convey("check the probability of very 4 bits", func() {
 			const scale = 100000
-			const diff = 200
+			const diff = 4000
 
 			countsPer4Bits := [16][16]int{}
 			for i := 0; i < scale*16; i++ {
@@ -105,7 +106,6 @@ func Test_fastSource(t *testing.T) {
 				}
 			}
 
-			ctx := ldcontext.Console()
 			for i, v := range countsPer4Bits {
 				ldsort.SortInts(v[:])
 				ctx.LogI("", zap.Int("postion", i), zap.Int("minCount", v[0]), zap.Int("maxCount", v[15]))
@@ -113,9 +113,36 @@ func Test_fastSource(t *testing.T) {
 			}
 		})
 
+		convey.Convey("check the probability of very 4 bits with previous number", func() {
+			const scale = 100000
+			const diff = 2000
+
+			countsPer4BitsWithPrev := [16][16][16]int{}
+			var prevNum uint64
+			for i := 0; i < scale*16*16; i++ {
+				v := r.Uint64()
+				p := prevNum
+				prevNum = v
+				for i := range countsPer4BitsWithPrev {
+					countsPer4BitsWithPrev[i][p&0xf][v&0xf]++
+					v = v >> 4
+					p = p >> 4
+				}
+			}
+
+			for i, v := range countsPer4BitsWithPrev {
+				for j, w := range v {
+					// ldsort.SortInts(w[:])
+					// ctx.LogI("", zap.Int("postion", i), zap.Int("prev", j), zap.Int("minCount", w[0]), zap.Int("maxCount", w[15]))
+					ctx.LogI("", zap.Int("postion", i), zap.Int("prev", j), zap.Ints("v", w[:]))
+					// convey.So(w[15]-w[0], convey.ShouldBeLessThan, diff)
+				}
+			}
+		})
+
 		convey.Convey("check the probability of very byte", func() {
 			const scale = 100000
-			const diff = 200
+			const diff = 4000
 
 			countsPer4Bits := [8][256]int{}
 			for i := 0; i < scale*256; i++ {
@@ -126,7 +153,6 @@ func Test_fastSource(t *testing.T) {
 				}
 			}
 
-			ctx := ldcontext.Console()
 			for i, v := range countsPer4Bits {
 				ldsort.SortInts(v[:])
 				ctx.LogI("", zap.Int("postion", i), zap.Int("minCount", v[0]), zap.Int("maxCount", v[255]))

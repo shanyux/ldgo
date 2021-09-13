@@ -7,7 +7,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"math/rand"
 	"os"
 	"time"
 
@@ -25,7 +24,7 @@ func main() {
 	mod := flag.Int("mod", 0, "")
 	flag.Parse()
 
-	r := rand.New(ldrand.NewFastSource(*seed))
+	r := ldrand.New(ldrand.NewFastSource(*seed))
 
 	switch *mod {
 	case 0:
