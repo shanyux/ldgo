@@ -2,7 +2,7 @@
  * Copyright (C) distroy
  */
 
-package gorm2
+package gorm
 
 import (
 	"github.com/distroy/ldgo/ldlogger"
