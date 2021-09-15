@@ -12,5 +12,7 @@ import (
 type GormDb = gorm2.GormDb
 
 func NewGormDb(db *gorm.DB) *GormDb {
-	return gorm2.NewGormDb(db)
+	g := &GormDb{}
+	g.Set(db)
+	return g
 }
