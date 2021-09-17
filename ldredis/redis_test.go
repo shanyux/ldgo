@@ -21,7 +21,7 @@ func Test_InitRedisClient(t *testing.T) {
 					Double: []ldhook.Values{{nil}},
 				},
 			})
-			cfg := &RedisConfig{
+			cfg := &Config{
 				Cluster:  true,
 				Addrs:    []string{"1.1.1.1"},
 				Password: "now password",
@@ -36,7 +36,7 @@ func Test_InitRedisClient(t *testing.T) {
 					Double: []ldhook.Values{{nil}},
 				},
 			})
-			cfg := &RedisConfig{
+			cfg := &Config{
 				Cluster:  false,
 				Addrs:    []string{"1.1.1.1"},
 				Addr:     "1.1.1.1",

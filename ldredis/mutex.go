@@ -5,9 +5,11 @@
 package ldredis
 
 import (
+	"sync/atomic"
 	"time"
 
 	"github.com/distroy/ldgo/ldcontext"
+	"github.com/distroy/ldgo/ldlogger"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -23,21 +25,8 @@ const (
 	_MUTEX_MIN_TIMEOUT  = 10 * time.Second
 )
 
-type Mutex interface {
-	SetRedis(redis Redis) Mutex
-	SetInterval(time.Duration) Mutex
-	SetTimeout(time.Duration) Mutex
-
-	Key() string
-
-	Events() <-chan MutexEvent
-
-	Lock(ctx ldcontext.Context, key string) error
-	Unlock(ctx ldcontext.Context) error
-}
-
-type mutex struct {
-	redis         Redis
+type Mutex struct {
+	redis         *Redis
 	events        chan MutexEvent
 	ctx           ldcontext.Context
 	key           string
@@ -45,70 +34,84 @@ type mutex struct {
 	interval      time.Duration
 	timeout       time.Duration
 	lastHeartbeat time.Time
-	locked        bool
+	locked        int32
 }
 
-func NewMutex(redis Redis) Mutex {
-	return &mutex{
-		redis:    redis,
+func NewMutex(redis *Redis) *Mutex {
+	rds := &Mutex{
 		interval: 5 * time.Second,
-		timeout:  55 * time.Minute,
+		timeout:  2 * time.Minute,
 	}
+	rds.SetRedis(redis)
+	return rds
 }
 
-func (that *mutex) SetRedis(redis Redis) Mutex {
-	that.redis = redis
-	return that
+func (m *Mutex) clone() *Mutex {
+	c := *m
+	return &c
 }
-func (that *mutex) SetInterval(d time.Duration) Mutex {
+
+func (m *Mutex) SetRedis(redis *Redis) *Mutex {
+	m = m.clone()
+
+	redis = redis.WithLogger(ldlogger.Discard())
+	redis = redis.WithRetry(1)
+
+	m.redis = redis
+	return m
+}
+func (m *Mutex) SetInterval(d time.Duration) *Mutex {
+	m = m.clone()
+
 	if d < _MUTEX_MIN_INTERVAL {
 		d = _MUTEX_MIN_INTERVAL
 	}
-	that.interval = d
+	m.interval = d
 
-	if timeout := that.getMinTimeout(d); that.timeout < timeout {
-		that.timeout = timeout
+	if timeout := m.getMinTimeout(d); m.timeout < timeout {
+		m.timeout = timeout
 	}
-	return that
+	return m
 }
 
-func (that *mutex) SetTimeout(d time.Duration) Mutex {
-	that.timeout = that.getMinTimeout(d)
-	return that
+func (m *Mutex) SetTimeout(d time.Duration) *Mutex {
+	m = m.clone()
+	m.timeout = m.getMinTimeout(d)
+	return m
 }
 
-func (that *mutex) getMinTimeout(d time.Duration) time.Duration {
+func (m *Mutex) getMinTimeout(d time.Duration) time.Duration {
 	if d < _MUTEX_MIN_TIMEOUT {
 		d = _MUTEX_MIN_TIMEOUT
 	}
 
-	if t := that.interval * 3; d < t {
+	if t := m.interval * 3; d < t {
 		d = t
 	}
 
 	return d
 }
 
-func (that *mutex) getExpiration() time.Duration {
-	return that.interval + that.timeout
+func (m *Mutex) getExpiration() time.Duration {
+	return m.interval + m.timeout
 }
 
-func (that *mutex) Key() string               { return that.key }
-func (that *mutex) Events() <-chan MutexEvent { return that.events }
+func (m *Mutex) Key() string               { return m.key }
+func (m *Mutex) Events() <-chan MutexEvent { return m.events }
 
-func (that *mutex) Lock(ctx ldcontext.Context, key string) error {
-	ctx = ctx.With(zap.String("key", key))
-	ctx = ctx.WithCancel()
+func (m *Mutex) Lock(ctx ldcontext.Context, key string) error {
+	ctx = ldcontext.WithLogger(ctx, ldcontext.GetLogger(ctx), zap.String("key", key))
+	ctx = ldcontext.WithCancel(ctx)
 
-	if that.locked {
-		ctx.LogE("redis mutex had locked", zap.String("old", that.key))
+	if atomic.LoadInt32(&m.locked) != 0 {
+		ctx.LogE("redis mutex had locked", zap.String("old", m.key))
 		return ErrMutexLocked
 	}
 
-	cli := that.redis.Client()
+	cli := m.redis.Client()
 	val := uuid.New().String()
 
-	cmd := cli.SetNX(key, val, that.getExpiration())
+	cmd := cli.SetNX(key, val, m.getExpiration())
 	if err := cmd.Err(); err != nil {
 		ctx.LogE("redis mutex setnx fail", zap.Error(err))
 		return err
@@ -119,34 +122,44 @@ func (that *mutex) Lock(ctx ldcontext.Context, key string) error {
 		return ErrMutexLocking
 	}
 
-	that.locked = true
-	that.ctx = ctx
-	that.key = key
-	that.token = val
-	that.events = make(chan MutexEvent, 1)
+	if ok := atomic.CompareAndSwapInt32(&m.locked, 0, 1); !ok {
+		cli.Del(key)
+		return ErrMutexLocked
+	}
 
-	go that.goroutine(ctx, key, val)
+	m.ctx = ctx
+	m.key = key
+	m.token = val
+	m.events = make(chan MutexEvent, 1)
+
+	go m.goroutine(ctx, key, val)
 
 	ctx.LogD("redis mutex lock succ")
 	return nil
 }
 
-func (that *mutex) Unlock(ctx ldcontext.Context) error {
-	ctx = ctx.With(zap.String("key", that.key))
-	if !that.locked {
-		ctx.LogW("redis mutex has not locked")
+func (m *Mutex) Unlock(ctx ldcontext.Context) error {
+	ctx = ldcontext.WithLogger(ctx, ldcontext.GetLogger(ctx), zap.String("key", m.key))
+
+	locked := atomic.LoadInt32(&m.locked)
+	if locked == 0 {
+		ctx.LogW("redis mutex has not been locked")
 		return nil
 	}
 
-	cli := that.redis.Client()
-	key := that.key
-	val := that.token
+	cli := m.redis.Client()
+	key := m.key
+	val := m.token
+
+	if ok := atomic.CompareAndSwapInt32(&m.locked, locked, 0); !ok {
+		ctx.LogW("redis mutex has been unlocked by another")
+		return nil
+	}
 
 	ctx.LogD("redis mutex will be unlock")
-	that.locked = false
-	that.ctx.TryCancel()
 
-	if err := that.checkToken(ctx, key, val); err != nil {
+	ldcontext.TryCancel(ctx)
+	if err := m.checkToken(ctx, key, val); err != nil {
 		return err
 	}
 
@@ -159,43 +172,49 @@ func (that *mutex) Unlock(ctx ldcontext.Context) error {
 	return nil
 }
 
-func (that *mutex) goroutine(ctx ldcontext.Context, key, val string) {
-	ticker := time.NewTicker(that.interval)
+func (m *Mutex) goroutine(ctx ldcontext.Context, key, val string) {
+	ctx.LogD("redis mutex goroutine start")
+	ticker := time.NewTicker(m.interval)
+
 	defer func() {
+		ctx.LogD("redis mutex goroutine stop")
+
+		ldcontext.TryCancel(ctx)
+		atomic.StoreInt32(&m.locked, 0)
+
+		close(m.events)
+		m.events = nil
+
 		ticker.Stop()
-		ctx.TryCancel()
-		close(that.events)
-		that.events = nil
-		that.locked = false
 	}()
 
-	that.lastHeartbeat = time.Now()
+	m.lastHeartbeat = time.Now()
 	for {
 		select {
 		case <-ctx.Done():
 			return
 
 		case now := <-ticker.C:
-			that.heartbeat(ctx, now, key, val)
+			m.heartbeat(ctx, now, key, val)
 		}
 	}
 }
 
-func (that *mutex) heartbeat(ctx ldcontext.Context, now time.Time, key, val string) {
-	switch err := that.checkToken(ctx, key, val); err {
+func (m *Mutex) heartbeat(ctx ldcontext.Context, now time.Time, key, val string) {
+	switch err := m.checkToken(ctx, key, val); err {
 	case nil:
-		that.lastHeartbeat = now
+		m.lastHeartbeat = now
 	case ErrMutexNotExists, ErrMutexNotMatch:
-		that.doHeartbeatError(ctx)
+		m.doHeartbeatError(ctx)
 	default:
-		that.checkHeartbeatTime(ctx)
+		m.checkHeartbeatTime(ctx)
 	}
 }
 
-func (that *mutex) checkToken(ctx ldcontext.Context, key, val string) error {
-	cli := that.redis.Client()
+func (m *Mutex) checkToken(ctx ldcontext.Context, key, val string) error {
+	cli := m.redis.Client()
 	{
-		cmd := cli.Expire(key, that.getExpiration())
+		cmd := cli.Expire(key, m.getExpiration())
 		if err := cmd.Err(); err != nil {
 			ctx.LogE("redis mutex expire fail", zap.Error(err))
 			return err
@@ -224,23 +243,20 @@ func (that *mutex) checkToken(ctx ldcontext.Context, key, val string) error {
 	return nil
 }
 
-func (that *mutex) checkHeartbeatTime(ctx ldcontext.Context) {
-	if time.Since(that.lastHeartbeat) < that.timeout {
+func (m *Mutex) checkHeartbeatTime(ctx ldcontext.Context) {
+	if time.Since(m.lastHeartbeat) < m.timeout {
 		return
 	}
 
 	ctx.LogW("redis mutex fail too much")
-	that.doHeartbeatError(ctx)
+	m.doHeartbeatError(ctx)
 }
 
-func (that *mutex) doHeartbeatError(ctx ldcontext.Context) {
-	defer func() {
-		that.ctx.TryCancel()
-	}()
+func (m *Mutex) doHeartbeatError(ctx ldcontext.Context) {
 	select {
 	case <-ctx.Done():
 		break
-	case that.events <- MutexEvent_Deleted:
+	case m.events <- MutexEvent_Deleted:
 		break
 	default:
 		break
