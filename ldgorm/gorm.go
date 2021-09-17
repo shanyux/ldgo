@@ -13,6 +13,6 @@ type GormDb = gorm2.GormDb
 
 func NewGormDb(db *gorm.DB) *GormDb {
 	g := &GormDb{}
-	g.Set(db)
+	g = g.Set(db)
 	return g
 }
