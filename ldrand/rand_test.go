@@ -12,8 +12,8 @@ import (
 
 func TestRandString(t *testing.T) {
 	convey.Convey("", t, func() {
-		a := RandString(16)
-		b := RandString(16)
+		a := String(16)
+		b := String(16)
 		convey.So(a, convey.ShouldHaveLength, 16)
 		convey.So(b, convey.ShouldHaveLength, 16)
 		convey.So(a, convey.ShouldNotEqual, b)
