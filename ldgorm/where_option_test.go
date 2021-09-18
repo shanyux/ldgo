@@ -11,7 +11,6 @@ import (
 	"github.com/distroy/ldgo/ldlogger"
 	"github.com/jinzhu/gorm"
 	"github.com/smartystreets/goconvey/convey"
-	"go.uber.org/zap"
 )
 
 type testFilter struct {
@@ -31,13 +30,13 @@ type testTable struct {
 func (_ *testTable) TableName() string { return "test_table" }
 
 func testGetGorm() *GormDb {
-	db, _ := gorm.Open("sqlite3", ":memory:")
+	v, _ := gorm.Open("sqlite3", ":memory:")
+
+	db := NewGormDb(v)
 	// convey.So(err, convey.ShouldBeNil)
-	db.LogMode(false)
+	db.SetLogger(ldlogger.GetWrapper(ldlogger.Discard()))
 	db.CreateTable(&testTable{})
-	log := ldlogger.WithOptions(ldlogger.Console(), zap.IncreaseLevel(zap.ErrorLevel))
-	db.SetLogger(ldlogger.GetWrapper(log))
-	return NewGormDb(db)
+	return db
 }
 
 func testGetWhereFromSql(scope *gorm.Scope) string {

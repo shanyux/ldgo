@@ -18,6 +18,7 @@ type CancelFunc = context.CancelFunc
 
 func Default() Context { return defaultContext }
 func Console() Context { return consoleContext }
+func Discard() Context { return discardContext }
 
 type Context interface {
 	context.Context
