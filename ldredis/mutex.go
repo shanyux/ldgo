@@ -30,6 +30,7 @@ type Mutex struct {
 	redis         *Redis
 	events        chan MutexEvent
 	ctx           ldcontext.Context
+	keyCtx        ldcontext.Context
 	key           string
 	token         string
 	interval      time.Duration
@@ -40,10 +41,11 @@ type Mutex struct {
 
 func NewMutex(redis *Redis) *Mutex {
 	m := &Mutex{
+		ctx:      ldcontext.Discard(),
 		interval: 5 * time.Second,
 		timeout:  2 * time.Minute,
 	}
-	m = m.SetRedis(redis)
+	m = m.WithRedis(redis)
 	return m
 }
 
@@ -52,7 +54,7 @@ func (m *Mutex) clone() *Mutex {
 	return &c
 }
 
-func (m *Mutex) SetRedis(redis *Redis) *Mutex {
+func (m *Mutex) WithRedis(redis *Redis) *Mutex {
 	m = m.clone()
 
 	redis = redis.WithLogger(ldlogger.Discard())
@@ -61,7 +63,18 @@ func (m *Mutex) SetRedis(redis *Redis) *Mutex {
 	m.redis = redis
 	return m
 }
-func (m *Mutex) SetInterval(d time.Duration) *Mutex {
+
+func (m *Mutex) WithContext(ctx Context) *Mutex {
+	m = m.clone()
+
+	m.redis = m.redis.WithContext(ctx)
+	m.redis = m.redis.WithLogger(ldlogger.Discard())
+	m.ctx = ctx
+
+	return m
+}
+
+func (m *Mutex) WithInterval(d time.Duration) *Mutex {
 	m = m.clone()
 
 	if d < _MUTEX_MIN_INTERVAL {
@@ -75,7 +88,7 @@ func (m *Mutex) SetInterval(d time.Duration) *Mutex {
 	return m
 }
 
-func (m *Mutex) SetTimeout(d time.Duration) *Mutex {
+func (m *Mutex) WithTimeout(d time.Duration) *Mutex {
 	m = m.clone()
 	m.timeout = m.getMinTimeout(d)
 	return m
@@ -100,7 +113,8 @@ func (m *Mutex) getExpiration() time.Duration {
 func (m *Mutex) Key() string               { return m.key }
 func (m *Mutex) Events() <-chan MutexEvent { return m.events }
 
-func (m *Mutex) Lock(ctx ldcontext.Context, key string) error {
+func (m *Mutex) Lock(key string) error {
+	ctx := m.ctx
 	ctx = ldcontext.WithLogger(ctx, ldcontext.GetLogger(ctx), zap.String("key", key))
 	ctx = ldcontext.WithCancel(ctx)
 
@@ -128,8 +142,8 @@ func (m *Mutex) Lock(ctx ldcontext.Context, key string) error {
 		return ErrMutexLocked
 	}
 
-	m.ctx = ctx
 	m.key = key
+	m.keyCtx = ctx
 	m.token = val
 	m.events = make(chan MutexEvent, 1)
 
@@ -139,8 +153,8 @@ func (m *Mutex) Lock(ctx ldcontext.Context, key string) error {
 	return nil
 }
 
-func (m *Mutex) Unlock(ctx ldcontext.Context) error {
-	ctx = ldcontext.WithLogger(ctx, ldcontext.GetLogger(ctx), zap.String("key", m.key))
+func (m *Mutex) Unlock() error {
+	ctx := m.keyCtx
 
 	locked := atomic.LoadInt32(&m.locked)
 	if locked == 0 {
@@ -181,7 +195,7 @@ func (m *Mutex) goroutine(ctx ldcontext.Context, key, val string) {
 		ctx.LogD("redis mutex goroutine stop")
 
 		ldcontext.TryCancel(ctx)
-		atomic.StoreInt32(&m.locked, 0)
+		atomic.CompareAndSwapInt32(&m.locked, 1, 0)
 
 		close(m.events)
 		m.events = nil
@@ -190,26 +204,31 @@ func (m *Mutex) goroutine(ctx ldcontext.Context, key, val string) {
 	}()
 
 	m.lastHeartbeat = time.Now()
-	for {
+	for running := true; running; {
 		select {
 		case <-ctx.Done():
 			return
 
 		case now := <-ticker.C:
-			m.heartbeat(ctx, now, key, val)
+			running = m.heartbeat(ctx, now, key, val)
 		}
 	}
 }
 
-func (m *Mutex) heartbeat(ctx ldcontext.Context, now time.Time, key, val string) {
+func (m *Mutex) heartbeat(ctx ldcontext.Context, now time.Time, key, val string) bool {
 	switch err := m.checkToken(ctx, key, val); err {
 	case nil:
 		m.lastHeartbeat = now
+
 	case ErrMutexNotExists, ErrMutexNotMatch:
 		m.doHeartbeatError(ctx)
+		return false
+
 	default:
-		m.checkHeartbeatTime(ctx)
+		return m.checkHeartbeatTime(ctx)
 	}
+
+	return true
 }
 
 func (m *Mutex) checkToken(ctx ldcontext.Context, key, val string) error {
@@ -244,22 +263,19 @@ func (m *Mutex) checkToken(ctx ldcontext.Context, key, val string) error {
 	return nil
 }
 
-func (m *Mutex) checkHeartbeatTime(ctx ldcontext.Context) {
+func (m *Mutex) checkHeartbeatTime(ctx ldcontext.Context) bool {
 	if time.Since(m.lastHeartbeat) < m.timeout {
-		return
+		return true
 	}
 
 	ctx.LogW("redis mutex fail too much")
 	m.doHeartbeatError(ctx)
+	return false
 }
 
 func (m *Mutex) doHeartbeatError(ctx ldcontext.Context) {
 	select {
 	case <-ctx.Done():
-		break
 	case m.events <- MutexEvent_Deleted:
-		break
-	default:
-		break
 	}
 }
