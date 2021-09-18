@@ -7,9 +7,14 @@ package ldrand
 import (
 	"math/rand"
 	"sync/atomic"
+	"unsafe"
 )
 
-var _ Rand = (*fastSource)(nil)
+var (
+	_ Rand          = (*fastSource)(nil)
+	_ rand.Source   = (*fastSource)(nil)
+	_ rand.Source64 = (*fastSource)(nil)
+)
 
 const (
 	fastSourceStep = 0x1753715715313157
@@ -34,11 +39,33 @@ var fastSourceXor [16]uint64 = [...]uint64{
 	0x8d406d33bb751a19,
 }
 
+// noescape hides a pointer from escape analysis.  noescape is
+// the identity function but escape analysis doesn't think the
+// output depends on the input. noescape is inlined and currently
+// compiles down to zero instructions.
+// USE CAREFULLY!
+// This was copied from the runtime; see issues 23382 and 7921.
+//go:nosplit
+//go:nocheckptr
+func noescape(p unsafe.Pointer) unsafe.Pointer {
+	x := uintptr(p)
+	return unsafe.Pointer(x ^ 0)
+}
+
 func NewFastSource(seed int64) rand.Source64 {
-	s := &fastSource{}
-	s.Seed(seed)
-	s.rand = rand.New(s)
-	return s
+	r := &fastSource{}
+	r.Seed(seed)
+	r.rand = rand.New((*fastSource)(noescape(unsafe.Pointer(r))))
+	return r
+}
+
+func newFastSource(seed int64, xor [16]uint64) *fastSource {
+	src := &fastSource{
+		xor:  xor,
+		seed: uint64(seed),
+	}
+	src.rand = rand.New(src)
+	return src
 }
 
 type fastSource struct {
@@ -187,6 +214,8 @@ func fastSourceNext(seed *uint64, xor []uint64) uint64 {
 
 	b = b ^ ((x >> 16) & 0xf)
 	b = b ^ ((x >> 20) & 0xf)
+	b = b ^ ((x >> 24) & 0xf)
+	b = b ^ ((x >> 28) & 0xf)
 
 	x = x | uint64(b)
 	return x
@@ -198,10 +227,7 @@ func initFastSourceXor(seed int64, xor []uint64) uint64 {
 		buf[i] = byte(i)
 	}
 
-	r := rand.New(&fastSource{
-		xor:  fastSourceXor,
-		seed: uint64(seed),
-	})
+	r := New(newFastSource(seed, fastSourceXor))
 
 	for i := 0; i < 16; i++ {
 		r.Shuffle(len(buf), func(i, j int) { buf[i], buf[j] = buf[j], buf[i] })

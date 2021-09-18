@@ -18,11 +18,11 @@ import (
 
 /*
  * pkg: github.com/distroy/ldgo/ldrand
- * cpu: Intel(R) Core(TM) i7-4770HQ CPU @ 2.20GHz
+ * cpu: Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz
  * BenchmarkRandGo
- * BenchmarkRandGo-8       10440508               112.6 ns/op
+ * BenchmarkRandGo-12      18746797                63.71 ns/op
  * BenchmarkRand
- * BenchmarkRand-8         43819591                27.69 ns/op
+ * BenchmarkRand-12        68977040                17.42 ns/op
  */
 func BenchmarkRandGo(b *testing.B) {
 	rand.Seed(time.Now().UnixNano())
