@@ -38,12 +38,12 @@ type Mutex struct {
 }
 
 func NewMutex(redis *Redis) *Mutex {
-	rds := &Mutex{
+	m := &Mutex{
 		interval: 5 * time.Second,
 		timeout:  2 * time.Minute,
 	}
-	rds.SetRedis(redis)
-	return rds
+	m = m.SetRedis(redis)
+	return m
 }
 
 func (m *Mutex) clone() *Mutex {
@@ -108,7 +108,7 @@ func (m *Mutex) Lock(ctx ldcontext.Context, key string) error {
 		return ErrMutexLocked
 	}
 
-	cli := m.redis.Client()
+	cli := m.redis
 	val := uuid.New().String()
 
 	cmd := cli.SetNX(key, val, m.getExpiration())
@@ -147,7 +147,7 @@ func (m *Mutex) Unlock(ctx ldcontext.Context) error {
 		return nil
 	}
 
-	cli := m.redis.Client()
+	cli := m.redis
 	key := m.key
 	val := m.token
 
@@ -212,7 +212,7 @@ func (m *Mutex) heartbeat(ctx ldcontext.Context, now time.Time, key, val string)
 }
 
 func (m *Mutex) checkToken(ctx ldcontext.Context, key, val string) error {
-	cli := m.redis.Client()
+	cli := m.redis
 	{
 		cmd := cli.Expire(key, m.getExpiration())
 		if err := cmd.Err(); err != nil {
