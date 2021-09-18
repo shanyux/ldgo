@@ -17,15 +17,6 @@ type cmdable interface {
 	Context() context.Context
 
 	WrapProcess(fn func(oldProcess func(Cmder) error) func(Cmder) error)
-
-	Do(args ...interface{}) *Cmd
-	Process(cmd Cmder) error
-	Close() error
-	// Discard() error
-	// Exec() ([]Cmder, error)
-
-	Subscribe(channels ...string) *PubSub
-	PSubscribe(channels ...string) *PubSub
 }
 
 type redisClientWrapper struct {
