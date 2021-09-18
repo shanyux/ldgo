@@ -36,7 +36,7 @@ type Mutex struct {
 	interval      time.Duration
 	timeout       time.Duration
 	lastHeartbeat time.Time
-	locked        int32
+	locked        int64
 }
 
 func NewMutex(redis *Redis) *Mutex {
@@ -118,8 +118,8 @@ func (m *Mutex) Lock(key string) error {
 	ctx = ldcontext.WithLogger(ctx, ldcontext.GetLogger(ctx), zap.String("key", key))
 	ctx = ldcontext.WithCancel(ctx)
 
-	if atomic.LoadInt32(&m.locked) != 0 {
-		ctx.LogE("redis mutex had locked", zap.String("old", m.key))
+	if atomic.LoadInt64(&m.locked) != 0 {
+		ctx.LogE("redis mutex had been locked", zap.String("old", m.key))
 		return ErrMutexLocked
 	}
 
@@ -137,7 +137,8 @@ func (m *Mutex) Lock(key string) error {
 		return ErrMutexLocking
 	}
 
-	if ok := atomic.CompareAndSwapInt32(&m.locked, 0, 1); !ok {
+	now := time.Now().UnixNano()
+	if ok := atomic.CompareAndSwapInt64(&m.locked, 0, now); !ok {
 		cli.Del(key)
 		return ErrMutexLocked
 	}
@@ -147,7 +148,7 @@ func (m *Mutex) Lock(key string) error {
 	m.token = val
 	m.events = make(chan MutexEvent, 1)
 
-	go m.goroutine(ctx, key, val)
+	go m.goroutine(ctx, key, val, now)
 
 	ctx.LogD("redis mutex lock succ")
 	return nil
@@ -156,7 +157,7 @@ func (m *Mutex) Lock(key string) error {
 func (m *Mutex) Unlock() error {
 	ctx := m.keyCtx
 
-	locked := atomic.LoadInt32(&m.locked)
+	locked := atomic.LoadInt64(&m.locked)
 	if locked == 0 {
 		ctx.LogW("redis mutex has not been locked")
 		return nil
@@ -166,7 +167,7 @@ func (m *Mutex) Unlock() error {
 	key := m.key
 	val := m.token
 
-	if ok := atomic.CompareAndSwapInt32(&m.locked, locked, 0); !ok {
+	if ok := atomic.CompareAndSwapInt64(&m.locked, locked, 0); !ok {
 		ctx.LogW("redis mutex has been unlocked by another")
 		return nil
 	}
@@ -187,7 +188,7 @@ func (m *Mutex) Unlock() error {
 	return nil
 }
 
-func (m *Mutex) goroutine(ctx ldcontext.Context, key, val string) {
+func (m *Mutex) goroutine(ctx ldcontext.Context, key, val string, lockTime int64) {
 	ctx.LogD("redis mutex goroutine start")
 	ticker := time.NewTicker(m.interval)
 
@@ -195,7 +196,7 @@ func (m *Mutex) goroutine(ctx ldcontext.Context, key, val string) {
 		ctx.LogD("redis mutex goroutine stop")
 
 		ldcontext.TryCancel(ctx)
-		atomic.CompareAndSwapInt32(&m.locked, 1, 0)
+		atomic.CompareAndSwapInt64(&m.locked, lockTime, 0)
 
 		close(m.events)
 		m.events = nil
