@@ -67,22 +67,29 @@ type Redis struct {
 	retry      int
 }
 
-func (c *Redis) clone() *Redis {
+func (c *Redis) clone(ctx ...Context) *Redis {
 	cp := *c
-	return &cp
-}
+	c = &cp
 
-func (c *Redis) WithContext(ctx Context) *Redis {
-	c = c.clone()
-	c.cmdable = c.cmdable.withContext(ctx)
-
-	log := ldcontext.GetLogger(ctx)
-	log = ldlogger.WithOptions(log, zap.AddCallerSkip(1))
-	c.logger = log
+	if len(ctx) != 0 {
+		c.cmdable = c.cmdable.withContext(ctx[0])
+	} else {
+		c.cmdable = c.cmdable.withContext(c.cmdable.Context())
+	}
 
 	c.cmdable.WrapProcess(func(oldProcess func(Cmder) error) func(Cmder) error {
 		return c.process
 	})
+
+	return c
+}
+
+func (c *Redis) WithContext(ctx Context) *Redis {
+	c = c.clone(ctx)
+
+	log := ldcontext.GetLogger(ctx)
+	log = ldlogger.WithOptions(log, zap.AddCallerSkip(1))
+	c.logger = log
 
 	return c
 }

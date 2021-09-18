@@ -13,6 +13,7 @@ import (
 func (c *Redis) process(cmd Cmder) error {
 	retry := c.retry
 	reporter := c.reporter
+	log := c.logger
 
 	for i := 0; ; {
 		begin := time.Now()
@@ -21,13 +22,13 @@ func (c *Redis) process(cmd Cmder) error {
 
 		err := cmd.Err()
 		if isErrorNil(err) {
+			log.Debug("redis cmd succ", zap.Int("retry", i), zap.Reflect("cmd", cmd.Args()))
 			return err
 		}
 
 		if i++; i >= retry {
-			log := c.logger
 			// log = ldlogger.With(log, fields...)
-			log.Error("redis cmd fail", zap.Int("retry", i), zap.Error(err), zap.Reflect("cmd", cmd.Args()))
+			log.Error("redis cmd fail", zap.Int("retry", i), zap.Reflect("cmd", cmd.Args()), zap.Error(err))
 			return err
 		}
 	}
