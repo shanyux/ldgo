@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 )
 
-var _ Rand = &fastSource{}
+var _ Rand = (*fastSource)(nil)
 
 const (
 	fastSourceStep = 0x1753715715313157
@@ -37,17 +37,27 @@ var fastSourceXor [16]uint64 = [...]uint64{
 func NewFastSource(seed int64) rand.Source64 {
 	s := &fastSource{}
 	s.Seed(seed)
+	s.rand = rand.New(s)
 	return s
 }
 
 type fastSource struct {
 	xor  [16]uint64
+	rand *rand.Rand
 	seed uint64
 }
 
 func (r *fastSource) Seed(seed int64) {
 	n := initFastSourceXor(seed, r.xor[:])
 	atomic.StoreUint64(&r.seed, n)
+}
+
+func (r *fastSource) ExpFloat64() float64 {
+	return r.rand.ExpFloat64()
+}
+
+func (r *fastSource) NormFloat64() float64 {
+	return r.rand.NormFloat64()
 }
 
 func (r *fastSource) Uint64() uint64 {
@@ -133,6 +143,21 @@ func (r *fastSource) Read(p []byte) (int, error) {
 		pos--
 	}
 	return len(p), nil
+}
+
+func (r *fastSource) Perm(n int) []int {
+	m := make([]int, n)
+	// In the following loop, the iteration when i=0 always swaps m[0] with m[0].
+	// A change to remove this useless iteration is to assign 1 to i in the init
+	// statement. But Perm also effects r. Making this change will affect
+	// the final state of r. So this change can't be made for compatibility
+	// reasons for Go 1.
+	for i := 0; i < n; i++ {
+		j := r.Intn(i + 1)
+		m[i] = m[j]
+		m[j] = i
+	}
+	return m
 }
 
 func (r *fastSource) Shuffle(n int, swap func(i, j int)) {
