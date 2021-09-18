@@ -5,12 +5,13 @@
 package ldredis
 
 import (
+	"encoding/hex"
 	"sync/atomic"
 	"time"
 
 	"github.com/distroy/ldgo/ldcontext"
 	"github.com/distroy/ldgo/ldlogger"
-	"github.com/google/uuid"
+	"github.com/distroy/ldgo/ldrand"
 	"go.uber.org/zap"
 )
 
@@ -109,7 +110,7 @@ func (m *Mutex) Lock(ctx ldcontext.Context, key string) error {
 	}
 
 	cli := m.redis
-	val := uuid.New().String()
+	val := hex.EncodeToString(ldrand.Bytes(16))
 
 	cmd := cli.SetNX(key, val, m.getExpiration())
 	if err := cmd.Err(); err != nil {
