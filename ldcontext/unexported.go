@@ -21,6 +21,7 @@ const (
 var (
 	defaultContext Context = newCtx(context.Background())
 	consoleContext Context = newCtx(newLogCtx(context.Background(), ldlogger.Console()))
+	discardContext Context = newCtx(newLogCtx(context.Background(), ldlogger.Discard()))
 )
 
 func defaultLogger() ldlogger.Logger { return ldlogger.Default() }

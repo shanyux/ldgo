@@ -18,10 +18,6 @@ type GormDb struct {
 	inSubTx bool
 }
 
-func NewGormDb(db *gorm.DB) *GormDb {
-	return &GormDb{gormDb: db}
-}
-
 func (w *GormDb) panicTxLevelLessZero() {
 	panic("tx level must not be less than zero")
 }
