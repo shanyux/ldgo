@@ -8,12 +8,11 @@ import (
 	"github.com/distroy/ldgo/ldcontext"
 	"github.com/distroy/ldgo/ldlogger"
 	"github.com/go-redis/redis"
-	"go.uber.org/zap"
 )
 
 var _ Cmdable = &Redis{}
 
-func NewRedis(cli redis.Cmdable) *Redis {
+func New(cli redis.Cmdable) *Redis {
 	if rds, ok := cli.(*Redis); ok {
 		return rds
 	}
@@ -22,6 +21,9 @@ func NewRedis(cli redis.Cmdable) *Redis {
 	case *Redis:
 		return v
 
+	case cmdable:
+		return newRedis(v)
+
 	case *redis.Client:
 		return newRedis(redisClientWrapper{Client: v})
 
@@ -29,10 +31,10 @@ func NewRedis(cli redis.Cmdable) *Redis {
 		return newRedis(redisClusterWrapper{ClusterClient: v})
 	}
 
-	panic("redis client type is invalid")
+	panic("redis client type must be `*ldredis.Redis` or `*redis.Client` or `*redis.ClusterClient`")
 }
 
-func NewRedisByConfig(cfg *Config) *Redis {
+func NewByConfig(cfg *Config) *Redis {
 	if cfg.Cluster {
 		return newRedis(newRedisCluster(cfg))
 	}
@@ -41,30 +43,46 @@ func NewRedisByConfig(cfg *Config) *Redis {
 }
 
 func newRedis(cli cmdable) *Redis {
-	cli = cli.withContext(cli.Context())
-
-	rds := &Redis{
+	ctx := ldcontext.NewContext(cli.Context())
+	c := &Redis{
 		cmdable:  cli,
-		logger:   ldlogger.Discard(),
+		origin:   cli,
+		ctx:      ctx,
 		reporter: discardReporter{},
+		caller:   true,
 	}
 
-	rds.cmdable.WrapProcess(func(oldProcess func(Cmder) error) func(Cmder) error {
-		rds.oldProcess = oldProcess
-		return rds.process
+	c.cmdable = c.cmdable.withContext(ctx)
+	c.cmdable.WrapProcess(func(oldProcess func(Cmder) error) func(Cmder) error {
+		c.oldProcess = oldProcess
+		return c.process
 	})
 
-	return rds
+	return c
 }
 
 // Redis struct
 type Redis struct {
 	cmdable
 
-	logger     ldlogger.Logger
-	reporter   Reporter
+	origin     cmdable
 	oldProcess func(Cmder) error
-	retry      int
+
+	ctx      Context
+	log      ldlogger.Logger
+	reporter Reporter
+	retry    int
+	caller   bool
+}
+
+func (c *Redis) Client() Cmdable  { return c.origin }
+func (c *Redis) context() Context { return c.ctx }
+
+func (c *Redis) logger() ldlogger.Logger {
+	if c.log != nil {
+		return c.log
+	}
+	return ldcontext.GetLogger(c.context())
 }
 
 func (c *Redis) clone(ctx ...Context) *Redis {
@@ -72,11 +90,12 @@ func (c *Redis) clone(ctx ...Context) *Redis {
 	c = &cp
 
 	if len(ctx) != 0 {
-		c.cmdable = c.cmdable.withContext(ctx[0])
+		c.origin = c.origin.withContext(ctx[0])
 	} else {
-		c.cmdable = c.cmdable.withContext(c.cmdable.Context())
+		c.origin = c.origin.withContext(c.origin.Context())
 	}
 
+	c.cmdable = c.origin
 	c.cmdable.WrapProcess(func(oldProcess func(Cmder) error) func(Cmder) error {
 		return c.process
 	})
@@ -86,21 +105,14 @@ func (c *Redis) clone(ctx ...Context) *Redis {
 
 func (c *Redis) WithContext(ctx Context) *Redis {
 	c = c.clone(ctx)
-
-	log := ldcontext.GetLogger(ctx)
-	log = ldlogger.WithOptions(log, zap.AddCallerSkip(1))
-	c.logger = log
-
+	c.ctx = ctx
+	c.log = nil
 	return c
 }
 
-func (c *Redis) WithLogger(log ldlogger.Logger) *Redis {
-	if log != ldlogger.Discard() {
-		log = ldlogger.WithOptions(log, zap.AddCallerSkip(1))
-	}
-
+func (c *Redis) WithLogger(l ldlogger.Logger) *Redis {
 	c = c.clone()
-	c.logger = log
+	c.log = l
 	return c
 }
 
@@ -116,6 +128,8 @@ func (c *Redis) WithReport(reporter Reporter) *Redis {
 	return c
 }
 
-func (c *Redis) Client() Cmdable {
-	return c.cmdable
+func (c *Redis) WithCaller(caller bool) *Redis {
+	c = c.clone()
+	c.caller = caller
+	return c
 }

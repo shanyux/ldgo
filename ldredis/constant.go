@@ -20,7 +20,3 @@ var (
 	ErrMutexNotExists = errors.New("redis mutex is not exists")
 	ErrMutexNotMatch  = errors.New("redis mutex is not match")
 )
-
-func isErrorNil(err error) bool {
-	return err == nil || err == Nil
-}
