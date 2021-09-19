@@ -27,14 +27,16 @@ const (
 )
 
 type Mutex struct {
-	redis         *Redis
-	events        chan MutexEvent
+	redis     *Redis
+	interval  time.Duration
+	timeout   time.Duration
+	lockForce bool
+
 	key           string
 	token         string
-	interval      time.Duration
-	timeout       time.Duration
 	lastHeartbeat time.Time
-	locked        int64
+	lockTime      int64 // if equal 0, has not locked
+	events        chan MutexEvent
 }
 
 func NewMutex(redis *Redis) *Mutex {
@@ -66,6 +68,12 @@ func (m *Mutex) WithContext(ctx Context) *Mutex {
 func (m *Mutex) WithLogger(l ldlogger.Logger) *Mutex {
 	m = m.clone()
 	m.redis = m.redis.WithLogger(l)
+	return m
+}
+
+func (m *Mutex) WithLockForce(force bool) *Mutex {
+	m = m.clone()
+	m.lockForce = force
 	return m
 }
 
@@ -110,55 +118,71 @@ func (m *Mutex) Events() <-chan MutexEvent { return m.events }
 
 func (m *Mutex) Lock(key string) error {
 	ctx := m.redis.context()
-	log := m.redis.logger()
-
-	log = ldlogger.With(log, zap.String("key", key))
-	ctx = ldcontext.WithLogger(ctx, log)
-
 	ctx = ldcontext.WithCancel(ctx)
 
-	if atomic.LoadInt64(&m.locked) != 0 {
-		ctx.LogE("redis mutex has been locked", zap.String("old", m.key))
+	if atomic.LoadInt64(&m.lockTime) != 0 {
+		ctx.LogE("redis mutex has been locked", zap.String("key", key), zap.String("old", m.key),
+			getCaller(m.redis.caller))
 		return ErrMutexLocked
 	}
 
-	cli := m.redis.Client()
-	val := hex.EncodeToString(ldrand.Bytes(16))
+	token := hex.EncodeToString(ldrand.Bytes(16))
 
-	cmd := cli.SetNX(key, val, m.getExpiration())
-	if err := cmd.Err(); err != nil {
-		ctx.LogE("redis mutex setnx fail", zap.Error(err))
-		return err
-	}
+	log := m.redis.logger()
+	log = ldlogger.With(log, zap.String("key", key), zap.String("token", token))
+	ctx = ldcontext.WithLogger(ctx, log)
 
-	if ok := cmd.Val(); !ok {
-		ctx.LogW("redis mutex has been locked by another goroutine/process")
-		return ErrMutexLocking
+	if err := m.internalLock(ctx, key, token); err != nil {
+		if !m.lockForce {
+			return err
+		}
+
+		for err != nil {
+			time.Sleep(m.interval)
+			err = m.internalLock(ctx, key, token)
+		}
 	}
 
 	now := time.Now().UnixNano()
-	if ok := atomic.CompareAndSwapInt64(&m.locked, 0, now); !ok {
-		cli.Del(key)
+	if ok := atomic.CompareAndSwapInt64(&m.lockTime, 0, now); !ok {
+		// cli := m.redis.Client()
+		// cli.Del(key)
 		return ErrMutexLocked
 	}
 
 	m.key = key
-	m.token = val
+	m.token = token
 	m.events = make(chan MutexEvent, 1)
 
-	go m.goroutine(ctx, key, val, now)
+	go m.goroutine(ctx, key, token, now)
 
-	ctx.LogD("redis mutex lock succ")
+	ctx.LogD("redis mutex lock succ", getCaller(m.redis.caller))
+	return nil
+}
+
+func (m *Mutex) internalLock(ctx Context, key, token string) error {
+	cli := m.redis.Client()
+
+	cmd := cli.SetNX(key, token, m.getExpiration())
+	if err := cmd.Err(); err != nil {
+		ctx.LogE("redis mutex setnx fail", zap.Error(err), getCaller(m.redis.caller))
+		return err
+	}
+
+	if ok := cmd.Val(); !ok {
+		ctx.LogW("redis mutex has been locked by another goroutine/process", getCaller(m.redis.caller))
+		return ErrMutexLocking
+	}
+
 	return nil
 }
 
 func (m *Mutex) Unlock() error {
 	ctx := m.redis.context()
-	log := m.redis.logger()
 
-	lockTime := atomic.LoadInt64(&m.locked)
+	lockTime := atomic.LoadInt64(&m.lockTime)
 	if lockTime == 0 {
-		log.Warn("redis mutex has not been locked")
+		ctx.LogW("redis mutex has not been locked", getCaller(m.redis.caller))
 		return nil
 	}
 
@@ -166,15 +190,16 @@ func (m *Mutex) Unlock() error {
 	key := m.key
 	val := m.token
 
-	log = ldlogger.With(log, zap.String("key", key))
+	log := m.redis.logger()
+	log = ldlogger.With(log, zap.String("key", key), zap.String("token", val))
 	ctx = ldcontext.WithLogger(ctx, log)
 
-	if ok := atomic.CompareAndSwapInt64(&m.locked, lockTime, 0); !ok {
-		ctx.LogW("redis mutex has been unlocked by another goroutine")
+	if ok := atomic.CompareAndSwapInt64(&m.lockTime, lockTime, 0); !ok {
+		ctx.LogW("redis mutex has been unlocked by another goroutine", getCaller(m.redis.caller))
 		return nil
 	}
 
-	ctx.LogD("redis mutex will be unlocked")
+	ctx.LogD("redis mutex will be unlocked", getCaller(m.redis.caller))
 
 	ldcontext.TryCancel(ctx)
 	if err := m.checkToken(ctx, key, val); err != nil {
@@ -183,7 +208,7 @@ func (m *Mutex) Unlock() error {
 
 	cmd := cli.Del(key)
 	if err := cmd.Err(); err != nil {
-		ctx.LogE("redis mutex del fail", zap.Error(err))
+		ctx.LogW("redis mutex del fail", zap.Error(err), getCaller(m.redis.caller))
 		return err
 	}
 
@@ -198,7 +223,7 @@ func (m *Mutex) goroutine(ctx ldcontext.Context, key, val string, lockTime int64
 		ctx.LogD("redis mutex goroutine stop")
 
 		ldcontext.TryCancel(ctx)
-		atomic.CompareAndSwapInt64(&m.locked, lockTime, 0)
+		atomic.CompareAndSwapInt64(&m.lockTime, lockTime, 0)
 
 		close(m.events)
 		m.events = nil

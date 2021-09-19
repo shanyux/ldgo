@@ -27,11 +27,13 @@ func newRedis() *ldredis.Redis {
 func pipeline(ctx ldcontext.Context) {
 	rds := newRedis()
 	rds = rds.WithRetry(3)
+	// rds = rds.WithCaller(false)
 	defer rds.Close()
 
 	p := rds.Pipeline()
 	p.Get("key1")
 	p.Get("key2")
+	p.Get("key3")
 	cmds, err := p.Exec()
 	ctx.LogI("pipeline return", zap.Error(err))
 	for _, v := range cmds {
