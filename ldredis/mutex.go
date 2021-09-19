@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/distroy/ldgo/ldcontext"
+	"github.com/distroy/ldgo/ldlogger"
 	"github.com/distroy/ldgo/ldrand"
 	"go.uber.org/zap"
 )
@@ -62,6 +63,12 @@ func (m *Mutex) WithContext(ctx Context) *Mutex {
 	return m
 }
 
+func (m *Mutex) WithLogger(l ldlogger.Logger) *Mutex {
+	m = m.clone()
+	m.redis = m.redis.WithLogger(l)
+	return m
+}
+
 func (m *Mutex) WithInterval(d time.Duration) *Mutex {
 	m = m.clone()
 
@@ -103,8 +110,12 @@ func (m *Mutex) Events() <-chan MutexEvent { return m.events }
 
 func (m *Mutex) Lock(key string) error {
 	ctx := m.redis.context()
+	log := m.redis.logger()
+
+	log = ldlogger.With(log, zap.String("key", key))
+	ctx = ldcontext.WithLogger(ctx, log)
+
 	ctx = ldcontext.WithCancel(ctx)
-	ctx = ldcontext.WithLogger(ctx, ldcontext.GetLogger(ctx), zap.String("key", key))
 
 	if atomic.LoadInt64(&m.locked) != 0 {
 		ctx.LogE("redis mutex has been locked", zap.String("old", m.key))
@@ -143,10 +154,11 @@ func (m *Mutex) Lock(key string) error {
 
 func (m *Mutex) Unlock() error {
 	ctx := m.redis.context()
+	log := m.redis.logger()
 
 	lockTime := atomic.LoadInt64(&m.locked)
 	if lockTime == 0 {
-		ctx.LogW("redis mutex has not been locked")
+		log.Warn("redis mutex has not been locked")
 		return nil
 	}
 
@@ -154,7 +166,8 @@ func (m *Mutex) Unlock() error {
 	key := m.key
 	val := m.token
 
-	ctx = ldcontext.WithLogger(ctx, ldcontext.GetLogger(ctx), zap.String("key", key))
+	log = ldlogger.With(log, zap.String("key", key))
+	ctx = ldcontext.WithLogger(ctx, log)
 
 	if ok := atomic.CompareAndSwapInt64(&m.locked, lockTime, 0); !ok {
 		ctx.LogW("redis mutex has been unlocked by another goroutine")

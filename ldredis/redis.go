@@ -53,9 +53,13 @@ func newRedis(cli cmdable) *Redis {
 	}
 
 	c.cmdable = c.cmdable.withContext(ctx)
-	c.cmdable.WrapProcess(func(oldProcess func(Cmder) error) func(Cmder) error {
+	c.cmdable.WrapProcess(func(oldProcess func(cmd Cmder) error) func(cmd Cmder) error {
 		c.oldProcess = oldProcess
-		return c.process
+		return c.defaultProcess
+	})
+	c.cmdable.WrapProcessPipeline(func(oldProcess func(cmds []Cmder) error) func(cmds []Cmder) error {
+		c.oldProcessPipeline = oldProcess
+		return c.defaultProcessPipeline
 	})
 
 	return c
@@ -65,8 +69,9 @@ func newRedis(cli cmdable) *Redis {
 type Redis struct {
 	cmdable
 
-	origin     cmdable
-	oldProcess func(Cmder) error
+	origin             cmdable
+	oldProcess         func(cmd Cmder) error
+	oldProcessPipeline func(cmds []Cmder) error
 
 	ctx      Context
 	log      ldlogger.Logger
@@ -96,8 +101,11 @@ func (c *Redis) clone(ctx ...Context) *Redis {
 	}
 
 	c.cmdable = c.origin
-	c.cmdable.WrapProcess(func(oldProcess func(Cmder) error) func(Cmder) error {
-		return c.process
+	c.cmdable.WrapProcess(func(oldProcess func(cmd Cmder) error) func(cmd Cmder) error {
+		return c.defaultProcess
+	})
+	c.cmdable.WrapProcessPipeline(func(oldProcess func(cmds []Cmder) error) func(cmds []Cmder) error {
+		return c.defaultProcessPipeline
 	})
 
 	return c

@@ -16,7 +16,8 @@ type cmdable interface {
 	withContext(ctx context.Context) cmdable
 	Context() context.Context
 
-	WrapProcess(fn func(oldProcess func(Cmder) error) func(Cmder) error)
+	WrapProcess(fn func(oldProcess func(cmd Cmder) error) func(cmd Cmder) error)
+	WrapProcessPipeline(fn func(oldProcess func(cmds []Cmder) error) func(cmds []Cmder) error)
 }
 
 type redisClientWrapper struct {
