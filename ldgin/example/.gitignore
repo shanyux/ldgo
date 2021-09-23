@@ -1,5 +1,0 @@
-# git ignore
-.*
-!.gitignore
-
-/example

@@ -17,6 +17,10 @@ type Error interface {
 }
 
 func NewError(status, code int, message string) Error {
+	return New(status, code, message)
+}
+
+func New(status, code int, message string) Error {
 	var err Error = commError{
 		error:  strError{text: message},
 		status: status,
@@ -24,6 +28,7 @@ func NewError(status, code int, message string) Error {
 	}
 
 	errMap.LoadOrStore(err.Code(), err)
+	// errMap.Store(err.Code(), err)
 	return err
 }
 

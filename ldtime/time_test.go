@@ -11,11 +11,11 @@ import (
 	"github.com/smartystreets/goconvey/convey"
 )
 
-var _TZ_TEST = fixedTimezone("Asia/Bejing", +(8 * time.Hour))
+var testTz = fixedTimezone("Asia/Bejing", +(8 * time.Hour))
 
 func paresTimeStr(s string) time.Time {
-	const TIME_FORMAT = "2006-01-02T15:04:05-0700"
-	tm, _ := time.Parse(TIME_FORMAT, s)
+	const timeFormat = "2006-01-02T15:04:05-0700"
+	tm, _ := time.Parse(timeFormat, s)
 	return tm
 }
 
@@ -59,8 +59,8 @@ func TestDateNumToTime(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
 		convey.Convey("20201224 +0800", func() {
 			n := int64(20201224)
-			t := DateNumToTime(n, _TZ_TEST)
-			convey.So(t, convey.ShouldResemble, paresTimeStr("2020-12-24T00:00:00+0800").In(_TZ_TEST))
+			t := DateNumToTime(n, testTz)
+			convey.So(t, convey.ShouldResemble, paresTimeStr("2020-12-24T00:00:00+0800").In(testTz))
 		})
 	})
 }

@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/distroy/ldgo/ldcontext"
+	"github.com/distroy/ldgo/ldrand"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -64,8 +64,7 @@ func GetResponse(c context.Context) *CommResponse {
 }
 
 func newSequence(g *gin.Context) string {
-	uuid, _ := uuid.NewRandom()
-	return hex.EncodeToString(uuid[:])
+	return hex.EncodeToString(ldrand.Bytes(16))
 }
 
 func getCtxByCommCtx(child context.Context) *Context {

@@ -7,7 +7,7 @@ package ldtime
 import "time"
 
 const (
-	_DATE_FORMAT = "2006-01-02"
+	fmtDateStr = "2006-01-02"
 )
 
 func divisionTimeNum(num *int64, dividend int64) int {
@@ -35,8 +35,9 @@ func TimeToDateNum(t time.Time) int64 {
 	return num
 }
 
+// TimeToDateStr format: 2006-01-02 '%Y-%m-%d'
 func TimeToDateStr(t time.Time) string {
-	return t.Format(_DATE_FORMAT)
+	return t.Format(fmtDateStr)
 }
 
 // DateNumToTime format: 20060102 '%Y%m%d'
