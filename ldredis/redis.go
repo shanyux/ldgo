@@ -10,6 +10,10 @@ import (
 	"github.com/go-redis/redis"
 )
 
+const (
+	Nil = redis.Nil
+)
+
 var _ Cmdable = &Redis{}
 
 func New(cli redis.Cmdable) *Redis {
@@ -118,11 +122,11 @@ func (c *Redis) WithContext(ctx Context) *Redis {
 	return c
 }
 
-func (c *Redis) WithLogger(l ldlogger.Logger) *Redis {
-	c = c.clone()
-	c.log = l
-	return c
-}
+// func (c *Redis) WithLogger(l ldlogger.Logger) *Redis {
+// 	c = c.clone()
+// 	c.log = l
+// 	return c
+// }
 
 func (c *Redis) WithRetry(retry int) *Redis {
 	c = c.clone()

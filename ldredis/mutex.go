@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/distroy/ldgo/ldcontext"
+	"github.com/distroy/ldgo/lderr"
 	"github.com/distroy/ldgo/ldlogger"
 	"github.com/distroy/ldgo/ldrand"
 	"go.uber.org/zap"
@@ -65,11 +66,11 @@ func (m *Mutex) WithContext(ctx Context) *Mutex {
 	return m
 }
 
-func (m *Mutex) WithLogger(l ldlogger.Logger) *Mutex {
-	m = m.clone()
-	m.redis = m.redis.WithLogger(l)
-	return m
-}
+// func (m *Mutex) WithLogger(l ldlogger.Logger) *Mutex {
+// 	m = m.clone()
+// 	m.redis = m.redis.WithLogger(l)
+// 	return m
+// }
 
 func (m *Mutex) WithLockForce(force bool) *Mutex {
 	m = m.clone()
@@ -123,7 +124,7 @@ func (m *Mutex) Lock(key string) error {
 	if atomic.LoadInt64(&m.lockTime) != 0 {
 		ctx.LogE("redis mutex has been locked", zap.String("key", key), zap.String("old", m.key),
 			getCaller(m.redis.caller))
-		return ErrMutexLocked
+		return lderr.ErrCacheMutexLocked
 	}
 
 	token := hex.EncodeToString(ldrand.Bytes(16))
@@ -147,7 +148,7 @@ func (m *Mutex) Lock(key string) error {
 	if ok := atomic.CompareAndSwapInt64(&m.lockTime, 0, now); !ok {
 		// cli := m.redis.Client()
 		// cli.Del(key)
-		return ErrMutexLocked
+		return lderr.ErrCacheMutexLocked
 	}
 
 	m.key = key
@@ -171,7 +172,7 @@ func (m *Mutex) internalLock(ctx Context, key, token string) error {
 
 	if ok := cmd.Val(); !ok {
 		ctx.LogW("redis mutex has been locked by another goroutine/process", getCaller(m.redis.caller))
-		return ErrMutexLocking
+		return lderr.ErrCacheMutexLocking
 	}
 
 	return nil
@@ -248,7 +249,7 @@ func (m *Mutex) heartbeat(ctx ldcontext.Context, now time.Time, key, val string)
 	case nil:
 		m.lastHeartbeat = now
 
-	case ErrMutexNotExists, ErrMutexNotMatch:
+	case lderr.ErrCacheMutexNotExists, lderr.ErrCacheMutexNotMatch:
 		m.doHeartbeatError(ctx)
 		return false
 
@@ -270,7 +271,7 @@ func (m *Mutex) checkToken(ctx ldcontext.Context, key, val string) error {
 
 		if ok := cmd.Val(); !ok {
 			ctx.LogE("redis mutex is not exists")
-			return ErrMutexNotExists
+			return lderr.ErrCacheMutexNotExists
 		}
 	}
 
@@ -284,7 +285,7 @@ func (m *Mutex) checkToken(ctx ldcontext.Context, key, val string) error {
 		if val != cmd.Val() {
 			ctx.LogE("redis mutex token is not match", zap.String("old", val),
 				zap.String("new", cmd.Val()))
-			return ErrMutexNotMatch
+			return lderr.ErrCacheMutexNotMatch
 		}
 	}
 
