@@ -23,8 +23,8 @@ const (
 )
 
 const (
-	_MUTEX_MIN_INTERVAL = time.Second
-	_MUTEX_MIN_TIMEOUT  = 10 * time.Second
+	mutexMinInterval = time.Second
+	mutexMinTimeout  = 10 * time.Second
 )
 
 type Mutex struct {
@@ -81,8 +81,8 @@ func (m *Mutex) WithLockForce(force bool) *Mutex {
 func (m *Mutex) WithInterval(d time.Duration) *Mutex {
 	m = m.clone()
 
-	if d < _MUTEX_MIN_INTERVAL {
-		d = _MUTEX_MIN_INTERVAL
+	if d < mutexMinInterval {
+		d = mutexMinInterval
 	}
 	m.interval = d
 
@@ -99,8 +99,8 @@ func (m *Mutex) WithTimeout(d time.Duration) *Mutex {
 }
 
 func (m *Mutex) getMinTimeout(d time.Duration) time.Duration {
-	if d < _MUTEX_MIN_TIMEOUT {
-		d = _MUTEX_MIN_TIMEOUT
+	if d < mutexMinTimeout {
+		d = mutexMinTimeout
 	}
 
 	if t := m.interval * 3; d < t {
