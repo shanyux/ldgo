@@ -13,7 +13,7 @@ import (
 
 var (
 	randStringLetters = ldconv.StrToBytesUnsafe("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-	globalRand        = rand.New(NewFastSource(time.Now().UnixNano()))
+	globalRand        = New(NewFastSource(time.Now().UnixNano()))
 )
 
 func init() {
@@ -28,7 +28,7 @@ func Intn(n int) int       { return globalRand.Intn(n) }
 func Int31n(n int32) int32 { return globalRand.Int31n(n) }
 func Int63n(n int64) int64 { return globalRand.Int63n(n) }
 
-func Uint() uint     { return uint(globalRand.Uint64()) }
+func Uint() uint     { return globalRand.Uint() }
 func Uint32() uint32 { return globalRand.Uint32() }
 func Uint64() uint64 { return globalRand.Uint64() }
 

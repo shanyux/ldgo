@@ -6,8 +6,6 @@ package ldrand
 
 import "math/rand"
 
-func (r randWrapper) Uint() uint { return uint(r.Rand.Uint64()) }
-
 // A Rand is a source of random numbers.
 type Rand interface {
 	Int() int
@@ -29,7 +27,15 @@ type Rand interface {
 
 	// Perm returns, as a slice of n ints, a pseudo-random permutation of the integers [0,n).
 	Perm(n int) []int
+
+	// Shuffle pseudo-randomizes the order of elements.
+	// n is the number of elements. Shuffle panics if n < 0.
+	// swap swaps the elements with indexes i and j.
 	Shuffle(n int, swap func(i, j int))
+
+	// Read generates len(p) random bytes and writes them into p. It
+	// always returns len(p) and a nil error.
+	// Read should not be called concurrently with any other Rand method.
 	Read(p []byte) (int, error)
 
 	// NormFloat64 returns a normally distributed float64 in the range
@@ -68,3 +74,5 @@ func New(src rand.Source) Rand {
 type randWrapper struct {
 	*rand.Rand
 }
+
+func (r randWrapper) Uint() uint { return uint(r.Rand.Uint64()) }
