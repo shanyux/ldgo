@@ -153,3 +153,23 @@ func GetString(p *string, def ...string) string {
 	}
 	return ""
 }
+
+func GetComplex64(p *complex64, def ...complex64) complex64 {
+	if p != nil {
+		return *p
+	}
+	if len(def) > 0 {
+		return def[0]
+	}
+	return complex(0, 0)
+}
+
+func GetComplex128(p *complex128, def ...complex128) complex128 {
+	if p != nil {
+		return *p
+	}
+	if len(def) > 0 {
+		return def[0]
+	}
+	return complex(0, 0)
+}

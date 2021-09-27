@@ -22,4 +22,7 @@ func NewUint64(d uint64) *uint64 { return &d }
 func NewFloat32(d float32) *float32 { return &d }
 func NewFloat64(d float64) *float64 { return &d }
 
-func NewString(d string) *string { return &d }
+func NewString(v string) *string { return &v }
+
+func NewComplex64(v complex64) *complex64    { return &v }
+func NewComplex128(v complex128) *complex128 { return &v }
