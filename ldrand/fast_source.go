@@ -212,10 +212,10 @@ func fastSourceNext(seed *uint64, xor []uint64) uint64 {
 	x = x - (x & 0xf)
 	x = x ^ (n << 4)
 
-	b = b ^ ((x >> 16) & 0xf)
-	b = b ^ ((x >> 20) & 0xf)
-	b = b ^ ((x >> 24) & 0xf)
-	b = b ^ ((x >> 28) & 0xf)
+	b = b ^ ((n >> 16) & 0xf)
+	b = b ^ ((n >> 20) & 0xf)
+	b = b ^ ((n >> 24) & 0xf)
+	b = b ^ ((n >> 28) & 0xf)
 
 	x = x | uint64(b)
 	return x
