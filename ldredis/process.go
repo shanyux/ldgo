@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	ldRedisSrcPath = "/ldgo/ldredis/"
-	exampleSrcPath = "/ldgo/ldredis/example/"
+	ldRedisSrcPath = "/ldgo/ldredis"
+	exampleSrcPath = "/ldgo/ldredis/example"
 	goRedisSrcPath = "/github.com/go-redis/redis"
 )
 
