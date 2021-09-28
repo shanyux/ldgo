@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	ErrTestOneError = lderr.NewError(http.StatusOK, 1, "test 1")
+	ErrTestOneError = lderr.New(http.StatusOK, 1, "test 1")
 )
 
 func testOneError(ctx *ldgin.Context) ldgin.Error {
@@ -52,7 +52,7 @@ type testValidateReq struct {
 
 func (req *testValidateReq) Validate(ctx context.Context) ldgin.Error {
 	if req.Valid != 0 {
-		return lderr.NewError(http.StatusOK, 111, fmt.Sprintf("invalid requet. valid=%v", req.Valid))
+		return lderr.New(http.StatusOK, 111, fmt.Sprintf("invalid requet. valid=%v", req.Valid))
 	}
 	return nil
 }

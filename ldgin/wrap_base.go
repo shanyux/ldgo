@@ -55,6 +55,10 @@ func (w *wrapper) returnError(c *Context, err Error) {
 		Data:     struct{}{},
 	}
 
+	if e, ok := err.(lderr.ErrorWithDetails); ok {
+		response.ErrDetails = e.Details()
+	}
+
 	c.Set(GinKeyResponse, response)
 	c.JSON(err.Status(), response)
 	c.Abort()

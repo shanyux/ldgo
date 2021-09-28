@@ -22,5 +22,5 @@ func midware2(c *ldgin.Context) ldgin.Error {
 
 func midware3(c *ldgin.Context) ldgin.Error {
 	c.LogI("midware3")
-	return lderr.NewError(http.StatusOK, 120, "midware error")
+	return lderr.New(http.StatusOK, 120, "midware error")
 }

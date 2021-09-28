@@ -81,11 +81,12 @@ type Handler interface{}
 type Midware interface{}
 
 type CommResponse struct {
-	ErrCode  int         `json:"code"`
-	ErrMsg   string      `json:"msg"`
-	Cost     string      `json:"cost"`
-	Sequence string      `json:"sequence"`
-	Data     interface{} `json:"data"`
+	ErrCode    int         `json:"code"`
+	ErrMsg     string      `json:"msg"`
+	ErrDetails []string    `json:"details,omitempty"`
+	Cost       string      `json:"cost"`
+	Sequence   string      `json:"sequence"`
+	Data       interface{} `json:"data"`
 }
 
 type (
