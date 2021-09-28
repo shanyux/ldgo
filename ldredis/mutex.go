@@ -123,7 +123,7 @@ func (m *Mutex) Lock(key string) error {
 
 	if atomic.LoadInt64(&m.lockTime) != 0 {
 		ctx.LogE("redis mutex has been locked", zap.String("key", key), zap.String("old", m.key),
-			getCaller(m.redis.caller))
+			getCallerField(m.redis.caller))
 		return lderr.ErrCacheMutexLocked
 	}
 
@@ -157,7 +157,7 @@ func (m *Mutex) Lock(key string) error {
 
 	go m.goroutine(ctx, key, token, now)
 
-	ctx.LogD("redis mutex lock succ", getCaller(m.redis.caller))
+	ctx.LogD("redis mutex lock succ", getCallerField(m.redis.caller))
 	return nil
 }
 
@@ -166,12 +166,12 @@ func (m *Mutex) internalLock(ctx Context, key, token string) error {
 
 	cmd := cli.SetNX(key, token, m.getExpiration())
 	if err := cmd.Err(); err != nil {
-		ctx.LogE("redis mutex setnx fail", zap.Error(err), getCaller(m.redis.caller))
+		ctx.LogE("redis mutex setnx fail", zap.Error(err), getCallerField(m.redis.caller))
 		return err
 	}
 
 	if ok := cmd.Val(); !ok {
-		ctx.LogW("redis mutex has been locked by another goroutine/process", getCaller(m.redis.caller))
+		ctx.LogW("redis mutex has been locked by another goroutine/process", getCallerField(m.redis.caller))
 		return lderr.ErrCacheMutexLocking
 	}
 
@@ -183,7 +183,7 @@ func (m *Mutex) Unlock() error {
 
 	lockTime := atomic.LoadInt64(&m.lockTime)
 	if lockTime == 0 {
-		ctx.LogW("redis mutex has not been locked", getCaller(m.redis.caller))
+		ctx.LogW("redis mutex has not been locked", getCallerField(m.redis.caller))
 		return nil
 	}
 
@@ -196,11 +196,11 @@ func (m *Mutex) Unlock() error {
 	ctx = ldcontext.WithLogger(ctx, log)
 
 	if ok := atomic.CompareAndSwapInt64(&m.lockTime, lockTime, 0); !ok {
-		ctx.LogW("redis mutex has been unlocked by another goroutine", getCaller(m.redis.caller))
+		ctx.LogW("redis mutex has been unlocked by another goroutine", getCallerField(m.redis.caller))
 		return nil
 	}
 
-	ctx.LogD("redis mutex will be unlocked", getCaller(m.redis.caller))
+	ctx.LogD("redis mutex will be unlocked", getCallerField(m.redis.caller))
 
 	ldcontext.TryCancel(ctx)
 	if err := m.checkToken(ctx, key, val); err != nil {
@@ -209,7 +209,7 @@ func (m *Mutex) Unlock() error {
 
 	cmd := cli.Del(key)
 	if err := cmd.Err(); err != nil {
-		ctx.LogW("redis mutex del fail", zap.Error(err), getCaller(m.redis.caller))
+		ctx.LogW("redis mutex del fail", zap.Error(err), getCallerField(m.redis.caller))
 		return err
 	}
 

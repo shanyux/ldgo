@@ -116,6 +116,10 @@ func (c *Redis) clone(ctx ...Context) *Redis {
 }
 
 func (c *Redis) WithContext(ctx Context) *Redis {
+	if ctx == nil {
+		ctx = ldcontext.Default()
+	}
+
 	c = c.clone(ctx)
 	c.ctx = ctx
 	c.log = nil
@@ -135,6 +139,10 @@ func (c *Redis) WithRetry(retry int) *Redis {
 }
 
 func (c *Redis) WithReport(reporter Reporter) *Redis {
+	if reporter == nil {
+		reporter = discardReporter{}
+	}
+
 	c = c.clone()
 	c.reporter = reporter
 	return c
