@@ -23,8 +23,19 @@ func Where(where interface{}) WhereOption {
 		panic("the where type must not be nil")
 	}
 
-	if w, ok := where.(WhereOption); ok {
-		return w
+	switch w := where.(type) {
+	case *whereOptionTree:
+		if len(w.Wheres) == 1 {
+			return w
+		}
+		return &whereOptionTree{
+			Wheres: []whereOptionTreeNode{
+				{Where: w},
+			},
+		}
+
+	case *whereOption:
+		return w.toTree()
 	}
 
 	val := reflect.ValueOf(where)
@@ -41,28 +52,28 @@ type whereOption struct {
 	Where *whereReflect
 }
 
-func (that *whereOption) buildGorm(db *GormDb) *GormDb {
-	return that.Where.buildGorm(db, that.Value)
+func (w *whereOption) buildGorm(db *GormDb) *GormDb {
+	return w.Where.buildGorm(db, w.Value)
 }
 
-func (that *whereOption) buildWhere() whereResult {
-	return that.Where.buildWhere(that.Value)
+func (w *whereOption) buildWhere() whereResult {
+	return w.Where.buildWhere(w.Value)
 }
 
-func (that *whereOption) toTree() whereOptionTree {
-	return whereOptionTree{
+func (w *whereOption) toTree() *whereOptionTree {
+	return &whereOptionTree{
 		Wheres: []whereOptionTreeNode{
-			{Where: that},
+			{Where: w},
 		},
 	}
 }
 
-func (that *whereOption) And(o interface{}) WhereOption {
-	return that.toTree().And(o)
+func (w *whereOption) And(o interface{}) WhereOption {
+	return w.toTree().And(o)
 }
 
-func (that *whereOption) Or(o interface{}) WhereOption {
-	return that.toTree().Or(o)
+func (w *whereOption) Or(o interface{}) WhereOption {
+	return w.toTree().Or(o)
 }
 
 type whereOptionTreeNode struct {
@@ -74,18 +85,18 @@ type whereOptionTree struct {
 	Wheres []whereOptionTreeNode `json:"wheres"`
 }
 
-func (that whereOptionTree) buildWhere() whereResult {
-	res := that.Wheres[0].Where.buildWhere()
-	if len(that.Wheres) == 1 {
+func (w *whereOptionTree) buildWhere() whereResult {
+	res := w.Wheres[0].Where.buildWhere()
+	if len(w.Wheres) == 1 {
 		return res
 	}
 
 	res.Query = "(" + res.Query
 
-	for _, w := range that.Wheres[1:] {
-		tmp := w.Where.buildWhere()
+	for _, v := range w.Wheres[1:] {
+		tmp := v.Where.buildWhere()
 		symbol := " AND "
-		if w.Or {
+		if v.Or {
 			symbol = " OR "
 		}
 
@@ -97,8 +108,8 @@ func (that whereOptionTree) buildWhere() whereResult {
 	return res
 }
 
-func (that whereOptionTree) buildGorm(db *GormDb) *GormDb {
-	res := that.buildWhere()
+func (w *whereOptionTree) buildGorm(db *GormDb) *GormDb {
+	res := w.buildWhere()
 	if strings.HasPrefix(res.Query, "(") && strings.HasSuffix(res.Query, ")") {
 		res.Query = res.Query[1 : len(res.Query)-1]
 	}
@@ -110,19 +121,25 @@ func (that whereOptionTree) buildGorm(db *GormDb) *GormDb {
 	return db
 }
 
-func (that whereOptionTree) And(where interface{}) WhereOption {
-	return that.append(false, where)
+func (w *whereOptionTree) clone() *whereOptionTree {
+	c := *w
+	return &c
 }
 
-func (that whereOptionTree) Or(where interface{}) WhereOption {
-	return that.append(true, where)
+func (w *whereOptionTree) And(where interface{}) WhereOption {
+	return w.append(false, where)
 }
 
-func (that whereOptionTree) append(or bool, where interface{}) WhereOption {
-	that.Wheres = append(that.Wheres, whereOptionTreeNode{
+func (w *whereOptionTree) Or(where interface{}) WhereOption {
+	return w.append(true, where)
+}
+
+func (w *whereOptionTree) append(or bool, where interface{}) WhereOption {
+	w = w.clone()
+	w.Wheres = append(w.Wheres, whereOptionTreeNode{
 		Or:    or,
 		Where: Where(where),
 	})
 
-	return that
+	return w
 }
