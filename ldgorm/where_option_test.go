@@ -98,5 +98,26 @@ func TestWhereOption(t *testing.T) {
 				Args:  []interface{}{10, 0, 100, 220, 200, 110},
 			})
 		})
+
+		convey.Convey("(((channel_id < 100 AND version_id > 220) OR (channel_id > 200 AND version_id < 110)) AND (project_id = 10 AND channel_id >= 0))", func() {
+			where1 := Where(&testFilter{
+				ChannelId: Lt(100),
+				VersionId: Gt(220),
+			}).Or(&testFilter{
+				ChannelId: Gt(200),
+				VersionId: Lt(110),
+			})
+			where2 := Where(&testFilter{
+				ProjectId: Equal(10),
+				ChannelId: Between(0, nil),
+			})
+			where := Where(where1).And(where2)
+
+			ApplyOptions(gormDb, where).Find(&rows)
+			convey.So(res, convey.ShouldResemble, whereResult{
+				Query: "(((`channel_id` < ? AND `version_id` > ?) OR (`channel_id` > ? AND `version_id` < ?)) AND (`project_id` = ? AND `channel_id` >= ?))",
+				Args:  []interface{}{100, 220, 200, 110, 10, 0},
+			})
+		})
 	})
 }
