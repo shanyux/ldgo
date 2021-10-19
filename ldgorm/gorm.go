@@ -5,7 +5,7 @@
 package ldgorm
 
 import (
-	gorm2 "github.com/distroy/ldgo/ldgorm/jinzhu/gorm"
+	gorm2 "github.com/distroy/ldgo/ldgorm/internal/jinzhu/gorm"
 	"github.com/jinzhu/gorm"
 )
 
