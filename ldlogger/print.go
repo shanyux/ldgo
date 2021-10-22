@@ -14,13 +14,13 @@ import (
 )
 
 const (
-	_DEBUG  = zapcore.DebugLevel
-	_INFO   = zapcore.InfoLevel
-	_WARN   = zapcore.WarnLevel
-	_ERROR  = zapcore.ErrorLevel
-	_DPANIC = zapcore.DPanicLevel
-	_PANIC  = zapcore.PanicLevel
-	_FATAL  = zapcore.FatalLevel
+	LevelDebug  = zapcore.DebugLevel
+	LevelInfo   = zapcore.InfoLevel
+	LevelWarn   = zapcore.WarnLevel
+	LevelError  = zapcore.ErrorLevel
+	LevelDpanic = zapcore.DPanicLevel
+	LevelPanic  = zapcore.PanicLevel
+	LevelFatal  = zapcore.FatalLevel
 )
 
 type printWrapper struct {
