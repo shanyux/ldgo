@@ -5,10 +5,13 @@
 package ldgorm
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"sort"
 	"sync"
+
+	"github.com/distroy/ldgo/ldconv"
 )
 
 const _ORDER_TAG = "gormorder"
@@ -36,6 +39,11 @@ func Order(o interface{}) Option {
 type orderOption struct {
 	Value reflect.Value
 	Order *orderReflect
+}
+
+func (that *orderOption) String() string {
+	bytes, _ := json.Marshal(that.Value.Interface())
+	return ldconv.BytesToStrUnsafe(bytes)
 }
 
 func (that *orderOption) buildGorm(db *GormDb) *GormDb {

@@ -5,11 +5,14 @@
 package ldgorm
 
 import (
+	"fmt"
+
 	"github.com/distroy/ldgo/ldmath"
 )
 
 type Option interface {
 	buildGorm(db *GormDb) *GormDb
+	String() string
 }
 
 func ApplyOptions(db *GormDb, opts ...Option) *GormDb {
@@ -24,11 +27,15 @@ type pagingOption struct {
 	Pagesize int64
 }
 
-func (that pagingOption) buildGorm(db *GormDb) *GormDb {
-	if that.Pagesize > 0 {
-		that.Page = ldmath.MaxInt64(1, that.Page)
-		offset := (that.Page - 1) * that.Pagesize
-		db = db.Offset(offset).Limit(that.Pagesize)
+func (p pagingOption) String() string {
+	return fmt.Sprintf(`{"page":%d,"pagesize":%d}`, p.Page, p.Pagesize)
+}
+
+func (p pagingOption) buildGorm(db *GormDb) *GormDb {
+	if p.Pagesize > 0 {
+		p.Page = ldmath.MaxInt64(1, p.Page)
+		offset := (p.Page - 1) * p.Pagesize
+		db = db.Offset(offset).Limit(p.Pagesize)
 	}
 
 	return db
