@@ -104,7 +104,7 @@ func fprintSlice(b *buffer.Buffer, v reflect.Value) {
 		if i != 0 {
 			b.AppendString(", ")
 		}
-		fprintArg(b, v.Index(i))
+		fprintArg(b, reflect.ValueOf(v.Index(i).Interface()))
 	}
 	b.AppendString("]")
 }
@@ -134,7 +134,7 @@ func fprintStruct(b *buffer.Buffer, v reflect.Value) {
 			b.AppendByte(':')
 		}
 		field := v.Field(i)
-		fprintArg(b, field)
+		fprintArg(b, reflect.ValueOf(field.Interface()))
 	}
 	b.AppendByte('}')
 }
@@ -152,9 +152,9 @@ func fprintMap(b *buffer.Buffer, val reflect.Value) {
 		if i > 0 {
 			b.AppendByte(',')
 		}
-		fprintArg(b, kv[0])
+		fprintArg(b, reflect.ValueOf(kv[0].Interface()))
 		b.AppendByte(':')
-		fprintArg(b, kv[1])
+		fprintArg(b, reflect.ValueOf(kv[1].Interface()))
 	}
 	b.AppendByte(']')
 }
