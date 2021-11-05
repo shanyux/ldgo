@@ -7,15 +7,15 @@ package context
 import (
 	"context"
 
-	"github.com/distroy/ldgo/ldcontext"
+	"github.com/distroy/ldgo/ldctx"
 	"go.uber.org/zap"
 )
 
-func Default() Context { return ldcontext.Default() }
-func Console() Context { return ldcontext.Console() }
+func Default() Context { return ldctx.Default() }
+func Console() Context { return ldctx.Console() }
 
-type Context = ldcontext.Context
+type Context = ldctx.Context
 
 func NewContext(c context.Context, fields ...zap.Field) Context {
-	return ldcontext.NewContext(c, fields...)
+	return ldctx.NewContext(c, fields...)
 }

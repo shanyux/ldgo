@@ -6,19 +6,19 @@ package ldcontext
 
 import (
 	"context"
-	"reflect"
 	"time"
 
+	"github.com/distroy/ldgo/ldctx"
 	"github.com/distroy/ldgo/lderr"
-	"github.com/distroy/ldgo/ldlogger"
+	"github.com/distroy/ldgo/ldlog"
 	"go.uber.org/zap"
 )
 
-type CancelFunc = context.CancelFunc
+type CancelFunc = ldctx.CancelFunc
 
-func Default() Context { return defaultContext }
-func Console() Context { return consoleContext }
-func Discard() Context { return discardContext }
+func Default() Context { return ldctx.Default() }
+func Console() Context { return ldctx.Console() }
+func Discard() Context { return ldctx.Discard() }
 
 type Context interface {
 	context.Context
@@ -35,97 +35,33 @@ type Context interface {
 }
 
 func NewContext(parent context.Context, fields ...zap.Field) Context {
-	if len(fields) == 0 {
-		if c, ok := parent.(Context); ok {
-			return c
-		}
-
-		return Default()
-	}
-
-	if parent == nil {
-		return newCtx(newLogCtx(Default(), ldlogger.With(defaultLogger(), fields...)))
-	}
-
-	return newCtx(newLogCtx(parent, ldlogger.With(GetLogger(parent), fields...)))
+	return ldctx.NewContext(parent, fields...)
 }
 
-func ContextName(c context.Context) string {
-	if s, ok := c.(stringer); ok {
-		return s.String()
+func ContextName(c context.Context) string   { return ldctx.ContextName(c) }
+func GetError(c context.Context) lderr.Error { return ldctx.GetError(c) }
+
+func WithLogger(parent context.Context, log ldlog.LoggerInterface, fields ...zap.Field) Context {
+	if log != nil {
+		return ldctx.WithLogger(parent, ldlog.GetLogger(log.Core()), fields...)
 	}
-	return reflect.TypeOf(c).String()
+	return ldctx.WithLogger(parent, ldctx.GetLogger(parent), fields...)
 }
 
-func GetError(c context.Context) lderr.Error {
-	e := c.Err()
-	switch e {
-	case nil:
-		return nil
-
-	case context.Canceled:
-		return lderr.ErrCtxCanceled
-
-	case context.DeadlineExceeded:
-		return lderr.ErrCtxDeadlineExceeded
-	}
-
-	if err, ok := e.(lderr.Error); ok {
-		return err
-	}
-
-	return lderr.Wrap(e)
-}
-
-func WithLogger(parent context.Context, log ldlogger.Logger, fields ...zap.Field) Context {
-	if log == nil {
-		log = GetLogger(parent)
-	}
-	log = ldlogger.With(log, fields...)
-	return newCtx(newLogCtx(parent, log))
-}
-
-func GetLogger(c context.Context) ldlogger.Logger {
-	log, ok := c.Value(ctxKeyLogger).(ldlogger.Logger)
-	if !ok {
-		log = defaultLogger()
-	}
-	return log
-}
+func GetLogger(c context.Context) ldlog.LoggerInterface { return ldctx.GetLogger(c) }
 
 func WithValue(parent context.Context, key, val interface{}) Context {
-	return newCtx(context.WithValue(parent, key, val))
+	return ldctx.WithValue(parent, key, val)
 }
 
-func WithCancel(parent context.Context) Context {
-	child, cancel := context.WithCancel(parent)
-	return newCtx(newCancelCtx(child, cancel))
-}
-
-func GetCancelFunc(c context.Context) CancelFunc {
-	cancel, _ := c.Value(ctxKeyCancel).(CancelFunc)
-	return cancel
-}
-
-func TryCancel(c context.Context) bool {
-	cancel := GetCancelFunc(c)
-	if cancel == nil {
-		return false
-	}
-	cancel()
-	return true
-}
+func WithCancel(parent context.Context) Context  { return ldctx.WithCancel(parent) }
+func GetCancelFunc(c context.Context) CancelFunc { return ldctx.GetCancelFunc(c) }
+func TryCancel(c context.Context) bool           { return ldctx.TryCancel(c) }
 
 func WithTimeout(parent context.Context, timeout time.Duration) Context {
-	return WithDeadline(parent, time.Now().Add(timeout))
+	return ldctx.WithTimeout(parent, timeout)
 }
 
 func WithDeadline(parent context.Context, deadline time.Time) Context {
-	if cur, ok := parent.Deadline(); ok && cur.Before(deadline) {
-		// The current deadline is already sooner than the new one.
-		return NewContext(parent)
-	}
-
-	child, cancel := context.WithDeadline(parent, deadline)
-	return newCtx(newCancelCtx(child, cancel))
+	return ldctx.WithDeadline(parent, deadline)
 }
