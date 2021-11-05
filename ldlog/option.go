@@ -2,7 +2,7 @@
  * Copyright (C) distroy
  */
 
-package ldlogger
+package ldlog
 
 import (
 	"io"
@@ -12,15 +12,15 @@ import (
 )
 
 const (
-	LOG_LEVEL         = "INFO"
-	LOG_ENABLE_CALLER = true
+	defaultLogLevel        = "INFO"
+	defaultLogEnableCaller = true
 )
 
 func newOptions() *options {
 	return &options{
 		writer:         os.Stderr,
-		level:          LOG_LEVEL,
-		enableCaller:   LOG_ENABLE_CALLER,
+		level:          defaultLogLevel,
+		enableCaller:   defaultLogEnableCaller,
 		encoderBuilder: NewLoggerEncoder,
 	}
 }

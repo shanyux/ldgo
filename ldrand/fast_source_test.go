@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/distroy/ldgo/ldcontext"
-	"github.com/distroy/ldgo/ldsort"
+	"github.com/distroy/ldgo/ldctx"
+	"github.com/distroy/ldgo/ldmath"
 	"github.com/smartystreets/goconvey/convey"
 	"go.uber.org/zap"
 )
@@ -49,6 +49,9 @@ type testFastSource struct {
 	Mod, Scale, Diff int
 }
 
+func maxInt(a []int) int { return ldmath.MaxInt(a[0], a[1:]...) }
+func minInt(a []int) int { return ldmath.MinInt(a[0], a[1:]...) }
+
 func (t *testFastSource) Test() {
 	mod := t.Mod
 	scale := t.Scale
@@ -56,7 +59,7 @@ func (t *testFastSource) Test() {
 	name := fmt.Sprintf("mod=%d,scale=%d,diff=%d", mod, scale, diff)
 	convey.Convey(name, func() {
 		r := New(NewFastSource(time.Now().UnixNano()))
-		ctx := ldcontext.Console()
+		ctx := ldctx.Console()
 
 		counts := make([]int, mod)
 		for i := 0; i < mod*scale; i++ {
@@ -65,18 +68,16 @@ func (t *testFastSource) Test() {
 			counts[x]++
 		}
 
-		ldsort.SortInts(counts)
+		min := minInt(counts)
+		max := maxInt(counts)
 
-		ctx.LogI("", zap.Int("minCount", counts[0]), zap.Int("maxCount", counts[mod-1]))
-		convey.So(counts[mod-1]-counts[0], convey.ShouldBeLessThan, diff)
+		ctx.LogI("", zap.Int("minCount", min), zap.Int("maxCount", max))
+		convey.So(max-min, convey.ShouldBeLessThan, diff)
 	})
 }
 
-func Test_fastSource(t *testing.T) {
+func Test_fastSource_ProbabilityOfOverall(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
-		r := New(NewFastSource(time.Now().UnixNano()))
-		ctx := ldcontext.Console()
-
 		(&testFastSource{
 			Mod:   100,
 			Scale: 100000,
@@ -92,7 +93,14 @@ func Test_fastSource(t *testing.T) {
 			Scale: 100000,
 			Diff:  2000,
 		}).Test()
+	})
+}
 
+func Test_fastSource_ProbabilityOfVery4Bits(t *testing.T) {
+	r := New(NewFastSource(time.Now().UnixNano()))
+	ctx := ldctx.Console()
+
+	convey.Convey(t.Name(), t, func() {
 		convey.Convey("check the probability of very 4 bits", func() {
 			const scale = 100000
 			const diff = 4000
@@ -107,15 +115,23 @@ func Test_fastSource(t *testing.T) {
 			}
 
 			for i, v := range countsPer4Bits {
-				ldsort.SortInts(v[:])
-				ctx.LogI("", zap.Int("postion", i), zap.Int("minCount", v[0]), zap.Int("maxCount", v[15]))
-				convey.So(v[15]-v[0], convey.ShouldBeLessThan, diff)
+				min := minInt(v[:])
+				max := maxInt(v[:])
+				ctx.LogI("", zap.Int("postion", i), zap.Int("minCount", min), zap.Int("maxCount", max))
+				convey.So(max-min, convey.ShouldBeLessThan, diff)
 			}
 		})
+	})
+}
 
+func Test_fastSource_ProbabilityOfVery4BitsWithPreviousNumber(t *testing.T) {
+	r := New(NewFastSource(time.Now().UnixNano()))
+	ctx := ldctx.Console()
+
+	convey.Convey(t.Name(), t, func() {
 		convey.Convey("check the probability of very 4 bits with previous number", func() {
 			const scale = 100000
-			const diff = 2000
+			const diff = 40000
 
 			countsPer4BitsWithPrev := [16][16][16]int{}
 			var prevNum uint64
@@ -132,17 +148,27 @@ func Test_fastSource(t *testing.T) {
 
 			for i, v := range countsPer4BitsWithPrev {
 				for j, w := range v {
-					// ldsort.SortInts(w[:])
+					min := minInt(w[:])
+					max := maxInt(w[:])
 					// ctx.LogI("", zap.Int("postion", i), zap.Int("prev", j), zap.Int("minCount", w[0]), zap.Int("maxCount", w[15]))
-					ctx.LogI("", zap.Int("postion", i), zap.Int("prev", j), zap.Ints("v", w[:]))
-					// convey.So(w[15]-w[0], convey.ShouldBeLessThan, diff)
+					ctx.LogI("", zap.Int("postion", i), zap.Int("prev", j),
+						zap.Int("minCount", min), zap.Int("maxCount", max),
+						zap.Ints("v", w[:]))
+					// convey.So(max-min, convey.ShouldBeLessThan, diff)
 				}
 			}
 		})
+	})
+}
 
+func Test_fastSource_ProbabilityOfVeryByte(t *testing.T) {
+	r := New(NewFastSource(time.Now().UnixNano()))
+	ctx := ldctx.Console()
+
+	convey.Convey(t.Name(), t, func() {
 		convey.Convey("check the probability of very byte", func() {
 			const scale = 100000
-			const diff = 4000
+			const diff = 5000
 
 			countsPer4Bits := [8][256]int{}
 			for i := 0; i < scale*256; i++ {
@@ -154,11 +180,18 @@ func Test_fastSource(t *testing.T) {
 			}
 
 			for i, v := range countsPer4Bits {
-				ldsort.SortInts(v[:])
-				ctx.LogI("", zap.Int("postion", i), zap.Int("minCount", v[0]), zap.Int("maxCount", v[255]))
-				convey.So(v[255]-v[0], convey.ShouldBeLessThan, diff)
+				min := minInt(v[:])
+				max := maxInt(v[:])
+				ctx.LogI("", zap.Int("postion", i), zap.Int("minCount", min), zap.Int("maxCount", max))
+				convey.So(max-min, convey.ShouldBeLessThan, diff)
 			}
 		})
+	})
+}
+
+func Test_fastSource_Repeated(t *testing.T) {
+	convey.Convey(t.Name(), t, func() {
+		r := New(NewFastSource(time.Now().UnixNano()))
 
 		convey.Convey("check result if repeated", func() {
 			const times = 100 * 10000

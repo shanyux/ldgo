@@ -10,7 +10,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/distroy/ldgo/ldcontext"
+	"github.com/distroy/ldgo/ldctx"
 	"github.com/distroy/ldgo/lderr"
 	"github.com/distroy/ldgo/ldgin"
 	"github.com/gin-gonic/gin"
@@ -88,7 +88,7 @@ func testPanic(c context.Context) ldgin.Error {
 	return nil
 }
 
-func initRouter(ctx ldcontext.Context, router gin.IRouter) {
+func initRouter(ctx ldctx.Context, router gin.IRouter) {
 	r := ldgin.WrapGin(router)
 
 	r = r.Group("/test", midware1)
@@ -104,7 +104,7 @@ func initRouter(ctx ldcontext.Context, router gin.IRouter) {
 }
 
 func main() {
-	ctx := ldcontext.Default()
+	ctx := ldctx.Default()
 
 	gin.SetMode(gin.DebugMode)
 	engine := gin.New()

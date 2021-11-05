@@ -2,12 +2,12 @@
  * Copyright (C) distroy
  */
 
-package ldcontext
+package ldctx
 
 import (
 	"context"
 
-	"github.com/distroy/ldgo/ldlogger"
+	"github.com/distroy/ldgo/ldlog"
 	"go.uber.org/zap"
 )
 
@@ -20,11 +20,11 @@ const (
 
 var (
 	defaultContext Context = newCtx(context.Background())
-	consoleContext Context = newCtx(newLogCtx(context.Background(), ldlogger.Console()))
-	discardContext Context = newCtx(newLogCtx(context.Background(), ldlogger.Discard()))
+	consoleContext Context = newCtx(newLogCtx(context.Background(), ldlog.Console()))
+	discardContext Context = newCtx(newLogCtx(context.Background(), ldlog.Discard()))
 )
 
-func defaultLogger() ldlogger.Logger { return ldlogger.Default() }
+func defaultLogger() *ldlog.Logger { return ldlog.Default() }
 
 type stringer interface {
 	String() string
@@ -38,11 +38,11 @@ func newCtx(c context.Context) ctx { return ctx{Context: c} }
 
 func (c ctx) String() string { return ContextName(c.Context) }
 
-func (c ctx) logger() ldlogger.Logger    { return GetLogger(c.Context) }
+func (c ctx) logger() *ldlog.Logger      { return GetLogger(c.Context) }
 func (c ctx) zCore() *zap.Logger         { return c.logger().Core() }
 func (c ctx) zSugar() *zap.SugaredLogger { return c.logger().Sugar() }
 
-// func (c ctx) GetLogger() ldlogger.Logger { return c.logger() }
+// func (c ctx) GetLogger() ldlog.Logger { return c.logger() }
 // func (c ctx) LogSync()                   { c.logger().Sync() }
 
 func (c ctx) LogD(msg string, fields ...zap.Field) { c.zCore().Debug(msg, fields...) }
@@ -60,10 +60,10 @@ func (c ctx) LogFf(fmt string, args ...interface{}) { c.zSugar().Fatalf(fmt, arg
 type logCtx struct {
 	context.Context
 
-	logger ldlogger.Logger
+	logger *ldlog.Logger
 }
 
-func newLogCtx(parent context.Context, log ldlogger.Logger) *logCtx {
+func newLogCtx(parent context.Context, log *ldlog.Logger) *logCtx {
 	return &logCtx{
 		Context: parent,
 		logger:  log,

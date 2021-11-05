@@ -9,14 +9,14 @@ import (
 	"encoding/hex"
 	"time"
 
-	"github.com/distroy/ldgo/ldcontext"
+	"github.com/distroy/ldgo/ldctx"
 	"github.com/distroy/ldgo/ldrand"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
 
 var _ context.Context = &Context{}
-var _ ldcontext.Context = &Context{}
+var _ ldctx.Context = &Context{}
 
 func GetContext(g *gin.Context) *Context {
 	return newCtxIfNotExists(g)
@@ -97,7 +97,7 @@ func newContext(g *gin.Context) *Context {
 	now := time.Now()
 	seq := newSequence(g)
 
-	ctx := ldcontext.NewContext(g, zap.String("sequence", seq))
+	ctx := ldctx.NewContext(g, zap.String("sequence", seq))
 
 	c := &Context{
 		ginCtx:    g,
@@ -119,7 +119,7 @@ type Context struct {
 	sequence  string
 }
 
-func (c *Context) String() string { return ldcontext.ContextName(c.ldCtx) + ".WithGin" }
+func (c *Context) String() string { return ldctx.ContextName(c.ldCtx) + ".WithGin" }
 
 func (c *Context) clone() *Context {
 	copy := *c

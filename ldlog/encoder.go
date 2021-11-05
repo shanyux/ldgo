@@ -2,7 +2,7 @@
  * Copyright (C) distroy
  */
 
-package ldlogger
+package ldlog
 
 import (
 	"encoding/base64"

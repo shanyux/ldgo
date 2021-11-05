@@ -5,7 +5,7 @@
 package ldgin
 
 import (
-	"github.com/distroy/ldgo/ldcontext"
+	"github.com/distroy/ldgo/ldctx"
 	"github.com/distroy/ldgo/lderr"
 	"github.com/gin-gonic/gin"
 )
@@ -91,7 +91,7 @@ type CommResponse struct {
 
 type (
 	ginCtx = gin.Context
-	ldCtx  = ldcontext.Context
+	ldCtx  = ldctx.Context
 )
 
 // Router is http router

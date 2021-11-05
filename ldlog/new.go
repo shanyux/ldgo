@@ -2,7 +2,7 @@
  * Copyright (C) distroy
  */
 
-package ldlogger
+package ldlog
 
 import (
 	"github.com/distroy/ldgo/ldconv"
@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-func NewLogger(opts ...Option) Logger {
+func NewLogger(opts ...Option) *Logger {
 	options := newOptions()
 	for _, opt := range opts {
 		opt(options)
@@ -53,5 +53,5 @@ func NewLogger(opts ...Option) Logger {
 	core := zapcore.NewTee(zapCores...)
 	zlog := zap.New(core, defaultOptions...)
 
-	return newLogger(newLoggerWrapper(zlog))
+	return newLogger(newWrapper(zlog, zlog.Sugar()))
 }

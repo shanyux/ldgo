@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/distroy/ldgo/ldlogger"
 	"github.com/distroy/ldgo/ldrand"
 	"go.uber.org/zap"
 )
@@ -78,7 +77,7 @@ func (c *Redis) defaultProcess(cmd Cmder) error {
 		}
 
 		if i++; i >= retry {
-			// log = ldlogger.With(log, fields...)
+			// log = ldlog.With(log, fields...)
 			log.Error("redis cmd fail", zap.Int("retry", i), getCmdField(cmd), zap.Error(err), getCallerField(caller))
 			return err
 		}
@@ -91,7 +90,7 @@ func (c *Redis) defaultProcessPipeline(cmds []Cmder) error {
 	log := c.logger()
 
 	caller := getCallerField(c.caller)
-	log = ldlogger.With(log, zap.String("pipeline", hex.EncodeToString(ldrand.Bytes(8))))
+	log = log.With(zap.String("pipeline", hex.EncodeToString(ldrand.Bytes(8))))
 
 	for i := 0; ; {
 		begin := time.Now()
