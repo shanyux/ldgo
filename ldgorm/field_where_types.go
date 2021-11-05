@@ -34,8 +34,8 @@ func getWhereValue(v interface{}) (interface{}, bool) {
 }
 
 type whereResult struct {
-	Query string
-	Args  []interface{}
+	Query string        `json:"query"`
+	Args  []interface{} `json:"args"`
 }
 
 func (r whereResult) IsValid() bool { return len(r.Query) != 0 }

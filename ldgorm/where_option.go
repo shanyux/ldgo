@@ -5,8 +5,11 @@
 package ldgorm
 
 import (
+	"encoding/json"
 	"reflect"
 	"strings"
+
+	"github.com/distroy/ldgo/ldconv"
 )
 
 type WhereOption interface {
@@ -52,6 +55,12 @@ type whereOption struct {
 	Where *whereReflect
 }
 
+func (w *whereOption) String() string {
+	res := w.buildWhere()
+	bytes, _ := json.Marshal(res)
+	return ldconv.BytesToStrUnsafe(bytes)
+}
+
 func (w *whereOption) buildGorm(db *GormDb) *GormDb {
 	return w.Where.buildGorm(db, w.Value)
 }
@@ -83,6 +92,12 @@ type whereOptionTreeNode struct {
 
 type whereOptionTree struct {
 	Wheres []whereOptionTreeNode `json:"wheres"`
+}
+
+func (w *whereOptionTree) String() string {
+	res := w.buildWhere()
+	bytes, _ := json.Marshal(res)
+	return ldconv.BytesToStrUnsafe(bytes)
 }
 
 func (w *whereOptionTree) buildWhere() whereResult {

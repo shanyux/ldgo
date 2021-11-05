@@ -60,9 +60,9 @@ func TestLogger(t *testing.T) {
 		})
 
 		convey.Convey("infoln", func() {
-			l.Infoln("infoln message", &LoggerValue{Name: "abc"})
+			l.Infoln("infoln message", &LoggerValue{Name: "abc"}, []interface{}{ldptr.NewInt(1234), (*int)(nil)})
 			convey.So(writer.String(), convey.ShouldEqual,
-				"2021-08-22T13:30:58.000+0800|INFO|-|ldlogger/logger_test.go:63|infoln message {Name:abc},abc=xxx\n")
+				"2021-08-22T13:30:58.000+0800|INFO|-|ldlogger/logger_test.go:63|infoln message {Name:abc} [1234, (*int)(nil)],abc=xxx\n")
 		})
 
 		convey.Convey("errorln", func() {
