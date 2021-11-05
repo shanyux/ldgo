@@ -17,6 +17,7 @@ var (
 )
 
 const (
+	//                 7654321076543210
 	fastSourceStep = 0x1753715715313157
 )
 
@@ -209,15 +210,19 @@ func fastSourceNext(seed *uint64, xor []uint64) uint64 {
 	b = b ^ ((n >> 12) & 0xf)
 
 	x = x ^ xor[b]
-	x = x - (x & 0xf)
 	x = x ^ (n << 4)
+	x = x ^ ((n >> 28) & 0xffffffff)
+	x = x - (x & 0xf)
 
 	b = b ^ ((n >> 16) & 0xf)
 	b = b ^ ((n >> 20) & 0xf)
 	b = b ^ ((n >> 24) & 0xf)
 	b = b ^ ((n >> 28) & 0xf)
 
+	b = b ^ ((n >> 60) & 0xf)
+
 	x = x | uint64(b)
+	// x = ((x & 0xffffffff) << 32) | ((x >> 32) & 0xffffffff)
 	return x
 }
 
