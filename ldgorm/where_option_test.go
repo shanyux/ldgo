@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/distroy/ldgo/ldlogger"
+	"github.com/distroy/ldgo/ldlog"
 	"github.com/jinzhu/gorm"
 	"github.com/smartystreets/goconvey/convey"
 )
@@ -34,7 +34,7 @@ func testGetGorm() *GormDb {
 
 	db := NewGormDb(v)
 	// convey.So(err, convey.ShouldBeNil)
-	db.SetLogger(ldlogger.GetWrapper(ldlogger.Discard()))
+	db.SetLogger(ldlog.Discard().Wrapper())
 	db.CreateTable(&testTable{})
 	return db
 }

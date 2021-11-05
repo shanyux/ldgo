@@ -5,12 +5,12 @@
 package ldredis
 
 import (
-	"github.com/distroy/ldgo/ldcontext"
+	"github.com/distroy/ldgo/ldctx"
 	"github.com/go-redis/redis"
 )
 
 type (
-	Context = ldcontext.Context
+	Context = ldctx.Context
 )
 
 type (

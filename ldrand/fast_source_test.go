@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/distroy/ldgo/ldcontext"
+	"github.com/distroy/ldgo/ldctx"
 	"github.com/distroy/ldgo/ldsort"
 	"github.com/smartystreets/goconvey/convey"
 	"go.uber.org/zap"
@@ -56,7 +56,7 @@ func (t *testFastSource) Test() {
 	name := fmt.Sprintf("mod=%d,scale=%d,diff=%d", mod, scale, diff)
 	convey.Convey(name, func() {
 		r := New(NewFastSource(time.Now().UnixNano()))
-		ctx := ldcontext.Console()
+		ctx := ldctx.Console()
 
 		counts := make([]int, mod)
 		for i := 0; i < mod*scale; i++ {
@@ -75,7 +75,7 @@ func (t *testFastSource) Test() {
 func Test_fastSource(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
 		r := New(NewFastSource(time.Now().UnixNano()))
-		ctx := ldcontext.Console()
+		ctx := ldctx.Console()
 
 		(&testFastSource{
 			Mod:   100,

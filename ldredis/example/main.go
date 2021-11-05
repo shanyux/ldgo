@@ -5,15 +5,15 @@
 package main
 
 import (
-	"github.com/distroy/ldgo/ldcontext"
-	"github.com/distroy/ldgo/ldlogger"
+	"github.com/distroy/ldgo/ldctx"
+	"github.com/distroy/ldgo/ldlog"
 	"github.com/distroy/ldgo/ldredis"
 	"go.uber.org/zap"
 )
 
 func init() {
-	log := ldlogger.NewLogger(ldlogger.Level("debug"))
-	ldlogger.SetDefault(log)
+	log := ldlog.NewLogger(ldlog.Level("debug"))
+	ldlog.SetDefault(log)
 }
 
 func newRedis() *ldredis.Redis {
@@ -24,7 +24,7 @@ func newRedis() *ldredis.Redis {
 	return rds
 }
 
-func pipeline(ctx ldcontext.Context) {
+func pipeline(ctx ldctx.Context) {
 	rds := newRedis()
 	rds = rds.WithRetry(3)
 	// rds = rds.WithCaller(false)
@@ -43,6 +43,6 @@ func pipeline(ctx ldcontext.Context) {
 }
 
 func main() {
-	ctx := ldcontext.Default()
+	ctx := ldctx.Default()
 	pipeline(ctx)
 }

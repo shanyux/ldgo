@@ -5,8 +5,8 @@
 package ldredis
 
 import (
-	"github.com/distroy/ldgo/ldcontext"
-	"github.com/distroy/ldgo/ldlogger"
+	"github.com/distroy/ldgo/ldctx"
+	"github.com/distroy/ldgo/ldlog"
 	"github.com/go-redis/redis"
 )
 
@@ -47,7 +47,7 @@ func NewByConfig(cfg *Config) *Redis {
 }
 
 func newRedis(cli cmdable) *Redis {
-	ctx := ldcontext.NewContext(cli.Context())
+	ctx := ldctx.NewContext(cli.Context())
 	c := &Redis{
 		cmdable:  cli,
 		origin:   cli,
@@ -78,7 +78,7 @@ type Redis struct {
 	oldProcessPipeline func(cmds []Cmder) error
 
 	ctx      Context
-	log      ldlogger.Logger
+	log      *ldlog.Logger
 	reporter Reporter
 	retry    int
 	caller   bool
@@ -87,11 +87,11 @@ type Redis struct {
 func (c *Redis) Client() Cmdable  { return c.origin }
 func (c *Redis) context() Context { return c.ctx }
 
-func (c *Redis) logger() ldlogger.Logger {
+func (c *Redis) logger() *ldlog.Logger {
 	if c.log != nil {
 		return c.log
 	}
-	return ldcontext.GetLogger(c.context())
+	return ldctx.GetLogger(c.context())
 }
 
 func (c *Redis) clone(ctx ...Context) *Redis {
@@ -117,7 +117,7 @@ func (c *Redis) clone(ctx ...Context) *Redis {
 
 func (c *Redis) WithContext(ctx Context) *Redis {
 	if ctx == nil {
-		ctx = ldcontext.Default()
+		ctx = ldctx.Default()
 	}
 
 	c = c.clone(ctx)
@@ -126,7 +126,7 @@ func (c *Redis) WithContext(ctx Context) *Redis {
 	return c
 }
 
-// func (c *Redis) WithLogger(l ldlogger.Logger) *Redis {
+// func (c *Redis) WithLogger(l *ldlog.Logger) *Redis {
 // 	c = c.clone()
 // 	c.log = l
 // 	return c

@@ -5,7 +5,7 @@
 package gorm
 
 import (
-	"github.com/distroy/ldgo/ldlogger"
+	"github.com/distroy/ldgo/ldlog"
 	"github.com/jinzhu/gorm"
 )
 
@@ -48,10 +48,10 @@ func (w *GormDb) Set(db *gorm.DB) *GormDb {
 	return w
 }
 
-func (w *GormDb) WithLogger(l ldlogger.Logger) *GormDb {
+func (w *GormDb) WithLogger(l ldlog.LoggerInterface) *GormDb {
 	w = w.clone()
 	w.gormDb = w.gormDb.LogMode(true)
-	w.gormDb.SetLogger(ldlogger.GetWrapper(l))
+	w.gormDb.SetLogger(ldlog.GetWrapper(l))
 	return w
 }
 

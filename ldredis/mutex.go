@@ -9,9 +9,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/distroy/ldgo/ldcontext"
+	"github.com/distroy/ldgo/ldctx"
 	"github.com/distroy/ldgo/lderr"
-	"github.com/distroy/ldgo/ldlogger"
 	"github.com/distroy/ldgo/ldrand"
 	"go.uber.org/zap"
 )
@@ -66,7 +65,7 @@ func (m *Mutex) WithContext(ctx Context) *Mutex {
 	return m
 }
 
-// func (m *Mutex) WithLogger(l ldlogger.Logger) *Mutex {
+// func (m *Mutex) WithLogger(l ldlog.Logger) *Mutex {
 // 	m = m.clone()
 // 	m.redis = m.redis.WithLogger(l)
 // 	return m
@@ -119,7 +118,7 @@ func (m *Mutex) Events() <-chan MutexEvent { return m.events }
 
 func (m *Mutex) Lock(key string) error {
 	ctx := m.redis.context()
-	ctx = ldcontext.WithCancel(ctx)
+	ctx = ldctx.WithCancel(ctx)
 
 	if atomic.LoadInt64(&m.lockTime) != 0 {
 		ctx.LogE("redis mutex has been locked", zap.String("key", key), zap.String("old", m.key),
@@ -130,8 +129,8 @@ func (m *Mutex) Lock(key string) error {
 	token := hex.EncodeToString(ldrand.Bytes(16))
 
 	log := m.redis.logger()
-	log = ldlogger.With(log, zap.String("key", key), zap.String("token", token))
-	ctx = ldcontext.WithLogger(ctx, log)
+	log = log.With(zap.String("key", key), zap.String("token", token))
+	ctx = ldctx.WithLogger(ctx, log)
 
 	if err := m.internalLock(ctx, key, token); err != nil {
 		if !m.lockForce {
@@ -192,8 +191,8 @@ func (m *Mutex) Unlock() error {
 	val := m.token
 
 	log := m.redis.logger()
-	log = ldlogger.With(log, zap.String("key", key), zap.String("token", val))
-	ctx = ldcontext.WithLogger(ctx, log)
+	log = log.With(zap.String("key", key), zap.String("token", val))
+	ctx = ldctx.WithLogger(ctx, log)
 
 	if ok := atomic.CompareAndSwapInt64(&m.lockTime, lockTime, 0); !ok {
 		ctx.LogW("redis mutex has been unlocked by another goroutine", getCallerField(m.redis.caller))
@@ -202,7 +201,7 @@ func (m *Mutex) Unlock() error {
 
 	ctx.LogD("redis mutex will be unlocked", getCallerField(m.redis.caller))
 
-	ldcontext.TryCancel(ctx)
+	ldctx.TryCancel(ctx)
 	if err := m.checkToken(ctx, key, val); err != nil {
 		return err
 	}
@@ -216,14 +215,14 @@ func (m *Mutex) Unlock() error {
 	return nil
 }
 
-func (m *Mutex) goroutine(ctx ldcontext.Context, key, val string, lockTime int64) {
+func (m *Mutex) goroutine(ctx ldctx.Context, key, val string, lockTime int64) {
 	ctx.LogD("redis mutex goroutine start")
 	ticker := time.NewTicker(m.interval)
 
 	defer func() {
 		ctx.LogD("redis mutex goroutine stop")
 
-		ldcontext.TryCancel(ctx)
+		ldctx.TryCancel(ctx)
 		atomic.CompareAndSwapInt64(&m.lockTime, lockTime, 0)
 
 		close(m.events)
@@ -244,7 +243,7 @@ func (m *Mutex) goroutine(ctx ldcontext.Context, key, val string, lockTime int64
 	}
 }
 
-func (m *Mutex) heartbeat(ctx ldcontext.Context, now time.Time, key, val string) bool {
+func (m *Mutex) heartbeat(ctx ldctx.Context, now time.Time, key, val string) bool {
 	switch err := m.checkToken(ctx, key, val); err {
 	case nil:
 		m.lastHeartbeat = now
@@ -260,7 +259,7 @@ func (m *Mutex) heartbeat(ctx ldcontext.Context, now time.Time, key, val string)
 	return true
 }
 
-func (m *Mutex) checkToken(ctx ldcontext.Context, key, val string) error {
+func (m *Mutex) checkToken(ctx ldctx.Context, key, val string) error {
 	cli := m.redis.Client()
 	{
 		cmd := cli.Expire(key, m.getExpiration())
@@ -292,7 +291,7 @@ func (m *Mutex) checkToken(ctx ldcontext.Context, key, val string) error {
 	return nil
 }
 
-func (m *Mutex) checkHeartbeatTime(ctx ldcontext.Context) bool {
+func (m *Mutex) checkHeartbeatTime(ctx ldctx.Context) bool {
 	if time.Since(m.lastHeartbeat) < m.timeout {
 		return true
 	}
@@ -302,7 +301,7 @@ func (m *Mutex) checkHeartbeatTime(ctx ldcontext.Context) bool {
 	return false
 }
 
-func (m *Mutex) doHeartbeatError(ctx ldcontext.Context) {
+func (m *Mutex) doHeartbeatError(ctx ldctx.Context) {
 	select {
 	case <-ctx.Done():
 	case m.events <- MutexEvent_Deleted:
