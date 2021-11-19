@@ -32,6 +32,7 @@ type Mutex struct {
 	timeout   time.Duration
 	lockForce bool
 
+	ctx           Context
 	key           string
 	token         string
 	lastHeartbeat time.Time
@@ -137,10 +138,18 @@ func (m *Mutex) Lock(key string) error {
 			return err
 		}
 
+		ticker := time.NewTicker(m.interval)
 		for err != nil {
-			time.Sleep(m.interval)
-			err = m.internalLock(ctx, key, token)
+			select {
+			case <-ctx.Done():
+				ticker.Stop()
+				return err
+
+			case <-ticker.C:
+				err = m.internalLock(ctx, key, token)
+			}
 		}
+		ticker.Stop()
 	}
 
 	now := time.Now().UnixNano()
@@ -150,6 +159,7 @@ func (m *Mutex) Lock(key string) error {
 		return lderr.ErrCacheMutexLocked
 	}
 
+	m.ctx = ctx
 	m.key = key
 	m.token = token
 	m.events = make(chan MutexEvent, 1)
@@ -186,6 +196,7 @@ func (m *Mutex) Unlock() error {
 		return nil
 	}
 
+	ctx = m.ctx
 	cli := m.redis.Client()
 	key := m.key
 	val := m.token
