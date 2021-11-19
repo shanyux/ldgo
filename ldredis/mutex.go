@@ -22,16 +22,19 @@ const (
 )
 
 const (
-	mutexMinInterval = time.Second
-	mutexMinTimeout  = 10 * time.Second
+	mutexMinHeartbeatInterval = 1 * time.Second
+	mutexMinHeartbeatTimeout  = 10 * time.Second
+	mutexMinLockForceInterval = 1 * time.Millisecond
 )
 
 type Mutex struct {
-	redis     *Redis
-	interval  time.Duration
-	timeout   time.Duration
-	lockForce bool
+	redis             *Redis
+	heartbeatInterval time.Duration
+	heartbeatTimeout  time.Duration
+	lockForce         bool
+	lockForceInterval time.Duration
 
+	ctx           Context
 	key           string
 	token         string
 	lastHeartbeat time.Time
@@ -41,9 +44,10 @@ type Mutex struct {
 
 func NewMutex(redis *Redis) *Mutex {
 	m := &Mutex{
-		redis:    redis,
-		interval: 5 * time.Second,
-		timeout:  2 * time.Minute,
+		redis:             redis,
+		heartbeatInterval: 5 * time.Second,
+		heartbeatTimeout:  2 * time.Minute,
+		lockForceInterval: 1 * time.Second,
 	}
 	return m
 }
@@ -71,38 +75,47 @@ func (m *Mutex) WithContext(ctx Context) *Mutex {
 // 	return m
 // }
 
-func (m *Mutex) WithLockForce(force bool) *Mutex {
+// WithLockForce return the redis mutex with lock force
+// but if the context is cancelled, the lock force is not available
+func (m *Mutex) WithLockForce(force bool, interval ...time.Duration) *Mutex {
 	m = m.clone()
 	m.lockForce = force
+	if len(interval) > 0 {
+		d := interval[0]
+		if d < mutexMinLockForceInterval {
+			d = mutexMinLockForceInterval
+		}
+		m.lockForceInterval = d
+	}
 	return m
 }
 
 func (m *Mutex) WithInterval(d time.Duration) *Mutex {
 	m = m.clone()
 
-	if d < mutexMinInterval {
-		d = mutexMinInterval
+	if d < mutexMinHeartbeatInterval {
+		d = mutexMinHeartbeatInterval
 	}
-	m.interval = d
+	m.heartbeatInterval = d
 
-	if timeout := m.getMinTimeout(d); m.timeout < timeout {
-		m.timeout = timeout
+	if timeout := m.getMinTimeout(d); m.heartbeatTimeout < timeout {
+		m.heartbeatTimeout = timeout
 	}
 	return m
 }
 
 func (m *Mutex) WithTimeout(d time.Duration) *Mutex {
 	m = m.clone()
-	m.timeout = m.getMinTimeout(d)
+	m.heartbeatTimeout = m.getMinTimeout(d)
 	return m
 }
 
 func (m *Mutex) getMinTimeout(d time.Duration) time.Duration {
-	if d < mutexMinTimeout {
-		d = mutexMinTimeout
+	if d < mutexMinHeartbeatTimeout {
+		d = mutexMinHeartbeatTimeout
 	}
 
-	if t := m.interval * 3; d < t {
+	if t := m.heartbeatInterval * 3; d < t {
 		d = t
 	}
 
@@ -110,7 +123,7 @@ func (m *Mutex) getMinTimeout(d time.Duration) time.Duration {
 }
 
 func (m *Mutex) getExpiration() time.Duration {
-	return m.interval + m.timeout
+	return m.heartbeatInterval + m.heartbeatTimeout
 }
 
 func (m *Mutex) Key() string               { return m.key }
@@ -137,10 +150,18 @@ func (m *Mutex) Lock(key string) error {
 			return err
 		}
 
+		ticker := time.NewTicker(m.lockForceInterval)
 		for err != nil {
-			time.Sleep(m.interval)
-			err = m.internalLock(ctx, key, token)
+			select {
+			case <-ctx.Done():
+				ticker.Stop()
+				return err
+
+			case <-ticker.C:
+				err = m.internalLock(ctx, key, token)
+			}
 		}
+		ticker.Stop()
 	}
 
 	now := time.Now().UnixNano()
@@ -150,6 +171,7 @@ func (m *Mutex) Lock(key string) error {
 		return lderr.ErrCacheMutexLocked
 	}
 
+	m.ctx = ctx
 	m.key = key
 	m.token = token
 	m.events = make(chan MutexEvent, 1)
@@ -186,6 +208,7 @@ func (m *Mutex) Unlock() error {
 		return nil
 	}
 
+	ctx = m.ctx
 	cli := m.redis.Client()
 	key := m.key
 	val := m.token
@@ -217,7 +240,7 @@ func (m *Mutex) Unlock() error {
 
 func (m *Mutex) goroutine(ctx ldctx.Context, key, val string, lockTime int64) {
 	ctx.LogD("redis mutex goroutine start")
-	ticker := time.NewTicker(m.interval)
+	ticker := time.NewTicker(m.heartbeatInterval)
 
 	defer func() {
 		ctx.LogD("redis mutex goroutine stop")
@@ -292,7 +315,7 @@ func (m *Mutex) checkToken(ctx ldctx.Context, key, val string) error {
 }
 
 func (m *Mutex) checkHeartbeatTime(ctx ldctx.Context) bool {
-	if time.Since(m.lastHeartbeat) < m.timeout {
+	if time.Since(m.lastHeartbeat) < m.heartbeatTimeout {
 		return true
 	}
 
