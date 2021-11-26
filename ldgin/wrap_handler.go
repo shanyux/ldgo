@@ -75,8 +75,10 @@ func (w *handler) getOutConv1(outType reflect.Type) outConvType {
 	return func(c *Context, outs []reflect.Value) {
 		out0 := outs[0].Interface()
 		if err := out0; err != nil {
-			w.returnError(c, lderr.Wrap(err.(Error)))
-			return
+			if e := lderr.Wrap(err.(error)); w.hasError(e) {
+				w.returnError(c, e)
+				return
+			}
 		}
 
 		w.returnResponse(c, nil)
@@ -98,8 +100,10 @@ func (w *handler) getOutConv2(outTypes []reflect.Type) outConvType {
 			out1 := outs[1].Interface()
 
 			if err := out1; err != nil {
-				w.returnError(c, lderr.Wrap(err.(Error)))
-				return
+				if e := lderr.Wrap(err.(error)); w.hasError(e) {
+					w.returnError(c, e)
+					return
+				}
 			}
 
 			c.Set(GinKeyRenderer, out0)
@@ -112,8 +116,10 @@ func (w *handler) getOutConv2(outTypes []reflect.Type) outConvType {
 		out1 := outs[1].Interface()
 
 		if err := out1; err != nil {
-			w.returnError(c, lderr.Wrap(err.(Error)))
-			return
+			if e := lderr.Wrap(err.(error)); w.hasError(e) {
+				w.returnError(c, e)
+				return
+			}
 		}
 
 		w.returnResponse(c, out0)

@@ -46,6 +46,10 @@ type wrapper struct {
 	OutConv outConvType
 }
 
+func (w *wrapper) hasError(err Error) bool {
+	return err != nil && err.Code() != 0
+}
+
 func (w *wrapper) returnError(c *Context, err Error) {
 	response := &CommResponse{
 		Sequence: c.sequence,
@@ -93,8 +97,10 @@ func (w *wrapper) getOutConv1(outType reflect.Type) outConvType {
 	return func(c *Context, outs []reflect.Value) {
 		out0 := outs[0].Interface()
 		if err := out0; err != nil {
-			w.returnError(c, lderr.Wrap(err.(error)))
-			return
+			if e := lderr.Wrap(err.(error)); w.hasError(e) {
+				w.returnError(c, e)
+				return
+			}
 		}
 	}
 }
@@ -150,7 +156,7 @@ func (w *wrapper) getInConv(t reflect.Type) inConvType {
 		v := reflect.New(t.Elem())
 
 		for _, f := range convs {
-			if err := f(c, v); err != nil {
+			if err := f(c, v); w.hasError(err) {
 				return v, err
 			}
 		}
@@ -258,7 +264,7 @@ func (w *wrapper) call(g *gin.Context, h reflect.Value) {
 	ins := make([]reflect.Value, 0, len(w.InConvs))
 	for _, conv := range w.InConvs {
 		v, err := conv(c)
-		if err != nil {
+		if w.hasError(err) {
 			w.returnError(c, err)
 			return
 		}
