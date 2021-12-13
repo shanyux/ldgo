@@ -124,8 +124,8 @@ func (s sortIface) Less(i, j int) bool {
 	return s.Compare(i, j) < 0
 }
 
-func internalSort(slice Interface)          { sort.Sort(sortIface{Interface: slice}) }
-func internalIsSorted(slice Interface) bool { return sort.IsSorted(sortIface{Interface: slice}) }
+func internalSort(s Interface)          { sort.Sort(sortIface{Interface: s}) }
+func internalIsSorted(s Interface) bool { return sort.IsSorted(sortIface{Interface: s}) }
 
 // Search uses binary search to find and return the smallest index in [0, n) at which f(i) is true
 func Search(n int, f func(i int) bool) int { return sort.Search(n, f) }
