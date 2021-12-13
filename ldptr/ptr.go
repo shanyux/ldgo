@@ -4,6 +4,8 @@
 
 package ldptr
 
+import "time"
+
 func GetByte(p *byte, def ...byte) byte {
 	if p != nil {
 		return *p
@@ -172,4 +174,24 @@ func GetComplex128(p *complex128, def ...complex128) complex128 {
 		return def[0]
 	}
 	return complex(0, 0)
+}
+
+func GetTime(p *time.Time, def ...time.Time) time.Time {
+	if p != nil {
+		return *p
+	}
+	if len(def) > 0 {
+		return def[0]
+	}
+	return time.Time{}
+}
+
+func GetDuration(p *time.Duration, def ...time.Duration) time.Duration {
+	if p != nil {
+		return *p
+	}
+	if len(def) > 0 {
+		return def[0]
+	}
+	return 0
 }
