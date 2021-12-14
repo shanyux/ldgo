@@ -51,22 +51,7 @@ func (w *wrapper) hasError(err Error) bool {
 }
 
 func (w *wrapper) returnError(c *Context, err Error) {
-	response := &CommResponse{
-		Sequence: c.sequence,
-		Cost:     time.Since(c.beginTime).String(),
-		ErrCode:  err.Code(),
-		ErrMsg:   err.Error(),
-		Data:     struct{}{},
-	}
-
-	if e, ok := err.(lderr.ErrorWithDetails); ok {
-		response.ErrDetails = e.Details()
-	}
-
-	c.Set(GinKeyResponse, response)
-	c.JSON(err.Status(), response)
-	c.Abort()
-	// c.AbortWithStatusJSON(err.Status(), response)
+	c.AbortWithError(err)
 }
 
 func (w *wrapper) returnResponse(c *Context, rsp interface{}) {

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/distroy/ldgo/ldctx"
+	"github.com/distroy/ldgo/lderr"
 	"github.com/distroy/ldgo/ldrand"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -143,4 +144,21 @@ func (c *Context) Value(key interface{}) interface{} {
 		return c
 	}
 	return c.ldCtx.Value(key)
+}
+
+func (c *Context) AbortWithError(err Error) {
+	response := &CommResponse{
+		Sequence: c.sequence,
+		Cost:     time.Since(c.beginTime).String(),
+		ErrCode:  err.Code(),
+		ErrMsg:   err.Error(),
+		Data:     struct{}{},
+	}
+
+	if e, ok := err.(lderr.ErrorWithDetails); ok {
+		response.ErrDetails = e.Details()
+	}
+
+	c.Set(GinKeyError, err)
+	c.AbortWithStatusJSON(err.Status(), response)
 }
