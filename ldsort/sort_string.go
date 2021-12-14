@@ -20,7 +20,7 @@ func SortStrings(a []string)          { internalSort(Strings(a)) }
 func UniqStrings(a []string) []string { return a[:uniq(Strings(a))] }
 func IsSortedStrings(a []string) bool { return internalIsSorted(Strings(a)) }
 func SearchStrings(a []string, x string) int {
-	return Search(len(a), func(i int) bool { return a[i] >= x })
+	return internalSearch(len(a), func(i int) bool { return a[i] >= x })
 }
 func IndexStrings(a []string, x string) int {
 	if idx := SearchStrings(a, x); idx < len(a) && a[idx] == x {

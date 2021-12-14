@@ -29,10 +29,10 @@ func (s *sortStructForCompare) Swap(i, j int) {
 	b.Set(reflect.ValueOf(t))
 }
 
-func (s *sortStructForCompare) Compare(i, j int) int {
+func (s *sortStructForCompare) Less(i, j int) bool {
 	args := [2]reflect.Value{s.Array.Index(i), s.Array.Index(j)}
 	res := s.CmpFunc.Call(args[:])
-	return int(res[0].Int())
+	return res[0].Int() < 0
 }
 
 type sortStructForLess struct {
@@ -60,12 +60,7 @@ func (s *sortStructForLess) Less(i, j int) bool {
 	return res[0].Bool()
 }
 
-// Sort sorts slice with lessFunc
-// slice type must be slice
-// lessOrCompareFunc type must be:
-//		func less(a, b TypeOfSliceElement) bool
-//		func compare(a, b TypeOfSliceElement) int
-func Sort(slice interface{}, lessOrCompareFunc interface{}) {
+func getSortInterface(slice interface{}, lessOrCompareFunc interface{}) sort.Interface {
 	aVal := reflect.ValueOf(slice)
 	aType := aVal.Type()
 	switch aType.Kind() {
@@ -79,21 +74,21 @@ func Sort(slice interface{}, lessOrCompareFunc interface{}) {
 	fVal := reflect.ValueOf(lessOrCompareFunc)
 	fType := fVal.Type()
 	if fType.Kind() != reflect.Func {
-		panic(fmt.Sprintf("less func must be func, type: %s", fType))
+		panic(fmt.Sprintf("less/compare func must be func, type: %s", fType))
 	}
 
 	if n := fType.NumIn(); n != 2 {
-		panic(fmt.Sprintf("less func must have 2 input parameters, type: %s", fType))
+		panic(fmt.Sprintf("less/compare func must have 2 input parameters, type: %s", fType))
 	}
 
 	type0 := fType.In(0)
 	type1 := fType.In(1)
 	if type0 != type1 || !(type0 == eType || (type0.Kind()) == reflect.Interface && eType.Implements(type0)) {
-		panic(fmt.Sprintf("second parameters of less func must be or implements %s", eType))
+		panic(fmt.Sprintf("second parameters of less/compare func must be or implements %s", eType))
 	}
 
 	if n := fType.NumOut(); n != 1 {
-		panic(fmt.Sprintf("less func must have 1 output parameter, type: %s", fType))
+		panic(fmt.Sprintf("less/compare func must have 1 output parameter, type: %s", fType))
 	}
 
 	switch typ := fType.Out(0); typ.Kind() {
@@ -101,19 +96,39 @@ func Sort(slice interface{}, lessOrCompareFunc interface{}) {
 		panic(fmt.Sprintf("parameter of less/compare func must be bool/int, type: %s", typ))
 
 	case reflect.Bool:
-		sort.Sort(&sortStructForLess{
+		return &sortStructForLess{
 			Size:     aVal.Len(),
 			Array:    aVal,
 			LessFunc: fVal,
-		})
+		}
 
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		internalSort(&sortStructForCompare{
+		return &sortStructForCompare{
 			Size:    aVal.Len(),
 			Array:   aVal,
 			CmpFunc: fVal,
-		})
+		}
 	}
+}
+
+// Sort sorts slice with lessOrCompareFunc
+// slice type must be slice
+// lessOrCompareFunc type must be:
+//		func less(a, b TypeOfSliceElement) bool
+//		func compare(a, b TypeOfSliceElement) int
+func Sort(slice interface{}, lessOrCompareFunc interface{}) {
+	i := getSortInterface(slice, lessOrCompareFunc)
+	sort.Sort(i)
+}
+
+// IsSorted reports whether data is sorted.
+// slice type must be slice
+// lessOrCompareFunc type must be:
+//		func less(a, b TypeOfSliceElement) bool
+//		func compare(a, b TypeOfSliceElement) int
+func IsSorted(slice interface{}, lessOrCompareFunc interface{}) bool {
+	i := getSortInterface(slice, lessOrCompareFunc)
+	return sort.IsSorted(i)
 }
 
 type sortIface struct {
@@ -126,6 +141,3 @@ func (s sortIface) Less(i, j int) bool {
 
 func internalSort(s Interface)          { sort.Sort(sortIface{Interface: s}) }
 func internalIsSorted(s Interface) bool { return sort.IsSorted(sortIface{Interface: s}) }
-
-// Search uses binary search to find and return the smallest index in [0, n) at which f(i) is true
-func Search(n int, f func(i int) bool) int { return sort.Search(n, f) }
