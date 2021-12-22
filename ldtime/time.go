@@ -16,14 +16,6 @@ func divisionTimeNum(num *int64, dividend int64) int {
 	return int(n)
 }
 
-func GetTopicWeekDay(tm time.Time) int {
-	wday := int(tm.Weekday())
-	if wday == 0 {
-		wday = 7
-	}
-	return wday
-}
-
 // TimeToDateNum format: 20060102 '%Y%m%d'
 func TimeToDateNum(t time.Time) int64 {
 	year, month, mday := t.Date()
@@ -53,12 +45,6 @@ func DateNumToTime(dateNum int64, loc ...*time.Location) time.Time {
 		tz = loc[0]
 	}
 	return time.Date(year, time.Month(month), day, hour, min, sec, nsec, tz)
-}
-
-func DateBegin(t time.Time) time.Time {
-	year, month, day := t.Date()
-	hour, min, sec, nsec := 0, 0, 0, 0
-	return time.Date(int(year), time.Month(month), int(day), hour, min, sec, nsec, t.Location())
 }
 
 // TimeToNum format: 20060102150405 '%Y%m%d%H%M%S'
