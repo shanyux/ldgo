@@ -7,6 +7,7 @@ package ldgin
 import (
 	"log"
 	"reflect"
+	"runtime"
 
 	"github.com/distroy/ldgo/lderr"
 	"github.com/gin-gonic/gin"
@@ -31,11 +32,14 @@ type handler struct {
 }
 
 func wrapHandler(f Handler) *handler {
+	handlerName := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
+
 	t := reflect.TypeOf(f)
 	w := &handler{
 		wrapper: wrapper{
-			Name: "handler",
-			Type: t,
+			Handler: handlerName,
+			Name:    "handler",
+			Type:    t,
 		},
 		Value: reflect.ValueOf(f),
 	}

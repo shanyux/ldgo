@@ -116,6 +116,9 @@ type Context struct {
 	*ginCtx
 	ldCtx
 
+	handler   string
+	method    string
+	path      string
 	beginTime time.Time
 	sequence  string
 }
@@ -162,3 +165,12 @@ func (c *Context) AbortWithError(err Error) {
 	c.Set(GinKeyError, err)
 	c.AbortWithStatusJSON(err.Status(), response)
 }
+
+func (c *Context) setHandler(h string) { c.handler = h }
+func (c *Context) GetHandler() string  { return c.handler }
+
+func (c *Context) setPath(p string) { c.path = p }
+func (c *Context) GetPath() string  { return c.path }
+
+func (c *Context) setMethod(m string) { c.method = m }
+func (c *Context) GetMethod() string  { return c.method }

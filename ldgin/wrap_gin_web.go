@@ -66,6 +66,12 @@ func (w *ginWebWapper) clone() *ginWebWapper {
 	return &c
 }
 
+func (w *ginWebWapper) WithAppPath(path string) routerBase {
+	w = w.clone()
+	w.setAppPath(path)
+	return w
+}
+
 func (w *ginWebWapper) Group(relativePath string, midwares ...Midware) routerBase {
 	w = w.clone()
 	w.basePath = w.calculateAbsolutePath(relativePath)
@@ -80,12 +86,21 @@ func (w *ginWebWapper) Use(midwares ...Midware) routerBase {
 }
 
 func (w *ginWebWapper) Handle(method, path string, h Handler, ms ...Midware) routerBase {
-	ins := make([]reflect.Value, 0, len(ms)+4)
+	fullPath := w.calculateFullPath(path)
+	absPath := w.calculateAbsolutePath(path)
+
+	handler := wrapHandler(h)
+	handler.setMethod(method)
+	handler.setPath(fullPath)
+
+	midwares := w.combineMidwares(ms).WithMethod(method, fullPath).Get()
+
+	ins := make([]reflect.Value, 0, len(midwares)+4)
 	ins = append(ins, w.router)
 	ins = append(ins, reflect.ValueOf(method))
-	ins = append(ins, reflect.ValueOf(w.calculateAbsolutePath(path)))
-	ins = append(ins, reflect.ValueOf(WrapHandler(h)))
-	for _, m := range w.combineMidwares(ms) {
+	ins = append(ins, reflect.ValueOf(absPath))
+	ins = append(ins, reflect.ValueOf(handler.Do))
+	for _, m := range midwares {
 		ins = append(ins, reflect.ValueOf(m))
 	}
 	w.method.Func.Call(ins[:])

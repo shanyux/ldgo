@@ -40,11 +40,17 @@ func (w wrapperBase) isType(child, parent reflect.Type) bool {
 type wrapper struct {
 	wrapperBase
 
+	Method  string
+	Path    string
+	Handler string
 	Name    string
 	Type    reflect.Type
 	InConvs []inConvType
 	OutConv outConvType
 }
+
+func (w *wrapper) setMethod(method string) { w.Method = method }
+func (w *wrapper) setPath(path string)     { w.Path = path }
 
 func (w *wrapper) hasError(err Error) bool {
 	return err != nil && err.Code() != 0
@@ -227,6 +233,16 @@ func (w *wrapper) getValidatorFunc(t reflect.Type) func(*Context, reflect.Value)
 
 func (w *wrapper) call(g *gin.Context, h reflect.Value) {
 	c := newCtxIfNotExists(g)
+	if len(w.Handler) > 0 {
+		c.setHandler(w.Handler)
+	}
+	if len(w.Method) > 0 {
+		c.setMethod(w.Method)
+	}
+	if len(w.Path) > 0 {
+		c.setPath(w.Path)
+	}
+
 	defer func() {
 		if e := recover(); e != nil {
 			seq := c.sequence

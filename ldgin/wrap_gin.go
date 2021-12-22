@@ -18,8 +18,17 @@ func WrapGin(router gin.IRouter) Router {
 }
 
 type ginWapperBase struct {
+	appPath  string
 	basePath string
-	midwares []gin.HandlerFunc
+	midwares midwares
+}
+
+func (w *ginWapperBase) setAppPath(path string) {
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+
+	w.appPath = path
 }
 
 func (w *ginWapperBase) BasePath() string {
@@ -29,50 +38,50 @@ func (w *ginWapperBase) BasePath() string {
 	return "/"
 }
 
-func (w *ginWapperBase) combineMidwares(midwares []Midware) []gin.HandlerFunc {
-	if len(midwares) == 0 {
-		return w.midwares
-	}
-
-	finalSize := len(w.midwares) + len(midwares)
-
-	merged := make([]gin.HandlerFunc, len(w.midwares), finalSize)
-	copy(merged, w.midwares)
-	for _, m := range midwares {
-		merged = append(merged, WrapMidware(m))
-	}
-	return merged
+func (w *ginWapperBase) combineMidwares(midwares []Midware) midwares {
+	return w.midwares.CombineMidwares(midwares)
 }
 
-func (w *ginWapperBase) combineHandlerMidwares(handler Handler, midwares []Midware) []gin.HandlerFunc {
-	finalSize := len(w.midwares) + len(midwares) + 1
-
-	merged := make([]gin.HandlerFunc, len(w.midwares), finalSize)
-	copy(merged, w.midwares)
-	for _, m := range midwares {
-		merged = append(merged, WrapMidware(m))
-	}
-	merged = append(merged, WrapHandler(handler))
-	return merged
+func (w *ginWapperBase) calculateFullPath(relativePath string) string {
+	return w.joinPath(w.appPath, w.basePath, relativePath)
 }
 
 func (w *ginWapperBase) calculateAbsolutePath(relativePath string) string {
-	absolutePath := w.BasePath()
+	return w.joinPath(w.basePath, relativePath)
+}
 
-	if relativePath == "" {
-		return absolutePath
+func (w *ginWapperBase) joinPath(elems ...string) string {
+	count := 0
+	for _, v := range elems {
+		if len(v) > 0 {
+			count++
+		}
+	}
+	if count < len(elems) {
+		i := 0
+		for _, v := range elems {
+			if len(v) > 0 {
+				elems[i] = v
+				i++
+			}
+		}
+		elems = elems[:count]
 	}
 
-	if !strings.HasPrefix(relativePath, "/") {
-		relativePath = "/" + relativePath
+	if count == 0 {
+		return "/"
 	}
 
-	finalPath := path.Join(absolutePath, relativePath)
-	if strings.HasSuffix(relativePath, "/") && !strings.HasSuffix(finalPath, "/") {
-		return finalPath + "/"
-	}
+	last := elems[count-1]
+	final := path.Join(elems...)
 
-	return finalPath
+	if !strings.HasPrefix(final, "/") {
+		final = "/" + final
+	}
+	if strings.HasSuffix(last, "/") && !strings.HasSuffix(final, "/") {
+		final = final + "/"
+	}
+	return final
 }
 
 type ginWapper struct {
@@ -84,6 +93,12 @@ type ginWapper struct {
 func (w *ginWapper) clone() *ginWapper {
 	c := *w
 	return &c
+}
+
+func (w *ginWapper) WithAppPath(path string) routerBase {
+	w = w.clone()
+	w.setAppPath(path)
+	return w
 }
 
 func (w *ginWapper) Group(relativePath string, midwares ...Midware) routerBase {
@@ -100,6 +115,9 @@ func (w *ginWapper) Use(midwares ...Midware) routerBase {
 }
 
 func (w *ginWapper) Handle(method, path string, h Handler, ms ...Midware) routerBase {
-	w.router.Handle(method, w.calculateAbsolutePath(path), w.combineHandlerMidwares(h, ms)...)
+	fullPath := w.calculateFullPath(path)
+	absPath := w.calculateAbsolutePath(path)
+	midwares := w.combineMidwares(ms).WithMethod(method, fullPath)
+	w.router.Handle(method, absPath, midwares.Get(h)...)
 	return w
 }
