@@ -193,7 +193,7 @@ func (m *Mutex) internalLock(ctx Context, key, token string) error {
 
 	if ok := cmd.Val(); !ok {
 		ctx.LogW("redis mutex has been locked by another goroutine/process", getCallerField(m.redis.caller))
-		return lderr.ErrCacheMutexLocking
+		return lderr.ErrCacheMutexLocked
 	}
 
 	return nil

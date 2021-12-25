@@ -46,7 +46,6 @@ var (
 	ErrCacheTimeout = New(http.StatusOK, -823, "cache timeout")
 
 	ErrCacheMutexLocked    = New(http.StatusOK, -831, "cache mutex had been locked")
-	ErrCacheMutexLocking   = New(http.StatusOK, -832, "cache mutex is locking")
-	ErrCacheMutexNotExists = New(http.StatusOK, -833, "cache mutex is not exists")
-	ErrCacheMutexNotMatch  = New(http.StatusOK, -834, "cache mutex is not match")
+	ErrCacheMutexNotExists = New(http.StatusOK, -832, "cache mutex is not exists")
+	ErrCacheMutexNotMatch  = New(http.StatusOK, -833, "cache mutex is not match")
 )
