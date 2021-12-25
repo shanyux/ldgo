@@ -14,7 +14,7 @@ const (
 	Nil = redis.Nil
 )
 
-var _ Cmdable = &Redis{}
+var _ Cmdable = (*Redis)(nil)
 
 func New(cli redis.Cmdable) *Redis {
 	if rds, ok := cli.(*Redis); ok {
@@ -113,6 +113,13 @@ func (c *Redis) clone(ctx ...Context) *Redis {
 	})
 
 	return c
+}
+
+func (c *Redis) WithCodec(codec Codec) CodecCmdable {
+	return &CodecRedis{
+		redis: c,
+		codec: codec,
+	}
 }
 
 func (c *Redis) WithContext(ctx Context) *Redis {

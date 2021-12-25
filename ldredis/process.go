@@ -77,7 +77,6 @@ func (c *Redis) defaultProcess(cmd Cmder) error {
 		}
 
 		if i++; i >= retry {
-			// log = ldlog.With(log, fields...)
 			log.Error("redis cmd fail", zap.Int("retry", i), getCmdField(cmd), zap.Error(err), getCallerField(caller))
 			return err
 		}
