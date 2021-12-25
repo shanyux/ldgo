@@ -14,6 +14,10 @@ const (
 	Nil = redis.Nil
 )
 
+func isErrNil(err error) bool {
+	return err == nil || err == Nil
+}
+
 var _ Cmdable = (*Redis)(nil)
 
 func New(cli redis.Cmdable) *Redis {
@@ -115,10 +119,10 @@ func (c *Redis) clone(ctx ...Context) *Redis {
 	return c
 }
 
-func (c *Redis) WithCodec(codec Codec) CodecCmdable {
+func (c *Redis) WithCodec(codec Codec) *CodecRedis {
 	return &CodecRedis{
-		redis: c,
-		codec: codec,
+		client: c,
+		codec:  codec,
 	}
 }
 
@@ -155,8 +159,8 @@ func (c *Redis) WithReport(reporter Reporter) *Redis {
 	return c
 }
 
-func (c *Redis) WithCaller(caller bool) *Redis {
+func (c *Redis) WithCaller(enable bool) *Redis {
 	c = c.clone()
-	c.caller = caller
+	c.caller = enable
 	return c
 }

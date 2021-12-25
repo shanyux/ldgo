@@ -41,9 +41,11 @@ var (
 	ErrDbTxBegin  = New(http.StatusOK, -813, "database tx begin error")
 	ErrDbTxCommit = New(http.StatusOK, -814, "database tx commit error")
 
-	ErrCacheRead    = New(http.StatusOK, -821, "cache read error")
-	ErrCacheWrite   = New(http.StatusOK, -822, "cache write error")
-	ErrCacheTimeout = New(http.StatusOK, -823, "cache timeout")
+	ErrCacheRead      = New(http.StatusOK, -821, "cache read error")
+	ErrCacheWrite     = New(http.StatusOK, -822, "cache write error")
+	ErrCacheTimeout   = New(http.StatusOK, -823, "cache timeout")
+	ErrCacheMarshal   = New(http.StatusOK, -824, "cache codec marshal error")
+	ErrCacheUnmarshal = New(http.StatusOK, -825, "cache codec unmarshal error")
 
 	ErrCacheMutexLocked    = New(http.StatusOK, -831, "cache mutex had been locked")
 	ErrCacheMutexNotExists = New(http.StatusOK, -832, "cache mutex is not exists")

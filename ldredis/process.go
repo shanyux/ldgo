@@ -71,7 +71,7 @@ func (c *Redis) defaultProcess(cmd Cmder) error {
 		reporter.Report(cmd, time.Since(begin))
 
 		err := cmd.Err()
-		if err == nil || err == Nil {
+		if isErrNil(err) {
 			log.Debug("redis cmd succ", zap.Int("retry", i), getCmdField(cmd), getCallerField(caller))
 			return err
 		}
@@ -104,7 +104,7 @@ func (c *Redis) defaultProcessPipeline(cmds []Cmder) error {
 			}
 		}
 
-		if err == nil || err == Nil {
+		if isErrNil(err) {
 			for _, cmd := range cmds {
 				log.Debug("redis pipeline cmd succ", zap.Int("retry", i), getCmdField(cmd), caller)
 			}
