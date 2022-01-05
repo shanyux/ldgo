@@ -222,7 +222,7 @@ func fastSourceNext(seed *uint64, xor []uint64) uint64 {
 	b = b ^ ((n >> 60) & 0xf)
 
 	x = x | uint64(b)
-	// x = ((x & 0xffffffff) << 32) | ((x >> 32) & 0xffffffff)
+	x = ((x & 0xffffffff) << 32) | ((x >> 32) & 0xffffffff)
 	return x
 }
 
