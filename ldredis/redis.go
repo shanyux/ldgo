@@ -104,11 +104,9 @@ func (c *Redis) clone(ctx ...Context) *Redis {
 
 	if len(ctx) != 0 {
 		c.origin = c.origin.withContext(ctx[0])
-	} else {
-		c.origin = c.origin.withContext(c.origin.Context())
 	}
 
-	c.cmdable = c.origin
+	c.cmdable = c.origin.withContext(c.origin.Context())
 	c.cmdable.WrapProcess(func(oldProcess func(cmd Cmder) error) func(cmd Cmder) error {
 		return c.defaultProcess
 	})
