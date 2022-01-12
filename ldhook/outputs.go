@@ -21,7 +21,7 @@ type ResultCell struct {
 	Times   int
 }
 
-func Bind(pos int, val interface{}) interface{} {
+func BindInput(pos int, val interface{}) interface{} {
 	if pos < 0 {
 		return val
 	}

@@ -296,7 +296,7 @@ func TestInput(t *testing.T) {
 		var i64 int64
 		var s string
 
-		convey.Convey("auto find the position(int)", func() {
+		convey.Convey("auto find (int)", func() {
 			patches.Apply(FuncHook{
 				Target: testFuncForInput,
 				Double: ResultCell{
@@ -309,7 +309,7 @@ func TestInput(t *testing.T) {
 			convey.So(i64, convey.ShouldEqual, int64(0))
 			convey.So(s, convey.ShouldEqual, "")
 		})
-		convey.Convey("auto find the position(int64)", func() {
+		convey.Convey("auto find (int64)", func() {
 			patches.Apply(FuncHook{
 				Target: testFuncForInput,
 				Double: ResultCell{
@@ -322,7 +322,7 @@ func TestInput(t *testing.T) {
 			convey.So(i64, convey.ShouldEqual, int64(123))
 			convey.So(s, convey.ShouldEqual, "")
 		})
-		convey.Convey("auto find the position(string)", func() {
+		convey.Convey("auto find (string)", func() {
 			patches.Apply(FuncHook{
 				Target: testFuncForInput,
 				Double: ResultCell{
@@ -336,7 +336,7 @@ func TestInput(t *testing.T) {
 			convey.So(s, convey.ShouldEqual, "1234")
 		})
 
-		convey.Convey("auto find the position(func)", func() {
+		convey.Convey("auto find (func)", func() {
 			patches.Apply(FuncHook{
 				Target: testFuncForInput,
 				Double: ResultCell{
@@ -360,11 +360,11 @@ func TestInput(t *testing.T) {
 			convey.So(func() { testFuncForInput(&i, &i64, &s) }, convey.ShouldPanic)
 		})
 
-		convey.Convey("position (int) succ", func() {
+		convey.Convey("bind (int) succ", func() {
 			patches.Apply(FuncHook{
 				Target: testFuncForInput,
 				Double: ResultCell{
-					Inputs: Values{Bind(0, 123)},
+					Inputs: Values{BindInput(0, 123)},
 				},
 			})
 
@@ -373,16 +373,29 @@ func TestInput(t *testing.T) {
 			convey.So(i64, convey.ShouldEqual, int64(0))
 			convey.So(s, convey.ShouldEqual, "")
 		})
-
-		convey.Convey("position (int) panic", func() {
+		convey.Convey("bind (int) panic", func() {
 			patches.Apply(FuncHook{
 				Target: testFuncForInput,
 				Double: ResultCell{
-					Inputs: Values{Bind(1, 123)},
+					Inputs: Values{BindInput(1, 123)},
 				},
 			})
 
 			convey.So(func() { testFuncForInput(&i, &i64, &s) }, convey.ShouldPanic)
+		})
+
+		convey.Convey("bind (func) succ", func() {
+			patches.Apply(FuncHook{
+				Target: testFuncForInput,
+				Double: ResultCell{
+					Inputs: Values{BindInput(2, func(s *string) { *s = "1234" })},
+				},
+			})
+
+			testFuncForInput(&i, &i64, &s)
+			convey.So(i, convey.ShouldEqual, 0)
+			convey.So(i64, convey.ShouldEqual, int64(0))
+			convey.So(s, convey.ShouldEqual, "1234")
 		})
 	})
 }
