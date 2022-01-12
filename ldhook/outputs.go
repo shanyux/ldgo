@@ -7,6 +7,7 @@ package ldhook
 import (
 	"fmt"
 	"reflect"
+	"runtime"
 
 	"github.com/agiledragon/gomonkey"
 )
@@ -14,44 +15,171 @@ import (
 type Values = []interface{}
 type OutputCell = gomonkey.OutputCell
 
+type ResultCell struct {
+	Inputs  Values
+	Outputs Values
+	Times   int
+}
+
+func BindInput(pos int, val interface{}) interface{} {
+	if pos < 0 {
+		return val
+	}
+	return input{
+		Position: pos,
+		Value:    reflect.ValueOf(val),
+	}
+}
+
+type input struct {
+	Position int
+	Value    reflect.Value
+	Type     reflect.Type
+	DataType reflect.Type
+}
+
 type wrapOutputs struct {
 	FuncType reflect.Type
-	Outputs  []OutputCell
+	Results  []ResultCell
 	Length   int
 	Position int
 	Times    int
 }
 
-func newWrap(funcType reflect.Type, outputs []OutputCell) *wrapOutputs {
+func newWrap(funcType reflect.Type, outputs []ResultCell) *wrapOutputs {
 	return &wrapOutputs{
 		FuncType: funcType,
-		Outputs:  outputs,
+		Results:  outputs,
 		Length:   len(outputs),
 		Position: 0,
 		Times:    0,
 	}
 }
 
-func (w *wrapOutputs) getValues() Values {
+func (w *wrapOutputs) getResultCell() *ResultCell {
 	if w.Position >= w.Length {
-		return w.Outputs[w.Length-1].Values
+		return &w.Results[w.Length-1]
 	}
 
-	cell := w.Outputs[w.Position]
+	cell := w.Results[w.Position]
 	w.Times++
 	if w.Times >= cell.Times {
 		w.Position++
 		w.Times = 0
 	}
-	return cell.Values
+	return &cell
 }
 
-func (w *wrapOutputs) GetOutputs() []reflect.Value {
-	funcType := w.FuncType
-	results := w.getValues()
+func (w *wrapOutputs) fillInputs(res *ResultCell, ins []reflect.Value) {
+	// types := make([]string, 0, len(ins))
+	// for _, v := range ins {
+	// 	types = append(types, v.Type().String())
+	// }
+	// log.Printf("input types: %s", strings.Join(types, ", "))
 
-	var resultValues []reflect.Value
-	for i, r := range results {
+	for _, i := range res.Inputs {
+		switch v := i.(type) {
+		case input:
+			w.fillOneToInputs(&v, ins)
+		case *input:
+			w.fillOneToInputs(v, ins)
+		case *reflect.Value:
+			w.fillOneToInputs(&input{Position: -1, Value: *v}, ins)
+		case reflect.Value:
+			w.fillOneToInputs(&input{Position: -1, Value: v}, ins)
+		default:
+			w.fillOneToInputs(&input{Position: -1, Value: reflect.ValueOf(i)}, ins)
+		}
+	}
+}
+
+func (w *wrapOutputs) fillOneToInput(res *input, in reflect.Value) error {
+	resV := res.Value
+	resT := res.Type
+
+	inV := in
+	inT := inV.Type()
+
+	if resT.Kind() == reflect.Func {
+		valT := res.DataType
+		if inT.ConvertibleTo(valT) {
+			resV.Call([]reflect.Value{inV})
+			return nil
+		}
+
+		return fmt.Errorf("the parameter of position %d must be convertible to %s",
+			res.Position, valT.String())
+	}
+
+	if inT.Kind() != reflect.Ptr {
+		return fmt.Errorf("the parameter of position %d must be pointer", res.Position)
+	}
+
+	if resT.Kind() == reflect.Ptr && resT.Elem().AssignableTo(inT.Elem()) {
+		inV.Elem().Set(resV.Elem())
+		return nil
+	}
+	if resT.AssignableTo(inT.Elem()) {
+		inV.Elem().Set(resV)
+		return nil
+	}
+
+	return fmt.Errorf("the parameter of position %d must be %s", res.Position, inT.String())
+}
+
+func (w *wrapOutputs) fillOneToInputs(res *input, ins []reflect.Value) {
+	if res.Position >= len(ins) {
+		panic(fmt.Sprintf("func has only %d parameters, can not get the parameter of position %d",
+			len(ins), res.Position))
+	}
+
+	if res.Type == nil {
+		res.Type = res.Value.Type()
+	}
+	if res.DataType == nil {
+		if res.Type.Kind() != reflect.Func {
+			res.DataType = res.Type
+
+		} else {
+			if res.Type.NumIn() != 1 {
+				funcName := runtime.FuncForPC(res.Value.Pointer()).Name()
+				panic(fmt.Errorf("func must have 1 parameter. func:%s", funcName))
+			}
+			res.DataType = res.Type.In(0)
+		}
+	}
+
+	if res.Position >= 0 {
+		in := ins[res.Position]
+		inV := reflect.ValueOf(in.Interface())
+		err := w.fillOneToInput(res, inV)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
+
+	for _, in := range ins {
+		inV := reflect.ValueOf(in.Interface())
+		err := w.fillOneToInput(res, inV)
+		if err != nil {
+			continue
+		}
+		return
+	}
+
+	if res.Type.Kind() == reflect.Func {
+		panic(fmt.Sprintf("cannot find the parameter can be convertible to %s", res.DataType.String()))
+	} else {
+		panic(fmt.Sprintf("cannot find the parameter is %s", res.Type.String()))
+	}
+}
+
+func (w *wrapOutputs) getOutputs(res *ResultCell) []reflect.Value {
+	funcType := w.FuncType
+	resultValues := make([]reflect.Value, 0, len(res.Outputs))
+
+	for i, r := range res.Outputs {
 		var resultValue reflect.Value
 		if r == nil {
 			resultValue = reflect.Zero(funcType.Out(i))
@@ -67,18 +195,25 @@ func (w *wrapOutputs) GetOutputs() []reflect.Value {
 		}
 		resultValues = append(resultValues, resultValue)
 	}
+
 	return resultValues
+}
+
+func (w *wrapOutputs) Do(ins []reflect.Value) []reflect.Value {
+	res := w.getResultCell()
+	w.fillInputs(res, ins)
+	return w.getOutputs(res)
 }
 
 func (w *wrapOutputs) MakeFunc() reflect.Value {
 	funcType := w.FuncType
-	outputs := w.Outputs
-	if funcType.NumOut() != len(outputs[0].Values) {
+	outputs := w.Results
+	if funcType.NumOut() != len(outputs[0].Outputs) {
 		panic(fmt.Sprintf("func type has %v return values, but only %v values provided as double, func type: %s",
-			funcType.NumOut(), len(outputs[0].Values), funcType))
+			funcType.NumOut(), len(outputs[0].Outputs), funcType))
 	}
 
-	return reflect.MakeFunc(funcType, func(_ []reflect.Value) []reflect.Value {
-		return w.GetOutputs()
+	return reflect.MakeFunc(funcType, func(ins []reflect.Value) []reflect.Value {
+		return w.Do(ins)
 	})
 }

@@ -46,33 +46,67 @@ func getDoubleInterface(funcType reflect.Type, double interface{}) interface{} {
 		return double
 
 	case []OutputCell:
-		return newWrap(funcType, v).MakeFunc().Interface()
+		outs := make([]ResultCell, 0, len(v))
+		for _, out := range v {
+			outs = append(outs, ResultCell{
+				Outputs: out.Values,
+				Times:   out.Times,
+			})
+		}
+		return newWrap(funcType, outs).MakeFunc().Interface()
 
 	case []*OutputCell:
-		outs := make([]OutputCell, 0, len(v))
+		outs := make([]ResultCell, 0, len(v))
+		for _, out := range v {
+			outs = append(outs, ResultCell{
+				Outputs: out.Values,
+				Times:   out.Times,
+			})
+		}
+		return newWrap(funcType, outs).MakeFunc().Interface()
+
+	case OutputCell:
+		outs := []ResultCell{{
+			Outputs: v.Values,
+			Times:   v.Times,
+		}}
+		return newWrap(funcType, outs).MakeFunc().Interface()
+
+	case *OutputCell:
+		outs := []ResultCell{{
+			Outputs: v.Values,
+			Times:   v.Times,
+		}}
+		return newWrap(funcType, outs).MakeFunc().Interface()
+
+	case []ResultCell:
+		return newWrap(funcType, v).MakeFunc().Interface()
+
+	case []*ResultCell:
+		outs := make([]ResultCell, 0, len(v))
 		for _, out := range v {
 			outs = append(outs, *out)
 		}
 		return newWrap(funcType, outs).MakeFunc().Interface()
 
-	case OutputCell:
-		outs := []OutputCell{v}
+	case ResultCell:
+		outs := []ResultCell{v}
 		return newWrap(funcType, outs).MakeFunc().Interface()
 
-	case *OutputCell:
-		outs := []OutputCell{*v}
+	case *ResultCell:
+		outs := []ResultCell{*v}
 		return newWrap(funcType, outs).MakeFunc().Interface()
 
 	case []Values:
-		outs := make([]OutputCell, 0, len(v))
+		outs := make([]ResultCell, 0, len(v))
 		for _, out := range v {
-			outs = append(outs, OutputCell{Values: out})
+			outs = append(outs, ResultCell{Outputs: out})
 		}
 		return newWrap(funcType, outs).MakeFunc().Interface()
 
 	case Values:
-		outs := []OutputCell{
-			{Values: v},
+		outs := []ResultCell{
+			{Outputs: v},
 		}
 		return newWrap(funcType, outs).MakeFunc().Interface()
 	}
