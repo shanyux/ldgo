@@ -44,7 +44,7 @@ func WeekBegin(t time.Time) time.Time {
 	offset := int(t.Weekday() - time.Sunday)
 	// offset = offset + 7
 	// offset = offset % 7
-	return t.Add(time.Duration(offset) * 24 * time.Hour)
+	return t.Add(time.Duration(-offset) * 24 * time.Hour)
 }
 
 func WeekEnd(t time.Time) time.Time {

@@ -44,6 +44,14 @@ func TestBeginAndEnd(t *testing.T) {
 			convey.So(TimeToStr(DateEnd(t1)), convey.ShouldResemble, "2021-12-21T23:59:59+0000")
 		})
 
+		convey.Convey("week", func() {
+			convey.So(TimeToStr(WeekBegin(t0)), convey.ShouldResemble, "2021-12-19T00:00:00+0800")
+			convey.So(TimeToStr(WeekEnd(t0)), convey.ShouldResemble, "2021-12-25T23:59:59+0800")
+
+			convey.So(TimeToStr(WeekBegin(t1)), convey.ShouldResemble, "2021-12-19T00:00:00+0000")
+			convey.So(TimeToStr(WeekEnd(t1)), convey.ShouldResemble, "2021-12-25T23:59:59+0000")
+		})
+
 		convey.Convey("month", func() {
 			convey.So(TimeToStr(MonthBegin(t0)), convey.ShouldResemble, "2021-12-01T00:00:00+0800")
 			convey.So(TimeToStr(MonthEnd(t0)), convey.ShouldResemble, "2021-12-31T23:59:59+0800")
