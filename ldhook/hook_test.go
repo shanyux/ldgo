@@ -287,6 +287,9 @@ func testFuncForInput(i *int, i64 *int64, s *string) {
 	*s = "-1000"
 }
 
+func testFuncForInput2(datas ...interface{}) {
+}
+
 func TestInput(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
 		patches := NewPatches()
@@ -296,44 +299,32 @@ func TestInput(t *testing.T) {
 		var i64 int64
 		var s string
 
-		convey.Convey("auto find (int)", func() {
+		convey.Convey("auto find ...interface{}", func() {
+			patches.Apply(FuncHook{
+				Target: testFuncForInput2,
+				Double: ResultCell{
+					Inputs: Values{int64(1234), "abc", 123},
+				},
+			})
+
+			testFuncForInput2(&i, &i64, &s)
+			convey.So(i, convey.ShouldEqual, 123)
+			convey.So(i64, convey.ShouldEqual, int64(1234))
+			convey.So(s, convey.ShouldEqual, "abc")
+		})
+
+		convey.Convey("auto find", func() {
 			patches.Apply(FuncHook{
 				Target: testFuncForInput,
 				Double: ResultCell{
-					Inputs: Values{123},
+					Inputs: Values{int64(1234), "abc", 123},
 				},
 			})
 
 			testFuncForInput(&i, &i64, &s)
 			convey.So(i, convey.ShouldEqual, 123)
-			convey.So(i64, convey.ShouldEqual, int64(0))
-			convey.So(s, convey.ShouldEqual, "")
-		})
-		convey.Convey("auto find (int64)", func() {
-			patches.Apply(FuncHook{
-				Target: testFuncForInput,
-				Double: ResultCell{
-					Inputs: Values{int64(123)},
-				},
-			})
-
-			testFuncForInput(&i, &i64, &s)
-			convey.So(i, convey.ShouldEqual, 0)
-			convey.So(i64, convey.ShouldEqual, int64(123))
-			convey.So(s, convey.ShouldEqual, "")
-		})
-		convey.Convey("auto find (string)", func() {
-			patches.Apply(FuncHook{
-				Target: testFuncForInput,
-				Double: ResultCell{
-					Inputs: Values{"1234"},
-				},
-			})
-
-			testFuncForInput(&i, &i64, &s)
-			convey.So(i, convey.ShouldEqual, 0)
-			convey.So(i64, convey.ShouldEqual, int64(0))
-			convey.So(s, convey.ShouldEqual, "1234")
+			convey.So(i64, convey.ShouldEqual, int64(1234))
+			convey.So(s, convey.ShouldEqual, "abc")
 		})
 
 		convey.Convey("auto find (func)", func() {
