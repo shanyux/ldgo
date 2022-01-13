@@ -18,5 +18,5 @@ func (r reverse) Compare(i, j int) int { return -r.Interface.Compare(j, i) }
 
 // Reverse returns the reverse order for data.
 func Reverse(data Interface) Interface {
-	return &reverse{data}
+	return reverse{data}
 }
