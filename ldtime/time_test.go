@@ -11,10 +11,6 @@ import (
 	"github.com/smartystreets/goconvey/convey"
 )
 
-const (
-	testTimeFormat = "2006-01-02T15:04:05-0700"
-)
-
 var testTz = fixedTimezone("Asia/Bejing", +(8 * time.Hour))
 
 func paresTimeStr(s string) time.Time {

@@ -6,10 +6,6 @@ package ldtime
 
 import "time"
 
-const (
-	fmtDateStr = "2006-01-02"
-)
-
 func divisionTimeNum(num *int64, dividend int64) int {
 	n := *num % dividend
 	*num /= dividend
@@ -29,7 +25,7 @@ func TimeToDateNum(t time.Time) int64 {
 
 // TimeToDateStr format: 2006-01-02 '%Y-%m-%d'
 func TimeToDateStr(t time.Time) string {
-	return t.Format(fmtDateStr)
+	return t.Format("2006-01-02")
 }
 
 // DateNumToTime format: 20060102 '%Y%m%d'
@@ -45,6 +41,11 @@ func DateNumToTime(dateNum int64, loc ...*time.Location) time.Time {
 		tz = loc[0]
 	}
 	return time.Date(year, time.Month(month), day, hour, min, sec, nsec, tz)
+}
+
+// TimeToStr format: 2006-01-02T15:04:05-0700 '%Y-%m-%dT%H:%M:%S%z'
+func TimeToStr(t time.Time) string {
+	return t.Format("2006-01-02T15:04:05-0700")
 }
 
 // TimeToNum format: 20060102150405 '%Y%m%d%H%M%S'
