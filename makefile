@@ -54,10 +54,8 @@ dep:
 	# $(GO) mod vendor
 
 go-test-coverage:
-	@echo GO_TEST_DIRS: $(GO_TEST_DIRS_NAME)
-	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) $(GO_TEST_DIRS) -json > "$(GO_TEST_OUTPUT)/test.json"
-	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) $(GO_TEST_DIRS) -coverprofile="$(GO_TEST_OUTPUT)/coverage.out"
+	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) ./... -json > "$(GO_TEST_OUTPUT)/test.json"
+	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) ./... -coverprofile="$(GO_TEST_OUTPUT)/coverage.out"
 
 go-test:
-	@echo GO_TEST_DIRS: $(GO_TEST_DIRS_NAME)
-	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) -v $(GO_TEST_DIRS)
+	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) -v ./...
