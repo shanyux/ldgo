@@ -40,24 +40,34 @@ $(info GIT_REVISION: $(GIT_REVISION))
 $(info GIT_BRANCH: $(GIT_BRANCH))
 $(info GIT_TAG: $(GIT_TAG))
 
+.PHONY: all
 all: go-test
 
-__nil:
-	@test 0 -eq 0
-
-$(GO_TEST_DIRS_NAME): __nil
+.PHONY: $(GO_TEST_DIRS_NAME)
+$(GO_TEST_DIRS_NAME):
 	@echo GO_TEST_DIRS: $(notdir $@)
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) -v ./$(notdir $@)
 
+.PHONY: dep
 dep:
 	$(GO) mod tidy
 	# $(GO) mod vendor
 
+.PHONY: go-test-coverage
 go-test-coverage:
 	@echo GO_TEST_DIRS: $(GO_TEST_DIRS_NAME)
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) $(GO_TEST_DIRS) -json > "$(GO_TEST_OUTPUT)/test.json"
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) $(GO_TEST_DIRS) -coverprofile="$(GO_TEST_OUTPUT)/coverage.out"
 
+.PHONY: go-test
 go-test:
 	@echo GO_TEST_DIRS: $(GO_TEST_DIRS_NAME)
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) -v $(GO_TEST_DIRS)
+
+.PHONY: install
+install:
+	go install github.com/uudashr/gocognit/cmd/gocognit@v1.0.5
+
+.PHONY: complexity
+complexity:
+	gocognit -over 20 . >&2
