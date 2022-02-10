@@ -114,7 +114,7 @@ func (that *convNumberReader) ReadExponentiation() bool {
 	return that.ReadDecimal()
 }
 
-func (that *convNumberReader) TestNumberType() {
+func (that *convNumberReader) detectFixedString() {
 	switch that.Peek() {
 	case 't', 'T':
 		if that.ReadString("true") {
@@ -132,7 +132,9 @@ func (that *convNumberReader) TestNumberType() {
 		}
 		return
 	}
+}
 
+func (that *convNumberReader) detectPositiveOrNegative() {
 	// detect positive or negative
 	for {
 		switch that.Peek() {
@@ -145,96 +147,113 @@ func (that *convNumberReader) TestNumberType() {
 		}
 		break
 	}
+}
 
-	switch that.Peek() {
-	case '0':
-		that.Next()
-		switch c := that.Peek(); c {
-		case '.':
-			// 0.123
-			that.MarkBegin()
-			that.Next()
-			that.ReadDecimal()
-			if c := that.Peek(); c == 'e' || c == 'E' {
-				// 0.123e123
-				that.Next()
-				if !that.ReadExponentiation() {
-					that.typNum = _NUMBER_TYPE_NIL
-					return
-				}
-				// that.ReadDecimal()
-			}
-			that.typNum = _NUMBER_TYPE_FLOAT
-			that.MarkEnd()
-			return
-
-		case 'x', 'X':
-			// 0x123
-			that.Next()
-			that.MarkBegin()
-			if !that.ReadHexadecimal() {
-				return
-			}
-			that.MarkEnd()
-			that.typNum = _NUMBER_TYPE_HEX
-
-		case 'o', 'O':
-			// 0o123
-			that.Next()
-			that.MarkBegin()
-			if !that.ReadOctal() {
-				return
-			}
-			that.MarkEnd()
-			that.typNum = _NUMBER_TYPE_OCT
-
-		default:
-			// 0123
-			that.MarkBegin()
-			// that.ReadOctal()
-			that.ReadDecimal()
-			that.MarkEnd()
-			// that.typNum = _NUMBER_TYPE_OCT
-			that.typNum = _NUMBER_TYPE_DEC
-		}
-
-	case '1', '2', '3', '4', '5', '6', '7', '8', '9':
-		that.MarkBegin()
-		that.Next()
-		that.typNum = _NUMBER_TYPE_DEC
-		that.ReadDecimal()
-		if that.Peek() == '.' {
-			that.Next()
-			that.typNum = _NUMBER_TYPE_FLOAT
-			that.ReadDecimal()
-		}
-		if c := that.Peek(); c == 'e' || c == 'E' {
-			that.Next()
-			if !that.ReadExponentiation() {
-				that.typNum = _NUMBER_TYPE_NIL
-				return
-			}
-			that.typNum = _NUMBER_TYPE_FLOAT
-			that.ReadDecimal()
-		}
-		that.MarkEnd()
-
+func (that *convNumberReader) detectWithPrefix0() {
+	that.Next()
+	switch c := that.Peek(); c {
 	case '.':
+		// 0.123
 		that.MarkBegin()
 		that.Next()
-		if !ldbyte.IsDigit(that.Peek()) {
-			return
-		}
 		that.ReadDecimal()
 		if c := that.Peek(); c == 'e' || c == 'E' {
+			// 0.123e123
 			that.Next()
 			if !that.ReadExponentiation() {
 				that.typNum = _NUMBER_TYPE_NIL
 				return
 			}
+			// that.ReadDecimal()
 		}
 		that.typNum = _NUMBER_TYPE_FLOAT
 		that.MarkEnd()
+		return
+
+	case 'x', 'X':
+		// 0x123
+		that.Next()
+		that.MarkBegin()
+		if !that.ReadHexadecimal() {
+			return
+		}
+		that.MarkEnd()
+		that.typNum = _NUMBER_TYPE_HEX
+
+	case 'o', 'O':
+		// 0o123
+		that.Next()
+		that.MarkBegin()
+		if !that.ReadOctal() {
+			return
+		}
+		that.MarkEnd()
+		that.typNum = _NUMBER_TYPE_OCT
+
+	default:
+		// 0123
+		that.MarkBegin()
+		// that.ReadOctal()
+		that.ReadDecimal()
+		that.MarkEnd()
+		// that.typNum = _NUMBER_TYPE_OCT
+		that.typNum = _NUMBER_TYPE_DEC
+	}
+}
+
+func (that *convNumberReader) detectWithPrefixNumber() {
+	that.MarkBegin()
+	that.Next()
+	that.typNum = _NUMBER_TYPE_DEC
+	that.ReadDecimal()
+	if that.Peek() == '.' {
+		that.Next()
+		that.typNum = _NUMBER_TYPE_FLOAT
+		that.ReadDecimal()
+	}
+	if c := that.Peek(); c == 'e' || c == 'E' {
+		that.Next()
+		if !that.ReadExponentiation() {
+			that.typNum = _NUMBER_TYPE_NIL
+			return
+		}
+		that.typNum = _NUMBER_TYPE_FLOAT
+		that.ReadDecimal()
+	}
+	that.MarkEnd()
+}
+
+func (that *convNumberReader) detectWithPrefixDot() {
+	that.MarkBegin()
+	that.Next()
+	if !ldbyte.IsDigit(that.Peek()) {
+		return
+	}
+	that.ReadDecimal()
+	if c := that.Peek(); c == 'e' || c == 'E' {
+		that.Next()
+		if !that.ReadExponentiation() {
+			that.typNum = _NUMBER_TYPE_NIL
+			return
+		}
+	}
+	that.typNum = _NUMBER_TYPE_FLOAT
+	that.MarkEnd()
+}
+
+func (that *convNumberReader) DetectNumberType() {
+	that.detectFixedString()
+	that.detectPositiveOrNegative()
+
+	switch that.Peek() {
+	case '0':
+		that.detectWithPrefix0()
+
+	case '1', '2', '3', '4', '5', '6', '7', '8', '9':
+		that.detectWithPrefixNumber()
+
+	case '.':
+		that.detectWithPrefixDot()
 	}
 }
 
@@ -255,7 +274,7 @@ func testStringNumberType(b []byte) (byte, bool, string) {
 	}
 
 	that.StripSpace()
-	that.TestNumberType()
+	that.DetectNumberType()
 	s := that.GetString()
 	// log.Printf("str:%s, type:%c, sub:%s", b, that.typNum, s)
 	return that.typNum, that.negative, s

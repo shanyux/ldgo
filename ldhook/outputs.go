@@ -153,12 +153,12 @@ func (w *wrapOutputs) fillOneToInputs(res *input, ins []reflect.Value) {
 		if res.Type.Kind() != reflect.Func {
 			res.DataType = res.Type
 
-		} else {
-			if res.Type.NumIn() != 1 {
-				funcName := runtime.FuncForPC(res.Value.Pointer()).Name()
-				panic(fmt.Errorf("func must have 1 parameter. func:%s", funcName))
-			}
+		} else if res.Type.NumIn() == 1 {
 			res.DataType = res.Type.In(0)
+
+		} else {
+			funcName := runtime.FuncForPC(res.Value.Pointer()).Name()
+			panic(fmt.Errorf("func must have 1 parameter. func:%s", funcName))
 		}
 	}
 
