@@ -8,20 +8,32 @@ import (
 	"math"
 	"reflect"
 	"sync"
+
+	"github.com/gin-gonic/gin"
 )
 
 var (
 	requestTypes = &sync.Map{}
 )
 
+var requestBinds = []*requestBind{
+	{Tag: "form", Func: (*gin.Context).ShouldBindQuery},
+	{Tag: "json", Func: (*gin.Context).ShouldBindJSON},
+	{Tag: "uri", Func: (*gin.Context).ShouldBindUri},
+	{Tag: "header", Func: (*gin.Context).ShouldBindHeader},
+}
+
+type requestBind struct {
+	Tag    string
+	Func   func(g *gin.Context, o interface{}) error
+	Fields []reflect.StructField
+}
+
 type requestType struct {
-	Type         reflect.Type
-	ReqPool      sync.Pool
-	ReqZero      reflect.Value
-	FormFields   []reflect.StructField
-	JsonFields   []reflect.StructField
-	UriFields    []reflect.StructField
-	HeaderFields []reflect.StructField
+	Type    reflect.Type
+	ReqPool sync.Pool
+	ReqZero reflect.Value
+	Binds   []*requestBind
 }
 
 func getRequestType(t reflect.Type) *requestType {
@@ -33,12 +45,22 @@ func getRequestType(t reflect.Type) *requestType {
 	}
 
 	reqT := &requestType{
-		Type:         t,
-		ReqZero:      reflect.Zero(t),
-		FormFields:   getStructFieldsByTag(t, "form"),
-		JsonFields:   getStructFieldsByTag(t, "json"),
-		UriFields:    getStructFieldsByTag(t, "uri"),
-		HeaderFields: getStructFieldsByTag(t, "header"),
+		Type:    t,
+		ReqZero: reflect.Zero(t),
+		Binds:   make([]*requestBind, 0, len(requestBinds)),
+	}
+
+	for _, v := range requestBinds {
+		fields := getStructFieldsByTag(t, v.Tag)
+		if len(fields) == 0 {
+			continue
+		}
+
+		reqT.Binds = append(reqT.Binds, &requestBind{
+			Tag:    v.Tag,
+			Func:   v.Func,
+			Fields: fields,
+		})
 	}
 
 	if v, ok := requestTypes.LoadOrStore(t, reqT); ok {
@@ -111,12 +133,7 @@ func isReflectValueZero(v reflect.Value) bool {
 		return math.Float64bits(real(c)) == 0 && math.Float64bits(imag(c)) == 0
 
 	case reflect.Array:
-		for i := 0; i < v.Len(); i++ {
-			if !isReflectValueZero(v.Index(i)) {
-				return false
-			}
-		}
-		return true
+		return isReflectValueArrayZero(v)
 
 	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice, reflect.UnsafePointer:
 		return v.IsNil()
@@ -125,12 +142,7 @@ func isReflectValueZero(v reflect.Value) bool {
 		return v.Len() == 0
 
 	case reflect.Struct:
-		for i := 0; i < v.NumField(); i++ {
-			if !isReflectValueZero(v.Field(i)) {
-				return false
-			}
-		}
-		return true
+		return isReflectValueStructZero(v)
 
 	default:
 		// This should never happens, but will act as a safeguard for
@@ -140,4 +152,22 @@ func isReflectValueZero(v reflect.Value) bool {
 			Kind:   v.Kind(),
 		})
 	}
+}
+
+func isReflectValueArrayZero(v reflect.Value) bool {
+	for i := 0; i < v.Len(); i++ {
+		if !isReflectValueZero(v.Index(i)) {
+			return false
+		}
+	}
+	return true
+}
+
+func isReflectValueStructZero(v reflect.Value) bool {
+	for i := 0; i < v.NumField(); i++ {
+		if !isReflectValueZero(v.Field(i)) {
+			return false
+		}
+	}
+	return true
 }

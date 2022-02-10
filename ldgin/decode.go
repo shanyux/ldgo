@@ -24,51 +24,19 @@ func shouldBind(ctx *Context, req interface{}) Error {
 	reqV = reqV.Elem()
 	reqT := getRequestType(reqV.Type())
 
-	if fields := reqT.FormFields; len(fields) != 0 {
+	for _, bind := range reqT.Binds {
+		if len(bind.Fields) == 0 {
+			continue
+		}
+
 		reqNew := newRequest(reqT)
-		if err := g.ShouldBindQuery(reqNew.Interface()); err != nil {
-			ctx.LogE("ShouldBindQuery() fail", zap.Error(err))
+		if err := bind.Func(g, reqNew.Interface()); err != nil {
+			ctx.LogE("ShouldBind() fail", zap.String("tag", bind.Tag), zap.Error(err))
 			delRequest(reqT, reqNew)
 			return lderr.ErrParseRequest
 		}
 
-		fillHttpRequestByFeilds(reqV, reqNew.Elem(), fields)
-		delRequest(reqT, reqNew)
-	}
-
-	if fields := reqT.JsonFields; len(fields) != 0 {
-		reqNew := newRequest(reqT)
-		if err := g.ShouldBindJSON(reqNew.Interface()); err != nil {
-			ctx.LogE("ShouldBindJSON() fail", zap.Error(err))
-			delRequest(reqT, reqNew)
-			return lderr.ErrParseRequest
-		}
-
-		fillHttpRequestByFeilds(reqV, reqNew.Elem(), fields)
-		delRequest(reqT, reqNew)
-	}
-
-	if fields := reqT.UriFields; len(fields) != 0 {
-		reqNew := newRequest(reqT)
-		if err := g.ShouldBindUri(reqNew.Interface()); err != nil {
-			ctx.LogE("ShouldBindUri() fail", zap.Error(err))
-			delRequest(reqT, reqNew)
-			return lderr.ErrParseRequest
-		}
-
-		fillHttpRequestByFeilds(reqV, reqNew.Elem(), fields)
-		delRequest(reqT, reqNew)
-	}
-
-	if fields := reqT.HeaderFields; len(fields) != 0 {
-		reqNew := newRequest(reqT)
-		if err := g.ShouldBindHeader(reqNew.Interface()); err != nil {
-			ctx.LogE("ShouldBindHeader() fail", zap.Error(err))
-			delRequest(reqT, reqNew)
-			return lderr.ErrParseRequest
-		}
-
-		fillHttpRequestByFeilds(reqV, reqNew.Elem(), fields)
+		fillHttpRequestByFeilds(reqV, reqNew.Elem(), bind.Fields)
 		delRequest(reqT, reqNew)
 	}
 

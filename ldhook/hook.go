@@ -16,7 +16,7 @@ type Hook interface {
 
 type FuncHook struct {
 	Target interface{}
-	Double interface{} // must be func/[]OutputCell/OutputCell/[]Params/Params
+	Double interface{} // must be func/[]OutputCell/OutputCell/[]Values/Values
 }
 
 func (h FuncHook) hook(patches *gomonkey.Patches) {

@@ -69,5 +69,5 @@ install:
 	go install github.com/uudashr/gocognit/cmd/gocognit@v1.0.5
 
 .PHONY: complexity
-complexity:
-	gocognit -over 20 . >&2
+complexity: install
+	gocognit -over 15 . >&2
