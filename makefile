@@ -66,7 +66,7 @@ go-test:
 
 .PHONY: install
 install:
-	go install github.com/uudashr/gocognit/cmd/gocognit@v1.0.5
+	go install github.com/distroy/gocognit/cmd/gocognit@v1.0.5.2
 
 .PHONY: complexity
 complexity: install
