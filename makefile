@@ -41,7 +41,7 @@ $(info GIT_BRANCH: $(GIT_BRANCH))
 $(info GIT_TAG: $(GIT_TAG))
 
 .PHONY: all
-all: go-test
+all: setup go-test
 
 .PHONY: $(GO_TEST_DIRS_NAME)
 $(GO_TEST_DIRS_NAME):
@@ -49,25 +49,26 @@ $(GO_TEST_DIRS_NAME):
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) -v ./$(notdir $@)
 
 .PHONY: dep
-dep:
+dep: setup
 	$(GO) mod tidy
 	# $(GO) mod vendor
 
 .PHONY: go-test-coverage
-go-test-coverage:
+go-test-coverage: setup
 	@echo GO_TEST_DIRS: $(GO_TEST_DIRS_NAME)
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) $(GO_TEST_DIRS) -json > "$(GO_TEST_OUTPUT)/test.json"
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) $(GO_TEST_DIRS) -coverprofile="$(GO_TEST_OUTPUT)/coverage.out"
 
 .PHONY: go-test
-go-test:
+go-test: setup
 	@echo GO_TEST_DIRS: $(GO_TEST_DIRS_NAME)
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) -v $(GO_TEST_DIRS)
 
-.PHONY: install
-install:
+.PHONY: setup
+setup:
 	go install github.com/distroy/gocognit/cmd/gocognit@v1.0.5.2
+	git config core.hooksPath "$(PROJECT_ROOT)/scripts/git-hooks"
 
 .PHONY: complexity
-complexity: install
+complexity: setup
 	gocognit -over 15 . >&2
