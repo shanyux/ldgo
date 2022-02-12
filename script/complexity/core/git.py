@@ -8,10 +8,10 @@
 import traceback
 import sys
 
-import exec
+from . import exec
 
 
-class GitDiff(object):
+class Diff(object):
     def __init__(self, file: str = '', pos: int = 0, end: int = 0):
         self.file = file
         self.pos = pos  # start with 1
@@ -21,7 +21,7 @@ class GitDiff(object):
         return '%s:%d,%d' % (self.file, self.pos, self.end)
 
 
-def get_diffs(branch: str) -> list[GitDiff]:
+def get_diffs(branch: str) -> list[Diff]:
     cmd = ['git', 'diff', '--unified=0', branch]
     status, output = exec.exec(cmd)
     if status != 0:
@@ -32,7 +32,7 @@ def get_diffs(branch: str) -> list[GitDiff]:
     lines: list[str] = output.split('\n')
     # print(lines)
 
-    buffer: list[GitDiff] = []
+    buffer: list[Diff] = []
     i, l = 0, len(lines)
     file = ''
     while i < l:
@@ -47,16 +47,16 @@ def get_diffs(branch: str) -> list[GitDiff]:
             items = line.split(' ')
             pos = items[2].split(',')
             if len(pos) == 1:
-                diff = GitDiff(file, int(pos[0]), int(pos[0]))
+                diff = Diff(file, int(pos[0]), int(pos[0]))
             else:
-                diff = GitDiff(file, int(pos[0]), int(pos[0]) + int(pos[1]) - 1)
+                diff = Diff(file, int(pos[0]), int(pos[0]) + int(pos[1]) - 1)
             # print(line, pos, str(diff))
             buffer.append(diff)
 
     return buffer
 
 
-def get_repo_root() -> str:
+def repo_root() -> str:
     cmd = ['git', 'rev-parse', '--show-toplevel']
     status, output = exec.exec(cmd)
     if status != 0:
@@ -65,9 +65,7 @@ def get_repo_root() -> str:
     return output
 
 
-def get_branch(args:  list[str]) -> str:
-    if len(args) > 0 and args[0] != '':
-        return args[0]
+def get_branch() -> str:
     cmd = ['git', 'rev-parse', '--verify', 'HEAD']
     status, _ = exec.exec(cmd)
     if status == 0:

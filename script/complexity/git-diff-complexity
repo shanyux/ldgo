@@ -12,11 +12,12 @@ import sys
 import optparse
 import typing
 
+from core import log
 from core import exec
 from core import git
 from core import complexity
 
-sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+# sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 
 
 def get_options() -> tuple[optparse.Values, list[typing.Any]]:
@@ -24,30 +25,84 @@ def get_options() -> tuple[optparse.Values, list[typing.Any]]:
 
     parser.add_option('-c', '--cogntive', dest='cogntive', metavar='<cogntive>',
                       default=15, type='int', help='cogntive complexity threshold. default: 15')
-    parser.add_option('-e', '--exclude', dest='exclude', metavar='<pattern>',
+    parser.add_option('-e', '--exclude', dest='excludes', metavar='<pattern>',
                       default=[], action='append', help='exclude files')
-    parser.add_option('--exclude-dir', dest='exclude_dir', metavar='<pattern>',
+    parser.add_option('--exclude-dir', dest='exclude_dirs', metavar='<pattern>',
                       default=[], action='append', help='exclude directories')
 
     opts, args = parser.parse_args()
     return opts, args
 
 
-def main(opts: optparse.Values, args: list[str]):
-    repo_root = git.get_repo_root()
-    print('repo root: %s' % repo_root)
-    # os.chdir(repo_root)
+def get_branch(args:  list[str]) -> str:
+    if len(args) > 0 and args[0] != '':
+        return args[0]
+    return git.get_branch()
 
-    branch = git.get_branch(args)
-    print('branch: %s' % branch)
+
+def wrapper_diffs(diffs: list[git.Diff]) -> typing.Callable[[git.Diff], bool]:
+    file_diffs: dict[str, list[git.Diff]] = {}
+    for diff in diffs:
+        if diff.file not in file_diffs:
+            file_diffs[diff.file] = []
+        file_diffs[diff.file].append(diff)
+    # print(file_diffs)
+
+    def handler(v: git.Diff) -> bool:
+        if v.file not in file_diffs:
+            return False
+        for df in file_diffs[v.file]:
+            if v.end < df.pos or v.pos > df.end:
+                continue
+            # print('diff:', df, 'complexities:', v)
+            return True
+        return False
+
+    return handler
+
+
+def main(opts: optparse.Values, args: list[str]):
+    repo_root = git.repo_root()
+    branch = get_branch(args)
 
     diffs = git.get_diffs(branch)
-    print([str(i) for i in diffs])
 
-    complexities = complexity.get_cogntive(repo_root)
-    print([str(i) for i in complexities])
+    cplxes = complexity.get_cogntive(repo_root, threshold=opts.cogntive,
+        excludes=opts.excludes, exclude_dirs=opts.exclude_dirs)
+    # print('%s' % complexities)
+    # print([str(i) for i in complexities])
 
-    return 0
+    fn = wrapper_diffs(diffs)
+    new_cplxes: list[complexity.Complexity] = []
+    old_cplxes: list[complexity.Complexity] = []
+    for cplx in cplxes:
+        if fn(git.Diff(cplx.file, pos=cplx.pos, end=cplx.end)):
+            new_cplxes.append(cplx)
+        else:
+            old_cplxes.append(cplx)
+
+    if len(new_cplxes) > 0:
+        f = sys.stderr
+        f.write(log.Color.FG_R)
+        f.write('the cogntive complexity of new functions is too high (over %d): \n' % (opts.cogntive))
+        for cplx in new_cplxes:
+            f.write('%s\n' % str(cplx))
+        f.write(log.Color.RESET)
+        f.write('\n')
+
+    if len(old_cplxes) > 0:
+        count = 10
+        if len(old_cplxes) > count:
+            old_cplxes = old_cplxes[:count]
+        f = sys.stdout
+        f.write(log.Color.FG_G)
+        f.write('the cogntive complexity of old functions is too high (over %d): \n' % (opts.cogntive))
+        f.write(log.Color.RESET)
+        for cplx in old_cplxes:
+            f.write('%s\n' % str(cplx))
+        f.write('\n')
+
+    return 0 if len(new_cplxes) == 0 else 1
 
 
 if __name__ == "__main__":
