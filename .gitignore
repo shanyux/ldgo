@@ -12,3 +12,6 @@ log
 bak
 
 */example/example
+
+*.pyc
+__pycache__/

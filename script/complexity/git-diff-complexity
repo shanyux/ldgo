@@ -1,0 +1,62 @@
+#! /usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) distroy
+#
+
+import traceback
+import os
+import io
+import time
+import sys
+import optparse
+import typing
+
+from core import exec
+from core import git
+from core import complexity
+
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+
+
+def get_options() -> tuple[optparse.Values, list[typing.Any]]:
+    parser = optparse.OptionParser(version="%prog (Renchong Tan) 0.1")
+
+    parser.add_option('-c', '--cogntive', dest='cogntive', metavar='<cogntive>',
+                      default=15, type='int', help='cogntive complexity threshold. default: 15')
+    parser.add_option('-e', '--exclude', dest='exclude', metavar='<pattern>',
+                      default=[], action='append', help='exclude files')
+    parser.add_option('--exclude-dir', dest='exclude_dir', metavar='<pattern>',
+                      default=[], action='append', help='exclude directories')
+
+    opts, args = parser.parse_args()
+    return opts, args
+
+
+def main(opts: optparse.Values, args: list[str]):
+    repo_root = git.get_repo_root()
+    print('repo root: %s' % repo_root)
+    # os.chdir(repo_root)
+
+    branch = git.get_branch(args)
+    print('branch: %s' % branch)
+
+    diffs = git.get_diffs(branch)
+    print([str(i) for i in diffs])
+
+    complexities = complexity.get_cogntive(repo_root)
+    print([str(i) for i in complexities])
+
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        (opts, args) = get_options()
+        exit(main(opts, args))
+    except KeyboardInterrupt:
+        sys.stderr.write("\033[1;31moperation cancelled by user\033[0m\n")
+        exit(-1)
+    except Exception:
+        sys.stderr.write(traceback.format_exc())
+        exit(-1)
