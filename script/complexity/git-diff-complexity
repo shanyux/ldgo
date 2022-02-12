@@ -84,7 +84,7 @@ def main(opts: optparse.Values, args: list[str]):
     if len(new_cplxes) > 0:
         f = sys.stderr
         f.write(log.Color.FG_R)
-        f.write('the cogntive complexity of new functions is too high (over %d): \n' % (opts.cogntive))
+        f.write('The cogntive complexity of these *new* functions is too high (over %d): \n' % (opts.cogntive))
         for cplx in new_cplxes:
             f.write('%s\n' % str(cplx))
         f.write(log.Color.RESET)
@@ -96,7 +96,7 @@ def main(opts: optparse.Values, args: list[str]):
             old_cplxes = old_cplxes[:count]
         f = sys.stdout
         f.write(log.Color.FG_G)
-        f.write('the cogntive complexity of old functions is too high (over %d): \n' % (opts.cogntive))
+        f.write('The cogntive complexity of these *old* functions is too high (over %d): \n' % (opts.cogntive))
         f.write(log.Color.RESET)
         for cplx in old_cplxes:
             f.write('%s\n' % str(cplx))
