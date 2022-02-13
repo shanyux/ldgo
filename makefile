@@ -67,7 +67,7 @@ go-test: setup
 .PHONY: setup
 setup:
 	go install github.com/distroy/gocognit/cmd/gocognit@v1.0.5.2
-	git config core.hooksPath "$(PROJECT_ROOT)/script/git-hooks"
+	git config core.hooksPath "$(PROJECT_ROOT)/script/git-hook"
 
 .PHONY: complexity
 complexity: setup
