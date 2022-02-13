@@ -29,7 +29,7 @@ ifeq (${test_report},)
 	export test_report=$(PROJECT_ROOT)/log
 endif
 # GO_TEST_FLAGS+=-v
-GO_TEST_FLAGS+=-gcflags="-l -N"
+GO_TEST_FLAGS+=-gcflags="all=-l"
 GO_TEST_OUTPUT=${test_report}
 
 # git
