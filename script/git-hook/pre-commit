@@ -17,4 +17,6 @@ else
 	against=$(git hash-object -t tree /dev/null)
 fi
 
-"${PROJECT_ROOT}/script/complexity/git-diff-complexity" -c 15 "$against" || exit 1
+"${PROJECT_ROOT}/script/complexity/git-diff-complexity" \
+    -c 15 \
+    "$against" || exit 1
