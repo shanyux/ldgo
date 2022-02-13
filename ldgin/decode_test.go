@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/distroy/ldgo/ldctx"
 	"github.com/distroy/ldgo/lderr"
 	"github.com/distroy/ldgo/ldhook"
 	"github.com/distroy/ldgo/ldlog"
@@ -24,10 +23,6 @@ func Test_shoudBind(t *testing.T) {
 		patches.Applys([]ldhook.Hook{
 			ldhook.FuncHook{
 				Target: ldlog.Default,
-				Double: ldhook.Values{ldlog.Discard()},
-			},
-			ldhook.FuncHook{
-				Target: ldctx.GetLogger,
 				Double: ldhook.Values{ldlog.Discard()},
 			},
 		})
