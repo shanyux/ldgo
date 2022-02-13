@@ -284,7 +284,7 @@ func (enc *loggerEncoder) AppendUintptr(v uintptr)            { enc.AppendUint64
 
 func (enc *loggerEncoder) Clone() zapcore.Encoder {
 	clone := enc.clone()
-	clone.buf.Write(enc.buf.Bytes())
+	clone.buf.Write(enc.buf.Bytes()) // nolint
 	return clone
 }
 
@@ -317,6 +317,7 @@ func (enc *loggerEncoder) EncodeEntry(ent zapcore.Entry, fields []zapcore.Field)
 	return ret, nil
 }
 
+// nolint
 func (enc *loggerEncoder) truncate() {
 	enc.buf.Reset()
 }
@@ -409,7 +410,7 @@ func (enc *loggerEncoder) safeAddByteString(s []byte) {
 			i++
 			continue
 		}
-		enc.buf.Write(s[i : i+size])
+		enc.buf.Write(s[i : i+size]) // nolint
 		i += size
 	}
 }
@@ -520,7 +521,7 @@ func addCaller(enc *loggerEncoder, ent *zapcore.Entry) {
 func addBuffer(enc, final *loggerEncoder) {
 	if enc.buf.Len() > 0 {
 		final.addElementSeparator()
-		final.buf.Write(enc.buf.Bytes())
+		final.buf.Write(enc.buf.Bytes()) // nolint
 	}
 }
 

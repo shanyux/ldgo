@@ -81,7 +81,7 @@ func newRequest(reqType *requestType) reflect.Value {
 
 func delRequest(reqType *requestType, val reflect.Value) {
 	val.Elem().Set(reqType.ReqZero)
-	reqType.ReqPool.Put(val)
+	reqType.ReqPool.Put(val) // nolint
 }
 
 func getStructFieldsByTag(objT reflect.Type, tag string) []reflect.StructField {

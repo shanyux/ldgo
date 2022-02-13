@@ -75,9 +75,7 @@ func (w *wrapOutputs) fillInputs(res *ResultCell, ins []reflect.Value) {
 		l := len(ins)
 		last := ins[l-1]
 		tmp := make([]reflect.Value, 0, l-1+last.Len())
-		for _, v := range ins[:l-1] {
-			tmp = append(tmp, v)
-		}
+		tmp = append(tmp, ins[:l-1]...)
 		for i := 0; i < last.Len(); i++ {
 			tmp = append(tmp, last.Index(i))
 		}

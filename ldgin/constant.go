@@ -29,7 +29,7 @@ const (
 )
 
 var (
-	typeOfInterface = reflect.TypeOf((*interface{})(nil)).Elem()
+	// typeOfInterface = reflect.TypeOf((*interface{})(nil)).Elem()
 
 	typeOfGinHandlerFunc   = reflect.TypeOf((*gin.HandlerFunc)(nil)).Elem()
 	typeOfGinHandlersChain = reflect.TypeOf((*gin.HandlersChain)(nil)).Elem()
@@ -40,14 +40,14 @@ var (
 	typeOfCommError = reflect.TypeOf((*error)(nil)).Elem()
 	typeOfError     = reflect.TypeOf((*Error)(nil)).Elem()
 
-	typeOfParser         = reflect.TypeOf((*Parser)(nil)).Elem()
-	typeOfValidator      = reflect.TypeOf((*Validator)(nil)).Elem()
-	typeOfParseValidator = reflect.TypeOf((*ParseValidator)(nil)).Elem()
+	// typeOfParser         = reflect.TypeOf((*Parser)(nil)).Elem()
+	// typeOfValidator      = reflect.TypeOf((*Validator)(nil)).Elem()
+	// typeOfParseValidator = reflect.TypeOf((*ParseValidator)(nil)).Elem()
 
-	typeOfGinParser         = reflect.TypeOf((*GinParser)(nil)).Elem()
-	typeOfGinValidator      = reflect.TypeOf((*GinValidator)(nil)).Elem()
-	typeOfGinParseValidator = reflect.TypeOf((*GinParseValidator)(nil)).Elem()
+	// typeOfGinParser         = reflect.TypeOf((*GinParser)(nil)).Elem()
+	// typeOfGinValidator      = reflect.TypeOf((*GinValidator)(nil)).Elem()
+	// typeOfGinParseValidator = reflect.TypeOf((*GinParseValidator)(nil)).Elem()
 
-	typeOfRenderer    = reflect.TypeOf((*Renderer)(nil)).Elem()
-	typeOfGinRenderer = reflect.TypeOf((*GinRenderer)(nil)).Elem()
+	// typeOfRenderer    = reflect.TypeOf((*Renderer)(nil)).Elem()
+	// typeOfGinRenderer = reflect.TypeOf((*GinRenderer)(nil)).Elem()
 )

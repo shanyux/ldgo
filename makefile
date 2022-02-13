@@ -23,7 +23,7 @@ $(info GO_FLAGS: $(GO_FLAGS))
 # go test
 GO_TEST_DIRS+=$(shell find . -name '*_test.go' | grep -v -E 'vendor|bak' | xargs dirname | sort | uniq)
 GO_TEST_DIRS_NAME=$(notdir $(GO_TEST_DIRS))
-$(info GO_TEST_DIRS: $(GO_TEST_DIRS_NAME))
+# $(info GO_TEST_DIRS: $(GO_TEST_DIRS_NAME))
 
 ifeq (${test_report},)
 	export test_report=$(PROJECT_ROOT)/log
@@ -55,14 +55,14 @@ dep: setup
 
 .PHONY: go-test-coverage
 go-test-coverage: setup
-	@echo GO_TEST_DIRS: $(GO_TEST_DIRS_NAME)
-	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) $(GO_TEST_DIRS) -json > "$(GO_TEST_OUTPUT)/test.json"
-	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) $(GO_TEST_DIRS) -coverprofile="$(GO_TEST_OUTPUT)/coverage.out"
+	@# echo GO_TEST_DIRS: $(GO_TEST_DIRS_NAME)
+	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) ./... -json > "$(GO_TEST_OUTPUT)/test.json"
+	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) ./... -coverprofile="$(GO_TEST_OUTPUT)/coverage.out"
 
 .PHONY: go-test
 go-test: setup
-	@echo GO_TEST_DIRS: $(GO_TEST_DIRS_NAME)
-	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) -v $(GO_TEST_DIRS)
+	@# echo GO_TEST_DIRS: $(GO_TEST_DIRS_NAME)
+	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) -v ./...
 
 .PHONY: setup
 setup:
@@ -71,4 +71,4 @@ setup:
 
 .PHONY: complexity
 complexity: setup
-	gocognit -over 15 . >&2
+	gocognit -over 15 .

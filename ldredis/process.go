@@ -68,7 +68,7 @@ func (c *Redis) defaultProcess(cmd Cmder) error {
 
 	for i := 0; ; {
 		begin := time.Now()
-		c.oldProcess(cmd)
+		c.oldProcess(cmd) // nolint
 		reporter.Report(cmd, time.Since(begin))
 
 		err := cmd.Err()
@@ -95,7 +95,7 @@ func (c *Redis) defaultProcessPipeline(cmds []Cmder) error {
 
 	for i := 0; ; {
 		begin := time.Now()
-		c.oldProcessPipeline(cmds)
+		c.oldProcessPipeline(cmds) // nolint
 		reporter.ReportPipeline(cmds, time.Since(begin))
 
 		err := c.checkPipelineError(cmds)
@@ -128,14 +128,13 @@ func (c *Redis) printPipelineSuccLog(cmds []Cmder, retry int, log *ldlog.Logger,
 	}
 }
 
-func (c *Redis) printPipelineFailLog(cmds []Cmder, retry int, log *ldlog.Logger, caller zap.Field) error {
+func (c *Redis) printPipelineFailLog(cmds []Cmder, retry int, log *ldlog.Logger, caller zap.Field) {
 	for _, cmd := range cmds {
 		if err := cmd.Err(); err != nil && err != Nil {
 			log.Error("redis pipeline cmd fail", zap.Int("retry", retry), getCmdField(cmd),
 				zap.Error(err), caller)
-			return err
+			break
 		}
 		log.Debug("redis pipeline cmd succ", zap.Int("retry", retry), getCmdField(cmd), caller)
 	}
-	return nil
 }

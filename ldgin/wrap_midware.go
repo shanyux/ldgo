@@ -44,7 +44,6 @@ func wrapMidware(f Midware) *midware {
 	switch t.NumOut() {
 	case 0:
 		w.OutConv = w.getOutConv0()
-		break
 
 	case 1:
 		outType := t.Out(0)
