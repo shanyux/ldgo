@@ -8,8 +8,6 @@ import (
 	"time"
 )
 
-var _zoreDuration time.Duration
-
 type Duration Int64
 
 func (p *Duration) get() *Int64 { return (*Int64)(p) }
