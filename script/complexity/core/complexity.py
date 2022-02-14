@@ -8,7 +8,6 @@
 import os
 
 from . import exec
-from . import pattern
 
 
 class Complexity(object):
@@ -27,30 +26,33 @@ class Complexity(object):
         return '%d %s %s %s' % (self.complexity, self.package, self.function, file_text)
 
 
-def install_gocognit():
-    cmd = ['type', 'gocognit']
+def __install():
+    cmd = ['which', 'gocognit']
     status, _ = exec.exec(cmd)
     if status == 0:
         return
 
-    cmd = ['go', 'install', 'github.com/distroy/gocognit/cmd/gocognit']
+    cmd = ['go', 'install', 'github.com/distroy/gocognit/cmd/gocognit@latest']
     status, _ = exec.exec(cmd)
     if status != 0:
         raise Exception('intall gocognit fail. status:%d, cmd:%s\n' % (status, ' '.join(cmd)))
 
 
 def get_cogntive(path: str, threshold: int = 15, excludes: list[str] = [], includes: list[str] = []) -> list[Complexity]:
-    install_gocognit()
+    __install()
 
-    cmd = ['gocognit', path]
+    cmd = ['gocognit']
+    for s in includes:
+        cmd.extend(['-include', s])
+    for s in excludes:
+        cmd.extend(['-exclude', s])
+    cmd.append(path)
     status, output = exec.exec(cmd)
     if status != 0:
         raise Exception('exec gocognit fail. status:%d, cmd:%s\n' % (status, ' '.join(cmd)))
 
     if not output:
         return []
-
-    patterns = pattern.Pattern(excludes=excludes, includes=includes)
 
     lines: list[str] = output.split('\n')
     # print(lines)
@@ -75,9 +77,6 @@ def get_cogntive(path: str, threshold: int = 15, excludes: list[str] = [], inclu
         items = items[1].split(',')
         pos = int(items[0])
         end = int(items[1])
-
-        if not patterns.check_file(file):
-            continue
 
         o = Complexity(file, complexity=complexity, package=package,
                        function=function, pos=pos, end=end)
