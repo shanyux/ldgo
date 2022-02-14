@@ -37,7 +37,7 @@ def install_gocognit():
     cmd = ['go', 'install', 'github.com/distroy/gocognit/cmd/gocognit@v1.0.5.2']
     status, _ = exec.exec(cmd)
     if status != 0:
-        sys.stderr.write('intall gocognit fail. cmd:%s\n' % ''.join(cmd))
+        sys.stderr.write('intall gocognit fail. cmd:%s\n' % ' '.join(cmd))
         sys.exit(status)
 
 
@@ -47,7 +47,7 @@ def get_cogntive(path: str, threshold: int = 15, excludes: list[str] = [], inclu
     cmd = ['gocognit', path]
     status, output = exec.exec(cmd)
     if status != 0:
-        sys.stderr.write('exec gocognit fail. cmd:%s\n' % ''.join(cmd))
+        sys.stderr.write('exec gocognit fail. cmd:%s\n' % ' '.join(cmd))
         sys.exit(status)
 
     if not output:
