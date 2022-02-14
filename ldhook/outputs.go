@@ -75,9 +75,7 @@ func (w *wrapOutputs) fillInputs(res *ResultCell, ins []reflect.Value) {
 		l := len(ins)
 		last := ins[l-1]
 		tmp := make([]reflect.Value, 0, l-1+last.Len())
-		for _, v := range ins[:l-1] {
-			tmp = append(tmp, v)
-		}
+		tmp = append(tmp, ins[:l-1]...)
 		for i := 0; i < last.Len(); i++ {
 			tmp = append(tmp, last.Index(i))
 		}
@@ -153,12 +151,12 @@ func (w *wrapOutputs) fillOneToInputs(res *input, ins []reflect.Value) {
 		if res.Type.Kind() != reflect.Func {
 			res.DataType = res.Type
 
-		} else {
-			if res.Type.NumIn() != 1 {
-				funcName := runtime.FuncForPC(res.Value.Pointer()).Name()
-				panic(fmt.Errorf("func must have 1 parameter. func:%s", funcName))
-			}
+		} else if res.Type.NumIn() == 1 {
 			res.DataType = res.Type.In(0)
+
+		} else {
+			funcName := runtime.FuncForPC(res.Value.Pointer()).Name()
+			panic(fmt.Errorf("func must have 1 parameter. func:%s", funcName))
 		}
 	}
 

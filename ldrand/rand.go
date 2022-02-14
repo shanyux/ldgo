@@ -79,6 +79,6 @@ func Bytes(n int) []byte {
 		return nil
 	}
 	b := make([]byte, n)
-	globalRand.Read(b)
+	globalRand.Read(b) // nolint
 	return b
 }

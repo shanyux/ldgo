@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/distroy/ldgo/ldlog"
 	"github.com/distroy/ldgo/ldrand"
 	"go.uber.org/zap"
 )
@@ -67,7 +68,7 @@ func (c *Redis) defaultProcess(cmd Cmder) error {
 
 	for i := 0; ; {
 		begin := time.Now()
-		c.oldProcess(cmd)
+		c.oldProcess(cmd) // nolint
 		reporter.Report(cmd, time.Since(begin))
 
 		err := cmd.Err()
@@ -94,37 +95,46 @@ func (c *Redis) defaultProcessPipeline(cmds []Cmder) error {
 
 	for i := 0; ; {
 		begin := time.Now()
-		c.oldProcessPipeline(cmds)
+		c.oldProcessPipeline(cmds) // nolint
 		reporter.ReportPipeline(cmds, time.Since(begin))
 
-		var err error
-		for _, cmd := range cmds {
-			if e := cmd.Err(); e != nil && e != Nil {
-				err = e
-				break
-			}
-		}
-
+		err := c.checkPipelineError(cmds)
 		if err == nil || err == Nil {
-			for _, cmd := range cmds {
-				log.Debug("redis pipeline cmd succ", zap.Int("retry", i), getCmdField(cmd), caller)
-			}
+			c.printPipelineSuccLog(cmds, i, log, caller)
 			log.Debug("redis pipeline cmd succ", zap.Int("retry", i), caller)
 			return err
 		}
 
 		if i++; i >= retry {
-			for _, cmd := range cmds {
-				if err := cmd.Err(); err != nil && err != Nil {
-					log.Error("redis pipeline cmd fail", zap.Int("retry", i), getCmdField(cmd),
-						zap.Error(err), caller)
-					break
-				}
-				log.Debug("redis pipeline cmd succ", zap.Int("retry", i), getCmdField(cmd), caller)
-			}
-
+			c.printPipelineFailLog(cmds, i, log, caller)
 			log.Error("redis pipeline fail", zap.Int("retry", i), zap.Error(err), caller)
 			return err
 		}
+	}
+}
+
+func (c *Redis) checkPipelineError(cmds []Cmder) error {
+	for _, cmd := range cmds {
+		if err := cmd.Err(); err != nil && err != Nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *Redis) printPipelineSuccLog(cmds []Cmder, retry int, log *ldlog.Logger, caller zap.Field) {
+	for _, cmd := range cmds {
+		log.Debug("redis pipeline cmd succ", zap.Int("retry", retry), getCmdField(cmd), caller)
+	}
+}
+
+func (c *Redis) printPipelineFailLog(cmds []Cmder, retry int, log *ldlog.Logger, caller zap.Field) {
+	for _, cmd := range cmds {
+		if err := cmd.Err(); err != nil && err != Nil {
+			log.Error("redis pipeline cmd fail", zap.Int("retry", retry), getCmdField(cmd),
+				zap.Error(err), caller)
+			break
+		}
+		log.Debug("redis pipeline cmd succ", zap.Int("retry", retry), getCmdField(cmd), caller)
 	}
 }

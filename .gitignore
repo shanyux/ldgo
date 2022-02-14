@@ -1,6 +1,7 @@
 # git ignore
 .*
 !.gitignore
+!.gitlab-ci.yml
 
 tags
 *.vim
@@ -12,3 +13,7 @@ log
 bak
 
 */example/example
+
+# python
+*.pyc
+__pycache__/
