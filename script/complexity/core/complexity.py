@@ -14,7 +14,7 @@ from . import pattern
 
 class Complexity(object):
     def __init__(self, file: str = '', complexity: int = 0, package: str = '',
-            function: str = '', pos: int = 0, end: int = 0):
+                 function: str = '', pos: int = 0, end: int = 0):
 
         self.complexity: int = complexity
         self.package: str = package
@@ -25,7 +25,7 @@ class Complexity(object):
 
     def __str__(self) -> str:
         file_text = '%s:%d,%d' % (self.file, self.pos, self.end)
-        return '%d %s %s %s' % (self.complexity, self.package,self.function, file_text)
+        return '%d %s %s %s' % (self.complexity, self.package, self.function, file_text)
 
 
 def install_gocognit():
@@ -41,7 +41,7 @@ def install_gocognit():
         sys.exit(status)
 
 
-def get_cogntive(path: str, threshold: int = 15, excludes: list[str] = [], exclude_dirs: list[str] = []) -> list[Complexity]:
+def get_cogntive(path: str, threshold: int = 15, excludes: list[str] = [], includes: list[str] = []) -> list[Complexity]:
     install_gocognit()
 
     cmd = ['gocognit', path]
@@ -53,7 +53,7 @@ def get_cogntive(path: str, threshold: int = 15, excludes: list[str] = [], exclu
     if not output:
         return []
 
-    patterns = pattern.Pattern(file_patterns=excludes, dir_patterns=exclude_dirs)
+    patterns = pattern.Pattern(excludes=excludes, includes=includes)
 
     lines: list[str] = output.split('\n')
     # print(lines)
@@ -80,11 +80,11 @@ def get_cogntive(path: str, threshold: int = 15, excludes: list[str] = [], exclu
         pos = int(items[0])
         end = int(items[1])
 
-        if patterns.check_file(file):
+        if not patterns.check_file(file):
             continue
 
         o = Complexity(file, complexity=complexity, package=package,
-            function=function, pos=pos, end=end)
+                       function=function, pos=pos, end=end)
         # print([line, str(o)])
         buffer.append(o)
 
