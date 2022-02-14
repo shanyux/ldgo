@@ -6,7 +6,6 @@
 
 
 import os
-import sys
 
 from . import exec
 from . import pattern
@@ -34,11 +33,10 @@ def install_gocognit():
     if status == 0:
         return
 
-    cmd = ['go', 'install', 'github.com/distroy/gocognit/cmd/gocognit@v1.0.5.2']
+    cmd = ['go', 'install', 'github.com/distroy/gocognit/cmd/gocognit']
     status, _ = exec.exec(cmd)
     if status != 0:
-        sys.stderr.write('intall gocognit fail. cmd:%s\n' % ' '.join(cmd))
-        sys.exit(status)
+        raise Exception('intall gocognit fail. status:%d, cmd:%s\n' % (status, ' '.join(cmd)))
 
 
 def get_cogntive(path: str, threshold: int = 15, excludes: list[str] = [], includes: list[str] = []) -> list[Complexity]:
@@ -47,8 +45,7 @@ def get_cogntive(path: str, threshold: int = 15, excludes: list[str] = [], inclu
     cmd = ['gocognit', path]
     status, output = exec.exec(cmd)
     if status != 0:
-        sys.stderr.write('exec gocognit fail. cmd:%s\n' % ' '.join(cmd))
-        sys.exit(status)
+        raise Exception('exec gocognit fail. status:%d, cmd:%s\n' % (status, ' '.join(cmd)))
 
     if not output:
         return []
@@ -62,8 +59,7 @@ def get_cogntive(path: str, threshold: int = 15, excludes: list[str] = [], inclu
     for line in lines:
         items = line.split(' ')
         if len(items) < 4:
-            sys.stderr.write('invalid complexity line. line: %s\n' % line)
-            sys.exit(-1)
+            raise Exception('invalid complexity line. line: %s\n' % line)
 
         complexity = int(items[0])
         package = items[1]

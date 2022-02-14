@@ -6,7 +6,6 @@
 
 
 import traceback
-import sys
 
 from . import exec
 
@@ -25,8 +24,7 @@ def get_diffs(branch: str) -> list[Diff]:
     cmd = ['git', 'diff', '--unified=0', branch]
     status, output = exec.exec(cmd)
     if status != 0:
-        sys.stderr.write('get git diff fail. cmd:%s\n' % ' '.join(cmd))
-        sys.exit(status)
+        raise Exception('get git diff fail. status:%d, cmd:%s\n' % (status, ' '.join(cmd)))
 
     # print(output)
     lines: list[str] = output.split('\n')
@@ -60,8 +58,7 @@ def repo_root() -> str:
     cmd = ['git', 'rev-parse', '--show-toplevel']
     status, output = exec.exec(cmd)
     if status != 0:
-        sys.stderr.write('get repo root fail. cmd:%s\n' % ' '.join(cmd))
-        sys.exit(status)
+        raise Exception('get repo root fail. status:%d, cmd:%s\n' % (status, ' '.join(cmd)))
     return output
 
 
@@ -74,6 +71,5 @@ def get_branch() -> str:
     cmd = ['git', 'hash-object', '-t', 'tree', '/dev/null']
     status, output = exec.exec(cmd)
     if status != 0:
-        sys.stderr.write('get hash-object fail. cmd:%s\n' % ' '.join(cmd))
-        sys.exit(status)
+        raise Exception('get hash-object fail. status:%d, cmd:%s\n' % (status, ' '.join(cmd)))
     return output
