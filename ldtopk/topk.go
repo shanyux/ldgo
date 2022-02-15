@@ -16,16 +16,7 @@ type TopkInterface interface {
 
 func TopkAdd(b TopkInterface, k int, x interface{}) bool {
 	if pos := b.Len(); pos < k {
-		b.Push(x)
-
-		for parent := 0; pos > 0; pos = parent {
-			parent = (pos - 1) / 2
-			if !b.Less(b.Get(parent), b.Get(pos)) {
-				break
-			}
-			b.Swap(parent, pos)
-		}
-
+		topkAppend(b, x)
 		return true
 	}
 
@@ -56,4 +47,17 @@ func TopkAdd(b TopkInterface, k int, x interface{}) bool {
 	}
 
 	return true
+}
+
+func topkAppend(b TopkInterface, x interface{}) {
+	pos := b.Len()
+	b.Push(x)
+
+	for parent := 0; pos > 0; pos = parent {
+		parent = (pos - 1) / 2
+		if !b.Less(b.Get(parent), b.Get(pos)) {
+			break
+		}
+		b.Swap(parent, pos)
+	}
 }

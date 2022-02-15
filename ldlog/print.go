@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strings"
 
 	"go.uber.org/zap/buffer"
 	"go.uber.org/zap/zapcore"
@@ -184,103 +185,97 @@ func (o sortedMap) compare(aVal, bVal reflect.Value) int {
 	switch aVal.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		a, b := aVal.Int(), bVal.Int()
-		switch {
-		case a < b:
-			return -1
-		case a > b:
-			return 1
-		default:
-			return 0
-		}
+		return o.intCompare(a, b)
+
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
 		a, b := aVal.Uint(), bVal.Uint()
-		switch {
-		case a < b:
-			return -1
-		case a > b:
-			return 1
-		default:
-			return 0
-		}
+		return o.uintCompare(a, b)
+
 	case reflect.String:
 		a, b := aVal.String(), bVal.String()
-		switch {
-		case a < b:
-			return -1
-		case a > b:
-			return 1
-		default:
-			return 0
-		}
+		return strings.Compare(a, b)
+
 	case reflect.Float32, reflect.Float64:
 		return o.floatCompare(aVal.Float(), bVal.Float())
+
 	case reflect.Complex64, reflect.Complex128:
 		a, b := aVal.Complex(), bVal.Complex()
-		if c := o.floatCompare(real(a), real(b)); c != 0 {
-			return c
-		}
-		return o.floatCompare(imag(a), imag(b))
+		return o.complexCompare(a, b)
+
 	case reflect.Bool:
 		a, b := aVal.Bool(), bVal.Bool()
-		switch {
-		case a == b:
-			return 0
-		case a:
-			return 1
-		default:
-			return -1
-		}
+		return o.boolCompare(a, b)
+
 	case reflect.Ptr, reflect.UnsafePointer:
 		a, b := aVal.Pointer(), bVal.Pointer()
-		switch {
-		case a < b:
-			return -1
-		case a > b:
-			return 1
-		default:
-			return 0
-		}
+		return o.ptrCompare(a, b)
+
 	case reflect.Chan:
 		if c, ok := o.nilCompare(aVal, bVal); ok {
 			return c
 		}
 		ap, bp := aVal.Pointer(), bVal.Pointer()
-		switch {
-		case ap < bp:
-			return -1
-		case ap > bp:
-			return 1
-		default:
-			return 0
-		}
+		return o.ptrCompare(ap, bp)
+
 	case reflect.Struct:
-		for i := 0; i < aVal.NumField(); i++ {
-			if c := o.compare(aVal.Field(i), bVal.Field(i)); c != 0 {
-				return c
-			}
-		}
-		return 0
+		return o.structCompare(aVal, bVal)
+
 	case reflect.Array:
-		for i := 0; i < aVal.Len(); i++ {
-			if c := o.compare(aVal.Index(i), bVal.Index(i)); c != 0 {
-				return c
-			}
-		}
-		return 0
+		return o.arrayCompare(aVal, bVal)
+
 	case reflect.Interface:
-		if c, ok := o.nilCompare(aVal, bVal); ok {
-			return c
-		}
-		c := o.compare(reflect.ValueOf(aVal.Elem().Type()), reflect.ValueOf(bVal.Elem().Type()))
-		if c != 0 {
-			return c
-		}
-		return o.compare(aVal.Elem(), bVal.Elem())
+		return o.ifaceCompare(aVal, bVal)
+
 	default:
 		// Certain types cannot appear as keys (maps, funcs, slices), but be explicit.
 		panic("bad type in compare: " + aType.String())
 	}
 }
+
+func (o sortedMap) intCompare(a, b int64) int {
+	switch {
+	case a < b:
+		return -1
+	case a > b:
+		return 1
+	default:
+		return 0
+	}
+}
+
+func (o sortedMap) uintCompare(a, b uint64) int {
+	switch {
+	case a < b:
+		return -1
+	case a > b:
+		return 1
+	default:
+		return 0
+	}
+}
+
+func (o sortedMap) boolCompare(a, b bool) int {
+	switch {
+	case a == b:
+		return 0
+	case a:
+		return 1
+	default:
+		return -1
+	}
+}
+
+func (o sortedMap) ptrCompare(a, b uintptr) int {
+	switch {
+	case a < b:
+		return -1
+	case a > b:
+		return 1
+	default:
+		return 0
+	}
+}
+
 func (o sortedMap) nilCompare(aVal, bVal reflect.Value) (int, bool) {
 	if aVal.IsNil() {
 		if bVal.IsNil() {
@@ -306,6 +301,42 @@ func (o sortedMap) floatCompare(a, b float64) int {
 		return 1
 	}
 	return 0
+}
+
+func (o sortedMap) structCompare(aVal, bVal reflect.Value) int {
+	for i := 0; i < aVal.NumField(); i++ {
+		if c := o.compare(aVal.Field(i), bVal.Field(i)); c != 0 {
+			return c
+		}
+	}
+	return 0
+}
+
+func (o sortedMap) arrayCompare(aVal, bVal reflect.Value) int {
+	for i := 0; i < aVal.Len(); i++ {
+		if c := o.compare(aVal.Index(i), bVal.Index(i)); c != 0 {
+			return c
+		}
+	}
+	return 0
+}
+
+func (o sortedMap) ifaceCompare(aVal, bVal reflect.Value) int {
+	if c, ok := o.nilCompare(aVal, bVal); ok {
+		return c
+	}
+	c := o.compare(reflect.ValueOf(aVal.Elem().Type()), reflect.ValueOf(bVal.Elem().Type()))
+	if c != 0 {
+		return c
+	}
+	return o.compare(aVal.Elem(), bVal.Elem())
+}
+
+func (o sortedMap) complexCompare(a, b complex128) int {
+	if c := o.floatCompare(real(a), real(b)); c != 0 {
+		return c
+	}
+	return o.floatCompare(imag(a), imag(b))
 }
 
 func (o sortedMap) isNaN(a float64) bool {

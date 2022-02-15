@@ -19,7 +19,7 @@ func NewLogger(opts ...Option) *Logger {
 	var level zapcore.Level
 
 	if err := level.UnmarshalText(ldconv.StrToBytesUnsafe(options.level)); err != nil {
-		level.UnmarshalText(ldconv.StrToBytesUnsafe("info"))
+		level.UnmarshalText(ldconv.StrToBytesUnsafe("info")) // nolint
 	}
 
 	encoder := zapcore.EncoderConfig{

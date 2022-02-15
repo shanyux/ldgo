@@ -46,8 +46,8 @@ func (_ fieldWhereEmpty) isEmpty() bool                 { return true }
 func (_ fieldWhereEmpty) And(b FieldWherer) FieldWherer { return b }
 func (_ fieldWhereEmpty) Or(b FieldWherer) FieldWherer  { return b }
 
-func (_ fieldWhereEmpty) buildGorm(db *GormDb, field string) *GormDb { return db }
-func (_ fieldWhereEmpty) buildWhere(field string) whereResult        { return whereResult{} }
+// func (_ fieldWhereEmpty) buildGorm(db *GormDb, field string) *GormDb { return db }
+func (_ fieldWhereEmpty) buildWhere(field string) whereResult { return whereResult{} }
 
 type fieldWhereBase struct{}
 

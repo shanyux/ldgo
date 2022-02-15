@@ -13,7 +13,6 @@ func WrapGinWeb(router interface{}) Router {
 }
 
 type ginWebWapper struct {
-	wrapperBase
 	ginWapperBase
 
 	router reflect.Value

@@ -99,7 +99,7 @@ func (c *CodecRedis) unmarshal(bytes []byte) (interface{}, error) {
 	v, err := c.codec.Unmarshal(bytes)
 	if err != nil {
 		c.logger().Error("redis codec unmarshal fail", zap.Error(err),
-			getCallerField(c.caller))
+			getCaller(c.caller))
 		return nil, lderr.ErrCacheUnmarshal
 	}
 	return v, nil
@@ -118,7 +118,7 @@ func (c *CodecRedis) unmarshalInterface(i interface{}) (interface{}, error) {
 		bytes = ldconv.StrToBytesUnsafe(tmp)
 	default:
 		c.logger().Error("redis codec cannot unmarshal the type",
-			zap.Stringer("type", reflect.TypeOf(i)), getCallerField(c.caller))
+			zap.Stringer("type", reflect.TypeOf(i)), getCaller(c.caller))
 		return nil, lderr.ErrCacheUnmarshal
 	}
 	return c.unmarshal(bytes)

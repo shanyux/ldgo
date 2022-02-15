@@ -50,7 +50,7 @@ var fastSourceXor [16]uint64 = [...]uint64{
 //go:nocheckptr
 func noescape(p unsafe.Pointer) unsafe.Pointer {
 	x := uintptr(p)
-	return unsafe.Pointer(x ^ 0)
+	return unsafe.Pointer(x ^ 0) // nolint
 }
 
 func NewFastSource(seed int64) rand.Source64 {

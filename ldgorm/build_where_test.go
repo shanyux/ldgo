@@ -14,7 +14,6 @@ import (
 
 func TestBuildWhere(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
-		const field = "field"
 		gormDb := testGetGorm()
 		defer gormDb.Close()
 
