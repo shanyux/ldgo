@@ -12,3 +12,11 @@ import "sync/atomic"
 //
 // A Value must not be copied after first use.
 type Value = atomic.Value
+
+func NewValue(d interface{}) *Value {
+	p := &Value{}
+	if d != nil {
+		p.Store(d)
+	}
+	return p
+}

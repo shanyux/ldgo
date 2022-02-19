@@ -8,11 +8,16 @@ import (
 	"time"
 )
 
-type Duration Int64
+type Duration int64
+
+func NewDuration(d time.Duration) *Duration {
+	v := Duration(d)
+	return &v
+}
 
 func (p *Duration) get() *Int64 { return (*Int64)(p) }
 
-func (p *Duration) Store(v time.Duration) { p.get().Store(int64(v)) }
+func (p *Duration) Store(d time.Duration) { p.get().Store(int64(d)) }
 func (p *Duration) Load() time.Duration   { return time.Duration(p.get().Load()) }
 func (p *Duration) Swap(old time.Duration) (new time.Duration) {
 	return time.Duration(p.get().Swap(int64(old)))

@@ -10,13 +10,17 @@ import (
 )
 
 type Pointer struct {
-	v unsafe.Pointer
+	d unsafe.Pointer
 }
 
-func (p *Pointer) get() *unsafe.Pointer { return &p.v }
+func NewPointer(d unsafe.Pointer) *Pointer {
+	return &Pointer{d: d}
+}
 
-func (p *Pointer) Store(val unsafe.Pointer) { atomic.StorePointer(p.get(), val) }
-func (p *Pointer) Load() unsafe.Pointer     { return atomic.LoadPointer(p.get()) }
+func (p *Pointer) get() *unsafe.Pointer { return &p.d }
+
+func (p *Pointer) Store(d unsafe.Pointer) { atomic.StorePointer(p.get(), d) }
+func (p *Pointer) Load() unsafe.Pointer   { return atomic.LoadPointer(p.get()) }
 func (p *Pointer) Swap(new unsafe.Pointer) (old unsafe.Pointer) {
 	return atomic.SwapPointer(p.get(), new)
 }

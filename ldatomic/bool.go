@@ -4,11 +4,17 @@
 
 package ldatomic
 
-type Bool Uint32
+type Bool uint32
+
+func NewBool(d bool) *Bool {
+	v := Bool(0)
+	v.Store(d)
+	return &v
+}
 
 func (p *Bool) get() *Uint32 { return (*Uint32)(p) }
 
-func (p *Bool) Store(val bool)           { p.get().Store(p.toInt(val)) }
+func (p *Bool) Store(d bool)             { p.get().Store(p.toInt(d)) }
 func (p *Bool) Load() bool               { return p.toBool(p.get().Load()) }
 func (p *Bool) Swap(new bool) (old bool) { return p.toBool(p.get().Swap(p.toInt(new))) }
 func (p *Bool) CompareAndSwap(old, new bool) (swapped bool) {
@@ -30,6 +36,6 @@ func (p *Bool) toInt(b bool) uint32 {
 	}
 	return 0
 }
-func (p *Bool) toBool(v uint32) bool {
-	return v != 0
+func (p *Bool) toBool(d uint32) bool {
+	return d != 0
 }
