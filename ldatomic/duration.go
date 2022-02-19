@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type Duration Int64
+type Duration int64
 
 func (p *Duration) get() *Int64 { return (*Int64)(p) }
 

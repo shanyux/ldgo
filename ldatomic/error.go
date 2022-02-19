@@ -4,7 +4,7 @@
 
 package ldatomic
 
-type Error Interface
+type Error Pointer
 
 func (p *Error) get() *Interface { return (*Interface)(p) }
 

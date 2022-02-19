@@ -33,3 +33,16 @@ func (p *Int64) Swap(new int64) (old int64)  { return atomic.SwapInt64(p.get(), 
 func (p *Int64) CompareAndSwap(old, new int64) (swapped bool) {
 	return atomic.CompareAndSwapInt64(p.get(), old, new)
 }
+
+type Int int64
+
+func (p *Int) get() *Int64 { return (*Int64)(p) }
+
+func (p *Int) Add(delta int) (new int) { return int(p.get().Add(int64(delta))) }
+func (p *Int) Sub(delta int) (new int) { return int(p.get().Sub(int64(delta))) }
+func (p *Int) Store(val int)           { p.get().Store(int64(val)) }
+func (p *Int) Load() int               { return int(p.get().Load()) }
+func (p *Int) Swap(new int) (old int)  { return int(p.get().Swap(int64(new))) }
+func (p *Int) CompareAndSwap(old, new int) (swapped bool) {
+	return p.get().CompareAndSwap(int64(old), int64(new))
+}

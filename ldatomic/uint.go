@@ -43,3 +43,16 @@ func (p *Uintptr) Load() uintptr                   { return atomic.LoadUintptr(p
 func (p *Uintptr) CompareAndSwap(old, new uintptr) (swapped bool) {
 	return atomic.CompareAndSwapUintptr(p.get(), old, new)
 }
+
+type Uint uint64
+
+func (p *Uint) get() *Uint64 { return (*Uint64)(p) }
+
+func (p *Uint) Add(delta uint) (new uint) { return uint(p.get().Add(uint64(delta))) }
+func (p *Uint) Sub(delta uint) (new uint) { return uint(p.get().Sub(uint64(delta))) }
+func (p *Uint) Store(val uint)            { p.get().Store(uint64(val)) }
+func (p *Uint) Load() uint                { return uint(p.get().Load()) }
+func (p *Uint) Swap(new int) (old uint)   { return uint(p.get().Swap(uint64(new))) }
+func (p *Uint) CompareAndSwap(old, new uint) (swapped bool) {
+	return p.get().CompareAndSwap(uint64(old), uint64(new))
+}
