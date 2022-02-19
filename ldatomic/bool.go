@@ -4,7 +4,7 @@
 
 package ldatomic
 
-type Bool Uint32
+type Bool uint32
 
 func (p *Bool) get() *Uint32 { return (*Uint32)(p) }
 
