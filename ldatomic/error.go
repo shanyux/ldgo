@@ -6,9 +6,17 @@ package ldatomic
 
 type Error Pointer
 
+func NewError(d error) *Error {
+	p := &Error{}
+	if d != nil {
+		p.Store(d)
+	}
+	return p
+}
+
 func (p *Error) get() *Interface { return (*Interface)(p) }
 
-func (p *Error) Store(v error)              { p.get().Store(v) }
+func (p *Error) Store(d error)              { p.get().Store(d) }
 func (p *Error) Load() error                { return p.toErr(p.get().Load()) }
 func (p *Error) Swap(new error) (old error) { return p.toErr(p.get().Swap(new)) }
 

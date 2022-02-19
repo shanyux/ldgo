@@ -12,12 +12,18 @@ import (
 var _zeroTime time.Time
 
 type Time struct {
-	v Pointer
+	d Pointer
 }
 
-func (p *Time) Store(v time.Time)                  { p.v.Store(p.toAddr(v)) }
-func (p *Time) Load() time.Time                    { return p.toTime(p.v.Load()) }
-func (p *Time) Swap(new time.Time) (old time.Time) { return p.toTime(p.v.Swap(p.toAddr(new))) }
+func NewTime(d time.Time) *Time {
+	p := &Time{}
+	p.Store(d)
+	return p
+}
+
+func (p *Time) Store(d time.Time)                  { p.d.Store(p.toAddr(d)) }
+func (p *Time) Load() time.Time                    { return p.toTime(p.d.Load()) }
+func (p *Time) Swap(new time.Time) (old time.Time) { return p.toTime(p.d.Swap(p.toAddr(new))) }
 func (p *Time) Add(d time.Duration) (new time.Time) {
 	return p.MustChange(func(old time.Time) (new time.Time) {
 		return old.Add(d)
@@ -40,14 +46,14 @@ func (p *Time) MustChange(change func(old time.Time) (new time.Time)) (new time.
 }
 
 func (p *Time) Change(change func(old time.Time) (new time.Time)) (new time.Time, swapped bool) {
-	oldAddr := p.v.Load()
+	oldAddr := p.d.Load()
 	old := p.toTime(oldAddr)
 	new = change(old)
 	newAddr := p.toAddr(new)
-	return new, p.v.CompareAndSwap(oldAddr, newAddr)
+	return new, p.d.CompareAndSwap(oldAddr, newAddr)
 }
 
-func (p *Time) toAddr(v time.Time) unsafe.Pointer { return unsafe.Pointer(&v) }
+func (p *Time) toAddr(d time.Time) unsafe.Pointer { return unsafe.Pointer(&d) }
 
 func (p *Time) toTime(addr unsafe.Pointer) time.Time {
 	if addr == nil {
