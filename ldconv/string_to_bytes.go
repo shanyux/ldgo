@@ -9,10 +9,6 @@ import (
 	"unsafe"
 )
 
-type bytesFromString struct {
-	reflect.SliceHeader
-}
-
 func BytesToStr(b []byte) string {
 	return string(b)
 }
@@ -32,13 +28,13 @@ func BytesToStrUnsafe(b []byte) string {
 // StrToBytesUnsafe the result bytes cannot be modified and the source string cannot free
 func StrToBytesUnsafe(s string) []byte {
 	// return *(*[]byte)(unsafe.Pointer(&s))
+
+	type bytesFromString reflect.SliceHeader
 	sh := (*reflect.StringHeader)(unsafe.Pointer(&s))
 	bh := &bytesFromString{
-		SliceHeader: reflect.SliceHeader{
-			Data: sh.Data,
-			Len:  sh.Len,
-			Cap:  sh.Len,
-		},
+		Data: sh.Data,
+		Len:  sh.Len,
+		Cap:  sh.Len,
 	}
 	return *(*[]byte)(unsafe.Pointer(bh))
 }
