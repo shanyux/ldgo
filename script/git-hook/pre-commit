@@ -19,4 +19,5 @@ fi
 
 "${PROJECT_ROOT}/script/complexity/git-diff-complexity" \
     -c 15 \
+    --exclude '_test.go$' \
     "$against" || exit $?
