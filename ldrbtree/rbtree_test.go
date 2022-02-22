@@ -42,6 +42,31 @@ func TestRBTree(t *testing.T) {
 			}
 		})
 
+		convey.Convey("insert or search", func() {
+			rbtree := newRBTree()
+			convey.So(rbtree.Len(), convey.ShouldEqual, len(nums))
+
+			convey.Convey("insert when exists", func() {
+				for _, n := range numsUnordered {
+					it := rbtree.InsertOrSearch(n)
+					convey.So(it.Data(), convey.ShouldEqual, n)
+					convey.So(rbtree.Len(), convey.ShouldEqual, len(nums))
+				}
+				it := rbtree.Begin()
+				for _, n := range nums {
+					convey.So(n, convey.ShouldEqual, it.Data())
+					it = it.Next()
+				}
+				convey.So(it, convey.ShouldResemble, rbtree.End())
+			})
+
+			convey.Convey("insert when not exists", func() {
+				it := rbtree.InsertOrSearch(-100)
+				convey.So(it.Data(), convey.ShouldEqual, -100)
+				convey.So(rbtree.Len(), convey.ShouldEqual, len(nums)+1)
+			})
+		})
+
 		convey.Convey("len", func() {
 			rbtree := newRBTree()
 			convey.So(rbtree.Len(), convey.ShouldEqual, len(nums))

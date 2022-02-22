@@ -42,6 +42,40 @@ func (rbt *RBTree) Insert(d interface{}) RBTreeIterator {
 	return it
 }
 
+func (rbt *RBTree) InsertOrSearch(d interface{}) RBTreeIterator {
+	rbt.init()
+
+	root := &rbt.root
+
+	node := getRBTreeNode(rbt.sentinel)
+	node.Data = d
+
+	if *root == rbt.sentinel {
+		*root = node
+		rbt.count++
+		return RBTreeIterator(rbtreeIterator{
+			tree: rbt,
+			node: node,
+		})
+	}
+
+	temp := rbt.insertOrSearchNode(node)
+	if temp != node {
+		// d already exists
+		putRBTreeNode(node)
+
+	} else {
+		// d inserted just now
+		rbt.insertFixup(node)
+		rbt.count++
+	}
+
+	return RBTreeIterator(rbtreeIterator{
+		tree: rbt,
+		node: temp,
+	})
+}
+
 func (rbt *RBTree) Clear() {
 	rbt.init()
 

@@ -30,6 +30,35 @@ func (rbt *RBTree) insertNode(node *rbtreeNode) {
 	// ldlog.Default().Info("==== debug", zap.Reflect("tree", rbt.toMap()))
 }
 
+func (rbt *RBTree) insertOrSearchNode(node *rbtreeNode) *rbtreeNode {
+	sentinel := rbt.sentinel
+
+	p := &rbt.root
+	last := *p
+	for {
+		r := rbt.Compare(node.Data, (*p).Data)
+		if r == 0 {
+			return *p
+		} else if r < 0 {
+			p = &(*p).Left
+		} else {
+			p = &(*p).Right
+		}
+
+		if *p == sentinel {
+			break
+		}
+		last = *p
+	}
+
+	*p = node
+	node.Parent = last
+	node.Color = _colorRed
+
+	// ldlog.Default().Info("==== debug", zap.Reflect("tree", rbt.toMap()))
+	return node
+}
+
 func (rbt *RBTree) insertFixup(node *rbtreeNode) {
 	root := &rbt.root
 
