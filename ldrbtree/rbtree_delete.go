@@ -20,7 +20,7 @@ func (rbt *RBTree) deleteNode(node *rbtreeNode) {
 		subst = node
 
 	default:
-		subst = node.Right.min(sentinel, forward(rbt))
+		subst = node.Right.min(forward(rbt))
 		if subst.Left != sentinel {
 			temp = subst.Left
 		} else {

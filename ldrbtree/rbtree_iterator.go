@@ -21,7 +21,7 @@ func (it rbtreeIterator) next(name string, iface rbtreeInterface) rbtreeIterator
 		panic(fmt.Sprintf("the %s is already at the end of the red-black tree, can not move next", name))
 	}
 
-	node := it.nextNode(iface)
+	node := it.node.next(iface)
 	return rbtreeIterator{
 		tree: it.tree,
 		node: node,
@@ -38,9 +38,9 @@ func (it rbtreeIterator) prev(name string, iface rbtreeInterface) rbtreeIterator
 
 	var node *rbtreeNode
 	if it.node == sentinel {
-		node = root.max(sentinel, iface)
+		node = root.max(iface)
 	} else {
-		node = it.prevNode(iface)
+		node = it.node.prev(iface)
 	}
 
 	if node == sentinel {
@@ -51,34 +51,6 @@ func (it rbtreeIterator) prev(name string, iface rbtreeInterface) rbtreeIterator
 		tree: it.tree,
 		node: node,
 	}
-}
-
-func (it rbtreeIterator) nextNode(iface rbtreeInterface) *rbtreeNode {
-	sentinel := it.tree.sentinel
-	node := it.node
-
-	if node == sentinel {
-		return sentinel
-	}
-
-	if iface.Right(node) != sentinel {
-		return iface.Right(node).min(sentinel, iface)
-	}
-
-	for node.Parent != sentinel {
-		if node == iface.Left(node.Parent) {
-			return node.Parent
-		}
-
-		// node == node.Parent.Right
-		node = node.Parent
-	}
-
-	return sentinel
-}
-
-func (it rbtreeIterator) prevNode(iface rbtreeInterface) *rbtreeNode {
-	return it.nextNode(iface.Reverse())
 }
 
 type RBTreeIterator rbtreeIterator

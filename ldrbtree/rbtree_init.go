@@ -16,11 +16,10 @@ func (rbt *RBTree) init() {
 
 func (rbt *RBTree) beginIterator(iface rbtreeInterface) rbtreeIterator {
 	root := rbt.root
-	sentinel := rbt.sentinel
 
 	return rbtreeIterator{
 		tree: rbt,
-		node: root.min(sentinel, iface),
+		node: root.min(iface),
 	}
 }
 

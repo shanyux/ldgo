@@ -110,8 +110,8 @@ func TestRBTree(t *testing.T) {
 			})
 		})
 
-		convey.Convey("reveiterator", func() {
-			convey.Convey("reverse iterator next", func() {
+		convey.Convey("reverse iterator", func() {
+			convey.Convey("next", func() {
 				rbtree := newRBTree()
 				it := rbtree.RBegin()
 				for i := len(nums) - 1; i >= 0; i-- {
@@ -169,7 +169,6 @@ func TestRBTree(t *testing.T) {
 			const retry = 20
 			convey.Convey("search", func() {
 				for i := 0; i < retry; i++ {
-
 					rbtree := newRBTree()
 
 					d := ldrand.Intn(count)
@@ -182,10 +181,6 @@ func TestRBTree(t *testing.T) {
 					rbtree.Insert(d)
 
 					it := rbtree.Search(d)
-					// ldlog.Default().Info("", zap.Int("data", d))
-					// ldlog.Default().Info("", zap.Reflect("node", it.node.toMap(it.tree.sentinel)))
-					// ldlog.Default().Info("", zap.Reflect("node", it.Next().node.toMap(it.tree.sentinel)))
-					// ldlog.Default().Info("", zap.Reflect("node", it.Next().Next().node.toMap(it.tree.sentinel)))
 
 					convey.So(it.Data(), convey.ShouldEqual, d)
 					convey.So(it.Next().Data(), convey.ShouldEqual, d)
@@ -193,7 +188,46 @@ func TestRBTree(t *testing.T) {
 				}
 			})
 
-			convey.Convey("rsearch", func() {
+			convey.Convey("lower bound", func() {
+				for i := 0; i < retry; i++ {
+					rbtree := newRBTree()
+
+					d := ldrand.Intn(count)
+					if it := rbtree.Search(d); it != rbtree.End() {
+						rbtree.Delete(it)
+					}
+
+					rbtree.Insert(d)
+					rbtree.Insert(d)
+					rbtree.Insert(d)
+
+					it := rbtree.LowerBound(d)
+
+					convey.So(it.Data(), convey.ShouldEqual, d)
+					convey.So(it.Next().Data(), convey.ShouldEqual, d)
+					convey.So(it.Next().Next().Data(), convey.ShouldEqual, d)
+				}
+			})
+
+			convey.Convey("upper bound", func() {
+				for i := 0; i < retry; i++ {
+					rbtree := newRBTree()
+
+					d := ldrand.Intn(count)
+
+					rbtree.Insert(d - 1)
+					rbtree.Insert(d)
+					rbtree.Insert(d + 1)
+
+					it := rbtree.UpperBound(d)
+
+					convey.So(it.Data(), convey.ShouldBeGreaterThan, d)
+					convey.So(it.Prev().Data(), convey.ShouldBeLessThanOrEqualTo, d)
+					// convey.So(it.Next().Next().Data(), convey.ShouldEqual, d)
+				}
+			})
+
+			convey.Convey("reverse search", func() {
 				for i := 0; i < retry; i++ {
 					rbtree := newRBTree()
 
@@ -206,15 +240,49 @@ func TestRBTree(t *testing.T) {
 					rbtree.Insert(d)
 					rbtree.Insert(d)
 
-					it := rbtree.Search(d)
-					// ldlog.Default().Info("", zap.Int("data", d))
-					// ldlog.Default().Info("", zap.Reflect("node", it.node.toMap(it.tree.sentinel)))
-					// ldlog.Default().Info("", zap.Reflect("node", it.Next().node.toMap(it.tree.sentinel)))
-					// ldlog.Default().Info("", zap.Reflect("node", it.Next().Next().node.toMap(it.tree.sentinel)))
+					it := rbtree.RSearch(d)
 
 					convey.So(it.Data(), convey.ShouldEqual, d)
 					convey.So(it.Next().Data(), convey.ShouldEqual, d)
 					convey.So(it.Next().Next().Data(), convey.ShouldEqual, d)
+				}
+			})
+
+			convey.Convey("reverse lower bound", func() {
+				for i := 0; i < retry; i++ {
+					rbtree := newRBTree()
+
+					d := ldrand.Intn(count)
+					if it := rbtree.Search(d); it != rbtree.End() {
+						rbtree.Delete(it)
+					}
+
+					rbtree.Insert(d)
+					rbtree.Insert(d)
+					rbtree.Insert(d)
+
+					it := rbtree.RLowerBound(d)
+
+					convey.So(it.Data(), convey.ShouldEqual, d)
+					convey.So(it.Next().Data(), convey.ShouldEqual, d)
+					convey.So(it.Next().Next().Data(), convey.ShouldEqual, d)
+				}
+			})
+
+			convey.Convey("reverse upper bound", func() {
+				for i := 0; i < retry; i++ {
+					rbtree := newRBTree()
+
+					d := ldrand.Intn(count)
+					rbtree.Insert(d - 1)
+					rbtree.Insert(d)
+					rbtree.Insert(d + 1)
+
+					it := rbtree.RUpperBound(d)
+
+					convey.So(it.Data(), convey.ShouldBeLessThan, d)
+					convey.So(it.Prev().Data(), convey.ShouldBeGreaterThanOrEqualTo, d)
+					// convey.So(it.Next().Next().Data(), convey.ShouldEqual, d)
 				}
 			})
 		})

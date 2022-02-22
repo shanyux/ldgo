@@ -48,7 +48,9 @@ type rbtreeNode struct {
 	Data   interface{} `json:"data"`
 }
 
-func (n *rbtreeNode) min(sentinel *rbtreeNode, iface rbtreeInterface) *rbtreeNode {
+func (n *rbtreeNode) min(iface rbtreeInterface) *rbtreeNode {
+	sentinel := iface.Sentinel()
+
 	if n == sentinel {
 		return sentinel
 	}
@@ -58,8 +60,36 @@ func (n *rbtreeNode) min(sentinel *rbtreeNode, iface rbtreeInterface) *rbtreeNod
 	return n
 }
 
-func (n *rbtreeNode) max(sentinel *rbtreeNode, iface rbtreeInterface) *rbtreeNode {
-	return n.min(sentinel, iface.Reverse())
+func (n *rbtreeNode) max(iface rbtreeInterface) *rbtreeNode {
+	return n.min(iface.Reverse())
+}
+
+func (n *rbtreeNode) next(iface rbtreeInterface) *rbtreeNode {
+	sentinel := iface.Sentinel()
+	node := n
+
+	if node == sentinel {
+		return sentinel
+	}
+
+	if iface.Right(node) != sentinel {
+		return iface.Right(node).min(iface)
+	}
+
+	for node.Parent != sentinel {
+		if node == iface.Left(node.Parent) {
+			return node.Parent
+		}
+
+		// node == node.Parent.Right
+		node = node.Parent
+	}
+
+	return sentinel
+}
+
+func (n *rbtreeNode) prev(iface rbtreeInterface) *rbtreeNode {
+	return n.next(iface.Reverse())
 }
 
 func (n *rbtreeNode) toMap(sentinel *rbtreeNode) map[string]interface{} {
