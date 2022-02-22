@@ -67,6 +67,26 @@ func TestRBTree(t *testing.T) {
 			})
 		})
 
+		convey.Convey("insert or assign", func() {
+			rbtree := &RBTree{
+				Compare: func(a, b interface{}) int {
+					aa, bb := a.([2]int), b.([2]int)
+					return compareInt(int64(aa[0]), int64(bb[0]))
+				},
+			}
+			convey.So(rbtree.Len(), convey.ShouldEqual, 0)
+
+			rbtree.InsertOrAssign([2]int{100, 0})
+			convey.So(rbtree.Len(), convey.ShouldEqual, 1)
+			convey.So(rbtree.Begin().Data(), convey.ShouldResemble, [2]int{100, 0})
+			convey.So(rbtree.Begin().Next(), convey.ShouldResemble, rbtree.End())
+
+			rbtree.InsertOrAssign([2]int{100, 2})
+			convey.So(rbtree.Len(), convey.ShouldEqual, 1)
+			convey.So(rbtree.Begin().Data(), convey.ShouldResemble, [2]int{100, 2})
+			convey.So(rbtree.Begin().Next(), convey.ShouldResemble, rbtree.End())
+		})
+
 		convey.Convey("len", func() {
 			rbtree := newRBTree()
 			convey.So(rbtree.Len(), convey.ShouldEqual, len(nums))
