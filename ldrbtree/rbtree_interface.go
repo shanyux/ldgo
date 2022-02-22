@@ -8,6 +8,7 @@ type rbtreeInterface interface {
 	Compare(a, b interface{}) int
 	Left(n *rbtreeNode) *rbtreeNode
 	Right(n *rbtreeNode) *rbtreeNode
+	Reverse() rbtreeInterface
 }
 
 func forward(tree *RBTree) rbtreeInterface { return rbtreeForward{tree: tree} }
@@ -20,6 +21,7 @@ type rbtreeForward struct {
 func (p rbtreeForward) Compare(a, b interface{}) int    { return p.tree.Compare(a, b) }
 func (p rbtreeForward) Left(n *rbtreeNode) *rbtreeNode  { return n.Left }
 func (p rbtreeForward) Right(n *rbtreeNode) *rbtreeNode { return n.Right }
+func (p rbtreeForward) Reverse() rbtreeInterface        { return reverse(p.tree) }
 
 type rbtreeReverse struct {
 	tree *RBTree
@@ -28,3 +30,4 @@ type rbtreeReverse struct {
 func (p rbtreeReverse) Compare(a, b interface{}) int    { return p.tree.Compare(b, a) }
 func (p rbtreeReverse) Left(n *rbtreeNode) *rbtreeNode  { return n.Right }
 func (p rbtreeReverse) Right(n *rbtreeNode) *rbtreeNode { return n.Left }
+func (p rbtreeReverse) Reverse() rbtreeInterface        { return forward(p.tree) }

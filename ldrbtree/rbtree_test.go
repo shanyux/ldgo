@@ -183,9 +183,9 @@ func TestRBTree(t *testing.T) {
 
 					it := rbtree.Search(d)
 					// ldlog.Default().Info("", zap.Int("data", d))
-					// ldlog.Default().Info("", zap.Reflect("node", it.node.ToMap(it.tree.sentinel)))
-					// ldlog.Default().Info("", zap.Reflect("node", it.Next().node.ToMap(it.tree.sentinel)))
-					// ldlog.Default().Info("", zap.Reflect("node", it.Next().Next().node.ToMap(it.tree.sentinel)))
+					// ldlog.Default().Info("", zap.Reflect("node", it.node.toMap(it.tree.sentinel)))
+					// ldlog.Default().Info("", zap.Reflect("node", it.Next().node.toMap(it.tree.sentinel)))
+					// ldlog.Default().Info("", zap.Reflect("node", it.Next().Next().node.toMap(it.tree.sentinel)))
 
 					convey.So(it.Data(), convey.ShouldEqual, d)
 					convey.So(it.Next().Data(), convey.ShouldEqual, d)
@@ -208,9 +208,9 @@ func TestRBTree(t *testing.T) {
 
 					it := rbtree.Search(d)
 					// ldlog.Default().Info("", zap.Int("data", d))
-					// ldlog.Default().Info("", zap.Reflect("node", it.node.ToMap(it.tree.sentinel)))
-					// ldlog.Default().Info("", zap.Reflect("node", it.Next().node.ToMap(it.tree.sentinel)))
-					// ldlog.Default().Info("", zap.Reflect("node", it.Next().Next().node.ToMap(it.tree.sentinel)))
+					// ldlog.Default().Info("", zap.Reflect("node", it.node.toMap(it.tree.sentinel)))
+					// ldlog.Default().Info("", zap.Reflect("node", it.Next().node.toMap(it.tree.sentinel)))
+					// ldlog.Default().Info("", zap.Reflect("node", it.Next().Next().node.toMap(it.tree.sentinel)))
 
 					convey.So(it.Data(), convey.ShouldEqual, d)
 					convey.So(it.Next().Data(), convey.ShouldEqual, d)
@@ -261,7 +261,7 @@ func (n *rbtreeNode) checkColor(sentinel *rbtreeNode) bool {
 func (n *rbtreeNode) walkColor(sentinel *rbtreeNode, wantBlacks, currentBlacks int) bool {
 	if n.Color == _colorRed {
 		if n.Left == nil || n.Right == nil || n.Left.Color != _colorBlack || n.Right.Color != _colorBlack {
-			// ldlog.Default().Info("the children of red node is not black", zap.Reflect("node", n.ToMap(sentinel)))
+			// ldlog.Default().Info("the children of red node is not black", zap.Reflect("node", n.toMap(sentinel)))
 			return false
 		}
 	}

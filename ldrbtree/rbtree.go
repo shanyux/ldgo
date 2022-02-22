@@ -165,6 +165,16 @@ func (rbt *RBTree) RSearch(d interface{}) RBTreeReverseIterator {
 	})
 }
 
+// RRange is reverse range
+func (rbt *RBTree) RRange() *RBTreeReverseRange {
+	rbt.init()
+
+	return &RBTreeReverseRange{
+		begin: rbt.RBegin(),
+		end:   rbt.REnd(),
+	}
+}
+
 // RBegin is reverse begin
 func (rbt *RBTree) RBegin() RBTreeReverseIterator {
 	rbt.init()
@@ -176,10 +186,3 @@ func (rbt *RBTree) REnd() RBTreeReverseIterator {
 	rbt.init()
 	return RBTreeReverseIterator(rbt.endIterator(reverse(rbt)))
 }
-
-// func (rbt *RBTree) ToMap() map[string]interface{} {
-// 	return map[string]interface{}{
-// 		"count": rbt.count,
-// 		"root":  rbt.root.ToMap(rbt.sentinel),
-// 	}
-// }

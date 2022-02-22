@@ -7,12 +7,10 @@ package ldrbtree
 func (rbt *RBTree) init() {
 	if rbt.sentinel == nil {
 		rbt.sentinel = getRBTreeNode(nil)
-	}
-	if rbt.root == nil {
 		rbt.root = rbt.sentinel
 	}
 	if rbt.Compare == nil {
-		rbt.Compare = defaultCompare
+		rbt.Compare = DefaultCompare
 	}
 }
 
@@ -32,5 +30,12 @@ func (rbt *RBTree) endIterator(iface rbtreeInterface) rbtreeIterator {
 	return rbtreeIterator{
 		tree: rbt,
 		node: sentinel,
+	}
+}
+
+func (rbt *RBTree) toMap() map[string]interface{} {
+	return map[string]interface{}{
+		"count": rbt.count,
+		"root":  rbt.root.toMap(rbt.sentinel),
 	}
 }

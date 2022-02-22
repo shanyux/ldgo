@@ -16,7 +16,7 @@ func reverseCompare(compare CompareFunc) CompareFunc {
 	}
 }
 
-func defaultCompare(a, b interface{}) int {
+func DefaultCompare(a, b interface{}) int {
 	aRef, bRef := reflect.ValueOf(a), reflect.ValueOf(b)
 	return compareReflect(aRef, bRef)
 }

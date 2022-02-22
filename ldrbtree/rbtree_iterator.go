@@ -78,28 +78,7 @@ func (it rbtreeIterator) nextNode(iface rbtreeInterface) *rbtreeNode {
 }
 
 func (it rbtreeIterator) prevNode(iface rbtreeInterface) *rbtreeNode {
-	sentinel := it.tree.sentinel
-
-	node := it.node
-
-	if node == sentinel {
-		return sentinel
-	}
-
-	if iface.Left(node) != sentinel {
-		return iface.Left(node).max(sentinel, iface)
-	}
-
-	for node.Parent != sentinel {
-		if node == iface.Right(node.Parent) {
-			return node.Parent
-		}
-
-		// node == node.Parent.Left
-		node = node.Parent
-	}
-
-	return sentinel
+	return it.nextNode(iface.Reverse())
 }
 
 type RBTreeIterator rbtreeIterator

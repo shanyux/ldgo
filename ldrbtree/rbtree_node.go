@@ -59,16 +59,10 @@ func (n *rbtreeNode) min(sentinel *rbtreeNode, iface rbtreeInterface) *rbtreeNod
 }
 
 func (n *rbtreeNode) max(sentinel *rbtreeNode, iface rbtreeInterface) *rbtreeNode {
-	if n == sentinel {
-		return sentinel
-	}
-	for iface.Right(n) != sentinel {
-		n = iface.Right(n)
-	}
-	return n
+	return n.min(sentinel, iface.Reverse())
 }
 
-func (n *rbtreeNode) ToMap(sentinel *rbtreeNode) map[string]interface{} {
+func (n *rbtreeNode) toMap(sentinel *rbtreeNode) map[string]interface{} {
 	if n == sentinel {
 		return nil
 	}
@@ -76,21 +70,11 @@ func (n *rbtreeNode) ToMap(sentinel *rbtreeNode) map[string]interface{} {
 	if n.Color == _colorRed {
 		color = "red"
 	}
-	m := map[string]interface{}{
+	return map[string]interface{}{
 		"parent": n.Parent.Data,
+		"left":   n.Left.toMap(sentinel),
+		"right":  n.Right.toMap(sentinel),
 		"color":  color,
 		"data":   n.Data,
 	}
-
-	left := n.Left.ToMap(sentinel)
-	if left != nil {
-		m["left"] = left
-	}
-
-	right := n.Right.ToMap(sentinel)
-	if right != nil {
-		m["right"] = right
-	}
-
-	return m
 }
