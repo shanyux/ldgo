@@ -117,27 +117,40 @@ func (rbt *RBTree) Clear() {
 	node := rbt.root
 	sentinel := rbt.sentinel
 
-	if node == sentinel {
-		return
-	}
-
-	buffer := make([]*rbtreeNode, 0, (rbt.count+1)/2)
-	buffer = append(buffer, node)
 	rbt.root = sentinel
 	rbt.count = 0
 
-	for len(buffer) > 0 {
-		pos := len(buffer) - 1
-		node := buffer[pos]
-		buffer = buffer[:pos]
+	for node != sentinel {
+		if node.Left != sentinel && node.Right != sentinel {
+			node = node.Left
+			continue
+		}
 
-		if node.Left != sentinel {
-			buffer = append(buffer, node.Left)
+		// node.Left == sentinel || node.Right == sentinel
+		parent := node.Parent
+		child := node.Left
+		if node.Left == sentinel {
+			child = node.Right
 		}
-		if node.Right != sentinel {
-			buffer = append(buffer, node.Right)
+
+		if node == parent.Left {
+			parent.Left = child
+		} else if node == parent.Right {
+			parent.Right = child
 		}
+
+		if child != sentinel {
+			child.Parent = parent
+		}
+
+		// ldlog.Default().Info("*** clear", zap.Any("data", node.Data))
 		putRBTreeNode(node)
+
+		if child != sentinel {
+			node = child
+		} else {
+			node = parent
+		}
 	}
 }
 
