@@ -51,3 +51,13 @@ func testRBTreeRDeleteAll(rbtree *RBTree, d interface{}) {
 		rbtree.RDelete(it)
 	}
 }
+
+func testCompareInt(a, b interface{}) int {
+	aa, bb := a.(int), b.(int)
+	if aa == bb {
+		return 0
+	} else if aa > bb {
+		return 1
+	}
+	return -1
+}
