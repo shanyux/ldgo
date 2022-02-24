@@ -175,6 +175,20 @@ func (rbt *RBTree) Delete(it RBTreeIterator) RBTreeIterator {
 	return it
 }
 
+func (rbt *RBTree) Count(d interface{}) int {
+	rbt.init()
+
+	sentinel := rbt.sentinel
+
+	count := 0
+	node := rbtreeLowerBound(d, forward(rbt))
+	for node != sentinel && rbt.Compare(d, node.Data) == 0 {
+		count++
+		node = node.next(forward(rbt))
+	}
+	return count
+}
+
 // Search returns the first node == d
 func (rbt *RBTree) Search(d interface{}) RBTreeIterator {
 	rbt.init()

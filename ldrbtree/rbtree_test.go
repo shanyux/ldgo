@@ -150,11 +150,36 @@ func TestRBTree_DuplicateData(t *testing.T) {
 	})
 }
 
+func TestRBTree_Count(t *testing.T) {
+	const retry = 20
+	convey.Convey(t.Name(), t, func() {
+		rbtree := testNewRBTree()
+		for i := 0; i < retry; i++ {
+			d := ldrand.Intn(_count)
+
+			count0 := 0
+			for it := rbtree.SearchRange(d); it.HasNext(); it.Next() {
+				count0++
+			}
+
+			convey.So(rbtree.Count(d), convey.ShouldEqual, count0)
+
+			rbtree.Insert(d)
+			rbtree.Insert(d)
+			rbtree.Insert(d)
+
+			convey.So(rbtree.Count(d), convey.ShouldEqual, count0+3)
+		}
+
+		convey.So(rbtree.Count(-100), convey.ShouldEqual, 0)
+	})
+}
+
 func TestRBTree_DuplicateDataReverse(t *testing.T) {
 	fnDeleteAll := testRBTreeRDeleteAll
+	const retry = 20
 
 	convey.Convey(t.Name(), t, func() {
-		const retry = 20
 		convey.Convey("search", func() {
 			for i := 0; i < retry; i++ {
 				rbtree := testNewRBTree()
