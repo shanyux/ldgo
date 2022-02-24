@@ -39,3 +39,15 @@ func testNewRBTree() *RBTree {
 	}
 	return rbtree
 }
+
+func testRBTreeDeleteAll(rbtree *RBTree, d interface{}) {
+	for it := rbtree.Search(d); it != rbtree.End(); it = rbtree.Search(d) {
+		rbtree.Delete(it)
+	}
+}
+
+func testRBTreeRDeleteAll(rbtree *RBTree, d interface{}) {
+	for it := rbtree.RSearch(d); it != rbtree.REnd(); it = rbtree.RSearch(d) {
+		rbtree.RDelete(it)
+	}
+}

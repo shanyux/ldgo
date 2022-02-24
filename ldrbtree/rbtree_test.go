@@ -88,11 +88,7 @@ func TestRBTree_Insert(t *testing.T) {
 }
 
 func TestRBTree_DuplicateData(t *testing.T) {
-	fnDeleteAll := func(rbtree *RBTree, d interface{}) {
-		if it := rbtree.Search(d); it != rbtree.End() {
-			rbtree.Delete(it)
-		}
-	}
+	fnDeleteAll := testRBTreeDeleteAll
 
 	convey.Convey(t.Name(), t, func() {
 		const retry = 20
@@ -155,11 +151,7 @@ func TestRBTree_DuplicateData(t *testing.T) {
 }
 
 func TestRBTree_DuplicateDataReverse(t *testing.T) {
-	fnDeleteAll := func(rbtree *RBTree, d interface{}) {
-		if rit := rbtree.RSearch(d); rit != rbtree.REnd() {
-			rbtree.RDelete(rit)
-		}
-	}
+	fnDeleteAll := testRBTreeRDeleteAll
 
 	convey.Convey(t.Name(), t, func() {
 		const retry = 20

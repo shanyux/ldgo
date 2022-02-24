@@ -5,12 +5,12 @@
 package ldrbtree
 
 type RBTreeRange struct {
-	begin RBTreeIterator
+	begin RBTreeIterator // [begin, end)
 	end   RBTreeIterator
 }
 
-func (p *RBTreeRange) IsValid() bool {
-	return p.begin != p.end
+func (p *RBTreeRange) HasNext() bool {
+	return p.begin.tree != nil && p.begin != p.end
 }
 
 func (p *RBTreeRange) Next() {
@@ -30,8 +30,8 @@ type RBTreeReverseRange struct {
 	end   RBTreeReverseIterator
 }
 
-func (p *RBTreeReverseRange) IsValid() bool {
-	return p.begin != p.end
+func (p *RBTreeReverseRange) HasNext() bool {
+	return p.begin.tree != nil && p.begin != p.end
 }
 
 func (p *RBTreeReverseRange) Next() {

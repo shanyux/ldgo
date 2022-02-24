@@ -25,10 +25,10 @@ func (rbt *RBTree) Insert(d interface{}) RBTreeIterator {
 
 	node := getRBTreeNode(rbt.sentinel)
 	node.Data = d
-	it := RBTreeIterator(rbtreeIterator{
+	it := RBTreeIterator{
 		tree: rbt,
 		node: node,
-	})
+	}
 
 	if *root == rbt.sentinel {
 		*root = node
@@ -53,10 +53,10 @@ func (rbt *RBTree) InsertOrSearch(d interface{}) RBTreeIterator {
 	if *root == rbt.sentinel {
 		*root = node
 		rbt.count++
-		return RBTreeIterator(rbtreeIterator{
+		return RBTreeIterator{
 			tree: rbt,
 			node: node,
-		})
+		}
 	}
 
 	temp := rbt.insertOrSearchNode(node)
@@ -70,10 +70,10 @@ func (rbt *RBTree) InsertOrSearch(d interface{}) RBTreeIterator {
 		rbt.count++
 	}
 
-	return RBTreeIterator(rbtreeIterator{
+	return RBTreeIterator{
 		tree: rbt,
 		node: temp,
-	})
+	}
 }
 
 func (rbt *RBTree) InsertOrAssign(d interface{}) RBTreeIterator {
@@ -87,10 +87,10 @@ func (rbt *RBTree) InsertOrAssign(d interface{}) RBTreeIterator {
 	if *root == rbt.sentinel {
 		*root = node
 		rbt.count++
-		return RBTreeIterator(rbtreeIterator{
+		return RBTreeIterator{
 			tree: rbt,
 			node: node,
-		})
+		}
 	}
 
 	temp := rbt.insertOrSearchNode(node)
@@ -105,10 +105,10 @@ func (rbt *RBTree) InsertOrAssign(d interface{}) RBTreeIterator {
 		rbt.count++
 	}
 
-	return RBTreeIterator(rbtreeIterator{
+	return RBTreeIterator{
 		tree: rbt,
 		node: temp,
-	})
+	}
 }
 
 func (rbt *RBTree) Clear() {
@@ -185,28 +185,49 @@ func (rbt *RBTree) Search(d interface{}) RBTreeIterator {
 	if node != sentinel && rbt.Compare(d, node.Data) != 0 {
 		node = sentinel
 	}
-	return RBTreeIterator(rbtreeIterator{
+	return RBTreeIterator{
 		tree: rbt,
 		node: node,
-	})
+	}
+}
+
+// SearchRange returns the node range [first node == d, first node > d)
+func (rbt *RBTree) SearchRange(d interface{}) *RBTreeRange {
+	rbt.init()
+
+	sentinel := rbt.sentinel
+
+	begin := rbtreeLowerBound(d, forward(rbt))
+	if begin != sentinel && rbt.Compare(d, begin.Data) != 0 {
+		return &RBTreeRange{
+			begin: RBTreeIterator{tree: rbt, node: sentinel},
+			end:   RBTreeIterator{tree: rbt, node: sentinel},
+		}
+	}
+
+	end := rbtreeUpperBound(d, forward(rbt))
+	return &RBTreeRange{
+		begin: RBTreeIterator{tree: rbt, node: begin},
+		end:   RBTreeIterator{tree: rbt, node: end},
+	}
 }
 
 // LowerBound returns the first node >= d
 func (rbt *RBTree) LowerBound(d interface{}) RBTreeIterator {
 	rbt.init()
-	return RBTreeIterator(rbtreeIterator{
+	return RBTreeIterator{
 		tree: rbt,
 		node: rbtreeLowerBound(d, forward(rbt)),
-	})
+	}
 }
 
 // UpperBound returns the first node > d
 func (rbt *RBTree) UpperBound(d interface{}) RBTreeIterator {
 	rbt.init()
-	return RBTreeIterator(rbtreeIterator{
+	return RBTreeIterator{
 		tree: rbt,
 		node: rbtreeUpperBound(d, forward(rbt)),
-	})
+	}
 }
 
 func (rbt *RBTree) Range() *RBTreeRange {
@@ -261,30 +282,52 @@ func (rbt *RBTree) RSearch(d interface{}) RBTreeReverseIterator {
 	if node != sentinel && rbt.Compare(d, node.Data) != 0 {
 		node = sentinel
 	}
-	return RBTreeReverseIterator(rbtreeIterator{
+	return RBTreeReverseIterator{
 		tree: rbt,
 		node: node,
-	})
+	}
+}
+
+// RSearchRange is reverse search range
+// RSearchRange returns the node range [last node == d, last node < d)
+func (rbt *RBTree) RSearchRange(d interface{}) *RBTreeReverseRange {
+	rbt.init()
+
+	sentinel := rbt.sentinel
+
+	begin := rbtreeLowerBound(d, reverse(rbt))
+	if begin != sentinel && rbt.Compare(d, begin.Data) != 0 {
+		return &RBTreeReverseRange{
+			begin: RBTreeReverseIterator{tree: rbt, node: sentinel},
+			end:   RBTreeReverseIterator{tree: rbt, node: sentinel},
+		}
+	}
+
+	end := rbtreeUpperBound(d, reverse(rbt))
+	return &RBTreeReverseRange{
+		begin: RBTreeReverseIterator{tree: rbt, node: begin},
+		end:   RBTreeReverseIterator{tree: rbt, node: end},
+	}
 }
 
 // RLowerBound is reverse lower bound
 // RLowerBound returns the last node <= d
 func (rbt *RBTree) RLowerBound(d interface{}) RBTreeReverseIterator {
 	rbt.init()
-	return RBTreeReverseIterator(rbtreeIterator{
+	return RBTreeReverseIterator{
 		tree: rbt,
 		node: rbtreeLowerBound(d, reverse(rbt)),
-	})
+	}
 }
 
 // RUpperBound is reverse upper bound
 // RUpperBound returns the last node < d
 func (rbt *RBTree) RUpperBound(d interface{}) RBTreeReverseIterator {
 	rbt.init()
-	return RBTreeReverseIterator(rbtreeIterator{
+	return RBTreeReverseIterator{
 		tree: rbt,
 		node: rbtreeUpperBound(d, reverse(rbt)),
-	})
+	}
 }
 
 // RRange is reverse range

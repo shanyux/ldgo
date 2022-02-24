@@ -64,11 +64,11 @@ func (i RBTreeIterator) base() rbtreeIterator {
 }
 
 func (i RBTreeIterator) Next() RBTreeIterator {
-	return RBTreeIterator(i.base().next("iterator", forward(i.tree)))
+	return RBTreeIterator(i.base().next("rbtree iterator", forward(i.tree)))
 }
 
 func (i RBTreeIterator) Prev() RBTreeIterator {
-	return RBTreeIterator(i.base().prev("iterator", forward(i.tree)))
+	return RBTreeIterator(i.base().prev("rbtree iterator", forward(i.tree)))
 }
 
 type RBTreeReverseIterator rbtreeIterator
@@ -82,9 +82,9 @@ func (i RBTreeReverseIterator) base() rbtreeIterator {
 }
 
 func (i RBTreeReverseIterator) Next() RBTreeReverseIterator {
-	return RBTreeReverseIterator(i.base().next("reverse iterator", reverse(i.tree)))
+	return RBTreeReverseIterator(i.base().next("rbtree reverse iterator", reverse(i.tree)))
 }
 
 func (i RBTreeReverseIterator) Prev() RBTreeReverseIterator {
-	return RBTreeReverseIterator(i.base().prev("reverse iterator", reverse(i.tree)))
+	return RBTreeReverseIterator(i.base().prev("rbtree reverse iterator", reverse(i.tree)))
 }
