@@ -214,15 +214,15 @@ func (rbt *RBTree) SearchRange(d interface{}) *RBTreeRange {
 	begin := rbtreeLowerBound(d, forward(rbt))
 	if begin != sentinel && rbt.Compare(d, begin.Data) != 0 {
 		return &RBTreeRange{
-			begin: RBTreeIterator{tree: rbt, node: sentinel},
-			end:   RBTreeIterator{tree: rbt, node: sentinel},
+			Begin: RBTreeIterator{tree: rbt, node: sentinel},
+			End:   RBTreeIterator{tree: rbt, node: sentinel},
 		}
 	}
 
 	end := rbtreeUpperBound(d, forward(rbt))
 	return &RBTreeRange{
-		begin: RBTreeIterator{tree: rbt, node: begin},
-		end:   RBTreeIterator{tree: rbt, node: end},
+		Begin: RBTreeIterator{tree: rbt, node: begin},
+		End:   RBTreeIterator{tree: rbt, node: end},
 	}
 }
 
@@ -248,8 +248,8 @@ func (rbt *RBTree) Range() *RBTreeRange {
 	rbt.init()
 
 	return &RBTreeRange{
-		begin: rbt.Begin(),
-		end:   rbt.End(),
+		Begin: rbt.Begin(),
+		End:   rbt.End(),
 	}
 }
 
@@ -312,15 +312,15 @@ func (rbt *RBTree) RSearchRange(d interface{}) *RBTreeReverseRange {
 	begin := rbtreeLowerBound(d, reverse(rbt))
 	if begin != sentinel && rbt.Compare(d, begin.Data) != 0 {
 		return &RBTreeReverseRange{
-			begin: RBTreeReverseIterator{tree: rbt, node: sentinel},
-			end:   RBTreeReverseIterator{tree: rbt, node: sentinel},
+			Begin: RBTreeReverseIterator{tree: rbt, node: sentinel},
+			End:   RBTreeReverseIterator{tree: rbt, node: sentinel},
 		}
 	}
 
 	end := rbtreeUpperBound(d, reverse(rbt))
 	return &RBTreeReverseRange{
-		begin: RBTreeReverseIterator{tree: rbt, node: begin},
-		end:   RBTreeReverseIterator{tree: rbt, node: end},
+		Begin: RBTreeReverseIterator{tree: rbt, node: begin},
+		End:   RBTreeReverseIterator{tree: rbt, node: end},
 	}
 }
 
@@ -349,8 +349,8 @@ func (rbt *RBTree) RRange() *RBTreeReverseRange {
 	rbt.init()
 
 	return &RBTreeReverseRange{
-		begin: rbt.RBegin(),
-		end:   rbt.REnd(),
+		Begin: rbt.RBegin(),
+		End:   rbt.REnd(),
 	}
 }
 

@@ -5,43 +5,35 @@
 package ldrbtree
 
 type RBTreeRange struct {
-	begin RBTreeIterator // [begin, end)
-	end   RBTreeIterator
+	Begin RBTreeIterator // [begin, end)
+	End   RBTreeIterator // [begin, end)
 }
 
 func (p *RBTreeRange) HasNext() bool {
-	return p.begin.tree != nil && p.begin != p.end
+	return p.Begin.tree != nil && p.Begin != p.End
 }
 
 func (p *RBTreeRange) Next() {
-	p.begin = p.begin.Next()
+	p.Begin = p.Begin.Next()
 }
 
 func (p *RBTreeRange) Data() interface{} {
-	return p.begin.Data()
-}
-
-func (p *RBTreeRange) Iterator() RBTreeIterator {
-	return p.begin
+	return p.Begin.Data()
 }
 
 type RBTreeReverseRange struct {
-	begin RBTreeReverseIterator
-	end   RBTreeReverseIterator
+	Begin RBTreeReverseIterator
+	End   RBTreeReverseIterator
 }
 
 func (p *RBTreeReverseRange) HasNext() bool {
-	return p.begin.tree != nil && p.begin != p.end
+	return p.Begin.tree != nil && p.Begin != p.End
 }
 
 func (p *RBTreeReverseRange) Next() {
-	p.begin = p.begin.Next()
+	p.Begin = p.Begin.Next()
 }
 
 func (p *RBTreeReverseRange) Data() interface{} {
-	return p.begin.Data()
-}
-
-func (p *RBTreeReverseRange) Iterator() RBTreeReverseIterator {
-	return p.begin
+	return p.Begin.Data()
 }
