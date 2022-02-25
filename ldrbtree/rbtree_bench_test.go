@@ -11,16 +11,18 @@ import (
 	"github.com/distroy/ldgo/ldrand"
 )
 
-// BenchmarkRBTree_Insert/insert-size:100-8                  137914              7937 ns/op
-// BenchmarkRBTree_Insert/insert-size:1000-8                  13520             86605 ns/op
-// BenchmarkRBTree_Insert/insert-size:10000-8                   798           1265990 ns/op
-// BenchmarkRBTree_Search/search-size:100-8                26130121                39.60 ns/op
-// BenchmarkRBTree_Search/search-size:1000-8               19865358                52.53 ns/op
-// BenchmarkRBTree_Search/search-size:10000-8              15433614                73.95 ns/op
+// cpu: Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz
+// BenchmarkRBTree_Insert/insert-size:100-12                 224559              5474 ns/op
+// BenchmarkRBTree_Insert/insert-size:1000-12                 19231             60777 ns/op
+// BenchmarkRBTree_Insert/insert-size:10000-12                 1258            798311 ns/op
+// BenchmarkRBTree_Search/search-size:100-12               43313860                25.84 ns/op
+// BenchmarkRBTree_Search/search-size:1000-12              35610832                32.71 ns/op
+// BenchmarkRBTree_Search/search-size:10000-12             22626291                45.91 ns/op
 
 func benchmarkRBTree_Insert(b *testing.B, size int) {
+	b.ResetTimer()
 	b.Run(fmt.Sprintf("insert-size:%d", size), func(b *testing.B) {
-		b.ResetTimer()
+		// b.ReportAllocs()
 		b.RunParallel(func(p *testing.PB) {
 			for p.Next() {
 				rbtree := &RBTree{
@@ -33,30 +35,33 @@ func benchmarkRBTree_Insert(b *testing.B, size int) {
 			}
 		})
 	})
+	b.StopTimer()
+}
+
+func benchmarkRBTree_Search(b *testing.B, size int) {
+	rbtree := &RBTree{
+		Compare: testCompareInt,
+	}
+	for i := 0; i < size; i++ {
+		rbtree.Insert(ldrand.Int())
+	}
+	b.ResetTimer()
+	b.Run(fmt.Sprintf("search-size:%d", size), func(b *testing.B) {
+		// b.ReportAllocs()
+		b.RunParallel(func(p *testing.PB) {
+			for p.Next() {
+				rbtree.Search(ldrand.Int())
+			}
+		})
+	})
+	b.StopTimer()
+	rbtree.Clear()
 }
 
 func BenchmarkRBTree_Insert(b *testing.B) {
 	benchmarkRBTree_Insert(b, 100)
 	benchmarkRBTree_Insert(b, 1000)
 	benchmarkRBTree_Insert(b, 10000)
-}
-
-func benchmarkRBTree_Search(b *testing.B, size int) {
-	b.Run(fmt.Sprintf("search-size:%d", size), func(b *testing.B) {
-		rbtree := &RBTree{
-			Compare: testCompareInt,
-		}
-		for i := 0; i < size; i++ {
-			rbtree.Insert(ldrand.Int())
-		}
-		b.ResetTimer()
-		b.RunParallel(func(p *testing.PB) {
-			for p.Next() {
-				rbtree.Search(ldrand.Int())
-			}
-		})
-		rbtree.Clear()
-	})
 }
 
 func BenchmarkRBTree_Search(b *testing.B) {
