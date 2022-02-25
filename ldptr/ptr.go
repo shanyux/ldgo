@@ -4,6 +4,18 @@
 
 package ldptr
 
+import "time"
+
+func GetBool(p *bool, def ...bool) bool {
+	if p != nil {
+		return *p
+	}
+	if len(def) > 0 {
+		return def[0]
+	}
+	return false
+}
+
 func GetByte(p *byte, def ...byte) byte {
 	if p != nil {
 		return *p
@@ -124,6 +136,16 @@ func GetUint64(p *uint64, def ...uint64) uint64 {
 	return 0
 }
 
+func GetUintptr(p *uintptr, def ...uintptr) uintptr {
+	if p != nil {
+		return *p
+	}
+	if len(def) > 0 {
+		return def[0]
+	}
+	return 0
+}
+
 func GetFloat32(p *float32, def ...float32) float32 {
 	if p != nil {
 		return *p
@@ -172,4 +194,24 @@ func GetComplex128(p *complex128, def ...complex128) complex128 {
 		return def[0]
 	}
 	return complex(0, 0)
+}
+
+func GetTime(p *time.Time, def ...time.Time) time.Time {
+	if p != nil {
+		return *p
+	}
+	if len(def) > 0 {
+		return def[0]
+	}
+	return time.Time{}
+}
+
+func GetDuration(p *time.Duration, def ...time.Duration) time.Duration {
+	if p != nil {
+		return *p
+	}
+	if len(def) > 0 {
+		return def[0]
+	}
+	return 0
 }

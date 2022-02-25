@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
-	"strings"
 
+	"github.com/distroy/ldgo/ldcmp"
 	"go.uber.org/zap/buffer"
 	"go.uber.org/zap/zapcore"
 )
@@ -41,10 +41,10 @@ func sprintln(args []interface{}) string {
 
 	buf := bufferpool.Get()
 
-	fprintArg(buf, reflect.ValueOf(args[0]))
+	fprintArg(buf, args[0])
 	for _, arg := range args[1:] {
 		buf.AppendByte(' ')
-		fprintArg(buf, reflect.ValueOf(arg))
+		fprintArg(buf, arg)
 	}
 
 	buf.TrimNewline()
@@ -54,48 +54,59 @@ func sprintln(args []interface{}) string {
 	return text
 }
 
-func fprintArg(b *buffer.Buffer, v reflect.Value) {
-	if v.Kind() == reflect.Ptr {
-		if v.Pointer() == 0 {
-			fprintPointer(b, v)
-			return
-		}
-		v = v.Elem()
+func fprintArg(b *buffer.Buffer, val interface{}) {
+	switch v := val.(type) {
+	case fmt.Stringer:
+		b.AppendString(v.String())
+		return
+
+	case error:
+		b.AppendString(v.Error())
+		return
 	}
 
-	switch v.Kind() {
+	ref := reflect.ValueOf(val)
+	if ref.Kind() == reflect.Ptr {
+		if ref.Pointer() == 0 {
+			fprintPointer(b, ref)
+			return
+		}
+		ref = ref.Elem()
+	}
+
+	switch ref.Kind() {
 	case reflect.Array, reflect.Slice:
-		fprintSlice(b, v)
+		fprintSlice(b, ref)
 
 	case reflect.Map:
-		fprintMap(b, v)
+		fprintMap(b, ref)
 
 	case reflect.Struct:
-		fprintStruct(b, v)
+		fprintStruct(b, ref)
 
 	case reflect.String:
-		b.AppendString(v.String())
+		b.AppendString(ref.String())
 
 	case reflect.Bool:
-		b.AppendBool(v.Bool())
+		b.AppendBool(ref.Bool())
 
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		b.AppendInt(v.Int())
+		b.AppendInt(ref.Int())
 
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		b.AppendUint(v.Uint())
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		b.AppendUint(ref.Uint())
 
 	case reflect.Float64:
-		b.AppendFloat(v.Float(), 64)
+		b.AppendFloat(ref.Float(), 64)
 
 	case reflect.Float32:
-		b.AppendFloat(v.Float(), 32)
+		b.AppendFloat(ref.Float(), 32)
 
 	case reflect.Chan, reflect.Func, reflect.UnsafePointer:
-		fprintPointer(b, v)
+		fprintPointer(b, ref)
 
 	default:
-		fmt.Fprint(b, v.Interface())
+		fmt.Fprint(b, ref.Interface())
 	}
 }
 
@@ -105,7 +116,7 @@ func fprintSlice(b *buffer.Buffer, v reflect.Value) {
 		if i != 0 {
 			b.AppendString(", ")
 		}
-		fprintArg(b, reflect.ValueOf(v.Index(i).Interface()))
+		fprintArg(b, v.Index(i).Interface())
 	}
 	b.AppendString("]")
 }
@@ -135,7 +146,7 @@ func fprintStruct(b *buffer.Buffer, v reflect.Value) {
 			b.AppendByte(':')
 		}
 		field := v.Field(i)
-		fprintArg(b, reflect.ValueOf(field.Interface()))
+		fprintArg(b, field.Interface())
 	}
 	b.AppendByte('}')
 }
@@ -153,9 +164,9 @@ func fprintMap(b *buffer.Buffer, val reflect.Value) {
 		if i > 0 {
 			b.AppendByte(',')
 		}
-		fprintArg(b, reflect.ValueOf(kv[0].Interface()))
+		fprintArg(b, kv[0].Interface())
 		b.AppendByte(':')
-		fprintArg(b, reflect.ValueOf(kv[1].Interface()))
+		fprintArg(b, kv[1].Interface())
 	}
 	b.AppendByte(']')
 }
@@ -164,170 +175,4 @@ type sortedMap [][2]reflect.Value
 
 func (o sortedMap) Len() int           { return len(o) }
 func (o sortedMap) Swap(i, j int)      { o[i], o[j] = o[j], o[i] }
-func (o sortedMap) Less(i, j int) bool { return o.compare(o[i][0], o[j][0]) < 0 }
-
-func (o sortedMap) compare(aVal, bVal reflect.Value) int {
-	aType, bType := aVal.Type(), bVal.Type()
-	if aType != bType {
-		return -1 // No good answer possible, but don't return 0: they're not equal.
-	}
-	switch aVal.Kind() {
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		a, b := aVal.Int(), bVal.Int()
-		return o.intCompare(a, b)
-
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		a, b := aVal.Uint(), bVal.Uint()
-		return o.uintCompare(a, b)
-
-	case reflect.String:
-		a, b := aVal.String(), bVal.String()
-		return strings.Compare(a, b)
-
-	case reflect.Float32, reflect.Float64:
-		return o.floatCompare(aVal.Float(), bVal.Float())
-
-	case reflect.Complex64, reflect.Complex128:
-		a, b := aVal.Complex(), bVal.Complex()
-		return o.complexCompare(a, b)
-
-	case reflect.Bool:
-		a, b := aVal.Bool(), bVal.Bool()
-		return o.boolCompare(a, b)
-
-	case reflect.Ptr, reflect.UnsafePointer:
-		a, b := aVal.Pointer(), bVal.Pointer()
-		return o.ptrCompare(a, b)
-
-	case reflect.Chan:
-		if c, ok := o.nilCompare(aVal, bVal); ok {
-			return c
-		}
-		ap, bp := aVal.Pointer(), bVal.Pointer()
-		return o.ptrCompare(ap, bp)
-
-	case reflect.Struct:
-		return o.structCompare(aVal, bVal)
-
-	case reflect.Array:
-		return o.arrayCompare(aVal, bVal)
-
-	case reflect.Interface:
-		return o.ifaceCompare(aVal, bVal)
-
-	default:
-		// Certain types cannot appear as keys (maps, funcs, slices), but be explicit.
-		panic("bad type in compare: " + aType.String())
-	}
-}
-
-func (o sortedMap) intCompare(a, b int64) int {
-	switch {
-	case a < b:
-		return -1
-	case a > b:
-		return 1
-	default:
-		return 0
-	}
-}
-
-func (o sortedMap) uintCompare(a, b uint64) int {
-	switch {
-	case a < b:
-		return -1
-	case a > b:
-		return 1
-	default:
-		return 0
-	}
-}
-
-func (o sortedMap) boolCompare(a, b bool) int {
-	switch {
-	case a == b:
-		return 0
-	case a:
-		return 1
-	default:
-		return -1
-	}
-}
-
-func (o sortedMap) ptrCompare(a, b uintptr) int {
-	switch {
-	case a < b:
-		return -1
-	case a > b:
-		return 1
-	default:
-		return 0
-	}
-}
-
-func (o sortedMap) nilCompare(aVal, bVal reflect.Value) (int, bool) {
-	if aVal.IsNil() {
-		if bVal.IsNil() {
-			return 0, true
-		}
-		return -1, true
-	}
-	if bVal.IsNil() {
-		return 1, true
-	}
-	return 0, false
-}
-
-func (o sortedMap) floatCompare(a, b float64) int {
-	switch {
-	case o.isNaN(a):
-		return -1 // No good answer if b is a NaN so don't bother checking.
-	case o.isNaN(b):
-		return 1
-	case a < b:
-		return -1
-	case a > b:
-		return 1
-	}
-	return 0
-}
-
-func (o sortedMap) structCompare(aVal, bVal reflect.Value) int {
-	for i := 0; i < aVal.NumField(); i++ {
-		if c := o.compare(aVal.Field(i), bVal.Field(i)); c != 0 {
-			return c
-		}
-	}
-	return 0
-}
-
-func (o sortedMap) arrayCompare(aVal, bVal reflect.Value) int {
-	for i := 0; i < aVal.Len(); i++ {
-		if c := o.compare(aVal.Index(i), bVal.Index(i)); c != 0 {
-			return c
-		}
-	}
-	return 0
-}
-
-func (o sortedMap) ifaceCompare(aVal, bVal reflect.Value) int {
-	if c, ok := o.nilCompare(aVal, bVal); ok {
-		return c
-	}
-	c := o.compare(reflect.ValueOf(aVal.Elem().Type()), reflect.ValueOf(bVal.Elem().Type()))
-	if c != 0 {
-		return c
-	}
-	return o.compare(aVal.Elem(), bVal.Elem())
-}
-
-func (o sortedMap) complexCompare(a, b complex128) int {
-	if c := o.floatCompare(real(a), real(b)); c != 0 {
-		return c
-	}
-	return o.floatCompare(imag(a), imag(b))
-}
-
-func (o sortedMap) isNaN(a float64) bool {
-	return a != a
-}
+func (o sortedMap) Less(i, j int) bool { return ldcmp.CompareReflect(o[i][0], o[j][0]) <= 0 }

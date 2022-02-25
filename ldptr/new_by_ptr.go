@@ -4,6 +4,16 @@
 
 package ldptr
 
+import "time"
+
+func NewBoolByPtr(d *bool) *bool {
+	if d == nil {
+		return nil
+	}
+	cp := *d
+	return &cp
+}
+
 func NewByteByPtr(d *byte) *byte {
 	if d == nil {
 		return nil
@@ -90,6 +100,13 @@ func NewUint64ByPtr(d *uint64) *uint64 {
 	cp := *d
 	return &cp
 }
+func NewUintptrByPtr(d *uintptr) *uintptr {
+	if d == nil {
+		return nil
+	}
+	cp := *d
+	return &cp
+}
 
 func NewFloat32ByPtr(d *float32) *float32 {
 	if d == nil {
@@ -122,6 +139,21 @@ func NewComplex64ByPtr(d *complex64) *complex64 {
 	return &cp
 }
 func NewComplex128ByPtr(d *complex128) *complex128 {
+	if d == nil {
+		return nil
+	}
+	cp := *d
+	return &cp
+}
+
+func NewTimeByPtr(d *time.Time) *time.Time {
+	if d == nil {
+		return nil
+	}
+	cp := *d
+	return &cp
+}
+func NewDurationByPtr(d *time.Duration) *time.Duration {
 	if d == nil {
 		return nil
 	}

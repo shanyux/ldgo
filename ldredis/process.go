@@ -38,7 +38,7 @@ func isCallerFilePath(file string) bool {
 	return false
 }
 
-func getCallerField(caller bool) zap.Field {
+func getCaller(caller bool) zap.Field {
 	if !caller {
 		return zap.Skip()
 	}
@@ -72,14 +72,13 @@ func (c *Redis) defaultProcess(cmd Cmder) error {
 		reporter.Report(cmd, time.Since(begin))
 
 		err := cmd.Err()
-		if err == nil || err == Nil {
-			log.Debug("redis cmd succ", zap.Int("retry", i), getCmdField(cmd), getCallerField(caller))
+		if isErrNil(err) {
+			log.Debug("redis cmd succ", zap.Int("retry", i), getCmdField(cmd), getCaller(caller))
 			return err
 		}
 
 		if i++; i >= retry {
-			// log = ldlog.With(log, fields...)
-			log.Error("redis cmd fail", zap.Int("retry", i), getCmdField(cmd), zap.Error(err), getCallerField(caller))
+			log.Error("redis cmd fail", zap.Int("retry", i), getCmdField(cmd), zap.Error(err), getCaller(caller))
 			return err
 		}
 	}
@@ -90,7 +89,7 @@ func (c *Redis) defaultProcessPipeline(cmds []Cmder) error {
 	reporter := c.reporter
 	log := c.logger()
 
-	caller := getCallerField(c.caller)
+	caller := getCaller(c.caller)
 	log = log.With(zap.String("pipeline", hex.EncodeToString(ldrand.Bytes(8))))
 
 	for i := 0; ; {
@@ -99,7 +98,7 @@ func (c *Redis) defaultProcessPipeline(cmds []Cmder) error {
 		reporter.ReportPipeline(cmds, time.Since(begin))
 
 		err := c.checkPipelineError(cmds)
-		if err == nil || err == Nil {
+		if isErrNil(err) {
 			c.printPipelineSuccLog(cmds, i, log, caller)
 			log.Debug("redis pipeline cmd succ", zap.Int("retry", i), caller)
 			return err
@@ -130,7 +129,7 @@ func (c *Redis) printPipelineSuccLog(cmds []Cmder, retry int, log *ldlog.Logger,
 
 func (c *Redis) printPipelineFailLog(cmds []Cmder, retry int, log *ldlog.Logger, caller zap.Field) {
 	for _, cmd := range cmds {
-		if err := cmd.Err(); err != nil && err != Nil {
+		if err := cmd.Err(); !isErrNil(err) {
 			log.Error("redis pipeline cmd fail", zap.Int("retry", retry), getCmdField(cmd),
 				zap.Error(err), caller)
 			break

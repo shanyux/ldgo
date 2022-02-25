@@ -55,19 +55,18 @@ dep: setup
 
 .PHONY: go-test-coverage
 go-test-coverage: setup
-	@# echo GO_TEST_DIRS: $(GO_TEST_DIRS_NAME)
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) ./... -json > "$(GO_TEST_OUTPUT)/test.json"
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) ./... -coverprofile="$(GO_TEST_OUTPUT)/coverage.out"
 
 .PHONY: go-test
 go-test: setup
-	@# echo GO_TEST_DIRS: $(GO_TEST_DIRS_NAME)
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) -v ./...
 
 .PHONY: setup
 setup:
+	git config core.hooksPath "script/git-hook"
 	go install github.com/distroy/gocognit/cmd/gocognit@latest || go install github.com/distroy/gocognit/cmd/gocognit
-	git config core.hooksPath "$(PROJECT_ROOT)/script/git-hook"
+	@echo $$'\E[32;1m'"setup succ"$$'\E[0m'
 
 .PHONY: complexity
 complexity: setup

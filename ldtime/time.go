@@ -6,22 +6,10 @@ package ldtime
 
 import "time"
 
-const (
-	fmtDateStr = "2006-01-02"
-)
-
 func divisionTimeNum(num *int64, dividend int64) int {
 	n := *num % dividend
 	*num /= dividend
 	return int(n)
-}
-
-func GetTopicWeekDay(tm time.Time) int {
-	wday := int(tm.Weekday())
-	if wday == 0 {
-		wday = 7
-	}
-	return wday
 }
 
 // TimeToDateNum format: 20060102 '%Y%m%d'
@@ -37,7 +25,7 @@ func TimeToDateNum(t time.Time) int64 {
 
 // TimeToDateStr format: 2006-01-02 '%Y-%m-%d'
 func TimeToDateStr(t time.Time) string {
-	return t.Format(fmtDateStr)
+	return t.Format("2006-01-02")
 }
 
 // DateNumToTime format: 20060102 '%Y%m%d'
@@ -55,10 +43,9 @@ func DateNumToTime(dateNum int64, loc ...*time.Location) time.Time {
 	return time.Date(year, time.Month(month), day, hour, min, sec, nsec, tz)
 }
 
-func DateBegin(t time.Time) time.Time {
-	year, month, day := t.Date()
-	hour, min, sec, nsec := 0, 0, 0, 0
-	return time.Date(int(year), time.Month(month), int(day), hour, min, sec, nsec, t.Location())
+// TimeToStr format: 2006-01-02T15:04:05-0700 '%Y-%m-%dT%H:%M:%S%z'
+func TimeToStr(t time.Time) string {
+	return t.Format("2006-01-02T15:04:05-0700")
 }
 
 // TimeToNum format: 20060102150405 '%Y%m%d%H%M%S'

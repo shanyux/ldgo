@@ -48,9 +48,9 @@ func TestLogger(t *testing.T) {
 		})
 
 		convey.Convey("info", func() {
-			l.Info("info message")
+			l.Infoln("info message", (10 * time.Millisecond))
 			convey.So(writer.String(), convey.ShouldEqual,
-				"2021-08-22T13:30:58.000+0800|INFO|-|ldlog/logger_test.go:51|info message,abc=xxx\n")
+				"2021-08-22T13:30:58.000+0800|INFO|-|ldlog/logger_test.go:51|info message 10ms,abc=xxx\n")
 		})
 
 		convey.Convey("warnln", func() {
@@ -69,6 +69,16 @@ func TestLogger(t *testing.T) {
 			l.Errorln("errorln message", (*LoggerValue)(nil), (unsafe.Pointer)((uintptr)(0x2345)))
 			convey.So(writer.String(), convey.ShouldEqual,
 				"2021-08-22T13:30:58.000+0800|ERROR|-|ldlog/logger_test.go:69|errorln message (*ldlog.LoggerValue)(nil) (unsafe.Pointer)(0x2345),abc=xxx\n")
+		})
+
+		convey.Convey("map", func() {
+			l.Warnln("warnln message", ldptr.NewInt(1234), map[interface{}]interface{}{
+				"a":       "b",
+				100:       124,
+				int64(10): 234,
+			})
+			convey.So(writer.String(), convey.ShouldEqual,
+				"2021-08-22T13:30:58.000+0800|WARN|-|ldlog/logger_test.go:75|warnln message 1234 map[10:234,100:124,a:b],abc=xxx\n")
 		})
 	})
 }

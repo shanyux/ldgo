@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/distroy/ldgo/ldctx"
+	"github.com/distroy/ldgo/lderr"
 	"github.com/distroy/ldgo/ldrand"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -115,6 +116,9 @@ type Context struct {
 	*ginCtx
 	ldCtx
 
+	handler   string
+	method    string
+	path      string
 	beginTime time.Time
 	sequence  string
 }
@@ -144,3 +148,29 @@ func (c *Context) Value(key interface{}) interface{} {
 	}
 	return c.ldCtx.Value(key)
 }
+
+func (c *Context) AbortWithError(err Error) {
+	response := &CommResponse{
+		Sequence: c.sequence,
+		Cost:     time.Since(c.beginTime).String(),
+		ErrCode:  err.Code(),
+		ErrMsg:   err.Error(),
+		Data:     struct{}{},
+	}
+
+	if e, ok := err.(lderr.ErrorWithDetails); ok {
+		response.ErrDetails = e.Details()
+	}
+
+	c.Set(GinKeyError, err)
+	c.AbortWithStatusJSON(err.Status(), response)
+}
+
+func (c *Context) setHandler(h string) { c.handler = h }
+func (c *Context) GetHandler() string  { return c.handler }
+
+func (c *Context) setPath(p string) { c.path = p }
+func (c *Context) GetPath() string  { return c.path }
+
+func (c *Context) setMethod(m string) { c.method = m }
+func (c *Context) GetMethod() string  { return c.method }

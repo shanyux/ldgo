@@ -43,9 +43,11 @@ func (kl *keyLocker) Unlock(key interface{}) {
 	d := kl.sub(key)
 	kl.locker.Unlock()
 
-	if d != nil {
-		d.locker.Unlock()
+	if d == nil {
+		return
 	}
+
+	d.locker.Unlock()
 }
 
 func (kl *keyLocker) TryLock(key interface{}) bool {

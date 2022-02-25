@@ -40,29 +40,24 @@ func (w wrapperBase) isType(child, parent reflect.Type) bool {
 type wrapper struct {
 	wrapperBase
 
+	Method  string
+	Path    string
+	Handler string
 	Name    string
 	Type    reflect.Type
 	InConvs []inConvType
 	OutConv outConvType
 }
 
+func (w *wrapper) setMethod(method string) { w.Method = method }
+func (w *wrapper) setPath(path string)     { w.Path = path }
+
+func (w *wrapper) hasError(err Error) bool {
+	return err != nil && err.Code() != 0
+}
+
 func (w *wrapper) returnError(c *Context, err Error) {
-	response := &CommResponse{
-		Sequence: c.sequence,
-		Cost:     time.Since(c.beginTime).String(),
-		ErrCode:  err.Code(),
-		ErrMsg:   err.Error(),
-		Data:     struct{}{},
-	}
-
-	if e, ok := err.(lderr.ErrorWithDetails); ok {
-		response.ErrDetails = e.Details()
-	}
-
-	c.Set(GinKeyResponse, response)
-	c.JSON(err.Status(), response)
-	c.Abort()
-	// c.AbortWithStatusJSON(err.Status(), response)
+	c.AbortWithError(err)
 }
 
 func (w *wrapper) returnResponse(c *Context, rsp interface{}) {
@@ -93,8 +88,10 @@ func (w *wrapper) getOutConv1(outType reflect.Type) outConvType {
 	return func(c *Context, outs []reflect.Value) {
 		out0 := outs[0].Interface()
 		if err := out0; err != nil {
-			w.returnError(c, lderr.Wrap(err.(error)))
-			return
+			if e := lderr.Wrap(err.(error)); w.hasError(e) {
+				w.returnError(c, e)
+				return
+			}
 		}
 	}
 }
@@ -150,7 +147,7 @@ func (w *wrapper) getInConv(t reflect.Type) inConvType {
 		v := reflect.New(t.Elem())
 
 		for _, f := range convs {
-			if err := f(c, v); err != nil {
+			if err := f(c, v); w.hasError(err) {
 				return v, err
 			}
 		}
@@ -236,6 +233,16 @@ func (w *wrapper) getValidatorFunc(t reflect.Type) func(*Context, reflect.Value)
 
 func (w *wrapper) call(g *gin.Context, h reflect.Value) {
 	c := newCtxIfNotExists(g)
+	if len(w.Handler) > 0 {
+		c.setHandler(w.Handler)
+	}
+	if len(w.Method) > 0 {
+		c.setMethod(w.Method)
+	}
+	if len(w.Path) > 0 {
+		c.setPath(w.Path)
+	}
+
 	defer func() {
 		if e := recover(); e != nil {
 			seq := c.sequence
@@ -258,7 +265,7 @@ func (w *wrapper) call(g *gin.Context, h reflect.Value) {
 	ins := make([]reflect.Value, 0, len(w.InConvs))
 	for _, conv := range w.InConvs {
 		v, err := conv(c)
-		if err != nil {
+		if w.hasError(err) {
 			w.returnError(c, err)
 			return
 		}

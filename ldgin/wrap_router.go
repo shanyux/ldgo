@@ -26,6 +26,11 @@ func (w routerWapper) Use(midwares ...Midware) Router {
 	return w
 }
 
+func (w routerWapper) WithAppPath(path string) Router {
+	w.router = w.router.WithAppPath(path)
+	return w
+}
+
 func (w routerWapper) BasePath() string {
 	return w.router.BasePath()
 }
