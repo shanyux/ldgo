@@ -48,9 +48,9 @@ func TestLogger(t *testing.T) {
 		})
 
 		convey.Convey("info", func() {
-			l.Info("info message")
+			l.Infoln("info message", (10 * time.Millisecond))
 			convey.So(writer.String(), convey.ShouldEqual,
-				"2021-08-22T13:30:58.000+0800|INFO|-|ldlog/logger_test.go:51|info message,abc=xxx\n")
+				"2021-08-22T13:30:58.000+0800|INFO|-|ldlog/logger_test.go:51|info message 10ms,abc=xxx\n")
 		})
 
 		convey.Convey("warnln", func() {

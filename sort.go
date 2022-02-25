@@ -8,9 +8,11 @@ import (
 	"github.com/distroy/ldgo/ldsort"
 )
 
-// Sort sorts slice with lessFunc
+// Sort sorts slice with lessOrCompareFunc
 // slice type must be slice
-// lessFunc type must be func (a, b TypeOfSliceElement) bool
-func Sort(slice interface{}, lessFunc interface{}) {
-	ldsort.Sort(slice, lessFunc)
+// lessOrCompareFunc type must be:
+//		func less(a, b TypeOfSliceElement) bool
+//		func compare(a, b TypeOfSliceElement) int
+func Sort(slice interface{}, lessOrCompareFunc interface{}) {
+	ldsort.Sort(slice, lessOrCompareFunc)
 }

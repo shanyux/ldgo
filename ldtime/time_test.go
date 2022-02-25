@@ -24,27 +24,6 @@ func fixedTimezone(name string, tm time.Duration) *time.Location {
 	return time.FixedZone(name, sec)
 }
 
-func TestDateBegin(t *testing.T) {
-	convey.Convey(t.Name(), t, func() {
-		tm := paresTimeStr("2020-11-10T06:42:23+0800")
-		convey.So(tm.Nanosecond(), convey.ShouldEqual, 0)
-		convey.So(tm.Unix(), convey.ShouldEqual, 1604961743)
-
-		convey.Convey("+0800", func() {
-			t := tm
-			t = DateBegin(t)
-			convey.So(t.Nanosecond(), convey.ShouldEqual, 0)
-			convey.So(t.Unix(), convey.ShouldEqual, 1604937600)
-		})
-		convey.Convey("+0000", func() {
-			t := tm.In(time.FixedZone("test", 0))
-			t = DateBegin(t)
-			convey.So(t.Nanosecond(), convey.ShouldEqual, 0)
-			convey.So(t.Unix(), convey.ShouldEqual, 1604880000)
-		})
-	})
-}
-
 func TestTimeToDateNum(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
 		convey.Convey("2020-12-24 16:59:54", func() {

@@ -41,10 +41,10 @@ func sprintln(args []interface{}) string {
 
 	buf := bufferpool.Get()
 
-	fprintArg(buf, reflect.ValueOf(args[0]))
+	fprintArg(buf, args[0])
 	for _, arg := range args[1:] {
 		buf.AppendByte(' ')
-		fprintArg(buf, reflect.ValueOf(arg))
+		fprintArg(buf, arg)
 	}
 
 	buf.TrimNewline()
@@ -54,48 +54,59 @@ func sprintln(args []interface{}) string {
 	return text
 }
 
-func fprintArg(b *buffer.Buffer, v reflect.Value) {
-	if v.Kind() == reflect.Ptr {
-		if v.Pointer() == 0 {
-			fprintPointer(b, v)
-			return
-		}
-		v = v.Elem()
+func fprintArg(b *buffer.Buffer, val interface{}) {
+	switch v := val.(type) {
+	case fmt.Stringer:
+		b.AppendString(v.String())
+		return
+
+	case error:
+		b.AppendString(v.Error())
+		return
 	}
 
-	switch v.Kind() {
+	ref := reflect.ValueOf(val)
+	if ref.Kind() == reflect.Ptr {
+		if ref.Pointer() == 0 {
+			fprintPointer(b, ref)
+			return
+		}
+		ref = ref.Elem()
+	}
+
+	switch ref.Kind() {
 	case reflect.Array, reflect.Slice:
-		fprintSlice(b, v)
+		fprintSlice(b, ref)
 
 	case reflect.Map:
-		fprintMap(b, v)
+		fprintMap(b, ref)
 
 	case reflect.Struct:
-		fprintStruct(b, v)
+		fprintStruct(b, ref)
 
 	case reflect.String:
-		b.AppendString(v.String())
+		b.AppendString(ref.String())
 
 	case reflect.Bool:
-		b.AppendBool(v.Bool())
+		b.AppendBool(ref.Bool())
 
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		b.AppendInt(v.Int())
+		b.AppendInt(ref.Int())
 
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		b.AppendUint(v.Uint())
+		b.AppendUint(ref.Uint())
 
 	case reflect.Float64:
-		b.AppendFloat(v.Float(), 64)
+		b.AppendFloat(ref.Float(), 64)
 
 	case reflect.Float32:
-		b.AppendFloat(v.Float(), 32)
+		b.AppendFloat(ref.Float(), 32)
 
 	case reflect.Chan, reflect.Func, reflect.UnsafePointer:
-		fprintPointer(b, v)
+		fprintPointer(b, ref)
 
 	default:
-		fmt.Fprint(b, v.Interface())
+		fmt.Fprint(b, ref.Interface())
 	}
 }
 
@@ -105,7 +116,7 @@ func fprintSlice(b *buffer.Buffer, v reflect.Value) {
 		if i != 0 {
 			b.AppendString(", ")
 		}
-		fprintArg(b, reflect.ValueOf(v.Index(i).Interface()))
+		fprintArg(b, v.Index(i).Interface())
 	}
 	b.AppendString("]")
 }
@@ -135,7 +146,7 @@ func fprintStruct(b *buffer.Buffer, v reflect.Value) {
 			b.AppendByte(':')
 		}
 		field := v.Field(i)
-		fprintArg(b, reflect.ValueOf(field.Interface()))
+		fprintArg(b, field.Interface())
 	}
 	b.AppendByte('}')
 }
@@ -153,9 +164,9 @@ func fprintMap(b *buffer.Buffer, val reflect.Value) {
 		if i > 0 {
 			b.AppendByte(',')
 		}
-		fprintArg(b, reflect.ValueOf(kv[0].Interface()))
+		fprintArg(b, kv[0].Interface())
 		b.AppendByte(':')
-		fprintArg(b, reflect.ValueOf(kv[1].Interface()))
+		fprintArg(b, kv[1].Interface())
 	}
 	b.AppendByte(']')
 }

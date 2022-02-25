@@ -7,6 +7,7 @@ package ldgin
 import (
 	"log"
 	"reflect"
+	"runtime"
 
 	"github.com/distroy/ldgo/lderr"
 	"github.com/gin-gonic/gin"
@@ -31,11 +32,14 @@ type handler struct {
 }
 
 func wrapHandler(f Handler) *handler {
+	handlerName := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
+
 	t := reflect.TypeOf(f)
 	w := &handler{
 		wrapper: wrapper{
-			Name: "handler",
-			Type: t,
+			Handler: handlerName,
+			Name:    "handler",
+			Type:    t,
 		},
 		Value: reflect.ValueOf(f),
 	}
@@ -74,8 +78,10 @@ func (w *handler) getOutConv1(outType reflect.Type) outConvType {
 	return func(c *Context, outs []reflect.Value) {
 		out0 := outs[0].Interface()
 		if err := out0; err != nil {
-			w.returnError(c, lderr.Wrap(err.(Error)))
-			return
+			if e := lderr.Wrap(err.(error)); w.hasError(e) {
+				w.returnError(c, e)
+				return
+			}
 		}
 
 		w.returnResponse(c, nil)
@@ -97,8 +103,10 @@ func (w *handler) getOutConv2(outTypes []reflect.Type) outConvType {
 			out1 := outs[1].Interface()
 
 			if err := out1; err != nil {
-				w.returnError(c, lderr.Wrap(err.(Error)))
-				return
+				if e := lderr.Wrap(err.(error)); w.hasError(e) {
+					w.returnError(c, e)
+					return
+				}
 			}
 
 			c.Set(GinKeyRenderer, out0)
@@ -111,8 +119,10 @@ func (w *handler) getOutConv2(outTypes []reflect.Type) outConvType {
 		out1 := outs[1].Interface()
 
 		if err := out1; err != nil {
-			w.returnError(c, lderr.Wrap(err.(Error)))
-			return
+			if e := lderr.Wrap(err.(error)); w.hasError(e) {
+				w.returnError(c, e)
+				return
+			}
 		}
 
 		w.returnResponse(c, out0)

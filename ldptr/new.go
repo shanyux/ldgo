@@ -4,6 +4,8 @@
 
 package ldptr
 
+import "time"
+
 func NewByte(d byte) *byte { return &d }
 func NewRune(d rune) *rune { return &d }
 
@@ -26,3 +28,6 @@ func NewString(v string) *string { return &v }
 
 func NewComplex64(v complex64) *complex64    { return &v }
 func NewComplex128(v complex128) *complex128 { return &v }
+
+func NewTime(v time.Time) *time.Time             { return &v }
+func NewDuration(v time.Duration) *time.Duration { return &v }
