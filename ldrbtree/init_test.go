@@ -52,12 +52,22 @@ func testRBTreeRDeleteAll(rbtree *RBTree, d interface{}) {
 	}
 }
 
-func testCompareInt(a, b interface{}) int {
-	aa, bb := a.(int), b.(int)
-	if aa == bb {
-		return 0
-	} else if aa > bb {
-		return 1
+func testNewMap() *Map {
+	m := &Map{}
+	for _, n := range _numsUnordered {
+		m.Insert(n, n)
 	}
-	return -1
+	return m
+}
+
+func testMapDeleteAll(m *Map, d interface{}) {
+	for it := m.Search(d); it != m.End(); it = m.Search(d) {
+		m.Delete(it)
+	}
+}
+
+func testMapRDeleteAll(m *Map, d interface{}) {
+	for it := m.RSearch(d); it != m.REnd(); it = m.RSearch(d) {
+		m.RDelete(it)
+	}
 }

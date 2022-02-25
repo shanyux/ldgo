@@ -53,7 +53,7 @@ func TestRBTree_Insert(t *testing.T) {
 				}
 				it := rbtree.Begin()
 				for _, n := range _nums {
-					convey.So(n, convey.ShouldEqual, it.Data())
+					convey.So(it.Data(), convey.ShouldEqual, n)
 					it = it.Next()
 				}
 				convey.So(it, convey.ShouldResemble, rbtree.End())

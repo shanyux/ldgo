@@ -24,6 +24,11 @@ func (m *Map) init() {
 	m.tree.init()
 }
 
+func (m *Map) Len() int {
+	m.init()
+	return m.tree.Len()
+}
+
 func (m *Map) Clear() {
 	m.init()
 	m.tree.Clear()
@@ -44,14 +49,14 @@ func (m *Map) InsertOrAssign(key, value interface{}) MapIterator {
 	return MapIterator(m.tree.InsertOrAssign(Pair{Key: key, Value: value}))
 }
 
-func (m *Map) Delete(it MapIterator) MapIterator {
-	m.init()
-	return MapIterator(m.tree.Delete(RBTreeIterator(it)))
-}
-
 func (m *Map) Count(key interface{}) int {
 	m.init()
 	return m.tree.Count(Pair{Key: key})
+}
+
+func (m *Map) Delete(it MapIterator) MapIterator {
+	m.init()
+	return MapIterator(m.tree.Delete(RBTreeIterator(it)))
 }
 
 // Search returns the first pair.key == key
@@ -116,7 +121,7 @@ func (m *Map) RDelete(it MapReverseIterator) MapReverseIterator {
 // RSearch returns the last pair.key == key
 func (m *Map) RSearch(key interface{}) MapReverseIterator {
 	m.init()
-	return MapReverseIterator(m.RSearch(Pair{Key: key}))
+	return MapReverseIterator(m.tree.RSearch(Pair{Key: key}))
 }
 
 // RSearchRange is reverse search range

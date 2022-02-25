@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/distroy/ldgo/ldcmp"
 	"github.com/distroy/ldgo/ldrand"
 )
 
@@ -26,7 +27,7 @@ func benchmarkRBTree_Insert(b *testing.B, size int) {
 		b.RunParallel(func(p *testing.PB) {
 			for p.Next() {
 				rbtree := &RBTree{
-					Compare: testCompareInt,
+					Compare: func(a, b interface{}) int { return ldcmp.CompareInt(a.(int), b.(int)) },
 				}
 				for i := 0; i < size; i++ {
 					rbtree.Insert(ldrand.Int())
@@ -40,7 +41,7 @@ func benchmarkRBTree_Insert(b *testing.B, size int) {
 
 func benchmarkRBTree_Search(b *testing.B, size int) {
 	rbtree := &RBTree{
-		Compare: testCompareInt,
+		Compare: func(a, b interface{}) int { return ldcmp.CompareInt(a.(int), b.(int)) },
 	}
 	for i := 0; i < size; i++ {
 		rbtree.Insert(ldrand.Int())

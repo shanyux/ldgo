@@ -11,18 +11,18 @@ import (
 	"github.com/smartystreets/goconvey/convey"
 )
 
-func TestRBTree_Range(t *testing.T) {
+func TestMap_Range(t *testing.T) {
 	const retry = 20
-	fnDeleteAll := testRBTreeDeleteAll
+	fnDeleteAll := testMapDeleteAll
 
 	convey.Convey(t.Name(), t, func() {
-		rbtree := testNewRBTree()
+		m := testNewMap()
 
 		convey.Convey("range", func() {
-			it := rbtree.Range()
-			for _, n := range _nums {
+			it := m.Range()
+			for _, d := range _nums {
 				convey.So(it.HasNext(), convey.ShouldBeTrue)
-				convey.So(it.Data(), convey.ShouldEqual, n)
+				convey.So(d, convey.ShouldEqual, it.Key())
 				it.Next()
 			}
 			convey.So(it.HasNext(), convey.ShouldBeFalse)
@@ -32,24 +32,27 @@ func TestRBTree_Range(t *testing.T) {
 		convey.Convey("search range", func() {
 			for i := 0; i < retry; i++ {
 				d := ldrand.Intn(_count)
-				fnDeleteAll(rbtree, d)
+				fnDeleteAll(m, d)
 
-				rbtree.Insert(d)
-				rbtree.Insert(d)
-				rbtree.Insert(d)
+				m.Insert(d, 0)
+				m.Insert(d, 1)
+				m.Insert(d, 2)
 
-				it := rbtree.SearchRange(d)
+				it := m.SearchRange(d)
 
 				convey.So(it.HasNext(), convey.ShouldBeTrue)
-				convey.So(it.Data(), convey.ShouldEqual, d)
+				convey.So(it.Key(), convey.ShouldEqual, d)
+				convey.So(it.Value(), convey.ShouldEqual, 0)
 				convey.So(func() { it.Next() }, convey.ShouldNotPanic)
 
 				convey.So(it.HasNext(), convey.ShouldBeTrue)
-				convey.So(it.Data(), convey.ShouldEqual, d)
+				convey.So(it.Key(), convey.ShouldEqual, d)
+				convey.So(it.Value(), convey.ShouldEqual, 1)
 				convey.So(func() { it.Next() }, convey.ShouldNotPanic)
 
 				convey.So(it.HasNext(), convey.ShouldBeTrue)
-				convey.So(it.Data(), convey.ShouldEqual, d)
+				convey.So(it.Key(), convey.ShouldEqual, d)
+				convey.So(it.Value(), convey.ShouldEqual, 2)
 				convey.So(func() { it.Next() }, convey.ShouldNotPanic)
 
 				convey.So(it.HasNext(), convey.ShouldBeFalse)
@@ -58,19 +61,19 @@ func TestRBTree_Range(t *testing.T) {
 	})
 }
 
-func TestRBTree_ReverseRange(t *testing.T) {
+func TestMap_ReverseRange(t *testing.T) {
 	const retry = 20
-	fnDeleteAll := testRBTreeRDeleteAll
+	fnDeleteAll := testMapRDeleteAll
 
 	convey.Convey(t.Name(), t, func() {
-		rbtree := testNewRBTree()
+		m := testNewMap()
 
 		convey.Convey("range", func() {
-			it := rbtree.RRange()
+			it := m.RRange()
 			for i := len(_nums) - 1; i >= 0; i-- {
 				n := _nums[i]
 				convey.So(it.HasNext(), convey.ShouldBeTrue)
-				convey.So(it.Data(), convey.ShouldEqual, n)
+				convey.So(n, convey.ShouldEqual, it.Key())
 				it.Next()
 			}
 			convey.So(it.HasNext(), convey.ShouldBeFalse)
@@ -80,24 +83,27 @@ func TestRBTree_ReverseRange(t *testing.T) {
 		convey.Convey("search range", func() {
 			for i := 0; i < retry; i++ {
 				d := ldrand.Intn(_count)
-				fnDeleteAll(rbtree, d)
+				fnDeleteAll(m, d)
 
-				rbtree.Insert(d)
-				rbtree.Insert(d)
-				rbtree.Insert(d)
+				m.Insert(d, 0)
+				m.Insert(d, 1)
+				m.Insert(d, 2)
 
-				it := rbtree.RSearchRange(d)
+				it := m.RSearchRange(d)
 
 				convey.So(it.HasNext(), convey.ShouldBeTrue)
-				convey.So(it.Data(), convey.ShouldEqual, d)
+				convey.So(it.Key(), convey.ShouldEqual, d)
+				convey.So(it.Value(), convey.ShouldEqual, 2)
 				convey.So(func() { it.Next() }, convey.ShouldNotPanic)
 
 				convey.So(it.HasNext(), convey.ShouldBeTrue)
-				convey.So(it.Data(), convey.ShouldEqual, d)
+				convey.So(it.Key(), convey.ShouldEqual, d)
+				convey.So(it.Value(), convey.ShouldEqual, 1)
 				convey.So(func() { it.Next() }, convey.ShouldNotPanic)
 
 				convey.So(it.HasNext(), convey.ShouldBeTrue)
-				convey.So(it.Data(), convey.ShouldEqual, d)
+				convey.So(it.Key(), convey.ShouldEqual, d)
+				convey.So(it.Value(), convey.ShouldEqual, 0)
 				convey.So(func() { it.Next() }, convey.ShouldNotPanic)
 
 				convey.So(it.HasNext(), convey.ShouldBeFalse)

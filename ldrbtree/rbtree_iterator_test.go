@@ -17,7 +17,7 @@ func TestRBTree_Iterator(t *testing.T) {
 		convey.Convey("next", func() {
 			it := rbtree.Begin()
 			for _, n := range _nums {
-				convey.So(n, convey.ShouldEqual, it.Data())
+				convey.So(it.Data(), convey.ShouldEqual, n)
 				it = it.Next()
 			}
 			convey.So(it, convey.ShouldResemble, rbtree.End())
@@ -30,7 +30,7 @@ func TestRBTree_Iterator(t *testing.T) {
 				it = it.Prev()
 				i--
 				n := _nums[i]
-				convey.So(n, convey.ShouldEqual, it.Data())
+				convey.So(it.Data(), convey.ShouldEqual, n)
 			}
 		})
 
@@ -73,7 +73,7 @@ func TestRBTree_ReverseIterator(t *testing.T) {
 			it := rbtree.RBegin()
 			for i := len(_nums) - 1; i >= 0; i-- {
 				n := _nums[i]
-				convey.So(n, convey.ShouldEqual, it.Data())
+				convey.So(it.Data(), convey.ShouldEqual, n)
 				it = it.Next()
 			}
 			convey.So(it, convey.ShouldResemble, rbtree.REnd())
@@ -86,7 +86,7 @@ func TestRBTree_ReverseIterator(t *testing.T) {
 				it = it.Prev()
 				n := _nums[i]
 				i++
-				convey.So(n, convey.ShouldEqual, it.Data())
+				convey.So(it.Data(), convey.ShouldEqual, n)
 			}
 		})
 
