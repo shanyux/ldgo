@@ -166,8 +166,5 @@ func compareReflectIface(a, b reflect.Value) int {
 	if r, ok := compareNilReflect(a, b); ok {
 		return r
 	}
-	if r := compareReflectType(a.Elem().Type(), b.Elem().Type()); r != 0 {
-		return r
-	}
 	return CompareReflect(a.Elem(), b.Elem())
 }

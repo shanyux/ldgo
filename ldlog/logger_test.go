@@ -78,7 +78,7 @@ func TestLogger(t *testing.T) {
 				int64(10): 234,
 			})
 			convey.So(writer.String(), convey.ShouldEqual,
-				"2021-08-22T13:30:58.000+0800|WARN|-|ldlog/logger_test.go:57|warnln message 1234 map[10:234,100:124,a:b],abc=xxx\n")
+				"2021-08-22T13:30:58.000+0800|WARN|-|ldlog/logger_test.go:75|warnln message 1234 map[10:234,100:124,a:b],abc=xxx\n")
 		})
 	})
 }
