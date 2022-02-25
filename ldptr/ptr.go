@@ -6,6 +6,16 @@ package ldptr
 
 import "time"
 
+func GetBool(p *bool, def ...bool) bool {
+	if p != nil {
+		return *p
+	}
+	if len(def) > 0 {
+		return def[0]
+	}
+	return false
+}
+
 func GetByte(p *byte, def ...byte) byte {
 	if p != nil {
 		return *p
@@ -117,6 +127,16 @@ func GetUint32(p *uint32, def ...uint32) uint32 {
 }
 
 func GetUint64(p *uint64, def ...uint64) uint64 {
+	if p != nil {
+		return *p
+	}
+	if len(def) > 0 {
+		return def[0]
+	}
+	return 0
+}
+
+func GetUintptr(p *uintptr, def ...uintptr) uintptr {
 	if p != nil {
 		return *p
 	}
