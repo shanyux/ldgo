@@ -7,6 +7,7 @@ package ldrbtree
 import (
 	"testing"
 
+	"github.com/distroy/ldgo/ldcmp"
 	"github.com/distroy/ldgo/ldrand"
 	"github.com/smartystreets/goconvey/convey"
 )
@@ -69,7 +70,7 @@ func TestRBTree_Insert(t *testing.T) {
 			rbtree := &RBTree{
 				Compare: func(a, b interface{}) int {
 					aa, bb := a.([2]int), b.([2]int)
-					return compareInt(int64(aa[0]), int64(bb[0]))
+					return ldcmp.CompareInt(aa[0], bb[0])
 				},
 			}
 			convey.So(rbtree.Len(), convey.ShouldEqual, 0)
