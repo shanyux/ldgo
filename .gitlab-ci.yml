@@ -57,4 +57,4 @@ complexity:
     # - echo "CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:" "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME"
     - merge_base=$(git merge-base "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME")
     - echo "$merge_base"
-    - python3 "$CI_PROJECT_DIR/script/complexity/git-diff-complexity" -c 20 --exclude='\.microkit\.go$' "$merge_base" || exit 1
+    - python3 "$CI_PROJECT_DIR/script/complexity/git-diff-complexity" -c 15 "$merge_base" || exit 1
