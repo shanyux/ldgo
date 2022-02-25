@@ -21,7 +21,9 @@ var (
 	ErrTestOneError = lderr.New(http.StatusOK, 1, "test 1")
 )
 
-func testOneError(ctx *ldgin.Context) ldgin.Error {
+func testOneError(c *ldgin.Context) ldgin.Error {
+	c.LogI("", zap.String("method", c.GetMethod()), zap.String("path", c.GetPath()),
+		zap.String("handler", c.GetHandler()))
 	return ErrTestOneError
 }
 
@@ -33,16 +35,20 @@ type testBindReq struct {
 }
 
 func testBind(ctx context.Context, req *testBindReq) (*testBindReq, ldgin.Error) {
+	g := ldgin.GetGin(ctx)
+	c := ldgin.GetContext(g)
+	c.LogI("", zap.String("method", c.GetMethod()), zap.String("path", c.GetPath()),
+		zap.String("handler", c.GetHandler()))
 	return req, nil
 }
 
 type testRenderer struct{}
 
-func (_ *testRenderer) Render(ctx *gin.Context) {
-	ctx.JSON(http.StatusOK, "abc")
+func (_ *testRenderer) Render(c *gin.Context) {
+	c.JSON(http.StatusOK, "abc")
 }
 
-func testRender(ctx *ldgin.Context) (*testRenderer, ldgin.Error) {
+func testRender(c *ldgin.Context) (*testRenderer, ldgin.Error) {
 	return &testRenderer{}, nil
 }
 
@@ -50,14 +56,14 @@ type testValidateReq struct {
 	Valid int64 `form:"valid"`
 }
 
-func (req *testValidateReq) Validate(ctx context.Context) ldgin.Error {
+func (req *testValidateReq) Validate(c context.Context) ldgin.Error {
 	if req.Valid != 0 {
 		return lderr.New(http.StatusOK, 111, fmt.Sprintf("invalid requet. valid=%v", req.Valid))
 	}
 	return nil
 }
 
-func testValidate(ctx *ldgin.Context, req *testValidateReq) ldgin.Error {
+func testValidate(c *ldgin.Context, req *testValidateReq) ldgin.Error {
 	return nil
 }
 
@@ -66,31 +72,35 @@ type testParseReq struct {
 	Query2 int64  `form:"query2"`
 }
 
-func (req *testParseReq) Parse(ctx *ldgin.Context) ldgin.Error {
-	if err := ctx.ShouldBindQuery(req); err != nil {
-		ctx.LogE("ShouldBindQuery() fail", zap.Error(err))
+func (req *testParseReq) Parse(c *ldgin.Context) ldgin.Error {
+	if err := c.ShouldBindQuery(req); err != nil {
+		c.LogE("ShouldBindQuery() fail", zap.Error(err))
 		return lderr.ErrParseRequest
 	}
 	return nil
 }
 
-func testParse(ctx *ldgin.Context, req *testParseReq) (*testParseReq, ldgin.Error) {
+func testParse(c *ldgin.Context, req *testParseReq) (*testParseReq, ldgin.Error) {
 	return req, nil
 }
 
-func testSucc(ctx *ldgin.Context) ldgin.Error {
+func testSucc(c *ldgin.Context) ldgin.Error {
 	return nil
 }
 
-func testPanic(c context.Context) ldgin.Error {
+func testPanic(c *ldgin.Context) ldgin.Error {
+	c.LogI("", zap.String("method", c.GetMethod()), zap.String("path", c.GetPath()),
+		zap.String("handler", c.GetHandler()))
+
 	var p *int
 	*p = 1
 	return nil
 }
 
-func initRouter(ctx ldctx.Context, router gin.IRouter) {
+func initRouter(c ldctx.Context, router gin.IRouter) {
 	r := ldgin.WrapGin(router)
 
+	r = r.WithAppPath("aaaaaa/")
 	r = r.Group("/test", midware1)
 	r.GET("panic", testPanic)
 

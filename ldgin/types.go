@@ -99,6 +99,7 @@ type Router interface {
 	Group(relativePath string, midwares ...Midware) Router
 	Use(midwares ...Midware) Router
 
+	WithAppPath(path string) Router
 	BasePath() string
 	Handle(method, path string, handler Handler, midwares ...Midware) Router
 
@@ -119,6 +120,8 @@ type routerBase interface {
 	Group(relativePath string, midwares ...Midware) routerBase
 	Use(midwares ...Midware) routerBase
 
+	WithAppPath(path string) routerBase
 	BasePath() string
+
 	Handle(method, path string, handler Handler, midwares ...Midware) routerBase
 }

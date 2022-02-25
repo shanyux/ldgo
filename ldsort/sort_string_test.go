@@ -25,6 +25,7 @@ func TestSortStrings(t *testing.T) {
 		convey.So(SearchStrings(l, ""), convey.ShouldEqual, 0)
 		convey.So(SearchStrings(l, "123"), convey.ShouldEqual, 0)
 		convey.So(SearchStrings(l, "24"), convey.ShouldEqual, 3)
+		convey.So(SearchStrings(l, "223"), convey.ShouldEqual, 1)
 		convey.So(SearchStrings(l, "zzz"), convey.ShouldEqual, 10)
 	})
 }
