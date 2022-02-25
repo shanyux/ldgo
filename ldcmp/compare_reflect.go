@@ -6,6 +6,7 @@ package ldcmp
 
 import (
 	"reflect"
+	"sort"
 
 	"github.com/distroy/ldgo/ldmath"
 )
@@ -18,20 +19,22 @@ const (
 	kindUint
 	kindFloat
 	kindComplex
-	kindPtr
+	kindString
+	kindInvalid
 )
 
 func CompareReflect(a, b reflect.Value) int {
-	aType, bType := a.Type(), b.Type()
-
-	if r := compareReflectType(aType, bType); r != 0 {
+	if r := compareReflectType(a, b); r != 0 {
 		return r
 	}
 
 	switch a.Kind() {
 	default:
 		// Certain types cannot appear as keys (maps, funcs, slices), but be explicit.
-		panic("bad type in compare: " + aType.String())
+		panic("bad type in compare: " + a.Type().String())
+
+	case reflect.Invalid:
+		return 0
 
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		a, b := a.Int(), b.Int()
@@ -61,11 +64,11 @@ func CompareReflect(a, b reflect.Value) int {
 		return CompareUintptr(a, b)
 
 	case reflect.Chan, reflect.Func:
-		// if r, ok := compareNilReflect(a, b); ok {
-		// 	return r
-		// }
 		ap, bp := a.Pointer(), b.Pointer()
 		return CompareUintptr(ap, bp)
+
+	case reflect.Map:
+		return compareReflectMap(a, b)
 
 	case reflect.Struct:
 		return compareReflectStruct(a, b)
@@ -81,48 +84,51 @@ func CompareReflect(a, b reflect.Value) int {
 	}
 }
 
-func convertKind(k reflect.Kind) (kind, string) {
+func convertKind(k reflect.Kind) kind {
 	switch k {
+	case reflect.Invalid:
+		return kindNil
+
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return kindInt, "int"
+		return kindInt
 
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		return kindUint, "uint"
+		return kindUint
 
 	case reflect.Float32, reflect.Float64:
-		return kindFloat, "float"
+		return kindFloat
 
 	case reflect.Complex64, reflect.Complex128:
-		return kindComplex, "complex"
+		return kindComplex
 
-	case reflect.Ptr, reflect.UnsafePointer:
-		return kindPtr, "ptr"
+	case reflect.String:
+		return kindString
 
 	default:
-		return kindNil, ""
+		return kindInvalid
 	}
 }
 
-func compareReflectType(a, b reflect.Type) int {
-	if a == b {
-		return 0
-	}
-	ak, an := convertKind(a.Kind())
-	bk, bn := convertKind(b.Kind())
-	if ak != kindNil && ak == bk {
+func compareReflectType(a, b reflect.Value) int {
+	aKind := convertKind(a.Kind())
+	bKind := convertKind(b.Kind())
+	if aKind != kindInvalid && aKind == bKind {
 		return 0
 	}
 
-	if ak == kindNil {
-		an = a.String()
+	if aKind != kindInvalid || bKind != kindInvalid {
+		return CompareInt(int(aKind), int(bKind))
 	}
-	if bk == kindNil {
-		bn = b.String()
+
+	if a.Type() == b.Type() {
+		return 0
 	}
-	if r := CompareInt(len(an), len(bn)); r != 0 {
+
+	aName, bName := a.String(), b.String()
+	if r := CompareInt(len(aName), len(bName)); r != 0 {
 		return r
 	}
-	if an < bn {
+	if aName < bName {
 		return -1
 	}
 	return 1
@@ -162,6 +168,30 @@ func compareReflectArray(a, b reflect.Value) int {
 	return 0
 }
 
+func compareReflectMap(a, b reflect.Value) int {
+	if r := CompareInt(a.Len(), b.Len()); r != 0 {
+		return r
+	}
+
+	aKeys, bKeys := a.MapKeys(), b.MapKeys()
+	sort.Sort(sortedReflects(aKeys))
+	sort.Sort(sortedReflects(bKeys))
+
+	for i := range aKeys {
+		aKey, bKey := aKeys[i], bKeys[i]
+		if r := CompareReflect(aKey, bKey); r != 0 {
+			return r
+		}
+
+		aVal, bVal := a.MapIndex(aKey), b.MapIndex(bKey)
+		if r := CompareReflect(aVal, bVal); r != 0 {
+			return r
+		}
+	}
+
+	return 0
+}
+
 func compareReflectSlice(a, b reflect.Value) int {
 	al, bl := a.Len(), b.Len()
 	l := ldmath.MinInt(al, bl)
@@ -180,3 +210,9 @@ func compareReflectIface(a, b reflect.Value) int {
 	}
 	return CompareReflect(a.Elem(), b.Elem())
 }
+
+type sortedReflects []reflect.Value
+
+func (o sortedReflects) Len() int           { return len(o) }
+func (o sortedReflects) Swap(i, j int)      { o[i], o[j] = o[j], o[i] }
+func (o sortedReflects) Less(i, j int) bool { return CompareReflect(o[i], o[j]) <= 0 }
