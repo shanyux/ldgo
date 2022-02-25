@@ -50,114 +50,114 @@ func CompareRune(a, b rune) int {
 
 func CompareInt(a, b int) int {
 	switch {
-	case a < b:
-		return -1
+	case a == b:
+		return 0
 	case a > b:
 		return 1
 	default:
-		return 0
+		return -1
 	}
 }
 func CompareInt8(a, b int8) int {
 	switch {
-	case a < b:
-		return -1
+	case a == b:
+		return 0
 	case a > b:
 		return 1
 	default:
-		return 0
+		return -1
 	}
 }
 func CompareInt16(a, b int16) int {
 	switch {
-	case a < b:
-		return -1
+	case a == b:
+		return 0
 	case a > b:
 		return 1
 	default:
-		return 0
+		return -1
 	}
 }
 func CompareInt32(a, b int32) int {
 	switch {
-	case a < b:
-		return -1
+	case a == b:
+		return 0
 	case a > b:
 		return 1
 	default:
-		return 0
+		return -1
 	}
 }
 func CompareInt64(a, b int64) int {
 	switch {
-	case a < b:
-		return -1
+	case a == b:
+		return 0
 	case a > b:
 		return 1
 	default:
-		return 0
+		return -1
 	}
 }
 
 func CompareUint(a, b uint) int {
 	switch {
-	case a < b:
-		return -1
+	case a == b:
+		return 0
 	case a > b:
 		return 1
 	default:
-		return 0
+		return -1
 	}
 }
 func CompareUint8(a, b uint8) int {
 	switch {
-	case a < b:
-		return -1
+	case a == b:
+		return 0
 	case a > b:
 		return 1
 	default:
-		return 0
+		return -1
 	}
 }
 func CompareUint16(a, b uint16) int {
 	switch {
-	case a < b:
-		return -1
+	case a == b:
+		return 0
 	case a > b:
 		return 1
 	default:
-		return 0
+		return -1
 	}
 }
 func CompareUint32(a, b uint32) int {
 	switch {
-	case a < b:
-		return -1
+	case a == b:
+		return 0
 	case a > b:
 		return 1
 	default:
-		return 0
+		return -1
 	}
 }
 func CompareUint64(a, b uint64) int {
 	switch {
-	case a < b:
-		return -1
+	case a == b:
+		return 0
 	case a > b:
 		return 1
 	default:
-		return 0
+		return -1
 	}
 }
 
 func CompareUintptr(a, b uintptr) int {
 	switch {
-	case a < b:
-		return -1
+	case a == b:
+		return 0
 	case a > b:
 		return 1
 	default:
-		return 0
+		return -1
 	}
 }
 

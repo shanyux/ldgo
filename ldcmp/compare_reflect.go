@@ -25,7 +25,7 @@ func CompareReflect(a, b reflect.Value) int {
 	aType, bType := a.Type(), b.Type()
 
 	if r := compareReflectType(aType, bType); r != 0 {
-		return 4
+		return r
 	}
 
 	switch a.Kind() {
@@ -81,25 +81,25 @@ func CompareReflect(a, b reflect.Value) int {
 	}
 }
 
-func convertKind(k reflect.Kind) kind {
+func convertKind(k reflect.Kind) (kind, string) {
 	switch k {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return kindInt
+		return kindInt, "int"
 
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		return kindUint
+		return kindUint, "uint"
 
 	case reflect.Float32, reflect.Float64:
-		return kindFloat
+		return kindFloat, "float"
 
 	case reflect.Complex64, reflect.Complex128:
-		return kindComplex
+		return kindComplex, "complex"
 
 	case reflect.Ptr, reflect.UnsafePointer:
-		return kindPtr
+		return kindPtr, "ptr"
 
 	default:
-		return kindNil
+		return kindNil, ""
 	}
 }
 
@@ -107,10 +107,22 @@ func compareReflectType(a, b reflect.Type) int {
 	if a == b {
 		return 0
 	}
-	if aa, bb := convertKind(a.Kind()), convertKind(b.Kind()); aa != kindNil && aa == bb {
+	ak, an := convertKind(a.Kind())
+	bk, bn := convertKind(b.Kind())
+	if ak != kindNil && ak == bk {
 		return 0
 	}
-	if a.String() < b.String() {
+
+	if ak == kindNil {
+		an = a.String()
+	}
+	if bk == kindNil {
+		bn = b.String()
+	}
+	if r := CompareInt(len(an), len(bn)); r != 0 {
+		return r
+	}
+	if an < bn {
 		return -1
 	}
 	return 1
