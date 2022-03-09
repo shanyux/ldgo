@@ -21,7 +21,7 @@ from core import complexity
 
 
 def get_options() -> tuple[optparse.Values, list[typing.Any]]:
-    parser = optparse.OptionParser(version="%prog (Renchong Tan) 0.1")
+    parser = optparse.OptionParser(version="%prog (distroy) 0.1")
 
     parser.add_option('-c', '--cogntive', dest='cogntive', metavar='<cogntive>',
                       default=15, type='int', help='cogntive complexity threshold. default: 15')

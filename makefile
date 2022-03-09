@@ -13,7 +13,6 @@ GO_FLAGS=${flags}
 GO_VERSION=$(shell go version | cut -d" " -f 3)
 GO_MAJOR_VERSION=$(shell echo $(GO_VERSION) | cut -d"." -f 1)
 GO_SUB_VERSION=$(shell echo $(GO_VERSION) | cut -d"." -f 2)
-export GO111MODULE=on
 # ifeq ($(shell expr ${GO_SUB_VERSION} '>' 10), 1)
 # 	GO_FLAGS+=-mod=vendor
 # endif
@@ -59,7 +58,7 @@ go-test-coverage: setup
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) ./... -coverprofile="$(GO_TEST_OUTPUT)/coverage.out"
 
 .PHONY: go-test
-go-test: setup
+go-test:
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) -v ./...
 
 .PHONY: setup
