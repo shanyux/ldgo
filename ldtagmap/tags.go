@@ -2,41 +2,44 @@
  * Copyright (C) distroy
  */
 
-package ldgorm
+package ldtagmap
 
 import (
 	"strings"
 )
 
-type tagMap map[string][]string
+type Tags map[string][]string
 
-func newTagMap() tagMap {
-	return make(tagMap)
+func New(size ...int) Tags {
+	if len(size) > 0 && size[0] > 0 {
+		return make(Tags, size[0])
+	}
+	return make(Tags)
 }
 
-func (m tagMap) Add(key, value string) {
+func (m Tags) Add(key, value string) {
 	key = strings.ToLower(key)
 	m[key] = append(m[key], value)
 }
 
-func (m tagMap) Set(key, value string) {
+func (m Tags) Set(key, value string) {
 	key = strings.ToLower(key)
 	m[key] = []string{value}
 }
 
-func (m tagMap) Has(key string) bool {
+func (m Tags) Has(key string) bool {
 	key = strings.ToLower(key)
 
 	_, ok := m[key]
 	return ok
 }
 
-func (m tagMap) Values(key string) []string {
+func (m Tags) Values(key string) []string {
 	key = strings.ToLower(key)
 	return m[key]
 }
 
-func (m tagMap) Get(key string) string {
+func (m Tags) Get(key string) string {
 	key = strings.ToLower(key)
 
 	v := m[key]
@@ -47,9 +50,9 @@ func (m tagMap) Get(key string) string {
 	return ""
 }
 
-func parseTagString(tag string) tagMap {
+func Parse(tag string) Tags {
 	tagList := strings.Split(tag, ";")
-	m := newTagMap()
+	m := New()
 	for _, v := range tagList {
 		if len(v) == 0 {
 			continue

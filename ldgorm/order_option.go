@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/distroy/ldgo/ldconv"
+	"github.com/distroy/ldgo/ldtagmap"
 )
 
 const _ORDER_TAG = "gormorder"
@@ -51,7 +52,7 @@ func (that *orderOption) buildGorm(db *GormDb) *GormDb {
 }
 
 type fieldOrderReflect struct {
-	Tags       tagMap
+	Tags       ldtagmap.Tags
 	Name       string
 	FieldOrder int
 }
@@ -151,7 +152,7 @@ func getOrderFieldReflect(typ reflect.Type, i int) *fieldOrderReflect {
 		return nil
 	}
 
-	tags := parseTagString(tag)
+	tags := ldtagmap.Parse(tag)
 	if _, ok := tags["-"]; ok {
 		return nil
 	}

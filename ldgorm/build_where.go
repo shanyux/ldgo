@@ -13,6 +13,7 @@ import (
 	"sync"
 
 	"github.com/distroy/ldgo/ldconv"
+	"github.com/distroy/ldgo/ldtagmap"
 )
 
 const _WHERE_TAG = "gormwhere"
@@ -37,7 +38,7 @@ type whereReflect struct {
 }
 
 type fieldWhereReflect struct {
-	Tags       tagMap
+	Tags       ldtagmap.Tags
 	Name       string
 	Order      int32
 	FieldOrder int
@@ -155,7 +156,7 @@ func getFieldWhereReflect(typ reflect.Type, i int) *fieldWhereReflect {
 		return nil
 	}
 
-	tags := parseTagString(tag)
+	tags := ldtagmap.Parse(tag)
 	if _, ok := tags["-"]; ok {
 		return nil
 	}
