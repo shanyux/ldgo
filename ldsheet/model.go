@@ -105,14 +105,14 @@ func checkFieldEmpty(f *modelField) error {
 
 	field := f.Field.Name
 	if len(f.Name) > 0 {
-		return fmt.Errorf("[sheet] the field is missed in header. field:%s, name:%s", field, f.Name)
+		return fmt.Errorf("[ldsheet] the field is missed in header. field:%s, name:%s", field, f.Name)
 	}
 
 	if len(f.Prefix) > 0 {
-		return fmt.Errorf("[sheet] the field is missed in header. field:%s, prefix:%s", field, f.Prefix)
+		return fmt.Errorf("[ldsheet] the field is missed in header. field:%s, prefix:%s", field, f.Prefix)
 	}
 
-	return fmt.Errorf("[sheet] the field is missed in header. field:%s", field)
+	return fmt.Errorf("[ldsheet] the field is missed in header. field:%s", field)
 }
 
 func parseFieldValue(field *modelField, obj reflect.Value, line []string) error {
@@ -122,7 +122,7 @@ func parseFieldValue(field *modelField, obj reflect.Value, line []string) error 
 
 	if field.HeaderIndex >= len(line) || len(line[field.HeaderIndex]) == 0 {
 		if field.NotEmpty {
-			return fmt.Errorf("[sheet] the field must not be empty. field:%s", field.Field.Name)
+			return fmt.Errorf("[ldsheet] the field must not be empty. field:%s", field.Field.Name)
 		}
 		return nil
 	}
@@ -131,7 +131,7 @@ func parseFieldValue(field *modelField, obj reflect.Value, line []string) error 
 	fVal := obj.Field(field.FieldIndex)
 	err := parseStringValue(fVal, str)
 	if err != nil {
-		return fmt.Errorf("[sheet] parse field value fail. type:%s, err:%s",
+		return fmt.Errorf("[ldsheet] parse field value fail. type:%s, err:%s",
 			fVal.Type().String(), err)
 	}
 

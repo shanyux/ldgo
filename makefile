@@ -70,3 +70,4 @@ setup:
 .PHONY: complexity
 complexity: setup
 	gocognit -over 15 .
+	gocognit -top 10 .

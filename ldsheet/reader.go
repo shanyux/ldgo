@@ -34,11 +34,55 @@ func (r *Reader) Read(d interface{}) error {
 		return err
 	}
 
-	if err := r.readBody(d); err != nil {
+	if err := r.readData(d); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (r *Reader) ReadAll(data interface{}) error {
+	pVal := reflect.ValueOf(data)
+	pTyp := pVal.Type()
+	if pTyp.Kind() != reflect.Ptr && pTyp.Elem().Kind() != reflect.Slice {
+		return fmt.Errorf("[ldsheet] the param of read all must be pointer to slice. type:%s", pTyp.String())
+	}
+
+	sVal := pVal.Elem()
+	eTyp := pTyp.Elem().Elem()
+	if (eTyp.Kind() != reflect.Ptr || eTyp.Elem().Kind() != reflect.Struct) && eTyp.Kind() != reflect.Struct {
+		return fmt.Errorf("[ldsheet] the element of slice must be the struct or the pointer to struct. type:%s", eTyp.String())
+	}
+
+	fnAppend := func(v reflect.Value) { sVal.Set(reflect.Append(sVal, v.Elem())) }
+	typ := eTyp
+	if eTyp.Kind() == reflect.Ptr {
+		typ = eTyp.Elem()
+		fnAppend = func(v reflect.Value) { sVal.Set(reflect.Append(sVal, v)) }
+	}
+
+	if err := r.init(reflect.New(typ).Interface()); err != nil {
+		return err
+	}
+
+	if err := r.readHeader(); err != nil {
+		return err
+	}
+
+	for {
+		val := reflect.New(typ)
+		err := r.readDataValue(val.Elem())
+		switch err {
+		case nil:
+			fnAppend(val)
+
+		case io.EOF:
+			return nil
+
+		default:
+			return fmt.Errorf("[ldsheet] read all data fail. err:%s", err)
+		}
+	}
 }
 
 func (r *Reader) init(d interface{}) error {
@@ -49,7 +93,7 @@ func (r *Reader) init(d interface{}) error {
 
 	typ := reflect.TypeOf(d)
 	if typ.Kind() != reflect.Ptr && typ.Elem().Kind() != reflect.Struct {
-		return fmt.Errorf("[sheet] the data must be the pointer to struct. type:%s", typ.String())
+		return fmt.Errorf("[ldsheet] the data must be the pointer to struct. type:%s", typ.String())
 	}
 
 	pTyp := typ         // pointer type
@@ -80,7 +124,7 @@ func (r *Reader) readHeader() error {
 
 	header, err := r.Reader.Read()
 	if err != nil {
-		return fmt.Errorf("[sheet] read header fail. err:%s", err)
+		return fmt.Errorf("[ldsheet] read header fail. err:%s", err)
 	}
 
 	headerMap := make(map[string]int, len(header))
@@ -104,24 +148,30 @@ func (r *Reader) readHeader() error {
 	return nil
 }
 
-func (r *Reader) readBody(d interface{}) error {
+func (r *Reader) readData(d interface{}) error {
 	m := &r.model
 
 	val := reflect.ValueOf(d)
 	typ := val.Type()
 	if m.Type != typ {
-		return fmt.Errorf("[sheet] read the inconsistently type. expected:%s", m.Type.String())
+		return fmt.Errorf("[ldsheet] read the inconsistently type. expected:%s", m.Type.String())
 	}
 
 	obj := val.Elem()
 	obj.Set(reflect.Zero(obj.Type()))
+
+	return r.readDataValue(obj)
+}
+
+func (r *Reader) readDataValue(obj reflect.Value) error {
+	m := &r.model
 
 	line, err := r.Reader.Read()
 	if err != nil {
 		if err == io.EOF {
 			return io.EOF
 		}
-		return fmt.Errorf("[sheet] read body fail. err:%s", err)
+		return fmt.Errorf("[ldsheet] read data fail. err:%s", err)
 	}
 
 	for _, field := range m.Fields {
