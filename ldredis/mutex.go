@@ -6,9 +6,10 @@ package ldredis
 
 import (
 	"encoding/hex"
-	"sync/atomic"
 	"time"
+	"unsafe"
 
+	"github.com/distroy/ldgo/ldatomic"
 	"github.com/distroy/ldgo/ldctx"
 	"github.com/distroy/ldgo/lderr"
 	"github.com/distroy/ldgo/ldrand"
@@ -37,8 +38,28 @@ type mutexContext struct {
 	key           string
 	token         string
 	lastHeartbeat time.Time
-	lockTime      int64 // if equal 0, has not locked
+	lockTime      ldatomic.Int64 // if equal 0, has not locked
 	events        chan MutexEvent
+}
+
+type atomicMutexContext struct {
+	d ldatomic.Pointer
+}
+
+func (a *atomicMutexContext) toData(p unsafe.Pointer) *mutexContext {
+	return (*mutexContext)(p)
+}
+
+func (a *atomicMutexContext) Load() *mutexContext { return a.toData(a.d.Load()) }
+
+// func (a *atomicMutexContext) Store(d *mutexContext) { a.d.Store(unsafe.Pointer(d)) }
+//
+// func (a *atomicMutexContext) Swap(new *mutexContext) (old *mutexContext) {
+// 	return a.toData(a.d.Swap(unsafe.Pointer(new)))
+// }
+
+func (a *atomicMutexContext) CompareAndSwap(old, new *mutexContext) (swapped bool) {
+	return a.d.CompareAndSwap(unsafe.Pointer(old), unsafe.Pointer(new))
 }
 
 type Mutex struct {
@@ -49,7 +70,7 @@ type Mutex struct {
 	lockForceInterval time.Duration
 	unlockDelay       time.Duration
 
-	ctx *mutexContext
+	ctx atomicMutexContext
 }
 
 func NewMutex(redis *Redis) *Mutex {
@@ -143,8 +164,8 @@ func (m *Mutex) getMinTimeout(d time.Duration) time.Duration {
 }
 
 func (m *Mutex) mustGetContext() *mutexContext {
-	mc := m.ctx
-	if mc == nil || atomic.LoadInt64(&mc.lockTime) == 0 {
+	mc := m.ctx.Load()
+	if mc == nil {
 		mc = &mutexContext{
 			events: closedMutextEventsChan,
 		}
@@ -163,11 +184,14 @@ func (m *Mutex) Lock(key string) error {
 	ctx := m.redis.context()
 	ctx = ldctx.WithCancel(ctx)
 
-	mc := m.mustGetContext()
-	if atomic.LoadInt64(&mc.lockTime) != 0 {
+	mc := m.ctx.Load()
+	if mc != nil && mc.lockTime.Load() != 0 {
 		ctx.LogE("redis mutex has been locked", zap.String("key", key), zap.String("old", mc.key),
 			getCaller(m.redis.caller))
 		return lderr.ErrCacheMutexLocked
+	}
+	if mc != nil {
+		m.ctx.CompareAndSwap(mc, nil)
 	}
 
 	token := hex.EncodeToString(ldrand.Bytes(16))
@@ -196,17 +220,18 @@ func (m *Mutex) Lock(key string) error {
 	}
 
 	now := time.Now().UnixNano()
-	if ok := atomic.CompareAndSwapInt64(&mc.lockTime, 0, now); !ok {
+	mc = &mutexContext{
+		ctx:      ctx,
+		key:      key,
+		token:    token,
+		lockTime: ldatomic.Int64(now),
+		events:   make(chan MutexEvent, 1),
+	}
+	if ok := m.ctx.CompareAndSwap(nil, mc); !ok {
 		// cli := m.redis.Client()
 		// cli.Del(key)
 		return lderr.ErrCacheMutexLocked
 	}
-
-	mc.ctx = ctx
-	mc.key = key
-	mc.token = token
-	mc.events = make(chan MutexEvent, 1)
-	m.ctx = mc
 
 	go m.goroutine(mc, now)
 
@@ -248,8 +273,13 @@ func (m *Mutex) Unlock() error {
 func (m *Mutex) unlock() error {
 	ctx := m.redis.context()
 
-	mc := m.mustGetContext()
-	lockTime := atomic.LoadInt64(&mc.lockTime)
+	mc := m.ctx.Load()
+	if mc == nil {
+		ctx.LogW("redis mutex has not been locked", getCaller(m.redis.caller))
+		return nil
+	}
+
+	lockTime := mc.lockTime.Load()
 	if lockTime == 0 {
 		ctx.LogW("redis mutex has not been locked", getCaller(m.redis.caller))
 		return nil
@@ -264,10 +294,11 @@ func (m *Mutex) unlock() error {
 	log = log.With(zap.String("key", key), zap.String("token", val))
 	ctx = ldctx.WithLogger(ctx, log)
 
-	if ok := atomic.CompareAndSwapInt64(&mc.lockTime, lockTime, 0); !ok {
+	if ok := mc.lockTime.CompareAndSwap(lockTime, 0); !ok {
 		ctx.LogW("redis mutex has been unlocked by another goroutine", getCaller(m.redis.caller))
 		return nil
 	}
+	m.ctx.CompareAndSwap(mc, nil)
 
 	ctx.LogD("redis mutex will be unlocked", getCaller(m.redis.caller))
 
@@ -294,10 +325,10 @@ func (m *Mutex) goroutine(mc *mutexContext, lockTime int64) {
 		ctx.LogD("redis mutex goroutine stop")
 
 		ldctx.TryCancel(ctx)
-		atomic.CompareAndSwapInt64(&mc.lockTime, lockTime, 0)
+		mc.lockTime.CompareAndSwap(lockTime, 0)
 
 		close(mc.events)
-		m.ctx = nil
+		m.ctx.CompareAndSwap(mc, nil)
 
 		ticker.Stop()
 	}()
