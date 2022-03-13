@@ -261,6 +261,7 @@ func (that *convNumberReader) GetString() string {
 	if that.typNum == _NUMBER_TYPE_NIL {
 		return ""
 	}
+
 	return BytesToStrUnsafe(that.buff[that.begin:that.end])
 }
 
