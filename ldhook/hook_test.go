@@ -32,6 +32,12 @@ func TestHookConvert(t *testing.T) {
 			convey.So(testFuncForConvert(1, ""), convey.ShouldEqual, 1101)
 			convey.So(testFuncForConvert(1, ""), convey.ShouldEqual, 1101)
 
+			patches.Apply(FuncHook{
+				Target: testFuncForConvert,
+				Double: Values{int64(1201)},
+			})
+			convey.So(testFuncForConvert(1, ""), convey.ShouldEqual, 1201)
+
 			patches.Reset()
 			convey.So(testFuncForConvert(1, ""), convey.ShouldEqual, 1001)
 		})

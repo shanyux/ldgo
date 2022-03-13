@@ -13,16 +13,25 @@ import (
 func TestVariableHook(t *testing.T) {
 	var _TestVariableHook *int
 	convey.Convey(t.Name(), t, func() {
-		v := 100
+		v0 := 100
+		v1 := 200
 
 		patches := NewPatches()
+		defer patches.Reset()
+
 		patches.Apply(VariableHook{
 			Target: &_TestVariableHook,
-			Double: &v,
+			Double: &v0,
 		})
-
 		convey.So(_TestVariableHook, convey.ShouldNotBeNil)
-		convey.So(*_TestVariableHook, convey.ShouldEqual, v)
+		convey.So(*_TestVariableHook, convey.ShouldEqual, v0)
+
+		patches.Apply(VariableHook{
+			Target: &_TestVariableHook,
+			Double: &v1,
+		})
+		convey.So(_TestVariableHook, convey.ShouldNotBeNil)
+		convey.So(*_TestVariableHook, convey.ShouldEqual, v1)
 
 		patches.Reset()
 		convey.So(_TestVariableHook, convey.ShouldBeNil)
