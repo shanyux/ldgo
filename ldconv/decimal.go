@@ -40,6 +40,9 @@ func newDecimalFromUint(n uint64) decimalNumber {
 }
 
 func newDecimalFromIntStr(s string, negative bool, base int) (decimalNumber, error) {
+	if len(s) == 0 {
+		return newDecimalZero(), nil
+	}
 	i, _ := new(big.Int).SetString(s, base)
 	if negative {
 		i = i.Neg(i)
