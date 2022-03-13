@@ -205,9 +205,65 @@ func ToUint64(_v interface{}) (uint64, error) {
 	return 0, _ERR_UNKOWN_TYPE
 }
 
-func ToFloat32(v interface{}) (float32, error) {
-	n, err := ToFloat64(v)
-	return float32(n), err
+func ToFloat32(vv interface{}) (float32, error) {
+	switch v := vv.(type) {
+	case bool:
+		if v {
+			return 1, nil
+		}
+		return 0, nil
+
+	case int:
+		return float32(v), nil
+	case int8:
+		return float32(v), nil
+	case int16:
+		return float32(v), nil
+	case int32:
+		return float32(v), nil
+	case int64:
+		return float32(v), nil
+
+	case uint:
+		return float32(v), nil
+	case uint8:
+		return float32(v), nil
+	case uint16:
+		return float32(v), nil
+	case uint32:
+		return float32(v), nil
+	case uint64:
+		return float32(v), nil
+
+	case float32:
+		return float32(v), nil
+	case float64:
+		return float32(v), nil
+
+	case big.Float:
+		r, _ := v.Float32()
+		return r, nil
+	case *big.Float:
+		r, _ := v.Float32()
+		return r, nil
+
+	case decimalNumber:
+		r, _ := v.Rat().Float32()
+		return r, nil
+	case *decimalNumber:
+		r, _ := v.Rat().Float32()
+		return r, nil
+
+	case []byte:
+		f, err := convFloat(v)
+		r, _ := f.Rat().Float32()
+		return r, err
+	case string:
+		f, err := convFloat(StrToBytesUnsafe(v))
+		r, _ := f.Rat().Float32()
+		return r, err
+	}
+	return 0, _ERR_UNKOWN_TYPE
 }
 
 func ToFloat64(_v interface{}) (float64, error) {
@@ -253,19 +309,19 @@ func ToFloat64(_v interface{}) (float64, error) {
 		return r, nil
 
 	case decimalNumber:
-		r, _ := v.BigFloat().Float64()
+		r, _ := v.Rat().Float64()
 		return r, nil
 	case *decimalNumber:
-		r, _ := v.BigFloat().Float64()
+		r, _ := v.Rat().Float64()
 		return r, nil
 
 	case []byte:
 		f, err := convFloat(v)
-		r, _ := f.Float64()
+		r, _ := f.Rat().Float64()
 		return r, err
 	case string:
 		f, err := convFloat(StrToBytesUnsafe(v))
-		r, _ := f.Float64()
+		r, _ := f.Rat().Float64()
 		return r, err
 	}
 	return 0, _ERR_UNKOWN_TYPE
