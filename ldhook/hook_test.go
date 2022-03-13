@@ -5,6 +5,7 @@
 package ldhook
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/smartystreets/goconvey/convey"
@@ -21,8 +22,7 @@ func (_ *testMethodForConvert) Test(_ ...interface{}) interface{} {
 func TestHookConvert(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
 		patches := NewPatches()
-		defer patches.Reset()
-		defer patches.Reset()
+		defer patches.Reset() // check double reset
 
 		convey.Convey("FuncHook", func() {
 			patches.Apply(FuncHook{
@@ -31,10 +31,23 @@ func TestHookConvert(t *testing.T) {
 			})
 			convey.So(testFuncForConvert(1, ""), convey.ShouldEqual, 1101)
 			convey.So(testFuncForConvert(1, ""), convey.ShouldEqual, 1101)
+
+			patches.Reset()
+			convey.So(testFuncForConvert(1, ""), convey.ShouldEqual, 1001)
 		})
 		convey.Convey("MethodHook", func() {
 			patches.Apply(MethodHook{
 				Target: (*testMethodForConvert)(nil),
+				Method: "Test",
+				Double: Values{1701},
+			})
+			obj := &testMethodForConvert{}
+			convey.So(obj.Test(1, ""), convey.ShouldEqual, 1701)
+			convey.So(obj.Test(1, ""), convey.ShouldEqual, 1701)
+		})
+		convey.Convey("MethodHook(reflect.Type)", func() {
+			patches.Apply(MethodHook{
+				Target: reflect.TypeOf((*testMethodForConvert)(nil)),
 				Method: "Test",
 				Double: Values{1701},
 			})
