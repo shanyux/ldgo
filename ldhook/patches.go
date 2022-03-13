@@ -5,12 +5,19 @@
 package ldhook
 
 import (
-	"github.com/agiledragon/gomonkey"
+	"container/list"
+	"fmt"
+	"reflect"
 )
 
 type Patches interface {
 	Apply(hooks ...Hook)
 	Applys(hooks []Hook)
+
+	ApplyFunc(target, double interface{})
+	ApplyMethod(target reflect.Type, methodName string, double interface{})
+	ApplyGlobalVar(target, double interface{})
+
 	Reset()
 }
 
@@ -19,16 +26,23 @@ func NewPatches() Patches {
 }
 
 type patches struct {
-	patches []*gomonkey.Patches
+	funcs     list.List
+	variables list.List
 }
 
 func (p *patches) Reset() {
-	for i := len(p.patches) - 1; i >= 0; i-- {
-		v := p.patches[i]
-		v.Reset()
-		p.patches[i] = nil
+	for i := p.funcs.Back(); i != nil; i = i.Prev() {
+		v := i.Value.(patchFunc)
+		resetFunc(v)
 	}
-	p.patches = p.patches[:0]
+	p.funcs.Init()
+
+	for i := p.variables.Back(); i != nil; i = i.Prev() {
+		v := i.Value.(patchVariable)
+		resetVariable(v)
+	}
+	p.variables.Init()
+
 }
 
 func (p *patches) Apply(hooks ...Hook) {
@@ -40,9 +54,59 @@ func (p *patches) Applys(hooks []Hook) {
 		return
 	}
 
-	patch := gomonkey.NewPatches()
 	for _, h := range hooks {
-		h.hook(patch)
+		h.hook(p)
 	}
-	p.patches = append(p.patches, patch)
+}
+
+func (p *patches) coreApplyVariable(target, double reflect.Value) {
+	if target.Type().Kind() != reflect.Ptr {
+		panic("target is not a pointer")
+	}
+
+	value := applyVariable(target, double)
+	p.variables.PushBack(value)
+}
+
+func (p *patches) coreApplyFunc(target, double reflect.Value) {
+	p.checkFunc(target, double)
+
+	value := applyFunc(target, double)
+	p.funcs.PushBack(value)
+}
+
+func (p *patches) checkFunc(target, double reflect.Value) {
+	if target.Kind() != reflect.Func {
+		panic("target is not a func")
+	}
+
+	if double.Kind() != reflect.Func {
+		panic("double is not a func")
+	}
+
+	if target.Type() != double.Type() {
+		panic(fmt.Sprintf("target type(%s) and double type(%s) are different", target.Type(), double.Type()))
+	}
+}
+
+func (p *patches) ApplyFunc(target, double interface{}) {
+	p.Apply(FuncHook{
+		Target: target,
+		Double: double,
+	})
+}
+
+func (p *patches) ApplyMethod(target reflect.Type, method string, double interface{}) {
+	p.Apply(MethodHook{
+		Target: target,
+		Method: method,
+		Double: double,
+	})
+}
+
+func (p *patches) ApplyGlobalVar(target, double interface{}) {
+	p.Apply(VariableHook{
+		Target: target,
+		Double: double,
+	})
 }

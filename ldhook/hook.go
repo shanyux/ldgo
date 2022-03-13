@@ -6,12 +6,10 @@ package ldhook
 
 import (
 	"reflect"
-
-	"github.com/agiledragon/gomonkey"
 )
 
 type Hook interface {
-	hook(patches *gomonkey.Patches)
+	hook(patches *patches)
 }
 
 type FuncHook struct {
@@ -19,9 +17,12 @@ type FuncHook struct {
 	Double interface{} // must be func/[]OutputCell/OutputCell/[]Values/Values
 }
 
-func (h FuncHook) hook(patches *gomonkey.Patches) {
+func (h FuncHook) hook(patches *patches) {
+	target := h.Target
 	funcType := reflect.TypeOf(h.Target)
-	patches.ApplyFunc(h.Target, getDoubleInterface(funcType, h.Double))
+	double := getDoubleInterface(funcType, h.Double)
+
+	patches.coreApplyFunc(reflect.ValueOf(target), reflect.ValueOf(double))
 }
 
 type MethodHook struct {
@@ -30,14 +31,20 @@ type MethodHook struct {
 	Double interface{} // must be func/[]OutputCell/OutputCell/[]Params/Params
 }
 
-func (h MethodHook) hook(patches *gomonkey.Patches) {
-	tType := reflect.TypeOf(h.Target)
+func (h MethodHook) hook(patches *patches) {
+	tType, ok := h.Target.(reflect.Type)
+	if !ok || tType == nil {
+		tType = reflect.TypeOf(h.Target)
+	}
 	method, ok := tType.MethodByName(h.Method)
 	if !ok {
 		panic("retrieve method by name fail")
 	}
+
 	mType := method.Type
-	patches.ApplyMethod(tType, h.Method, getDoubleInterface(mType, h.Double))
+	double := getDoubleInterface(mType, h.Double)
+
+	patches.coreApplyFunc(method.Func, reflect.ValueOf(double))
 }
 
 func getDoubleInterface(funcType reflect.Type, double interface{}) interface{} {
