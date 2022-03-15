@@ -75,7 +75,7 @@ func (c *CodecRedis) HGetAll(key string) *StringCodecMapCmd {
 	return newStringCodecMapCmd(c, c.client.HGetAll(key))
 }
 func (c *CodecRedis) HMGet(key string, fields ...string) *CodecSliceCmd {
-	return newCodecSliceCmd(c, c.client.HMGet(key))
+	return newCodecSliceCmd(c, c.client.HMGet(key, fields...))
 }
 func (c *CodecRedis) HMSet(key string, fields map[string]interface{}) *StatusCmd {
 	return c.client.HMSet(key, c.marshalStringInterfaceMap(fields))

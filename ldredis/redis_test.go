@@ -25,7 +25,7 @@ func Test_New(t *testing.T) {
 				Addrs:    []string{"1.1.1.1"},
 				Password: "now password",
 			}
-			NewByConfig(cfg)
+			convey.So(NewByConfig(cfg), convey.ShouldNotBeNil)
 		})
 
 		convey.Convey("redis not cluster", func() {
@@ -41,7 +41,7 @@ func Test_New(t *testing.T) {
 				Addr:     "1.1.1.1",
 				Password: "now password",
 			}
-			NewByConfig(cfg)
+			convey.So(NewByConfig(cfg), convey.ShouldNotBeNil)
 		})
 	})
 }
