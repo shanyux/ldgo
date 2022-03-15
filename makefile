@@ -46,7 +46,7 @@ _func_protobuf = ( \
 	cd $(1); \
 	rm -rf *.pb.go *_pb2.py; \
 	echo protoc --go_out . --python_out . *.proto; \
-	protoc --go_out . --python_out . *.proto || exit $$?; \
+	protoc --go_out . --python_out . ./*.proto || exit $$?; \
 	cd $(PROJECT_ROOT); \
 	);
 
@@ -54,7 +54,7 @@ _func_protobuf = ( \
 all: setup go-test
 
 .PHONY: $(GO_TEST_DIRS_NAME)
-$(GO_TEST_DIRS_NAME): pb
+$(GO_TEST_DIRS_NAME):
 	@echo GO_TEST_DIRS: $(notdir $@)
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) -v ./$(notdir $@)
 
@@ -68,12 +68,12 @@ dep: setup
 	# $(GO) mod vendor
 
 .PHONY: go-test-coverage
-go-test-coverage: setup
+go-test-coverage:
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) ./... -json > "$(GO_TEST_OUTPUT)/test.json"
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) ./... -coverprofile="$(GO_TEST_OUTPUT)/coverage.out"
 
 .PHONY: go-test
-go-test: pb
+go-test:
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) -v ./...
 
 .PHONY: setup
