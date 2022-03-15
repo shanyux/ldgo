@@ -15,80 +15,72 @@ import (
 func ProtoCodec(m ...proto.Message) Codec { return ProtoV1Codec(m...) }
 
 func ProtoV1Codec(m ...proto.Message) Codec {
-	c := protoCodec{
-		marshal: func(p interface{}) ([]byte, error) {
-			m, _ := p.(proto.Message)
-			if m == nil {
-				return nil, fmt.Errorf("the object for marshal must be `proto.Message`. type:%T", p)
-			}
-			return proto.Marshal(m)
-		},
-		unmarshal: func(b []byte, p interface{}) error {
-			m, _ := p.(proto.Message)
-			if m == nil {
-				return fmt.Errorf("the object for unmarshal must be `proto.Message`. type:%T", p)
-			}
-			return proto.Unmarshal(b, m)
-		},
+	if len(m) == 0 || m[0] == nil {
+		return protoV1Codec{}
 	}
 
-	if len(m) > 0 && m[0] != nil {
-		c.typ = reflect.TypeOf(m[0])
+	return protoV1Codec{
+		t: reflect.TypeOf(m[0]),
 	}
-
-	return c
 }
 
 func ProtoV2Codec(m ...protov2.Message) Codec {
-	c := protoCodec{
-		marshal: func(p interface{}) ([]byte, error) {
-			m, _ := p.(protov2.Message)
-			if m == nil {
-				return nil, fmt.Errorf("the object for marshal must be `protoV2.Message`. type:%T", p)
-			}
-			return protov2.Marshal(m)
-		},
-		unmarshal: func(b []byte, p interface{}) error {
-			m, _ := p.(protov2.Message)
-			if m == nil {
-				return fmt.Errorf("the object for unmarshal must be `protoV2.Message`. type:%T", p)
-			}
-			return protov2.Unmarshal(b, m)
-		},
+	if len(m) == 0 || m[0] == nil {
+		return protoV2Codec{}
 	}
 
-	if len(m) > 0 && m[0] != nil {
-		c.typ = reflect.TypeOf(m[0])
+	return protoV2Codec{
+		m: m[0],
 	}
-
-	return c
 }
 
-type protoCodec struct {
-	typ       reflect.Type
-	marshal   func(v interface{}) ([]byte, error)
-	unmarshal func(b []byte, p interface{}) error
+type protoV1Codec struct {
+	t reflect.Type
 }
 
-func (c protoCodec) Marshal(v interface{}) ([]byte, error) {
-	return c.marshal(v)
+func (c protoV1Codec) Marshal(v interface{}) ([]byte, error) {
+	m, _ := v.(proto.Message)
+	if m == nil {
+		return nil, fmt.Errorf("the object for marshal must be `proto.Message`. type:%T", v)
+	}
+	return proto.Marshal(m)
 }
 
-func (c protoCodec) Unmarshal(b []byte) (interface{}, error) {
-	if c.typ == nil {
+func (c protoV1Codec) Unmarshal(b []byte) (interface{}, error) {
+	if c.t == nil {
 		return nil, fmt.Errorf("cannot new object before unmarshal. type:<nil>")
 	}
 
-	switch c.typ.Kind() {
-	case reflect.Struct:
-		v := reflect.New(c.typ).Elem().Interface()
-		return v, c.unmarshal(b, &v)
-
-	case reflect.Ptr:
-		p := reflect.New(c.typ.Elem()).Interface()
-		return p, c.unmarshal(b, p)
-
-	default:
-		return nil, fmt.Errorf("cannot new object before unmarshal. type:%s", c.typ.Name())
+	if c.t.Kind() != reflect.Ptr || c.t.Elem().Kind() != reflect.Struct {
+		return nil, fmt.Errorf("cannot new object before unmarshal. type:%s", c.t.String())
 	}
+
+	p := reflect.New(c.t.Elem()).Interface()
+	m, _ := p.(proto.Message)
+	if m == nil {
+		return nil, fmt.Errorf("the object for unmarshal must be `proto.Message`. type:%T", p)
+	}
+
+	return m, proto.Unmarshal(b, m)
+}
+
+type protoV2Codec struct {
+	m protov2.Message
+}
+
+func (c protoV2Codec) Marshal(v interface{}) ([]byte, error) {
+	m, _ := v.(protov2.Message)
+	if m == nil {
+		return nil, fmt.Errorf("the object for marshal must be `protoV2.Message`. type:%T", v)
+	}
+	return protov2.Marshal(m)
+}
+
+func (c protoV2Codec) Unmarshal(b []byte) (interface{}, error) {
+	if c.m == nil {
+		return nil, fmt.Errorf("cannot new object before unmarshal. type:<nil>")
+	}
+
+	m := c.m.ProtoReflect().New().Interface()
+	return m, protov2.Unmarshal(b, m)
 }

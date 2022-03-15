@@ -1,0 +1,12 @@
+/*
+ * Copyright (C) distroy
+ */
+
+syntax = "proto2";
+package ldtestproto;
+
+message TestProto {
+    optional string str = 1;
+    optional int64  i64 = 2;
+    optional double f64 = 3;
+}

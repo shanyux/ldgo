@@ -4,7 +4,9 @@
 
 # variables
 PROJECT_ROOT= $(patsubst %/,%,$(abspath $(dir $$PWD)))
+PROTOS=$(dir $(shell test -d "$(PROJECT_ROOT)/proto" && find "$(PROJECT_ROOT)/proto" -name '*.proto'))
 $(info PROJECT_ROOT: $(PROJECT_ROOT))
+$(info PROTOS: $(PROTOS))
 
 # go
 # GO=env GODEBUG=madvdontneed=1 go
@@ -39,13 +41,26 @@ $(info GIT_REVISION: $(GIT_REVISION))
 $(info GIT_BRANCH: $(GIT_BRANCH))
 $(info GIT_TAG: $(GIT_TAG))
 
+_func_protobuf = ( \
+	echo "=== building protobuf: $(1)"; \
+	cd $(1); \
+	rm -rf *.pb.go *_pb2.py; \
+	echo protoc --go_out . --python_out . *.proto; \
+	protoc --go_out . --python_out . *.proto || exit $$?; \
+	cd $(PROJECT_ROOT); \
+	);
+
 .PHONY: all
 all: setup go-test
 
 .PHONY: $(GO_TEST_DIRS_NAME)
-$(GO_TEST_DIRS_NAME):
+$(GO_TEST_DIRS_NAME): pb
 	@echo GO_TEST_DIRS: $(notdir $@)
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) -v ./$(notdir $@)
+
+.PHONY: pb
+pb:
+	@$(foreach i, $(PROTOS), $(call _func_protobuf,$(i)))
 
 .PHONY: dep
 dep: setup
@@ -58,7 +73,7 @@ go-test-coverage: setup
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) ./... -coverprofile="$(GO_TEST_OUTPUT)/coverage.out"
 
 .PHONY: go-test
-go-test:
+go-test: pb
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) -v ./...
 
 .PHONY: setup
