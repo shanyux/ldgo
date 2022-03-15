@@ -167,6 +167,9 @@ func (c *CodecRedis) SIsMember(key string, member interface{}) *BoolCmd {
 func (c *CodecRedis) SMembers(key string) *CodecsCmd {
 	return newCodecsCmd(c, c.client.SMembers(key))
 }
+func (c *CodecRedis) SMembersMap(key string) *CodecSetCmd {
+	return newCodecSetCmd(c, c.client.SMembersMap(key))
+}
 func (c *CodecRedis) SMove(src, dest string, member interface{}) *BoolCmd {
 	return c.client.SMove(src, dest, c.mustMarshal(member))
 }

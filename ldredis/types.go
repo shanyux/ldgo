@@ -141,7 +141,7 @@ type CodecCmdable interface {
 	SInterStore(destination string, keys ...string) *IntCmd        // same as Cmdable
 	SIsMember(key string, member interface{}) *BoolCmd             //
 	SMembers(key string) *CodecsCmd                                //
-	SMembersMap(key string) *StringSetCmd                          // same as Cmdable
+	SMembersMap(key string) *CodecSetCmd                           //
 	SMove(source, destination string, member interface{}) *BoolCmd //
 	SPop(key string) *CodecCmd                                     //
 	SPopN(key string, count int64) *CodecsCmd                      //
