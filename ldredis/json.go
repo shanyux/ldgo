@@ -6,6 +6,7 @@ package ldredis
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 )
 
@@ -28,43 +29,42 @@ func (c jsonCodec) Marshal(v interface{}) ([]byte, error) {
 }
 
 func (c jsonCodec) Unmarshal(b []byte) (interface{}, error) {
-	var p interface{}
-	var v interface{}
-
-	if c.typ != nil {
-		switch c.typ.Kind() {
-		case reflect.Map:
-			v = reflect.MakeMap(c.typ).Interface()
-
-		case reflect.Slice, reflect.Array:
-			v = reflect.MakeSlice(reflect.SliceOf(c.typ.Elem()), 0, 0).Interface()
-
-		case reflect.Struct:
-			v = reflect.New(c.typ).Elem().Interface()
-
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-			reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
-			reflect.Uintptr, reflect.UnsafePointer,
-			reflect.Float32, reflect.Float64,
-			reflect.Bool, reflect.String:
-			v = reflect.New(c.typ).Elem().Interface()
-
-		case reflect.Ptr:
-			p = reflect.New(c.typ.Elem()).Interface()
-
-		default:
-		}
-	}
-
-	if p == nil {
+	if c.typ == nil {
+		var v interface{}
 		if err := json.Unmarshal(b, &v); err != nil {
 			return nil, err
 		}
 		return v, nil
 	}
 
-	if err := json.Unmarshal(b, p); err != nil {
+	var p reflect.Value
+	var v reflect.Value
+
+	switch c.typ.Kind() {
+	default:
+		return nil, fmt.Errorf("the type is not supported. %s", c.typ.String())
+
+	case reflect.Ptr:
+		p = reflect.New(c.typ.Elem())
+		v = p
+
+	case reflect.Slice, reflect.Array, reflect.Map, reflect.Struct:
+		p = reflect.New(c.typ)
+		v = p.Elem()
+
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.Uintptr, reflect.UnsafePointer,
+		reflect.Float32, reflect.Float64,
+		reflect.Bool, reflect.String:
+
+		p = reflect.New(c.typ)
+		v = p.Elem()
+	}
+
+	if err := json.Unmarshal(b, p.Interface()); err != nil {
 		return nil, err
 	}
-	return p, nil
+
+	return v.Interface(), nil
 }

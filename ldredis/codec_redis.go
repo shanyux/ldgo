@@ -75,7 +75,7 @@ func (c *CodecRedis) HGetAll(key string) *StringCodecMapCmd {
 	return newStringCodecMapCmd(c, c.client.HGetAll(key))
 }
 func (c *CodecRedis) HMGet(key string, fields ...string) *CodecSliceCmd {
-	return newCodecSliceCmd(c, c.client.HMGet(key))
+	return newCodecSliceCmd(c, c.client.HMGet(key, fields...))
 }
 func (c *CodecRedis) HMSet(key string, fields map[string]interface{}) *StatusCmd {
 	return c.client.HMSet(key, c.marshalStringInterfaceMap(fields))
@@ -166,6 +166,9 @@ func (c *CodecRedis) SIsMember(key string, member interface{}) *BoolCmd {
 }
 func (c *CodecRedis) SMembers(key string) *CodecsCmd {
 	return newCodecsCmd(c, c.client.SMembers(key))
+}
+func (c *CodecRedis) SMembersMap(key string) *CodecSetCmd {
+	return newCodecSetCmd(c, c.client.SMembersMap(key))
 }
 func (c *CodecRedis) SMove(src, dest string, member interface{}) *BoolCmd {
 	return c.client.SMove(src, dest, c.mustMarshal(member))

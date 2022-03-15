@@ -14,7 +14,7 @@ import (
 	"github.com/smartystreets/goconvey/convey"
 )
 
-func mockRedis() *Redis {
+func testMemoryRedis() *Redis {
 	server, err := miniredis.Run()
 	if err != nil {
 		panic(err)
@@ -27,13 +27,15 @@ func mockRedis() *Redis {
 
 func TestMutex_Unlock(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
+		rds := testMemoryRedis()
+		defer rds.Close()
+
+		lockKey := "test-key"
 		timeout := 1 * time.Second
-		ctx := ldctx.WithTimeout(ldctx.Console(), timeout)
-		rds := mockRedis()
+		ctx := ldctx.WithTimeout(ldctx.Discard(), timeout)
 
 		convey.Convey("unlock after context not timeout", func() {
 			m := NewMutex(rds).WithContext(ctx)
-			lockKey := "test-key"
 
 			convey.So(m.Lock(lockKey), convey.ShouldBeNil)
 
@@ -44,7 +46,6 @@ func TestMutex_Unlock(t *testing.T) {
 
 		convey.Convey("unlock after context timeout", func() {
 			m := NewMutex(rds).WithContext(ctx)
-			lockKey := "test-key"
 
 			convey.So(m.Lock(lockKey), convey.ShouldBeNil)
 

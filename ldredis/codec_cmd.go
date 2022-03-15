@@ -118,6 +118,41 @@ func (c *CodecsCmd) parse(cli *CodecRedis, cmd *StringsCmd) {
 	c.val = s
 }
 
+func newCodecSetCmd(cli *CodecRedis, cmd *StringSetCmd) *CodecSetCmd {
+	c := &CodecSetCmd{}
+	c.parse(cli, cmd)
+	return c
+}
+
+type CodecSetCmd struct {
+	*StringSetCmd
+
+	err error
+	val map[interface{}]struct{}
+}
+
+func (c *CodecSetCmd) Err() error                                { return c.err }
+func (c *CodecSetCmd) Val() map[interface{}]struct{}             { return c.val }
+func (c *CodecSetCmd) Result() (map[interface{}]struct{}, error) { return c.Val(), c.Err() }
+func (c *CodecSetCmd) parse(cli *CodecRedis, cmd *StringSetCmd) {
+	c.StringSetCmd = cmd
+	c.err = cmd.Err()
+	if c.err != nil {
+		return
+	}
+
+	s := make(map[interface{}]struct{}, len(cmd.Val()))
+	for val := range cmd.Val() {
+		v, err := cli.unmarshal(ldconv.StrToBytesUnsafe(val))
+		if err != nil {
+			c.err = err
+			return
+		}
+		s[v] = struct{}{}
+	}
+	c.val = s
+}
+
 func newCodecSliceCmd(cli *CodecRedis, cmd *SliceCmd) *CodecSliceCmd {
 	c := &CodecSliceCmd{}
 	c.parse(cli, cmd)
