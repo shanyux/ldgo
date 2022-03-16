@@ -19,6 +19,10 @@ func TestCodecRedis_String(t *testing.T) {
 		key := "test-codec-redis-string"
 		expiration := time.Duration(0)
 
+		convey.Convey("marshal fail", func() {
+			cmd := rds.WithCodec(ProtoV1Codec()).Set(key, "234", expiration)
+			convey.So(cmd.Err().Error(), convey.ShouldStartWith, "the object for marshal must be `proto.Message`.")
+		})
 		convey.Convey("set/setnx/setxx/get", func() {
 			s0 := rds.WithCodec(JsonCodec()).SetXX(key, "100", expiration)
 			convey.So(s0.Err(), convey.ShouldBeNil)
