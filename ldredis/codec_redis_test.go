@@ -11,6 +11,37 @@ import (
 	"github.com/smartystreets/goconvey/convey"
 )
 
+func TestCodecRedis_Nil(t *testing.T) {
+	convey.Convey(t.Name(), t, func() {
+		rds := testMemoryRedis()
+		defer rds.Close()
+
+		type TestImpl struct{}
+
+		var pTest *TestImpl
+		var p interface{} = pTest
+
+		convey.So(pTest == nil, convey.ShouldBeTrue)
+		convey.So(p, convey.ShouldBeNil)
+		convey.So(p, convey.ShouldNotResemble, nil)
+
+		key := "test-codec-redis-nil"
+		expiration := 100 * time.Second
+
+		s := rds.WithCodec(JsonCodec()).SetNX(key, p, expiration)
+		convey.So(s.Err(), convey.ShouldBeNil)
+		convey.So(s.Val(), convey.ShouldBeTrue)
+
+		g0 := rds.Get(key)
+		convey.So(g0.Err(), convey.ShouldBeNil)
+		convey.So(g0.Val(), convey.ShouldResemble, "")
+
+		g1 := rds.WithCodec(JsonCodec()).Get(key)
+		convey.So(g1.Err(), convey.ShouldBeNil)
+		convey.So(g1.Val(), convey.ShouldResemble, nil)
+	})
+}
+
 func TestCodecRedis_String(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
 		rds := testMemoryRedis()
@@ -19,6 +50,10 @@ func TestCodecRedis_String(t *testing.T) {
 		key := "test-codec-redis-string"
 		expiration := time.Duration(0)
 
+		convey.Convey("marshal fail", func() {
+			cmd := rds.WithCodec(ProtoV1Codec()).Set(key, "234", expiration)
+			convey.So(cmd.Err().Error(), convey.ShouldStartWith, "the object for marshal must be `proto.Message`.")
+		})
 		convey.Convey("set/setnx/setxx/get", func() {
 			s0 := rds.WithCodec(JsonCodec()).SetXX(key, "100", expiration)
 			convey.So(s0.Err(), convey.ShouldBeNil)

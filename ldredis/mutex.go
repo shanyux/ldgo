@@ -70,6 +70,8 @@ type Mutex struct {
 	lockForceInterval time.Duration
 	unlockDelay       time.Duration
 
+	// if equal nil, has not locked
+	// but when mutex has been cloned. maybe the lockTime is equal 0, the ctx is not equal nil
 	ctx atomicMutexContext
 }
 
