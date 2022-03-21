@@ -5,6 +5,7 @@
 package ldredis
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -25,7 +26,14 @@ type jsonCodec struct {
 }
 
 func (c jsonCodec) Marshal(v interface{}) ([]byte, error) {
-	return json.Marshal(v)
+	b, err := json.Marshal(v)
+	if err != nil {
+		return nil, err
+	}
+	if bytes.Compare(b, []byte("null")) == 0 {
+		return nil, nil
+	}
+	return b, nil
 }
 
 func (c jsonCodec) Unmarshal(b []byte) (interface{}, error) {
