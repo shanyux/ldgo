@@ -79,7 +79,7 @@ go-test:
 .PHONY: setup
 setup:
 	git config core.hooksPath "script/git-hook"
-	go install github.com/distroy/gocognit/cmd/gocognit@latest || go install github.com/distroy/gocognit/cmd/gocognit
+	type gocognit || go install github.com/distroy/gocognit/cmd/gocognit@latest || go install github.com/distroy/gocognit/cmd/gocognit
 	@echo $$'\E[32;1m'"setup succ"$$'\E[0m'
 
 .PHONY: complexity
