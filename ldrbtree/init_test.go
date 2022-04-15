@@ -5,6 +5,7 @@
 package ldrbtree
 
 import (
+	"os"
 	"testing"
 
 	"github.com/distroy/ldgo/ldrand"
@@ -29,7 +30,7 @@ func TestMain(m *testing.M) {
 	// log.Printf("unordered: %v", _numsUnordered)
 	// log.Printf("nums: %v", _nums)
 
-	m.Run()
+	os.Exit(m.Run())
 }
 
 func testNewRBTree() *RBTree {
