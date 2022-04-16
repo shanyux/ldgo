@@ -149,13 +149,29 @@ func (c *Context) Value(key interface{}) interface{} {
 	return c.ldCtx.Value(key)
 }
 
+func (c *Context) AbortWithData(data interface{}) {
+	c.AbortWithErrorData(lderr.ErrSuccess, data)
+}
+
 func (c *Context) AbortWithError(err Error) {
+	c.AbortWithErrorData(err, struct{}{})
+}
+
+func (c *Context) AbortWithErrorData(err Error, data interface{}) {
+	if data == nil {
+		data = struct{}{}
+	}
+
+	if err == nil {
+		err = lderr.ErrSuccess
+	}
+
 	response := &CommResponse{
 		Sequence: c.sequence,
 		Cost:     time.Since(c.beginTime).String(),
 		ErrCode:  err.Code(),
 		ErrMsg:   err.Error(),
-		Data:     struct{}{},
+		Data:     data,
 	}
 
 	if e, ok := err.(lderr.ErrorWithDetails); ok {
