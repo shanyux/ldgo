@@ -190,3 +190,18 @@ func (c *Context) GetPath() string  { return c.path }
 
 func (c *Context) setMethod(m string) { c.method = m }
 func (c *Context) GetMethod() string  { return c.method }
+
+func (c *Context) GetBeginTime() time.Time { return c.beginTime }
+func (c *Context) GetSequence() string     { return c.sequence }
+
+func (c *Context) GetError() Error {
+	v := c.Gin().Value(GinKeyError)
+	r, _ := v.(Error)
+	return r
+}
+
+func (c *Context) GetResponse() *CommResponse {
+	v := c.Gin().Value(GinKeyResponse)
+	r, _ := v.(*CommResponse)
+	return r
+}
