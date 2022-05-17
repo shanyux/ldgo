@@ -338,11 +338,13 @@ func (m *Mutex) goroutine(mc *mutexContext, lockTime int64) {
 	mc.lastHeartbeat = time.Now()
 	for running := true; running; {
 		select {
-		case <-ctx.Done():
-			return
-
 		case now := <-ticker.C:
 			running = m.heartbeat(mc, now)
+
+		case <-ctx.Done():
+			c := ldctx.WithLogger(ldctx.Default(), ldctx.GetLogger(ctx))
+			m.WithContext(c).unlock()
+			return
 		}
 	}
 }
