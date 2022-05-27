@@ -178,7 +178,9 @@ func (c *Context) AbortWithErrorData(err Error, data interface{}) {
 		response.ErrDetails = e.Details()
 	}
 
-	c.Set(GinKeyError, err)
+	if err != lderr.ErrSuccess {
+		c.Set(GinKeyError, err)
+	}
 	c.AbortWithStatusJSON(err.Status(), response)
 }
 

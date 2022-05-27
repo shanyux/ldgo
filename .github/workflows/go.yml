@@ -27,4 +27,3 @@ jobs:
         go mod download
     - run: make complexity
     - run: make go-test
-

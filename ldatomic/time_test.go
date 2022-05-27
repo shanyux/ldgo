@@ -22,7 +22,9 @@ func TestTime(t *testing.T) {
 	const format = "2006-01-02T15:04:05-0700"
 	now := time.Unix(1644479966, 0).In(_testTimezone)
 	convey.Convey(t.Name(), t, func() {
-		p := &Time{}
+		convey.So(NewTime(time.Time{}).Load().Format(format), convey.ShouldEqual, _zeroTime.Format(format))
+
+		p := Time{}
 		convey.So(p.Load().Format(format), convey.ShouldEqual, _zeroTime.Format(format))
 
 		p.Store(now)

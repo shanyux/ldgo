@@ -65,26 +65,26 @@ func (w *ginWebWapper) clone() *ginWebWapper {
 	return &c
 }
 
-func (w *ginWebWapper) WithAppPath(path string) routerBase {
+func (w *ginWebWapper) WithAppPath(path string) routerAdapter {
 	w = w.clone()
 	w.setAppPath(path)
 	return w
 }
 
-func (w *ginWebWapper) Group(relativePath string, midwares ...Midware) routerBase {
+func (w *ginWebWapper) Group(relativePath string, midwares ...Midware) routerAdapter {
 	w = w.clone()
 	w.basePath = w.calculateAbsolutePath(relativePath)
 	w.midwares = w.combineMidwares(midwares)
 	return w
 }
 
-func (w *ginWebWapper) Use(midwares ...Midware) routerBase {
+func (w *ginWebWapper) Use(midwares ...Midware) routerAdapter {
 	w = w.clone()
 	w.midwares = w.combineMidwares(midwares)
 	return w
 }
 
-func (w *ginWebWapper) Handle(method, path string, h Handler, ms ...Midware) routerBase {
+func (w *ginWebWapper) Handle(method, path string, h Handler, ms ...Midware) routerAdapter {
 	fullPath := w.calculateFullPath(path)
 	absPath := w.calculateAbsolutePath(path)
 

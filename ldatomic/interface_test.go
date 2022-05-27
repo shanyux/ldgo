@@ -12,6 +12,9 @@ import (
 
 func TestInterface(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
+		convey.So(NewInterface(nil).Load(), convey.ShouldBeNil)
+		convey.So(NewInterface("123").Load(), convey.ShouldEqual, "123")
+
 		p := Interface{}
 		convey.So(p.Load(), convey.ShouldBeNil)
 

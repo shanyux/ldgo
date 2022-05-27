@@ -59,6 +59,7 @@ func TestKeyLocker(t *testing.T) {
 
 		kl.Unlock(key1)
 		kl.Unlock(key2)
+		kl.Unlock(key2) // double unlock
 
 		convey.So(kl.TryLock(key1), convey.ShouldBeTrue)
 		convey.So(kl.TryLock(key2), convey.ShouldBeTrue)
