@@ -7,6 +7,11 @@ package ldconv
 import (
 	"math/big"
 	"strconv"
+	"time"
+)
+
+const (
+	timeFormat = "2006-01-02T15:04:05-0700"
 )
 
 func ToByte(v interface{}) (byte, error) { return ToUint8(v) }
@@ -373,6 +378,16 @@ func ToString(_v interface{}) (string, error) {
 		return BytesToStrUnsafe(v), nil
 	case string:
 		return v, nil
+
+	case time.Time:
+		return v.Format(timeFormat), nil
+	case *time.Time:
+		return v.Format(timeFormat), nil
+
+	case time.Duration:
+		return v.String(), nil
+	case *time.Duration:
+		return v.String(), nil
 	}
 	return "", _ERR_UNKOWN_TYPE
 }
