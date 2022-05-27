@@ -12,6 +12,8 @@ import (
 
 func TestString(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
+		convey.So(NewString("abc").Load(), convey.ShouldEqual, "abc")
+
 		p := String{}
 		convey.So(p.Load(), convey.ShouldEqual, "")
 
@@ -20,7 +22,7 @@ func TestString(t *testing.T) {
 		p.Store("abc")
 		convey.So(p.Load(), convey.ShouldEqual, "abc")
 		p.Store("")
-		convey.So(p.Load(), convey.ShouldEqual, "")
+		convey.So(p.String(), convey.ShouldEqual, "")
 
 		convey.So(p.Swap("123"), convey.ShouldEqual, "")
 		convey.So(p.Swap("abc"), convey.ShouldEqual, "123")

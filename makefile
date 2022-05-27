@@ -29,9 +29,9 @@ GO_TEST_DIRS_NAME=$(notdir $(GO_TEST_DIRS))
 ifeq (${test_report},)
 	export test_report=$(PROJECT_ROOT)/log
 endif
-# GO_TEST_FLAGS+=-v
+GO_TEST_FLAGS+=-v
 GO_TEST_FLAGS+=-gcflags="all=-l"
-GO_TEST_OUTPUT=${test_report}
+GO_TEST_REPORT_DIR=${test_report}
 
 # git
 GIT_REVISION=$(shell git rev-parse HEAD 2> /dev/null)
@@ -56,7 +56,7 @@ all: setup go-test
 .PHONY: $(GO_TEST_DIRS_NAME)
 $(GO_TEST_DIRS_NAME):
 	@echo GO_TEST_DIRS: $(notdir $@)
-	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) -v ./$(notdir $@)
+	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) ./$(notdir $@)
 
 .PHONY: pb
 pb:
@@ -67,19 +67,30 @@ dep: setup
 	$(GO) mod tidy
 	# $(GO) mod vendor
 
+.PHONY: go-test-report-dir
+go-test-report-dir:
+	mkdir -pv $(GO_TEST_REPORT_DIR)
+
 .PHONY: go-test-coverage
-go-test-coverage:
-	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) ./... -json > "$(GO_TEST_OUTPUT)/test.json"
-	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) ./... -coverprofile="$(GO_TEST_OUTPUT)/coverage.out"
+go-test-coverage: go-test-report-dir
+	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) ./... \
+		-coverprofile="$(GO_TEST_REPORT_DIR)/coverage.out"
+
+go-test-report: go-test-report-dir
+	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) ./... \
+		-coverprofile="$(GO_TEST_REPORT_DIR)/coverage.out" \
+		-json > "$(GO_TEST_REPORT_DIR)/test.json"
 
 .PHONY: go-test
 go-test:
-	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) -v ./...
+	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) ./...
 
 .PHONY: setup
 setup:
 	git config core.hooksPath "script/git-hook"
-	type gocognit || go install github.com/distroy/gocognit/cmd/gocognit@latest || go install github.com/distroy/gocognit/cmd/gocognit
+	type gocognit \
+		|| go install github.com/distroy/gocognit/cmd/gocognit@latest \
+		|| go install github.com/distroy/gocognit/cmd/gocognit
 	@echo $$'\E[32;1m'"setup succ"$$'\E[0m'
 
 .PHONY: complexity

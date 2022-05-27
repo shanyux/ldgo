@@ -64,20 +64,22 @@ type Response interface{}
 
 // Handler must be:
 // func (*gin.Context)
+// func (*gin.Context) Error
 // func (*gin.Context, Request) Error
 // func (*gin.Context) (Response, Error)
 // func (*gin.Context, Request) (Response, Error)
-// func (Context)
-// func (Context, Request) Error
-// func (Context) (Response, Error)
-// func (Context, Request) (Response, Error)
+// func (*Context)
+// func (*Context) Error
+// func (*Context, Request) Error
+// func (*Context) (Response, Error)
+// func (*Context, Request) (Response, Error)
 type Handler interface{}
 
 // Midware must be:
 // func (*gin.Context)
 // func (*gin.Context, Request) Error
-// func (Context)
-// func (Context, Request) Error
+// func (*Context)
+// func (*Context, Request) Error
 type Midware interface{}
 
 type CommResponse struct {
@@ -94,34 +96,12 @@ type (
 	ldCtx  = ldctx.Context
 )
 
-// Router is http router
-type Router interface {
-	Group(relativePath string, midwares ...Midware) Router
-	Use(midwares ...Midware) Router
+type routerAdapter interface {
+	Group(relativePath string, midwares ...Midware) routerAdapter
+	Use(midwares ...Midware) routerAdapter
 
-	WithAppPath(path string) Router
-	BasePath() string
-	Handle(method, path string, handler Handler, midwares ...Midware) Router
-
-	GET(path string, handler Handler, midwares ...Midware) Router
-	POST(path string, handler Handler, midwares ...Midware) Router
-	DELETE(path string, handler Handler, midwares ...Midware) Router
-	PATCH(path string, handler Handler, midwares ...Midware) Router
-	PUT(path string, handler Handler, midwares ...Midware) Router
-	OPTIONS(path string, handler Handler, midwares ...Midware) Router
-	HEAD(path string, handler Handler, midwares ...Midware) Router
-
-	// StaticFile(string, string) Router
-	// Static(string, string) Router
-	// StaticFS(string, http.FileSystem) Router
-}
-
-type routerBase interface {
-	Group(relativePath string, midwares ...Midware) routerBase
-	Use(midwares ...Midware) routerBase
-
-	WithAppPath(path string) routerBase
+	WithAppPath(path string) routerAdapter
 	BasePath() string
 
-	Handle(method, path string, handler Handler, midwares ...Midware) routerBase
+	Handle(method, path string, handler Handler, midwares ...Midware) routerAdapter
 }

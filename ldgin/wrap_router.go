@@ -6,64 +6,46 @@ package ldgin
 
 import "net/http"
 
-type routerWapper struct {
-	router routerBase
+// Router is http router
+type Router struct {
+	router routerAdapter
 }
 
-func wrapRouter(r routerBase) Router {
-	return routerWapper{
+func wrapRouter(r routerAdapter) Router {
+	return Router{
 		router: r,
 	}
 }
 
-func (w routerWapper) Group(relativePath string, midwares ...Midware) Router {
+func (w Router) Group(relativePath string, midwares ...Midware) Router {
 	w.router = w.router.Group(relativePath, midwares...)
 	return w
 }
 
-func (w routerWapper) Use(midwares ...Midware) Router {
+func (w Router) Use(midwares ...Midware) Router {
 	w.router = w.router.Use(midwares...)
 	return w
 }
 
-func (w routerWapper) WithAppPath(path string) Router {
+func (w Router) WithAppPath(path string) Router {
 	w.router = w.router.WithAppPath(path)
 	return w
 }
 
-func (w routerWapper) BasePath() string {
+func (w Router) BasePath() string {
 	return w.router.BasePath()
 }
 
-func (w routerWapper) Handle(method, path string, h Handler, ms ...Midware) Router {
+func (w Router) Handle(method, path string, h Handler, ms ...Midware) {
 	w.router = w.router.Handle(method, path, h, ms...)
-	return w
 }
 
-func (w routerWapper) GET(path string, h Handler, ms ...Midware) Router {
-	return w.Handle(http.MethodGet, path, h, ms...)
-}
-
-func (w routerWapper) DELETE(path string, h Handler, ms ...Midware) Router {
-	return w.Handle(http.MethodDelete, path, h, ms...)
-}
-
-func (w routerWapper) HEAD(path string, h Handler, ms ...Midware) Router {
-	return w.Handle(http.MethodHead, path, h, ms...)
-}
-
-func (w routerWapper) OPTIONS(path string, h Handler, ms ...Midware) Router {
-	return w.Handle(http.MethodConnect, path, h, ms...)
-}
-
-func (w routerWapper) PATCH(path string, h Handler, ms ...Midware) Router {
-	return w.Handle(http.MethodPatch, path, h, ms...)
-}
-
-func (w routerWapper) POST(path string, h Handler, ms ...Midware) Router {
-	return w.Handle(http.MethodPost, path, h, ms...)
-}
-
-func (w routerWapper) PUT(path string, h Handler, ms ...Midware) Router {
-	return w.Handle(http.MethodPut, path, h, ms...)
+func (w Router) GET(p string, h Handler, ms ...Midware)    { w.Handle(http.MethodGet, p, h, ms...) }
+func (w Router) DELETE(p string, h Handler, ms ...Midware) { w.Handle(http.MethodDelete, p, h, ms...) }
+func (w Router) HEAD(p string, h Handler, ms ...Midware)   { w.Handle(http.MethodHead, p, h, ms...) }
+func (w Router) PATCH(p string, h Handler, ms ...Midware)  { w.Handle(http.MethodPatch, p, h, ms...) }
+func (w Router) POST(p string, h Handler, ms ...Midware)   { w.Handle(http.MethodPost, p, h, ms...) }
+func (w Router) PUT(p string, h Handler, ms ...Midware)    { w.Handle(http.MethodPut, p, h, ms...) }
+func (w Router) OPTIONS(p string, h Handler, ms ...Midware) {
+	w.Handle(http.MethodConnect, p, h, ms...)
 }
