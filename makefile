@@ -41,7 +41,7 @@ $(info GIT_REVISION: $(GIT_REVISION))
 $(info GIT_BRANCH: $(GIT_BRANCH))
 $(info GIT_TAG: $(GIT_TAG))
 
-_func_protobuf = ( \
+_mk_protobuf = ( \
 	echo "=== building protobuf: $(1)"; \
 	cd $(1); \
 	rm -rf *.pb.go *_pb2.py; \
@@ -49,6 +49,9 @@ _func_protobuf = ( \
 	protoc --go_out . --python_out . ./*.proto || exit $$?; \
 	cd $(PROJECT_ROOT); \
 	);
+
+_go_install =  \
+	go install $(1) || go install $(1)@latest
 
 .PHONY: all
 all: setup go-test
@@ -60,7 +63,7 @@ $(GO_TEST_DIRS_NAME):
 
 .PHONY: pb
 pb:
-	@$(foreach i, $(PROTOS), $(call _func_protobuf,$(i)))
+	@$(foreach i, $(PROTOS), $(call _mk_protobuf,$(i)))
 
 .PHONY: dep
 dep: setup
@@ -88,12 +91,12 @@ go-test:
 .PHONY: setup
 setup:
 	git config core.hooksPath "script/git-hook"
-	type gocognit \
-		|| go install github.com/distroy/gocognit/cmd/gocognit@latest \
-		|| go install github.com/distroy/gocognit/cmd/gocognit
+	$(call _go_install,github.com/distroy/git-go-tool/cmd/go-cognitive)
+	$(call _go_install,github.com/distroy/git-go-tool/cmd/git-diff-go-cognitive)
+	$(call _go_install,github.com/distroy/git-go-tool/cmd/git-diff-go-coverage)
 	@echo $$'\E[32;1m'"setup succ"$$'\E[0m'
 
-.PHONY: complexity
-complexity: setup
-	gocognit -over 15 .
-	gocognit -top 10 .
+.PHONY: cognitive
+cognitive: setup
+	go-cognitive -over 15 .
+	go-cognitive -top 10 .
