@@ -13,13 +13,14 @@ import (
 	"testing"
 
 	"github.com/distroy/ldgo/lderr"
+	"github.com/distroy/ldgo/ldio"
 	"github.com/gin-gonic/gin"
 	"github.com/smartystreets/goconvey/convey"
 )
 
 func TestWrapHandler(t *testing.T) {
 
-	log.SetOutput(writerDiscard{})
+	log.SetOutput(ldio.Discard())
 
 	body := `{ "Where": "abc", "channel_id": 123 }`
 
