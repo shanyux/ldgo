@@ -11,10 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type writerDiscard struct{}
-
-func (writerDiscard) Write(p []byte) (int, error) { return len(p), nil }
-
 type testRequest struct {
 	ProjectId int64  `uri:"project_id"`
 	ChannelId int64  `uri:"channel_id"`
