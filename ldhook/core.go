@@ -22,7 +22,7 @@ func getPointer(v reflect.Value) unsafe.Pointer
 
 type patchFunc struct {
 	target reflect.Value
-	double reflect.Value
+	double reflect.Value // fixed the bug the double func will be released automitically
 	origin []byte
 }
 
