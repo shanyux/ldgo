@@ -22,6 +22,7 @@ func getPointer(v reflect.Value) unsafe.Pointer
 
 type patchFunc struct {
 	target reflect.Value
+	double reflect.Value // fixed the bug the double func will be released automitically
 	origin []byte
 }
 
@@ -34,6 +35,7 @@ func applyFunc(target, double reflect.Value) patchFunc {
 	origin := replace(*(*uintptr)(getPointer(target)), uintptr(getPointer(double)))
 	return patchFunc{
 		target: target,
+		double: double,
 		origin: origin,
 	}
 }

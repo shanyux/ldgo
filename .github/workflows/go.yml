@@ -23,7 +23,13 @@ jobs:
         # name: go-setup
         with:
           go-version: "1.12.17"
-      - run: make cognitive
+      - run: |
+          cd "$WORKSPACE/.."
+          go install github.com/distroy/git-go-tool/cmd/go-cognitive@latest || go install github.com/distroy/git-go-tool/cmd/go-cognitive
+          cd "$WORKSPACE"
+      - run: |
+          go-cognitive -over 15 .
+          go-cognitive -top 10 .
 
   go-test-coverage-job:
     if: ${{ github.event_name == 'pull_request' }}
