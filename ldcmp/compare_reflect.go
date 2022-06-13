@@ -5,6 +5,7 @@
 package ldcmp
 
 import (
+	"math"
 	"reflect"
 	"sort"
 
@@ -15,13 +16,21 @@ type kind int
 
 const (
 	kindNil kind = iota
-	kindInt
-	kindUint
-	kindFloat
+	kindBool
+	kindNumber
 	kindComplex
 	kindString
 	kindInvalid
 )
+
+func reflectValueOf(v interface{}) reflect.Value {
+	if vv, ok := v.(reflect.Value); ok {
+		return vv
+	}
+
+	vv := reflect.ValueOf(v)
+	return vv
+}
 
 func CompareReflect(a, b reflect.Value) int {
 	if r := compareReflectType(a, b); r != 0 {
@@ -37,35 +46,41 @@ func CompareReflect(a, b reflect.Value) int {
 		return 0
 
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		a, b := a.Int(), b.Int()
-		return CompareInt64(a, b)
+		aa := a.Int()
+		return compareReflectNumberLeftInt(aa, b)
 
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		a, b := a.Uint(), b.Uint()
-		return CompareUint64(a, b)
-
-	case reflect.String:
-		a, b := a.String(), b.String()
-		return CompareString(a, b)
+		aa := a.Uint()
+		return compareReflectNumberLeftUint(aa, b)
 
 	case reflect.Float32, reflect.Float64:
-		return CompareFloat64(a.Float(), b.Float())
+		aa := a.Float()
+		return compareReflectNumberLeftFloat(aa, b)
+
+	case reflect.String:
+		aa := a.String()
+		bb := b.String()
+		return CompareString(aa, bb)
 
 	case reflect.Complex64, reflect.Complex128:
-		a, b := a.Complex(), b.Complex()
-		return CompareComplex128(a, b)
+		aa := a.Complex()
+		bb := b.Complex()
+		return CompareComplex128(aa, bb)
 
 	case reflect.Bool:
-		a, b := a.Bool(), b.Bool()
-		return CompareBool(a, b)
+		aa := a.Bool()
+		bb := b.Bool()
+		return CompareBool(aa, bb)
 
 	case reflect.Ptr, reflect.UnsafePointer:
-		a, b := a.Pointer(), b.Pointer()
-		return CompareUintptr(a, b)
+		aa := a.Pointer()
+		bb := b.Pointer()
+		return CompareUintptr(aa, bb)
 
 	case reflect.Chan, reflect.Func:
-		ap, bp := a.Pointer(), b.Pointer()
-		return CompareUintptr(ap, bp)
+		aa := a.Pointer()
+		bb := b.Pointer()
+		return CompareUintptr(aa, bb)
 
 	case reflect.Map:
 		return compareReflectMap(a, b)
@@ -89,14 +104,17 @@ func convertKind(k reflect.Kind) kind {
 	case reflect.Invalid:
 		return kindNil
 
+	case reflect.Bool:
+		return kindBool
+
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return kindInt
+		return kindNumber
 
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		return kindUint
+		return kindNumber
 
 	case reflect.Float32, reflect.Float64:
-		return kindFloat
+		return kindNumber
 
 	case reflect.Complex64, reflect.Complex128:
 		return kindComplex
@@ -124,7 +142,8 @@ func compareReflectType(a, b reflect.Value) int {
 		return 0
 	}
 
-	aName, bName := a.String(), b.String()
+	aName := a.String()
+	bName := b.String()
 	if r := CompareInt(len(aName), len(bName)); r != 0 {
 		return r
 	}
@@ -149,7 +168,8 @@ func compareNilReflect(a, b reflect.Value) (int, bool) {
 
 func compareReflectStruct(a, b reflect.Value) int {
 	for i := 0; i < a.NumField(); i++ {
-		aa, bb := a.Field(i), b.Field(i)
+		aa := a.Field(i)
+		bb := b.Field(i)
 		// aa, bb = reflect.ValueOf(aa.Interface()), reflect.ValueOf(bb.Interface())
 		if r := CompareReflect(aa, bb); r != 0 {
 			return r
@@ -160,7 +180,8 @@ func compareReflectStruct(a, b reflect.Value) int {
 
 func compareReflectArray(a, b reflect.Value) int {
 	for i := 0; i < a.Len(); i++ {
-		aa, bb := a.Index(i), b.Index(i)
+		aa := a.Index(i)
+		bb := b.Index(i)
 		if r := CompareReflect(aa, bb); r != 0 {
 			return r
 		}
@@ -173,7 +194,8 @@ func compareReflectMap(a, b reflect.Value) int {
 		return r
 	}
 
-	aKeys, bKeys := a.MapKeys(), b.MapKeys()
+	aKeys := a.MapKeys()
+	bKeys := b.MapKeys()
 	sort.Sort(sortedReflects(aKeys))
 	sort.Sort(sortedReflects(bKeys))
 
@@ -193,7 +215,8 @@ func compareReflectMap(a, b reflect.Value) int {
 }
 
 func compareReflectSlice(a, b reflect.Value) int {
-	al, bl := a.Len(), b.Len()
+	al := a.Len()
+	bl := b.Len()
 	l := ldmath.MinInt(al, bl)
 	for i := 0; i < l; i++ {
 		aa, bb := a.Index(i), b.Index(i)
@@ -211,8 +234,56 @@ func compareReflectIface(a, b reflect.Value) int {
 	return CompareReflect(a.Elem(), b.Elem())
 }
 
-type sortedReflects []reflect.Value
+func compareReflectNumberLeftInt(aa int64, b reflect.Value) int {
+	switch b.Kind() {
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		bb := b.Uint()
+		if bb > math.MaxInt64 {
+			return -1
+		}
+		return CompareInt64(aa, int64(bb))
 
-func (o sortedReflects) Len() int           { return len(o) }
-func (o sortedReflects) Swap(i, j int)      { o[i], o[j] = o[j], o[i] }
-func (o sortedReflects) Less(i, j int) bool { return CompareReflect(o[i], o[j]) <= 0 }
+	case reflect.Float32, reflect.Float64:
+		bb := b.Float()
+		return CompareFloat64(float64(aa), bb)
+	}
+
+	bb := b.Int()
+	return CompareInt64(aa, bb)
+}
+
+func compareReflectNumberLeftUint(aa uint64, b reflect.Value) int {
+	switch b.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		bb := b.Int()
+		if aa > math.MaxInt64 {
+			return 1
+		}
+		return CompareInt64(int64(aa), bb)
+
+	case reflect.Float32, reflect.Float64:
+		bb := b.Float()
+		return CompareFloat64(float64(aa), bb)
+	}
+
+	bb := b.Uint()
+	return CompareUint64(aa, bb)
+}
+
+func compareReflectNumberLeftFloat(aa float64, b reflect.Value) int {
+	switch b.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		bb := b.Int()
+		if aa > math.MaxInt64 {
+			return 1
+		}
+		return CompareFloat64(aa, float64(bb))
+
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		bb := b.Uint()
+		return CompareFloat64(aa, float64(bb))
+	}
+
+	bb := b.Float()
+	return CompareFloat64(aa, bb)
+}

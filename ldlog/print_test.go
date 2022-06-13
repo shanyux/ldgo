@@ -36,10 +36,10 @@ func Test_sortedMap(t *testing.T) {
 		}
 
 		convey.So(l2, convey.ShouldResemble, []interface{}{
-			123,
-			int64(234),
 			uint(100),
+			123,
 			uint64(200),
+			int64(234),
 			"abc",
 			"bcd",
 		})
