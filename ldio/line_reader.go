@@ -14,33 +14,47 @@ var (
 	ErrOverMaxSize = fmt.Errorf("over max size")
 )
 
-type LineReader struct {
-	reader    io.Reader
-	buffer    []byte
-	maxSize   int
-	tokenPos  int
-	tokenEnd  int
-	tokenNext int
-	bufferEnd int
-	err       error
-}
+const (
+	defaultBufferSize = 4096
+)
 
-func NewLineReader(r io.Reader) *LineReader {
-	maxSize := 4096
-	return newLineReader(r, maxSize)
-}
+type LineReaderOption func(r *LineReader)
 
-func newLineReader(r io.Reader, maxSize int) *LineReader {
-	return &LineReader{
-		reader:    r,
-		buffer:    make([]byte, maxSize),
-		maxSize:   maxSize,
-		tokenPos:  0,
-		tokenEnd:  -1,
-		tokenNext: 0,
-		bufferEnd: 0,
-		err:       nil,
+func LineReaderBufferSize(size int) LineReaderOption {
+	return func(r *LineReader) {
+		r.bufferSize = size
 	}
+}
+
+type LineReader struct {
+	reader     io.Reader
+	buffer     []byte
+	bufferSize int
+	tokenPos   int
+	tokenEnd   int
+	tokenNext  int
+	bufferEnd  int
+	err        error
+}
+
+func NewLineReader(reader io.Reader, opts ...LineReaderOption) *LineReader {
+	r := &LineReader{
+		reader:     reader,
+		buffer:     nil,
+		bufferSize: defaultBufferSize,
+		tokenPos:   0,
+		tokenEnd:   -1,
+		tokenNext:  0,
+		bufferEnd:  0,
+		err:        nil,
+	}
+
+	for _, opt := range opts {
+		opt(r)
+	}
+
+	r.buffer = make([]byte, r.bufferSize)
+	return r
 }
 
 func (r *LineReader) PeekLineString() (string, error) {
@@ -128,7 +142,7 @@ func (r *LineReader) readLineLoop() error {
 			return nil
 		}
 
-		if r.bufferEnd >= r.maxSize {
+		if r.bufferEnd >= r.bufferSize {
 			r.err = ErrOverMaxSize
 			return r.err
 		}

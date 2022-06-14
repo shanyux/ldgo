@@ -5,13 +5,13 @@
 package ldcmp
 
 import (
-	"reflect"
 	"strings"
 	"time"
 )
 
 func CompareInterface(a, b interface{}) int {
-	aa, bb := reflect.ValueOf(a), reflect.ValueOf(b)
+	aa := reflectValueOf(a)
+	bb := reflectValueOf(b)
 	return CompareReflect(aa, bb)
 }
 
@@ -164,6 +164,9 @@ func CompareUintptr(a, b uintptr) int {
 func CompareFloat32(a, b float32) int {
 	switch {
 	case isNaNFloat32(a):
+		if isNaNFloat32(b) {
+			return 0
+		}
 		return -1 // No good answer if b is a NaN so don't bother checking.
 	case isNaNFloat32(b):
 		return 1
@@ -178,6 +181,9 @@ func CompareFloat32(a, b float32) int {
 func CompareFloat64(a, b float64) int {
 	switch {
 	case isNaNFloat64(a):
+		if isNaNFloat64(b) {
+			return 0
+		}
 		return -1 // No good answer if b is a NaN so don't bother checking.
 	case isNaNFloat64(b):
 		return 1
