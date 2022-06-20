@@ -5,9 +5,13 @@
 package ldcmp
 
 import (
+	"bytes"
 	"math"
+	"strings"
 	"testing"
 
+	"github.com/distroy/ldgo/ldconv"
+	"github.com/distroy/ldgo/ldrand"
 	"github.com/smartystreets/goconvey/convey"
 )
 
@@ -92,5 +96,67 @@ func TestCompareInterface(t *testing.T) {
 				[]interface{}{100, float64(200), ""},
 			), convey.ShouldEqual, 0)
 		})
+	})
+}
+
+var testStringCompareCases [][2]string
+
+func testGetStringCompareCases(t testing.TB) [][2]string {
+	const size = 1024
+	const strLen = 128
+	if testStringCompareCases == nil {
+		cases := make([][2]string, 0, size)
+		for i := 0; i < size; i++ {
+			cases = append(cases, [2]string{
+				// ldconv.StrToBytesUnsafe(ldrand.String(128)), ldconv.StrToBytesUnsafe(ldrand.String(128)),
+				ldrand.String(128), ldrand.String(128),
+			})
+		}
+
+		testStringCompareCases = cases
+	}
+
+	return testStringCompareCases
+}
+
+func BenchmarkStringsCompare(b *testing.B) {
+	cases := testGetStringCompareCases(b)
+	b.ResetTimer()
+
+	b.RunParallel(func(p *testing.PB) {
+		size := len(cases)
+		pos := 0
+		for p.Next() {
+			v := cases[pos]
+			pos++
+			if pos >= size {
+				pos -= size
+			}
+
+			a, b := v[0], v[1]
+			strings.Compare(a, b)
+			// strings.Compare(ldconv.BytesToStrUnsafe(a), ldconv.BytesToStrUnsafe(b))
+		}
+	})
+}
+
+func BenchmarkBytesCompare(b *testing.B) {
+	cases := testGetStringCompareCases(b)
+	b.ResetTimer()
+
+	b.RunParallel(func(p *testing.PB) {
+		size := len(cases)
+		pos := 0
+		for p.Next() {
+			v := cases[pos]
+			pos++
+			if pos >= size {
+				pos -= size
+			}
+
+			a, b := v[0], v[1]
+			bytes.Compare(ldconv.StrToBytesUnsafe(a), ldconv.StrToBytesUnsafe(b))
+			// bytes.Compare(a, b)
+		}
 	})
 }
