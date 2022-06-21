@@ -121,19 +121,24 @@ func (r *fastSource) NormFloat64() float64 {
 
 		if i == 0 {
 			// This extra work is only required for the base strip.
-			for {
-				x = -math.Log(r.Float64()) * (1.0 / rn)
-				y := -math.Log(r.Float64())
-				if y+y >= x*x {
-					break
-				}
-			}
+			x = r.normFloat64X()
 			if j > 0 {
 				return rn + x
 			}
 			return -rn - x
 		}
 		if fn[i]+float32(r.Float64())*(fn[i-1]-fn[i]) < float32(math.Exp(-.5*x*x)) {
+			return x
+		}
+	}
+}
+
+func (r *fastSource) normFloat64X() float64 {
+	// This extra work is only required for the base strip.
+	for {
+		x := -math.Log(r.Float64()) * (1.0 / rn)
+		y := -math.Log(r.Float64())
+		if y+y >= x*x {
 			return x
 		}
 	}
