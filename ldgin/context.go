@@ -16,8 +16,14 @@ import (
 	"go.uber.org/zap"
 )
 
-var _ context.Context = &Context{}
-var _ ldctx.Context = &Context{}
+type (
+	StdContext = context.Context
+)
+
+var (
+	_ context.Context = &Context{}
+	_ ldctx.Context   = &Context{}
+)
 
 func GetContext(g *gin.Context) *Context {
 	return newCtxIfNotExists(g)
@@ -52,7 +58,7 @@ func GetSequence(c context.Context) string {
 func GetRequest(c context.Context) interface{}  { return GetGin(c).Value(GinKeyRequest) }
 func GetRenderer(c context.Context) interface{} { return GetGin(c).Value(GinKeyRenderer) }
 
-func GetError(c context.Context) Error {
+func GetError(c StdContext) Error {
 	v := GetGin(c).Value(GinKeyError)
 	r, _ := v.(Error)
 	return r
