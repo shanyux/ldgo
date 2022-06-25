@@ -14,7 +14,10 @@ import (
 	"go.uber.org/zap"
 )
 
-type CancelFunc = context.CancelFunc
+type (
+	StdContext = context.Context
+	CancelFunc = context.CancelFunc
+)
 
 func Default() Context { return defaultContext }
 func Console() Context { return consoleContext }
@@ -57,7 +60,7 @@ func ContextName(c context.Context) string {
 	return reflect.TypeOf(c).String()
 }
 
-func GetError(c context.Context) lderr.Error {
+func GetError(c StdContext) lderr.Error {
 	e := c.Err()
 	switch e {
 	case nil:

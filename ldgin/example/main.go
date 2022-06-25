@@ -17,6 +17,10 @@ import (
 	"go.uber.org/zap"
 )
 
+type (
+	StdContext = context.Context
+)
+
 var (
 	ErrTestOneError = lderr.New(http.StatusOK, 1, "test 1")
 )
@@ -34,7 +38,7 @@ type testBindReq struct {
 	Language string `header:"accept-language"`
 }
 
-func testBind(ctx context.Context, req *testBindReq) (*testBindReq, ldgin.Error) {
+func testBind(ctx StdContext, req *testBindReq) (*testBindReq, ldgin.Error) {
 	g := ldgin.GetGin(ctx)
 	c := ldgin.GetContext(g)
 	c.LogI("", zap.String("method", c.GetMethod()), zap.String("path", c.GetPath()),
@@ -56,7 +60,7 @@ type testValidateReq struct {
 	Valid int64 `form:"valid"`
 }
 
-func (req *testValidateReq) Validate(c context.Context) ldgin.Error {
+func (req *testValidateReq) Validate(c StdContext) ldgin.Error {
 	if req.Valid != 0 {
 		return lderr.New(http.StatusOK, 111, fmt.Sprintf("invalid requet. valid=%v", req.Valid))
 	}

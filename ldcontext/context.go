@@ -14,7 +14,10 @@ import (
 	"go.uber.org/zap"
 )
 
-type CancelFunc = ldctx.CancelFunc
+type (
+	StdContext = context.Context
+	CancelFunc = ldctx.CancelFunc
+)
 
 func Default() Context { return ldctx.Default() }
 func Console() Context { return ldctx.Console() }
@@ -38,8 +41,8 @@ func NewContext(parent context.Context, fields ...zap.Field) Context {
 	return ldctx.NewContext(parent, fields...)
 }
 
-func ContextName(c context.Context) string   { return ldctx.ContextName(c) }
-func GetError(c context.Context) lderr.Error { return ldctx.GetError(c) }
+func ContextName(c context.Context) string { return ldctx.ContextName(c) }
+func GetError(c StdContext) lderr.Error    { return ldctx.GetError(c) }
 
 func WithLogger(parent context.Context, log ldlog.LoggerInterface, fields ...zap.Field) Context {
 	if log != nil {
