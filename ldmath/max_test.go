@@ -22,10 +22,10 @@ func TestMax(t *testing.T) {
 
 func TestMin(t *testing.T) {
 	convey.Convey("", t, func() {
-		convey.So(MinInt(3, 4), convey.ShouldEqual, 3)
-		convey.So(MinInt8(3, 4), convey.ShouldEqual, int8(3))
-		convey.So(MinInt16(3, 4), convey.ShouldEqual, int16(3))
-		convey.So(MinInt32(3, 4), convey.ShouldEqual, int32(3))
-		convey.So(MinInt64(3, 4), convey.ShouldEqual, int64(3))
+		convey.So(MinInt(4, 3), convey.ShouldEqual, 3)
+		convey.So(MinInt8(4, 3), convey.ShouldEqual, int8(3))
+		convey.So(MinInt16(4, 3), convey.ShouldEqual, int16(3))
+		convey.So(MinInt32(4, 3), convey.ShouldEqual, int32(3))
+		convey.So(MinInt64(4, 3), convey.ShouldEqual, int64(3))
 	})
 }
