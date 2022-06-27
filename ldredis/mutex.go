@@ -182,7 +182,7 @@ func (m *Mutex) getExpiration() time.Duration {
 func (m *Mutex) Key() string               { return m.mustGetContext().key }
 func (m *Mutex) Events() <-chan MutexEvent { return m.mustGetContext().events }
 
-func (m *Mutex) Lock(key string) error {
+func (m *Mutex) Lock(key string) lderr.Error {
 	ctx := m.redis.context()
 	ctx = ldctx.WithCancel(ctx)
 
@@ -241,13 +241,13 @@ func (m *Mutex) Lock(key string) error {
 	return nil
 }
 
-func (m *Mutex) internalLock(ctx Context, key, token string) error {
+func (m *Mutex) internalLock(ctx Context, key, token string) lderr.Error {
 	cli := m.redis.Client()
 
 	cmd := cli.SetNX(key, token, m.getExpiration())
 	if err := cmd.Err(); err != nil {
 		ctx.LogE("redis mutex setnx fail", zap.Error(err), getCaller(m.redis.caller))
-		return err
+		return lderr.Wrap(err, lderr.ErrCacheRead)
 	}
 
 	if ok := cmd.Val(); !ok {
@@ -258,7 +258,7 @@ func (m *Mutex) internalLock(ctx Context, key, token string) error {
 	return nil
 }
 
-func (m *Mutex) Unlock() error {
+func (m *Mutex) Unlock() lderr.Error {
 	d := m.unlockDelay
 	if d <= 0 {
 		return m.unlock()
@@ -272,7 +272,7 @@ func (m *Mutex) Unlock() error {
 	return nil
 }
 
-func (m *Mutex) unlock() error {
+func (m *Mutex) unlock() lderr.Error {
 	ctx := m.redis.context()
 
 	mc := m.ctx.Load()
@@ -312,7 +312,7 @@ func (m *Mutex) unlock() error {
 	cmd := cli.Del(key)
 	if err := cmd.Err(); err != nil {
 		ctx.LogW("redis mutex del fail", zap.Error(err), getCaller(m.redis.caller))
-		return err
+		return lderr.Wrap(err, lderr.ErrCacheWrite)
 	}
 
 	return nil
@@ -365,7 +365,7 @@ func (m *Mutex) heartbeat(mc *mutexContext, now time.Time) bool {
 	return true
 }
 
-func (m *Mutex) checkToken(mc *mutexContext) error {
+func (m *Mutex) checkToken(mc *mutexContext) lderr.Error {
 	ctx := mc.ctx
 	cli := m.redis.Client()
 	key := mc.key
@@ -374,7 +374,7 @@ func (m *Mutex) checkToken(mc *mutexContext) error {
 		cmd := cli.Expire(key, m.getExpiration())
 		if err := cmd.Err(); err != nil {
 			ctx.LogE("redis mutex expire fail", zap.Error(err))
-			return err
+			return lderr.Wrap(err, lderr.ErrCacheWrite)
 		}
 
 		if ok := cmd.Val(); !ok {
@@ -387,7 +387,7 @@ func (m *Mutex) checkToken(mc *mutexContext) error {
 		cmd := cli.Get(key)
 		if err := cmd.Err(); err != nil {
 			ctx.LogE("redis mutex get fail", zap.Error(err))
-			return err
+			return lderr.Wrap(err, lderr.ErrCacheRead)
 		}
 
 		if val != cmd.Val() {
