@@ -219,6 +219,7 @@ func isNaNFloat32(a float32) bool {
 
 func CompareString(a, b string) int {
 	return strings.Compare(a, b)
+	// return bytes.Compare(ldconv.StrToBytesUnsafe(a), ldconv.StrToBytesUnsafe(b))
 }
 
 func CompareDuration(a, b time.Duration) int {

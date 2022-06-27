@@ -56,7 +56,7 @@ func noescape(p unsafe.Pointer) unsafe.Pointer {
 func NewFastSource(seed int64) rand.Source64 {
 	r := &fastSource{}
 	r.Seed(seed)
-	r.rand = rand.New((*fastSource)(noescape(unsafe.Pointer(r))))
+	// r.rand = rand.New((*fastSource)(noescape(unsafe.Pointer(r))))
 	return r
 }
 
@@ -65,14 +65,14 @@ func newFastSource(seed int64, xor [16]uint64) *fastSource {
 		xor:  xor,
 		seed: uint64(seed),
 	}
-	src.rand = rand.New(src)
+	// src.rand = rand.New(src)
 	return src
 }
 
 type fastSource struct {
 	xor  [16]uint64
-	rand *rand.Rand
 	seed uint64
+	// rand *rand.Rand
 }
 
 func (r *fastSource) Seed(seed int64) {
@@ -80,13 +80,13 @@ func (r *fastSource) Seed(seed int64) {
 	atomic.StoreUint64(&r.seed, n)
 }
 
-func (r *fastSource) ExpFloat64() float64 {
-	return r.rand.ExpFloat64()
-}
+// func (r *fastSource) ExpFloat64() float64 {
+// 	return r.rand.ExpFloat64()
+// }
 
-func (r *fastSource) NormFloat64() float64 {
-	return r.rand.NormFloat64()
-}
+// func (r *fastSource) NormFloat64() float64 {
+// 	return r.rand.NormFloat64()
+// }
 
 func (r *fastSource) Uint64() uint64 {
 	return fastSourceNext(&r.seed, r.xor[:])
