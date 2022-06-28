@@ -74,7 +74,7 @@ func benchmarkMap(b *testing.B, nodeCount, replicas int) {
 	b.Logf("min hits:%d, max hits:%d, arg hits:%d", min, max, int(totalHits)/nodeCount)
 }
 
-func testMinAndMax(m map[string]*int32) (int32, int32) {
+func testMinAndMax(m map[string]*int32) (min, max int32) {
 	a := testHits(m)
 	return ldmath.MinInt32(a[0], a...), ldmath.MaxInt32(a[0], a...)
 }

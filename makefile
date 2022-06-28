@@ -90,13 +90,21 @@ go-test:
 
 .PHONY: setup
 setup:
-	git config core.hooksPath "script/git-hook"
-	$(call _go_install,github.com/distroy/git-go-tool/cmd/go-cognitive)
+	git config core.hooksPath "git-go-tool/git-hook"
+	@cd
 	$(call _go_install,github.com/distroy/git-go-tool/cmd/git-diff-go-cognitive)
 	$(call _go_install,github.com/distroy/git-go-tool/cmd/git-diff-go-coverage)
+	$(call _go_install,github.com/distroy/git-go-tool/cmd/git-diff-go-format)
+	$(call _go_install,github.com/distroy/git-go-tool/cmd/go-cognitive)
+	$(call _go_install,github.com/distroy/git-go-tool/cmd/go-format)
+	@cd "$(PROJECT_ROOT)"
 	@echo $$'\E[32;1m'"setup succ"$$'\E[0m'
 
 .PHONY: cognitive
 cognitive: setup
 	go-cognitive -over 15 .
 	go-cognitive -top 10 .
+
+.PHONY: format
+format: setup
+	go-format --func-input-num 4 -func-context-error-match=0
