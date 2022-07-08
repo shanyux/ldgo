@@ -87,39 +87,63 @@ func NotIn(value interface{}) FieldWherer {
 }
 
 func Like(value string) FieldWherer {
+	if value == "" {
+		return fieldWhereEmpty{}
+	}
 	return newFieldWhereWithCheck(" LIKE ?", value)
 }
 
 func LikePrefix(value string) FieldWherer {
+	if value == "" {
+		return fieldWhereEmpty{}
+	}
 	value = value + "%"
 	return newFieldWhereWithCheck(" LIKE ?", value)
 }
 
 func LikeSuffix(value string) FieldWherer {
+	if value == "" {
+		return fieldWhereEmpty{}
+	}
 	value = "%" + value
 	return newFieldWhereWithCheck(" LIKE ?", value)
 }
 
 func LikeContain(value string) FieldWherer {
+	if value == "" {
+		return fieldWhereEmpty{}
+	}
 	value = "%" + value + "%"
 	return newFieldWhereWithCheck(" LIKE ?", value)
 }
 
 func NotLike(value string) FieldWherer {
+	if value == "" {
+		return fieldWhereEmpty{}
+	}
 	return newFieldWhereWithCheck(" NOT LIKE ?", value)
 }
 
 func NotLikePrefix(value string) FieldWherer {
+	if value == "" {
+		return fieldWhereEmpty{}
+	}
 	value = value + "%"
 	return newFieldWhereWithCheck(" NOT LIKE ?", value)
 }
 
 func NotLikeSuffix(value string) FieldWherer {
+	if value == "" {
+		return fieldWhereEmpty{}
+	}
 	value = "%" + value
 	return newFieldWhereWithCheck(" NOT LIKE ?", value)
 }
 
 func NotLikeContain(value string) FieldWherer {
+	if value == "" {
+		return fieldWhereEmpty{}
+	}
 	value = "%" + value + "%"
 	return newFieldWhereWithCheck(" NOT LIKE ?", value)
 }
