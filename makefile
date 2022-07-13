@@ -90,6 +90,8 @@ go-test:
 
 .PHONY: setup
 setup:
+	git submodule init
+	git submodule update
 	git config core.hooksPath "git-go-tool/git-hook"
 	@cd
 	$(call _go_install,github.com/distroy/git-go-tool/cmd/git-diff-go-cognitive)
