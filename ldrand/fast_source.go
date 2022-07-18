@@ -18,7 +18,7 @@ var (
 
 const (
 	//                 7654321076543210
-	fastSourceStep = 0x1753715715313157
+	fastSourceStep = 0x3753717315313157
 )
 
 var fastSourceXor [16]uint64 = [...]uint64{
