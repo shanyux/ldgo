@@ -16,6 +16,7 @@ func TestNewBoolByPtr(t *testing.T) {
 		convey.So(NewBoolByPtr(nil), convey.ShouldBeNil)
 		convey.So(NewBoolByPtr(nil, false), convey.ShouldResemble, NewBool(false))
 		convey.So(NewBoolByPtr(nil, true), convey.ShouldResemble, NewBool(true))
+		convey.So(NewBoolByPtr(NewBool(false)), convey.ShouldResemble, NewBool(false))
 		convey.So(NewBoolByPtr(NewBool(true)), convey.ShouldResemble, NewBool(true))
 	})
 }
@@ -175,6 +176,14 @@ func TestNewFloat64ByPtr(t *testing.T) {
 		convey.So(NewFloat64ByPtr(NewFloat64(100)), convey.ShouldResemble, NewFloat64(100))
 		convey.So(NewFloat64ByPtr(NewFloat64(-100)), convey.ShouldResemble, NewFloat64(-100))
 		convey.So(NewFloat64ByPtr(NewFloat64(123.123)), convey.ShouldResemble, NewFloat64(123.123))
+	})
+}
+
+func TestNewStringByPtr(t *testing.T) {
+	convey.Convey(t.Name(), t, func() {
+		convey.So(NewStringByPtr(nil), convey.ShouldBeNil)
+		convey.So(NewStringByPtr(nil, "a"), convey.ShouldResemble, NewString("a"))
+		convey.So(NewStringByPtr(NewString("1")), convey.ShouldResemble, NewString("1"))
 	})
 }
 
