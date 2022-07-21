@@ -16,40 +16,25 @@ func StrMapReplace(s string, m map[string]string, l string, r string) string {
 		return s
 	}
 
-	builder := &strings.Builder{}
-	builder.Grow(len(s))
-	for len(s) > 0 {
-		bpos := strings.Index(s, l)
-		if bpos < 0 {
-			builder.WriteString(s)
-			break
-		}
-		builder.WriteString(s[:bpos])
-		s = s[bpos+len(l):]
+	replaceKeyValues := make([]string, 0, len(m)*2)
+	for k, v := range m {
+		kk := k
+		vv := v
 
-		epos := strings.Index(s, r)
-		if epos < 0 {
-			builder.WriteString(l)
-			builder.WriteString(s)
-			break
-		}
-
-		key := s[:epos]
-		val, ok := m[key]
-		if !ok {
-			builder.WriteString(l)
+		kk = strings.Join([]string{l, kk, r}, "")
+		if kk == "" {
 			continue
 		}
-
-		builder.WriteString(val)
-		s = s[epos+len(r):]
+		replaceKeyValues = append(replaceKeyValues, kk, vv)
 	}
-	return builder.String()
+
+	replacer := strings.NewReplacer(replaceKeyValues...)
+	return replacer.Replace(s)
 }
 
 func StrIMapReplace(s string, _m interface{}, l string, r string) string {
-	if _m, ok := _m.(map[string]string); ok {
-		return StrMapReplace(s, _m, l, r)
+	if m, ok := _m.(map[string]string); ok {
+		return StrMapReplace(s, m, l, r)
 	}
 
 	val := reflect.ValueOf(_m)
@@ -62,13 +47,25 @@ func StrIMapReplace(s string, _m interface{}, l string, r string) string {
 	if val.Kind() != reflect.Map {
 		return ""
 	}
-	m := make(map[string]string, val.Len())
+	if val.Len() == 0 {
+		return s
+	}
 
+	replaceKeyValues := make([]string, 0, val.Len()*2)
 	for it := val.MapRange(); it.Next(); {
 		k := it.Key().Interface()
 		v := it.Value().Interface()
-		m[ldconv.AsString(k)] = ldconv.AsString(v)
+
+		kk := ldconv.AsString(k)
+		vv := ldconv.AsString(v)
+
+		kk = strings.Join([]string{l, kk, r}, "")
+		if kk == "" {
+			continue
+		}
+		replaceKeyValues = append(replaceKeyValues, kk, vv)
 	}
 
-	return StrMapReplace(s, m, l, r)
+	replacer := strings.NewReplacer(replaceKeyValues...)
+	return replacer.Replace(s)
 }
