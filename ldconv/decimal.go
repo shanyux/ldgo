@@ -26,6 +26,11 @@ func newDecimalFromFloatStr(s string) (decimalNumber, error) {
 	return decimal.NewFromString(s)
 }
 
+func mustNewDecimalFromStr(s string) decimalNumber {
+	n, _ := decimal.NewFromString(s)
+	return n
+}
+
 func newDecimalFromBigFloat(n *big.Float) decimalNumber {
 	r, _ := decimal.NewFromString(n.String())
 	return r
