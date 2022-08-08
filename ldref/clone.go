@@ -7,6 +7,10 @@ package ldref
 import "reflect"
 
 func Clone(i interface{}) interface{} {
+	if x, ok := i.(reflect.Value); ok {
+		return clone(x)
+	}
+
 	x := clone(reflect.ValueOf(i))
 	if x.Kind() == reflect.Invalid {
 		return nil
