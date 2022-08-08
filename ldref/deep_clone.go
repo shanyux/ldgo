@@ -7,6 +7,10 @@ package ldref
 import "reflect"
 
 func DeepClone(i interface{}) interface{} {
+	if x, ok := i.(reflect.Value); ok {
+		return deepClone(x)
+	}
+
 	x := deepClone(reflect.ValueOf(i))
 	if x.Kind() == reflect.Invalid {
 		return nil
