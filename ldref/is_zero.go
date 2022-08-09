@@ -46,7 +46,13 @@ func IsValZero(v reflect.Value) bool {
 	case reflect.Array:
 		return isArrayValZero(v)
 
-	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice, reflect.UnsafePointer:
+	case reflect.Chan, reflect.Func, reflect.Interface:
+		return v.IsNil()
+
+	case reflect.Map, reflect.Ptr, reflect.Slice:
+		return v.IsNil()
+
+	case reflect.UnsafePointer:
 		return v.IsNil()
 
 	case reflect.String:
