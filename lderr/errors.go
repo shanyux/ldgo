@@ -15,6 +15,10 @@ var (
 	ErrCtxCanceled         = New(http.StatusOK, -11, "context canceled")
 	ErrCtxDeadlineExceeded = New(http.StatusOK, -12, "context deadline exceeded")
 
+	ErrReflectError        = New(http.StatusOK, -21, "reflect error")
+	ErrReflectTargetNotPtr = New(http.StatusOK, -22, "reflect target not be pointer")
+	ErrReflectTargetNilPtr = New(http.StatusOK, -23, "reflect target be nil pointer")
+
 	ErrNonAuthoritativeInfo = New(http.StatusNonAuthoritativeInfo, -101, "http non authoritative info")
 	ErrUnauthorized         = New(http.StatusUnauthorized, -102, "http unauthorized")
 	ErrInternalServerError  = New(http.StatusInternalServerError, -103, "http internal server error")
