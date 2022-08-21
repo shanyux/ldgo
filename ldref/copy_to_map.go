@@ -123,6 +123,10 @@ func copyReflectToMapFromSlice(c *context, target, source reflect.Value) bool {
 	tKeyTyp := tTyp.Key()
 	tValTyp := tTyp.Elem()
 
+	if tValTyp == typeOfEmptyStruct {
+		return copyReflectToMapFromSliceWithEmptyStructValue(c, target, source)
+	}
+
 	sTyp := source.Type()
 	sKeyTyp := reflect.TypeOf(int(0))
 	sValTyp := sTyp.Elem()
@@ -139,7 +143,7 @@ func copyReflectToMapFromSlice(c *context, target, source reflect.Value) bool {
 	target.Set(reflect.MakeMap(target.Type()))
 	// }
 
-	for i := 0; i < source.Len(); i++ {
+	for i, l := 0, source.Len(); i < l; i++ {
 		sKey := reflect.ValueOf(i)
 		sVal := source.Index(i)
 
@@ -161,6 +165,39 @@ func copyReflectToMapFromSlice(c *context, target, source reflect.Value) bool {
 		}
 
 		target.SetMapIndex(tKey, tVal)
+	}
+
+	return true
+}
+
+func copyReflectToMapFromSliceWithEmptyStructValue(c *context, target, source reflect.Value) bool {
+	tTyp := target.Type()
+	tElemTyp := tTyp.Key()
+
+	sTyp := source.Type()
+	sElemTyp := sTyp.Elem()
+
+	if !isCopyTypeConvertible(tElemTyp, sElemTyp) {
+		return false
+	}
+
+	target.Set(reflect.MakeMap(target.Type()))
+
+	tValue := reflect.ValueOf(struct{}{})
+	for i, l := 0, source.Len(); i < l; i++ {
+		// sKey := reflect.ValueOf(i)
+		sElem := source.Index(i)
+
+		tElem := reflect.New(tElemTyp).Elem()
+
+		c.PushField(fmt.Sprintf("%d", i))
+		keyEnd := copyReflect(c, tElem, sElem)
+		c.PopField()
+		if !keyEnd {
+			continue
+		}
+
+		target.SetMapIndex(tElem, tValue)
 	}
 
 	return true

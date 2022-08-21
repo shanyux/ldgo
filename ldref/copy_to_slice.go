@@ -28,6 +28,9 @@ func copyReflectToSlice(c *context, target, source reflect.Value) bool {
 		fallthrough
 	case reflect.Array, reflect.Slice:
 		return copyReflectToSliceFromSlice(c, target, source)
+
+	case reflect.Map:
+		return copyReflectToSliceFromMapWithEmptyStructValue(c, target, source)
 	}
 
 	return true
@@ -78,6 +81,43 @@ func copyReflectToSliceFromSlice(c *context, target, source reflect.Value) bool 
 	for i := 0; i < l; i++ {
 		tItem := target.Index(i)
 		sItem := source.Index(i)
+
+		c.PushField(strconv.Itoa(i))
+		copyReflect(c, tItem, sItem)
+		c.PopField()
+	}
+
+	return true
+}
+
+func copyReflectToSliceFromMapWithEmptyStructValue(c *context, target, source reflect.Value) bool {
+	tTyp := target.Type()
+	sTyp := source.Type()
+
+	if sTyp.Elem() != typeOfEmptyStruct {
+		return false
+	}
+
+	if isCopyTypeConvertible(sTyp.Elem(), sTyp.Key()) {
+		return false
+	}
+
+	l := source.Len()
+	if l > target.Len() {
+		if target.Kind() == reflect.Array {
+			c.AddErrorf("%s has %d elements, can not convert to %s", sTyp.String(), l, tTyp.String())
+			l = target.Len()
+
+		} else {
+			target.Set(reflect.MakeSlice(tTyp, l, l))
+		}
+	}
+
+	i := 0
+	sTyp.Comparable()
+	for it := source.MapRange(); i < l && it.Next(); i++ {
+		tItem := target.Index(i)
+		sItem := it.Key()
 
 		c.PushField(strconv.Itoa(i))
 		copyReflect(c, tItem, sItem)

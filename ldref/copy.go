@@ -32,6 +32,15 @@ func copyWithContext(c *context, target, source interface{}) lderr.Error {
 	// sVal, _ = valueElment(sVal)
 
 	if tVal, ok := target.(reflect.Value); ok {
+		if !tVal.CanAddr() {
+			if tVal.Kind() != reflect.Ptr {
+				return lderr.ErrReflectTargetNotPtr
+
+			} else if tVal.IsNil() {
+				return lderr.ErrReflectTargetNilPtr
+			}
+		}
+
 		copyReflect(c, tVal, sVal)
 		return c.Error()
 	}

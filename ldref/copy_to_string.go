@@ -41,9 +41,9 @@ func copyReflectToString(c *context, target, source reflect.Value) bool {
 		n := source.Float()
 		target.SetString(strconv.FormatFloat(n, 'f', -1, 64))
 
-	case reflect.Complex64, reflect.Complex128:
-		n := source.Complex()
-		target.SetString(strconv.FormatComplex(n, 'f', -1, 128))
+	// case reflect.Complex64, reflect.Complex128:
+	// 	n := source.Complex()
+	// 	target.SetString(strconv.FormatComplex(n, 'f', -1, 128))
 
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		n := source.Int()

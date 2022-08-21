@@ -62,35 +62,35 @@ func copyReflectToComplex(c *context, target, source reflect.Value) bool {
 			c.AddErrorf("%s(%d) overflow", target.Type().String(), n)
 		}
 
-	case reflect.String:
-		return copyReflectToComplexFromString(c, target, source)
+		// case reflect.String:
+		// 	return copyReflectToComplexFromString(c, target, source)
 	}
 
 	return true
 }
 
-func copyReflectToComplexFromString(c *context, target, source reflect.Value) bool {
-	s := source.String()
-	if x, err := strconv.ParseComplex(s, 128); err == nil {
-		target.SetComplex(x)
-		if target.OverflowComplex(x) {
-			c.AddErrorf("%s(%s) overflow", target.Type().String(), s)
-		}
-		return true
-	}
-
-	if n, err := strconv.ParseFloat(s, 64); err == nil {
-		x := complex(n, 0)
-		target.SetComplex(x)
-		if target.OverflowComplex(x) {
-			c.AddErrorf("%s(%s) overflow", target.Type().String(), s)
-		}
-		return true
-	}
-
-	c.AddErrorf("can not convert to %s, %q", target.Type().String(), s)
-	return true
-}
+// func copyReflectToComplexFromString(c *context, target, source reflect.Value) bool {
+// 	s := source.String()
+// 	if x, err := strconv.ParseComplex(s, 128); err == nil {
+// 		target.SetComplex(x)
+// 		if target.OverflowComplex(x) {
+// 			c.AddErrorf("%s(%s) overflow", target.Type().String(), s)
+// 		}
+// 		return true
+// 	}
+//
+// 	if n, err := strconv.ParseFloat(s, 64); err == nil {
+// 		x := complex(n, 0)
+// 		target.SetComplex(x)
+// 		if target.OverflowComplex(x) {
+// 			c.AddErrorf("%s(%s) overflow", target.Type().String(), s)
+// 		}
+// 		return true
+// 	}
+//
+// 	c.AddErrorf("can not convert to %s, %q", target.Type().String(), s)
+// 	return true
+// }
 
 func copyReflectToFloat(c *context, target, source reflect.Value) bool {
 	// source, _ = prepareCopySourceReflect(c, source)
@@ -231,7 +231,7 @@ func copyReflectToUint(c *context, target, source reflect.Value) bool {
 	case reflect.Float32, reflect.Float64:
 		n := source.Float()
 		target.SetUint(uint64(n))
-		if target.OverflowInt(int64(n)) {
+		if target.OverflowUint(uint64(n)) {
 			c.AddErrorf("%s(%f) overflow", target.Type().String(), n)
 		}
 
@@ -239,7 +239,7 @@ func copyReflectToUint(c *context, target, source reflect.Value) bool {
 		n := source.Complex()
 		r := real(n)
 		target.SetUint(uint64(r))
-		if r > math.MaxUint64 || r < 0 || target.OverflowInt(int64(r)) {
+		if r > math.MaxUint64 || r < 0 || target.OverflowUint(uint64(r)) {
 			c.AddErrorf("%s(%v) overflow", target.Type().String(), n)
 		}
 

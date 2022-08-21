@@ -5,8 +5,11 @@
 package ldref
 
 import (
+	"reflect"
+	"sort"
 	"testing"
 
+	"github.com/distroy/ldgo/lderr"
 	"github.com/smartystreets/goconvey/convey"
 )
 
@@ -20,6 +23,133 @@ type testCopyStruct struct {
 
 func TestCopy(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
+		convey.Convey("int to int", func() {
+			var (
+				target int
+				source int = 100
+			)
+
+			err := Copy(target, source)
+			convey.So(err, convey.ShouldEqual, lderr.ErrReflectTargetNotPtr)
+			convey.So(target, convey.ShouldEqual, 0)
+		})
+
+		convey.Convey("to reflect.Value", func() {
+			convey.Convey("int to reflect.Value - int (can not addr)", func() {
+				var (
+					target reflect.Value = reflect.ValueOf(int(0))
+					source int           = 100
+				)
+
+				err := Copy(target, source)
+				convey.So(err, convey.ShouldEqual, lderr.ErrReflectTargetNotPtr)
+				convey.So(target.Interface(), convey.ShouldEqual, 0)
+			})
+
+			convey.Convey("int to reflect.Value - *int", func() {
+				var (
+					xxxx   *int          = new(int)
+					target reflect.Value = reflect.ValueOf(xxxx)
+					source int           = 100
+				)
+
+				err := Copy(target, source)
+				convey.So(err, convey.ShouldBeNil)
+				convey.So(target.Interface(), convey.ShouldResemble, &source)
+			})
+
+			convey.Convey("int to reflect.Value - *int (can not addr)", func() {
+				var (
+					xxxx   *int
+					target reflect.Value = reflect.ValueOf(xxxx)
+					source int           = 100
+				)
+
+				err := Copy(target, source)
+				// convey.So(err, convey.ShouldBeNil)
+				// convey.So(target.Interface(), convey.ShouldEqual, 100)
+				convey.So(err, convey.ShouldEqual, lderr.ErrReflectTargetNilPtr)
+				convey.So(target.Interface(), convey.ShouldBeNil)
+			})
+
+			convey.Convey("int to reflect.Value - *int (elem of **int)", func() {
+				var (
+					xxxx   **int         = new(*int)
+					target reflect.Value = reflect.ValueOf(xxxx).Elem()
+					source int           = 100
+				)
+
+				err := Copy(target, source)
+				// convey.So(err, convey.ShouldBeNil)
+				// convey.So(target.Interface(), convey.ShouldEqual, 100)
+				convey.So(err, convey.ShouldBeNil)
+				convey.So(target.Interface(), convey.ShouldResemble, &source)
+			})
+
+			convey.Convey("int to reflect.Value - **int", func() {
+				var (
+					xxxx   *int
+					target reflect.Value = reflect.ValueOf(&xxxx)
+					source int           = 100
+				)
+
+				err := Copy(target, source)
+				convey.So(err, convey.ShouldBeNil)
+				convey.So(xxxx, convey.ShouldResemble, &source)
+			})
+		})
+
+		convey.Convey("to *interface{}", func() {
+			convey.Convey("nil to *interface{}", func() {
+				var (
+					target interface{}
+					source interface{}
+				)
+
+				err := Copy(&target, source)
+				convey.So(err, convey.ShouldBeNil)
+				convey.So(target, convey.ShouldEqual, nil)
+			})
+
+			convey.Convey("int to *interface{}", func() {
+				var (
+					target interface{}
+					source int = 100
+				)
+
+				err := Copy(&target, source)
+				convey.So(err, convey.ShouldBeNil)
+				convey.So(target, convey.ShouldEqual, source)
+			})
+
+			convey.Convey("*int to *interface{}", func() {
+				var (
+					target interface{}
+					source *int = new(int)
+				)
+				*source = 100
+
+				err := Copy(&target, source)
+				convey.So(err, convey.ShouldBeNil)
+				convey.So(target, convey.ShouldEqual, source)
+				convey.So(target, convey.ShouldResemble, source)
+			})
+
+			convey.Convey("**int to *interface{}", func() {
+				var (
+					target interface{}
+					xxxx0  int   = 100
+					xxxx1  *int  = &xxxx0
+					source **int = &xxxx1
+				)
+
+				err := Copy(&target, source)
+				convey.So(err, convey.ShouldBeNil)
+				convey.So(target, convey.ShouldEqual, source)
+				convey.So(target, convey.ShouldResemble, source)
+			})
+		})
+
 		convey.Convey("to **int", func() {
 			convey.Convey("bool to **int", func() {
 				var target *int = new(int)
@@ -88,51 +218,29 @@ func TestCopy(t *testing.T) {
 				convey.So(err.Error(), convey.ShouldEqual, "func() can not convert to int")
 				convey.So(target, convey.ShouldEqual, 0)
 			})
+
+			convey.Convey("func to *string", func() {
+				var (
+					target string
+					source func(interface{}) bool = IsZero
+				)
+
+				err := Copy(&target, source)
+				convey.So(err, convey.ShouldBeNil)
+				convey.So(target, convey.ShouldEqual, "github.com/distroy/ldgo/ldref.IsZero")
+			})
 		})
 
-		convey.Convey("number to *numbers", func() {
-			convey.Convey("nil to *int", func() {
+		convey.Convey("to *bool", func() {
+			convey.Convey("nil to *bool", func() {
 				var (
-					target int
+					target bool
 					source interface{}
 				)
 
 				err := Copy(&target, source)
 				convey.So(err, convey.ShouldBeNil)
-				convey.So(target, convey.ShouldEqual, 0)
-			})
-
-			convey.Convey("int to *int", func() {
-				var (
-					target int
-					source int = 100
-				)
-
-				err := Copy(&target, source)
-				convey.So(err, convey.ShouldBeNil)
-				convey.So(target, convey.ShouldEqual, source)
-			})
-
-			convey.Convey("uint to *int", func() {
-				var (
-					target int
-					source uint = 100
-				)
-
-				err := Copy(&target, source)
-				convey.So(err, convey.ShouldBeNil)
-				convey.So(target, convey.ShouldEqual, source)
-			})
-
-			convey.Convey("int to *uint", func() {
-				var (
-					target uint
-					source int = 100
-				)
-
-				err := Copy(&target, source)
-				convey.So(err, convey.ShouldBeNil)
-				convey.So(target, convey.ShouldEqual, source)
+				convey.So(target, convey.ShouldEqual, false)
 			})
 
 			convey.Convey("float to *bool", func() {
@@ -144,6 +252,263 @@ func TestCopy(t *testing.T) {
 				err := Copy(&target, source)
 				convey.So(err, convey.ShouldBeNil)
 				convey.So(target, convey.ShouldEqual, source != 0)
+			})
+			convey.Convey("int to *bool", func() {
+				var (
+					target bool
+					source int = 100
+				)
+
+				err := Copy(&target, source)
+				convey.So(err, convey.ShouldBeNil)
+				convey.So(target, convey.ShouldEqual, source != 0)
+			})
+			convey.Convey("uint to *bool", func() {
+				var (
+					target bool
+					source uint = 100
+				)
+
+				err := Copy(&target, source)
+				convey.So(err, convey.ShouldBeNil)
+				convey.So(target, convey.ShouldEqual, source != 0)
+			})
+			convey.Convey("complex to *bool", func() {
+				var (
+					target bool
+					source complex128 = 100
+				)
+
+				err := Copy(&target, source)
+				convey.So(err, convey.ShouldBeNil)
+				convey.So(target, convey.ShouldEqual, source != 0)
+			})
+		})
+
+		convey.Convey("number to *numbers", func() {
+			convey.Convey("to *int", func() {
+				convey.Convey("nil to *int", func() {
+					var (
+						target int
+						source interface{}
+					)
+
+					err := Copy(&target, source)
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldEqual, 0)
+				})
+
+				convey.Convey("int to *int", func() {
+					var (
+						target int
+						source int = 100
+					)
+
+					err := Copy(&target, source)
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldEqual, source)
+				})
+
+				convey.Convey("uint to *int", func() {
+					var (
+						target int
+						source uint = 100
+					)
+
+					err := Copy(&target, source)
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldEqual, source)
+				})
+
+				convey.Convey("float64 to *int", func() {
+					var (
+						target int
+						source float64 = 100
+					)
+
+					err := Copy(&target, source)
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldEqual, source)
+				})
+
+				convey.Convey("complex128 to *int", func() {
+					var (
+						target int
+						source complex128 = 100
+					)
+
+					err := Copy(&target, source)
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldEqual, source)
+				})
+			})
+			convey.Convey("to *uint", func() {
+				convey.Convey("nil to *uint", func() {
+					var (
+						target uint
+						source interface{}
+					)
+
+					err := Copy(&target, source)
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldEqual, 0)
+				})
+
+				convey.Convey("int to *uint", func() {
+					var (
+						target uint
+						source int = 100
+					)
+
+					err := Copy(&target, source)
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldEqual, source)
+				})
+
+				convey.Convey("uint to *uint", func() {
+					var (
+						target uint
+						source uint = 100
+					)
+
+					err := Copy(&target, source)
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldEqual, source)
+				})
+
+				convey.Convey("float64 to *uint", func() {
+					var (
+						target uint
+						source float64 = 100
+					)
+
+					err := Copy(&target, source)
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldEqual, source)
+				})
+
+				convey.Convey("complex128 to *uint", func() {
+					var (
+						target uint
+						source complex128 = 100
+					)
+
+					err := Copy(&target, source)
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldEqual, source)
+				})
+			})
+			convey.Convey("to *float64", func() {
+				convey.Convey("nil to *float64", func() {
+					var (
+						target float64
+						source interface{}
+					)
+
+					err := Copy(&target, source)
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldEqual, 0)
+				})
+
+				convey.Convey("int to *float64", func() {
+					var (
+						target float64
+						source int = 100
+					)
+
+					err := Copy(&target, source)
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldEqual, source)
+				})
+
+				convey.Convey("uint to *float64", func() {
+					var (
+						target float64
+						source uint = 100
+					)
+
+					err := Copy(&target, source)
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldEqual, source)
+				})
+
+				convey.Convey("float64 to *float64", func() {
+					var (
+						target float64
+						source float64 = 100
+					)
+
+					err := Copy(&target, source)
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldEqual, source)
+				})
+
+				convey.Convey("complex128 to *float64", func() {
+					var (
+						target float64
+						source complex128 = 100
+					)
+
+					err := Copy(&target, source)
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldEqual, source)
+				})
+			})
+			convey.Convey("to *complex128", func() {
+				convey.Convey("nil to *complex128", func() {
+					var (
+						target complex128
+						source interface{}
+					)
+
+					err := Copy(&target, source)
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldEqual, 0)
+				})
+
+				convey.Convey("int to *complex128", func() {
+					var (
+						target complex128
+						source int = 100
+					)
+
+					err := Copy(&target, source)
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldEqual, source)
+				})
+
+				convey.Convey("uint to *complex128", func() {
+					var (
+						target complex128
+						source uint = 100
+					)
+
+					err := Copy(&target, source)
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldEqual, source)
+				})
+
+				convey.Convey("float64 to *complex128", func() {
+					var (
+						target complex128
+						source float64 = 100
+					)
+
+					err := Copy(&target, source)
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldEqual, source)
+				})
+
+				convey.Convey("complex128 to *complex128", func() {
+					var (
+						target complex128
+						source complex128 = 100
+					)
+
+					err := Copy(&target, source)
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldEqual, source)
+				})
 			})
 		})
 
@@ -180,6 +545,37 @@ func TestCopy(t *testing.T) {
 				convey.So(err, convey.ShouldBeNil)
 				convey.So(target, convey.ShouldEqual, "100")
 			})
+			convey.Convey("uint to *string", func() {
+				var (
+					target string
+					source uint = 100
+				)
+
+				err := Copy(&target, source)
+				convey.So(err, convey.ShouldBeNil)
+				convey.So(target, convey.ShouldEqual, "100")
+			})
+			convey.Convey("float64 to *string", func() {
+				var (
+					target string
+					source float64 = 100
+				)
+
+				err := Copy(&target, source)
+				convey.So(err, convey.ShouldBeNil)
+				convey.So(target, convey.ShouldEqual, "100")
+			})
+
+			// convey.Convey("complex128 to *string", func() {
+			// 	var (
+			// 		target string
+			// 		source complex128 = 100
+			// 	)
+			//
+			// 	err := Copy(&target, source)
+			// 	convey.So(err, convey.ShouldBeNil)
+			// 	convey.So(target, convey.ShouldEqual, "(100+0i)")
+			// })
 		})
 
 		convey.Convey("string to *number", func() {
@@ -193,7 +589,6 @@ func TestCopy(t *testing.T) {
 				convey.So(err, convey.ShouldBeNil)
 				convey.So(target, convey.ShouldEqual, 100)
 			})
-
 			convey.Convey("string to *bool", func() {
 				var (
 					target bool
@@ -204,6 +599,37 @@ func TestCopy(t *testing.T) {
 				convey.So(err, convey.ShouldBeNil)
 				convey.So(target, convey.ShouldEqual, true)
 			})
+			convey.Convey("string to *int", func() {
+				var (
+					target int
+					source string = "100"
+				)
+
+				err := Copy(&target, source)
+				convey.So(err, convey.ShouldBeNil)
+				convey.So(target, convey.ShouldEqual, 100)
+			})
+			convey.Convey("string to *uint", func() {
+				var (
+					target uint
+					source string = "100"
+				)
+
+				err := Copy(&target, source)
+				convey.So(err, convey.ShouldBeNil)
+				convey.So(target, convey.ShouldEqual, 100)
+			})
+
+			// convey.Convey("string to *complex128", func() {
+			// 	var (
+			// 		target complex128
+			// 		source string = "100"
+			// 	)
+			//
+			// 	err := Copy(&target, source)
+			// 	convey.So(err, convey.ShouldBeNil)
+			// 	convey.So(target, convey.ShouldEqual, complex128(100))
+			// })
 		})
 
 		convey.Convey("string/[]byte/[]rune", func() {
@@ -337,6 +763,24 @@ func TestCopy(t *testing.T) {
 					`3`: "zzz",
 				})
 			})
+
+			convey.Convey("[]string to *map[string]struct{}", func() {
+				var (
+					target map[string]struct{}
+					source []string = []string{
+						"abc", "xyz", "123", "zzz",
+					}
+				)
+
+				err := Copy(&target, source)
+				convey.So(err, convey.ShouldBeNil)
+				convey.So(target, convey.ShouldResemble, map[string]struct{}{
+					"abc": {},
+					"xyz": {},
+					"123": {},
+					"zzz": {},
+				})
+			})
 		})
 
 		convey.Convey("to *slice", func() {
@@ -374,6 +818,26 @@ func TestCopy(t *testing.T) {
 				convey.So(err, convey.ShouldBeNil)
 				convey.So(target, convey.ShouldResemble, []complex128{
 					2, -100, 356,
+				})
+			})
+
+			convey.Convey("map[string]struct{} to *[]string", func() {
+				var (
+					target []string
+					source map[string]struct{} = map[string]struct{}{
+						"abc": {},
+						"xyz": {},
+						"AAA": {},
+						"123": {},
+					}
+				)
+
+				err := Copy(&target, source)
+				convey.So(err, convey.ShouldBeNil)
+
+				sort.Strings(target)
+				convey.So(target, convey.ShouldResemble, []string{
+					"123", "AAA", "abc", "xyz",
 				})
 			})
 
