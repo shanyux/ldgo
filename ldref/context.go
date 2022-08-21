@@ -16,7 +16,7 @@ var (
 	contextPool = &sync.Pool{}
 )
 
-func getContext() *context {
+func getContext(isDeep bool) *context {
 	c := contextPool.Get().(*context)
 	if c == nil {
 		c = &context{
@@ -24,6 +24,8 @@ func getContext() *context {
 			errors: make([]string, 0, 16),
 		}
 	}
+
+	c.IsDeep = isDeep
 	return c
 }
 
@@ -35,6 +37,8 @@ func putContext(c *context) {
 type context struct {
 	fields []string
 	errors []string
+
+	IsDeep bool
 }
 
 func (c *context) Reset() {
@@ -42,7 +46,7 @@ func (c *context) Reset() {
 	c.errors = c.errors[:0]
 }
 
-func (c *context) Error() error {
+func (c *context) Error() lderr.Error {
 	if len(c.errors) == 0 {
 		return nil
 	}
@@ -52,9 +56,13 @@ func (c *context) Error() error {
 	return lderr.WithDetails(err, c.errors)
 }
 
-func (c *context) AddError(format string, args ...interface{}) {
+// AddErrorf formats according to a format specifier.
+func (c *context) AddErrorf(format string, args ...interface{}) {
 	text := fmt.Sprintf(format, args...)
+	c.AddError(text)
+}
 
+func (c *context) AddError(text string) {
 	fields := strings.Join(c.fields, ".")
 	if fields != "" {
 		text = fmt.Sprintf("%s: %s", fields, text)
