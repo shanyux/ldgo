@@ -39,5 +39,45 @@ func TestAsInt(t *testing.T) {
 
 		convey.So(AsInt(int(-1)), convey.ShouldEqual, -1)
 		convey.So(AsInt(uint(1)), convey.ShouldEqual, 1)
+
+		convey.So(AsInt(mustNewDecimalFromStr("-123.234")), convey.ShouldEqual, -123)
+	})
+}
+
+func TestAsFloat32(t *testing.T) {
+	convey.Convey(t.Name(), t, func() {
+		convey.So(AsFloat32("0"), convey.ShouldEqual, 0)
+		convey.So(AsFloat32("abc"), convey.ShouldEqual, 0)
+		convey.So(AsFloat32("abc", 1), convey.ShouldEqual, 1)
+
+		convey.So(AsFloat32("true", 0), convey.ShouldEqual, 1)
+		convey.So(AsFloat32("false", 1), convey.ShouldEqual, 0)
+		convey.So(AsFloat32([]byte("null"), 1), convey.ShouldEqual, 0)
+
+		convey.So(AsFloat32(0, 100), convey.ShouldEqual, 0)
+
+		convey.So(AsFloat32(int(-1)), convey.ShouldEqual, -1)
+		convey.So(AsFloat32(uint(1)), convey.ShouldEqual, 1)
+
+		convey.So(AsFloat32(mustNewDecimalFromStr("-123.234")), convey.ShouldEqual, -123.234)
+	})
+}
+
+func TestAsFloat64(t *testing.T) {
+	convey.Convey(t.Name(), t, func() {
+		convey.So(AsFloat64("0"), convey.ShouldEqual, 0)
+		convey.So(AsFloat64("abc"), convey.ShouldEqual, 0)
+		convey.So(AsFloat64("abc", 1), convey.ShouldEqual, 1)
+
+		convey.So(AsFloat64("true", 0), convey.ShouldEqual, 1)
+		convey.So(AsFloat64("false", 1), convey.ShouldEqual, 0)
+		convey.So(AsFloat64([]byte("null"), 1), convey.ShouldEqual, 0)
+
+		convey.So(AsFloat64(0, 100), convey.ShouldEqual, 0)
+
+		convey.So(AsFloat64(int(-1)), convey.ShouldEqual, -1)
+		convey.So(AsFloat64(uint(1)), convey.ShouldEqual, 1)
+
+		convey.So(AsFloat64(mustNewDecimalFromStr("-123.234")), convey.ShouldEqual, -123.234)
 	})
 }
