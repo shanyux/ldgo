@@ -17,7 +17,7 @@ var (
 )
 
 func getContext(isDeep bool) *context {
-	c := contextPool.Get().(*context)
+	c, _ := contextPool.Get().(*context)
 	if c == nil {
 		c = &context{
 			fields: make([]string, 0, 16),

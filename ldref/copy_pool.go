@@ -9,17 +9,24 @@ import (
 	"sync"
 )
 
+const (
+	copyTagName = "copy"
+)
+
 var copyTypePool = &sync.Map{}
 
 type copyFieldInfo struct {
 	reflect.StructField
 
-	Name  string
-	Index int
+	Name   string
+	Index  int
+	Ignore bool
 }
 
 type copyStructInfo struct {
-	Fields map[string]*copyFieldInfo
+	Type    reflect.Type
+	Fields  map[string]*copyFieldInfo
+	Ignores []*copyFieldInfo
 }
 
 func getCopyTypeInfo(typ reflect.Type) *copyStructInfo {
@@ -29,21 +36,26 @@ func getCopyTypeInfo(typ reflect.Type) *copyStructInfo {
 		return p
 	}
 
+	p = parseCopyStructInfo(typ)
+	copyTypePool.LoadOrStore(typ, p)
+
 	return p
 }
 
 func parseCopyStructInfo(typ reflect.Type) *copyStructInfo {
 	num := typ.NumField()
 	res := &copyStructInfo{
+		Type:   typ,
 		Fields: make(map[string]*copyFieldInfo, num),
 	}
 
 	for i := 0; i < num; i++ {
-		field := parseCopyFieldInfo(i, typ.Field(i))
-		if field == nil {
+		f := parseCopyFieldInfo(i, typ.Field(i))
+		if f.Ignore {
+			res.Ignores = append(res.Ignores, f)
 			continue
 		}
-		res.Fields[field.Name] = field
+		res.Fields[f.Name] = f
 	}
 
 	return res
@@ -56,13 +68,14 @@ func parseCopyFieldInfo(index int, field reflect.StructField) *copyFieldInfo {
 		Index:       index,
 	}
 
-	tagStr := field.Tag.Get("copy")
+	tagStr := field.Tag.Get(copyTagName)
 	if tagStr == "" {
 		return f
 	}
 
 	if tagStr == "-" {
-		return nil
+		f.Ignore = true
+		return f
 	}
 
 	if name := tagStr; name != "" {
