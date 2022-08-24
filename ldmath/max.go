@@ -93,3 +93,21 @@ func MaxUint64(n uint64, args ...uint64) uint64 {
 	}
 	return n
 }
+
+func MaxFloat32(n float32, args ...float32) float32 {
+	for _, v := range args {
+		if n < v {
+			n = v
+		}
+	}
+	return n
+}
+
+func MaxFloat64(n float64, args ...float64) float64 {
+	for _, v := range args {
+		if n < v {
+			n = v
+		}
+	}
+	return n
+}

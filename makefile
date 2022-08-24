@@ -109,4 +109,4 @@ cognitive: setup
 
 .PHONY: format
 format: setup
-	go-format --func-input-num 4 -func-context-error-match=0
+	go-format --func-input-num 4 -func-context-error-match=1
