@@ -2,14 +2,12 @@
  * Copyright (C) distroy
  */
 
-package ldcmp
+package cmp
 
 import (
 	"math"
 	"reflect"
 	"sort"
-
-	"github.com/distroy/ldgo/ldmath"
 )
 
 type kind int
@@ -217,7 +215,10 @@ func compareReflectMap(a, b reflect.Value) int {
 func compareReflectSlice(a, b reflect.Value) int {
 	al := a.Len()
 	bl := b.Len()
-	l := ldmath.MinInt(al, bl)
+	l := al
+	if l > bl {
+		l = bl
+	}
 	for i := 0; i < l; i++ {
 		aa, bb := a.Index(i), b.Index(i)
 		if r := CompareReflect(aa, bb); r != 0 {

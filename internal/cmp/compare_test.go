@@ -2,7 +2,7 @@
  * Copyright (C) distroy
  */
 
-package ldcmp
+package cmp
 
 import (
 	"math"
