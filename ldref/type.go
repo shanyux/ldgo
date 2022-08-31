@@ -7,5 +7,6 @@ package ldref
 import "reflect"
 
 var (
-	typeOfEmptyStruct = reflect.TypeOf((*struct{})(nil)).Elem()
+	typeOfByteSlice = reflect.TypeOf((*[]byte)(nil)).Elem()
+	typeOfRuneSlice = reflect.TypeOf((*[]rune)(nil)).Elem()
 )
