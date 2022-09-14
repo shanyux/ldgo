@@ -6,6 +6,7 @@ package ldref
 
 import (
 	"reflect"
+	"unsafe"
 )
 
 func clearCopyStructIgnoreField(c *context, v reflect.Value, info *copyStructInfo) {
@@ -56,7 +57,8 @@ func copyReflectToStructFromStruct(c *context, target, source reflect.Value) boo
 			continue
 		}
 
-		tField := target.Field(tFieldInfo.Index)
+		tFieldAddr := unsafe.Pointer(target.Field(tFieldInfo.Index).UnsafeAddr())
+		tField := reflect.NewAt(tFieldInfo.Type, tFieldAddr).Elem()
 		sField := source.Field(sFieldInfo.Index)
 
 		c.PushField(tFieldInfo.Name)

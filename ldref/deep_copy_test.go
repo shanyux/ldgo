@@ -209,7 +209,7 @@ func TestDeepCopy(t *testing.T) {
 				)
 
 				err := DeepCopy(&target, source)
-				convey.So(err.Error(), convey.ShouldEqual, "func() can not convert to int")
+				convey.So(err.Error(), convey.ShouldEqual, "func() can not copy to *int")
 				convey.So(target, convey.ShouldEqual, 0)
 			})
 
@@ -853,21 +853,23 @@ func TestDeepCopy(t *testing.T) {
 				var (
 					target testCopyStruct
 					source *testCopyStruct = &testCopyStruct{
-						Id:     100,
-						Ignore: true,
-						Name:   "abc",
-						Age:    23,
-						Female: true,
+						Id:        100,
+						Ignore:    true,
+						Name:      "abc",
+						Age:       23,
+						Female:    true,
+						unexpored: new(int),
 					}
 				)
 
 				err := DeepCopy(&target, source)
 				convey.So(err, convey.ShouldBeNil)
 				convey.So(&target, convey.ShouldResemble, &testCopyStruct{
-					Id:     100,
-					Name:   "abc",
-					Age:    23,
-					Female: true,
+					Id:        100,
+					Name:      "abc",
+					Age:       23,
+					Female:    true,
+					unexpored: new(int),
 				})
 			})
 

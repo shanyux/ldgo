@@ -203,7 +203,7 @@ func copyReflect(c *context, target, source reflect.Value) bool {
 		_target.Set(reflect.Zero(_target.Type()))
 	}
 
-	c.AddErrorf("%s can not convert to %s", typeNameOfReflect(source), typeNameOfReflect(target))
+	c.AddErrorf("%s can not copy to %s", typeNameOfReflect(source), typeNameOfReflect(_target))
 	return false
 }
 

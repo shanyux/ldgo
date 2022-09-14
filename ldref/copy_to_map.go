@@ -36,6 +36,18 @@ func copyReflectToMap(c *context, target, source reflect.Value) bool {
 	return true
 }
 
+func isStructFieldNilPtr(v reflect.Value) bool {
+	for v.Kind() == reflect.Ptr {
+		if v.IsNil() {
+			return true
+		}
+
+		v = v.Elem()
+	}
+
+	return false
+}
+
 func copyReflectToMapFromStruct(c *context, target, source reflect.Value) bool {
 	tTyp := target.Type()
 	keyTyp := tTyp.Key()
@@ -51,9 +63,13 @@ func copyReflectToMapFromStruct(c *context, target, source reflect.Value) bool {
 
 	sInfo := getCopyTypeInfo(source.Type())
 	for _, sFieldInfo := range sInfo.Fields {
+		sField := source.Field(sFieldInfo.Index)
+		if isStructFieldNilPtr(sField) {
+			continue
+		}
+
 		key := reflect.ValueOf(sFieldInfo.Name)
 		value := reflect.New(valTyp).Elem()
-		sField := source.Field(sFieldInfo.Index)
 
 		c.PushField(sFieldInfo.Name)
 		copyReflect(c, value, sField)
