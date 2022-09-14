@@ -9,6 +9,13 @@ import (
 	"reflect"
 )
 
+func isEmptyStruct(typ reflect.Type) bool {
+	if typ.Kind() == reflect.Struct && typ.NumField() == 0 {
+		return true
+	}
+	return false
+}
+
 func copyReflectToMap(c *context, target, source reflect.Value) bool {
 	source, _ = indirectSourceReflect(source)
 
@@ -139,7 +146,7 @@ func copyReflectToMapFromSlice(c *context, target, source reflect.Value) bool {
 	tKeyTyp := tTyp.Key()
 	tValTyp := tTyp.Elem()
 
-	if tValTyp == typeOfEmptyStruct {
+	if isEmptyStruct(tValTyp) {
 		return copyReflectToMapFromSliceWithEmptyStructValue(c, target, source)
 	}
 

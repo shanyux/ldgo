@@ -6,7 +6,6 @@ package ldref
 
 import (
 	"reflect"
-	"runtime"
 	"strconv"
 )
 
@@ -73,9 +72,9 @@ func copyReflectToString(c *context, target, source reflect.Value) bool {
 			target.SetString(string(ss))
 		}
 
-	case reflect.Func:
-		funcName := runtime.FuncForPC(source.Pointer()).Name()
-		target.SetString(funcName)
+		// case reflect.Func:
+		// 	funcName := runtime.FuncForPC(source.Pointer()).Name()
+		// 	target.SetString(funcName)
 	}
 
 	return true

@@ -14,7 +14,6 @@ func copyReflectToArray(c *context, target, source reflect.Value) bool {
 }
 
 func copyReflectToSlice(c *context, target, source reflect.Value) bool {
-	// source, _ = prepareCopySourceReflect(c, source)
 	source, _ = indirectSourceReflect(source)
 
 	switch source.Kind() {
@@ -24,29 +23,51 @@ func copyReflectToSlice(c *context, target, source reflect.Value) bool {
 	case reflect.Invalid:
 		target.Set(reflect.Zero(target.Type()))
 
-	case reflect.String:
-		fallthrough
 	case reflect.Array, reflect.Slice:
 		return copyReflectToSliceFromSlice(c, target, source)
 
 	case reflect.Map:
 		return copyReflectToSliceFromMapWithEmptyStructValue(c, target, source)
+
+	case reflect.String:
+		return copyReflectToSliceFromString(c, target, source)
+	}
+
+	return true
+}
+
+func copyReflectToSliceFromString(c *context, target, source reflect.Value) bool {
+	switch target.Type() {
+	default:
+		return false
+
+	case typeOfByteSlice:
+		source = reflect.ValueOf([]byte(source.String()))
+
+	case typeOfRuneSlice:
+		source = reflect.ValueOf([]rune(source.String()))
+	}
+
+	if target.Kind() == reflect.Slice {
+		target.Set(source)
+		return true
+	}
+
+	// target.Kind() == reflect.Array
+	l := source.Len()
+	if l > target.Len() {
+		l = target.Len()
+	}
+	for i := 0; i < l; i++ {
+		tItem := target.Index(i)
+		sItem := source.Index(i)
+		tItem.Set(sItem)
 	}
 
 	return true
 }
 
 func copyReflectToSliceFromSlice(c *context, target, source reflect.Value) bool {
-	if source.Kind() == reflect.String {
-		switch target.Interface().(type) {
-		case []byte:
-			source = reflect.ValueOf([]byte(source.String()))
-
-		case []rune:
-			source = reflect.ValueOf([]rune(source.String()))
-		}
-	}
-
 	tTyp := target.Type()
 	sTyp := source.Type()
 	if !c.IsDeep && tTyp == sTyp {
@@ -94,7 +115,7 @@ func copyReflectToSliceFromMapWithEmptyStructValue(c *context, target, source re
 	tTyp := target.Type()
 	sTyp := source.Type()
 
-	if sTyp.Elem() != typeOfEmptyStruct {
+	if !isEmptyStruct(sTyp.Elem()) {
 		return false
 	}
 

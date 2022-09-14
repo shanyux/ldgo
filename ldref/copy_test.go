@@ -227,8 +227,9 @@ func TestCopy(t *testing.T) {
 				)
 
 				err := Copy(&target, source)
-				convey.So(err, convey.ShouldBeNil)
-				convey.So(target, convey.ShouldEqual, "github.com/distroy/ldgo/ldref.IsZero")
+				convey.So(err.Error(), convey.ShouldEqual, "func(interface {}) bool can not copy to *string")
+				// convey.So(err, convey.ShouldBeNil)
+				// convey.So(target, convey.ShouldEqual, "github.com/distroy/ldgo/ldref.IsZero")
 			})
 		})
 
