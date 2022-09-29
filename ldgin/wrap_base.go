@@ -7,10 +7,8 @@ package ldgin
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"runtime"
-	"time"
 
 	"github.com/distroy/ldgo/lderr"
 	"github.com/gin-gonic/gin"
@@ -61,18 +59,7 @@ func (w *wrapper) returnError(c *Context, err Error) {
 }
 
 func (w *wrapper) returnResponse(c *Context, rsp interface{}) {
-	if rsp == nil {
-		rsp = struct{}{}
-	}
-
-	response := &CommResponse{
-		Sequence: c.sequence,
-		Cost:     time.Since(c.beginTime).String(),
-		Data:     rsp,
-	}
-
-	c.Set(GinKeyResponse, response)
-	c.JSON(http.StatusOK, response)
+	c.AbortWithData(rsp)
 }
 
 func (w *wrapper) getOutConv0() outConvType {
