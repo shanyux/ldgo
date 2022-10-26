@@ -14,8 +14,9 @@ import (
 
 func Test_Reader(t *testing.T) {
 	type Object struct {
-		Name    string `sheet:"name:name;notempty"`
 		ID      int64  `sheet:"name:id;notempty"`
+		ShopId  uint64 `sheet:"name:shopid;ignorecase"`
+		Name    string `sheet:"name:name;notempty"`
 		Prefix  string `sheet:"prefix:Prefix"`
 		HttpUrl *string
 		Int     int
@@ -73,9 +74,9 @@ func Test_Reader(t *testing.T) {
 
 		convey.Convey("read succ", func() {
 			lines := [][]string{
-				{"id", "name", "http url", "Prefix (for test)", "Int", "Uint"},
-				{"100", "aaa", "http://a", "xxxx", "0x100"},
-				{"200", "bbb", "http://b", "yyyy", "", "0x200"},
+				{"id", "name", "http url", "Prefix (for test)", "Int", "Uint", "ShopID"},
+				{"100", "aaa", "http://a", "xxxx", "0x100", "", "1100"},
+				{"200", "bbb", "http://b", "yyyy", "", "0x200", "1200"},
 				{"300", "ccc", ""},
 			}
 
@@ -87,6 +88,7 @@ func Test_Reader(t *testing.T) {
 				convey.So(r.Read(p), convey.ShouldBeNil)
 				convey.So(p, convey.ShouldResemble, &Object{
 					ID:      100,
+					ShopId:  1100,
 					Name:    "aaa",
 					Prefix:  "xxxx",
 					HttpUrl: ldptr.NewString("http://a"),
@@ -96,6 +98,7 @@ func Test_Reader(t *testing.T) {
 				convey.So(r.Read(p), convey.ShouldBeNil)
 				convey.So(p, convey.ShouldResemble, &Object{
 					ID:      200,
+					ShopId:  1200,
 					Name:    "bbb",
 					Prefix:  "yyyy",
 					HttpUrl: ldptr.NewString("http://b"),
@@ -110,6 +113,17 @@ func Test_Reader(t *testing.T) {
 
 				convey.So(r.Read(p), convey.ShouldEqual, io.EOF)
 			})
+		})
+
+		convey.Convey("read all succ", func() {
+			lines := [][]string{
+				{"id", "name", "http url", "Prefix (for test)", "Int", "Uint"},
+				{"100", "aaa", "http://a", "xxxx", "0x100"},
+				{"200", "bbb", "http://b", "yyyy", "", "0x200"},
+				{"300", "ccc", ""},
+			}
+
+			r := &Reader{Reader: Lines(lines)}
 
 			convey.Convey("read all (struct)", func() {
 				var res []Object

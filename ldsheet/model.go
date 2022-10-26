@@ -24,6 +24,7 @@ type modelField struct {
 	Field       reflect.StructField
 	Tags        ldtagmap.Tags
 	NotEmpty    bool
+	IgnoreCase  bool
 	Name        string
 	Prefix      string
 	FieldIndex  int
@@ -47,41 +48,82 @@ func parseModelField(field reflect.StructField) *modelField {
 	name := tags.Get("name")
 	prefix := tags.Get("prefix")
 	notEmpty := tags.Has("notempty")
+	ignoreCase := tags.Has("ignorecase")
 
 	return &modelField{
 		Field:       field,
 		Name:        name,
 		Prefix:      prefix,
 		NotEmpty:    notEmpty,
+		IgnoreCase:  ignoreCase,
 		HeaderIndex: -1,
 	}
 }
 
-func getFieldIndex(headers map[string]int, field *modelField) int {
-	if name := field.Name; len(name) > 0 {
-		if idx, ok := headers[name]; ok {
+func (f *modelField) GetIndex(headers map[string]int) int {
+	if f.IgnoreCase {
+		temp := make(map[string]int, len(headers))
+		for k, v := range headers {
+			temp[strings.ToLower(k)] = v
+		}
+		headers = temp
+	}
+
+	if idx := f.getIndexByNameInTag(headers); idx >= 0 {
+		return idx
+	}
+
+	if idx := f.getIndexByPrefix(headers); idx >= 0 {
+		return idx
+	}
+
+	if f.Name != "" || f.Prefix != "" {
+		return -1
+	}
+
+	if idx := f.getIndexByFieldName(headers); idx >= 0 {
+		return idx
+	}
+
+	return -1
+}
+
+func (f *modelField) getIndexByNameInTag(headers map[string]int) int {
+	name := f.Name
+	name = f.getStr(name)
+	if name != "" {
+		idx, ok := headers[name]
+		if ok {
 			return idx
 		}
 	}
 
-	if prefix := field.Prefix; len(prefix) > 0 {
+	return -1
+}
+
+func (f *modelField) getIndexByPrefix(headers map[string]int) int {
+	prefix := f.Prefix
+	prefix = f.getStr(prefix)
+	if prefix != "" {
 		for key, idx := range headers {
+			key = f.getStr(key)
 			if strings.HasPrefix(key, prefix) {
 				return idx
 			}
 		}
 	}
 
-	if len(field.Name) > 0 || len(field.Prefix) > 0 {
-		return -1
-	}
+	return -1
+}
 
-	name := field.Field.Name
+func (f *modelField) getIndexByFieldName(headers map[string]int) int {
+	name := f.Field.Name
+	name = f.getStr(name)
 	if idx, ok := headers[name]; ok {
 		return idx
 	}
 
-	name = splitStringWord(field.Field.Name)
+	name = splitStringWord(f.Field.Name)
 	if idx, ok := headers[name]; ok {
 		return idx
 	}
@@ -94,7 +136,15 @@ func getFieldIndex(headers map[string]int, field *modelField) int {
 	return -1
 }
 
-func checkFieldEmpty(f *modelField) error {
+func (f *modelField) getStr(s string) string {
+	ignoreCase := f.IgnoreCase
+	if !ignoreCase {
+		return s
+	}
+	return strings.ToLower(s)
+}
+
+func (f *modelField) Validate() error {
 	if f.HeaderIndex >= 0 {
 		return nil
 	}
@@ -115,20 +165,20 @@ func checkFieldEmpty(f *modelField) error {
 	return fmt.Errorf("[ldsheet] the field is missed in header. field:%s", field)
 }
 
-func parseFieldValue(field *modelField, obj reflect.Value, line []string) error {
-	if field.HeaderIndex < 0 {
+func (f *modelField) ParseValue(obj reflect.Value, line []string) error {
+	if f.HeaderIndex < 0 {
 		return nil
 	}
 
-	if field.HeaderIndex >= len(line) || len(line[field.HeaderIndex]) == 0 {
-		if field.NotEmpty {
-			return fmt.Errorf("[ldsheet] the field must not be empty. field:%s", field.Field.Name)
+	if f.HeaderIndex >= len(line) || len(line[f.HeaderIndex]) == 0 {
+		if f.NotEmpty {
+			return fmt.Errorf("[ldsheet] the field must not be empty. field:%s", f.Field.Name)
 		}
 		return nil
 	}
 
-	str := line[field.HeaderIndex]
-	fVal := obj.Field(field.FieldIndex)
+	str := line[f.HeaderIndex]
+	fVal := obj.Field(f.FieldIndex)
 	err := parseStringValue(fVal, str)
 	if err != nil {
 		return fmt.Errorf("[ldsheet] parse field value fail. type:%s, err:%s",
