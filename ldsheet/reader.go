@@ -135,10 +135,10 @@ func (r *Reader) readHeader() error {
 	for _, field := range m.Fields {
 		field.HeaderIndex = -1
 
-		if idx := getFieldIndex(headerMap, field); idx >= 0 {
+		if idx := field.GetIndex(headerMap); idx >= 0 {
 			field.HeaderIndex = idx
 
-		} else if err := checkFieldEmpty(field); err != nil {
+		} else if err := field.Validate(); err != nil {
 			return err
 		}
 	}
@@ -175,7 +175,7 @@ func (r *Reader) readDataValue(obj reflect.Value) error {
 	}
 
 	for _, field := range m.Fields {
-		err := parseFieldValue(field, obj, line)
+		err := field.ParseValue(obj, line)
 		if err != nil {
 			return err
 		}
