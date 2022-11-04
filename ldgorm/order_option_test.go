@@ -35,8 +35,10 @@ func TestOrder(t *testing.T) {
 		defer gormDb.Close()
 
 		var res string
+		var args []interface{}
 		gormDb.Callback().Query().After("gorm:query").Register("ldgorm:after_query", func(scope *gorm.Scope) {
 			res = testGetOrderFromSql(scope)
+			args = scope.SQLVars
 		})
 
 		var rows []*testTable
@@ -59,6 +61,26 @@ func TestOrder(t *testing.T) {
 
 			ApplyOptions(gormDb, order).Find(&rows)
 			convey.So(res, convey.ShouldResemble, "`channel_id` DESC,`type`")
+		})
+
+		convey.Convey("FIELD type", func() {
+			order := Order(&testOrderStruct{
+				Type: FieldOrder(1).Field([]int{2, 4, 3}),
+			})
+
+			ApplyOptions(gormDb, order).Find(&rows)
+			convey.So(res, convey.ShouldResemble, "FIELD(`type`, ?, ?, ?)")
+			convey.So(args, convey.ShouldResemble, []interface{}{2, 4, 3})
+		})
+
+		convey.Convey("FIELD type DESC", func() {
+			order := Order(&testOrderStruct{
+				Type: FieldOrder(1).Field([]int{2, 4, 3}).Desc(),
+			})
+
+			ApplyOptions(gormDb, order).Find(&rows)
+			convey.So(res, convey.ShouldResemble, "FIELD(`type`, ?, ?, ?) DESC")
+			convey.So(args, convey.ShouldResemble, []interface{}{2, 4, 3})
 		})
 	})
 }
