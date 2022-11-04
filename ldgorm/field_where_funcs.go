@@ -97,6 +97,7 @@ func LikePrefix(value string) FieldWherer {
 	if value == "" {
 		return fieldWhereEmpty{}
 	}
+	value = escapeForLike(value)
 	value = value + "%"
 	return newFieldWhere(" LIKE ?", value)
 }
@@ -105,6 +106,7 @@ func LikeSuffix(value string) FieldWherer {
 	if value == "" {
 		return fieldWhereEmpty{}
 	}
+	value = escapeForLike(value)
 	value = "%" + value
 	return newFieldWhere(" LIKE ?", value)
 }
@@ -113,6 +115,7 @@ func LikeContain(value string) FieldWherer {
 	if value == "" {
 		return fieldWhereEmpty{}
 	}
+	value = escapeForLike(value)
 	value = "%" + value + "%"
 	return newFieldWhere(" LIKE ?", value)
 }
@@ -128,6 +131,7 @@ func NotLikePrefix(value string) FieldWherer {
 	if value == "" {
 		return fieldWhereEmpty{}
 	}
+	value = escapeForLike(value)
 	value = value + "%"
 	return newFieldWhere(" NOT LIKE ?", value)
 }
@@ -136,6 +140,7 @@ func NotLikeSuffix(value string) FieldWherer {
 	if value == "" {
 		return fieldWhereEmpty{}
 	}
+	value = escapeForLike(value)
 	value = "%" + value
 	return newFieldWhere(" NOT LIKE ?", value)
 }
@@ -144,6 +149,7 @@ func NotLikeContain(value string) FieldWherer {
 	if value == "" {
 		return fieldWhereEmpty{}
 	}
+	value = escapeForLike(value)
 	value = "%" + value + "%"
 	return newFieldWhere(" NOT LIKE ?", value)
 }
