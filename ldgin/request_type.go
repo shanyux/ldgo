@@ -8,8 +8,10 @@ import (
 	"reflect"
 	"sync"
 
+	"github.com/distroy/ldgo/lderr"
 	"github.com/distroy/ldgo/ldref"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 var (
@@ -17,16 +19,23 @@ var (
 )
 
 var requestBinds = []*requestBind{
-	{Tag: "form", Func: (*gin.Context).ShouldBindQuery},
-	{Tag: "json", Func: (*gin.Context).ShouldBindJSON},
-	{Tag: "uri", Func: (*gin.Context).ShouldBindUri},
-	{Tag: "header", Func: (*gin.Context).ShouldBindHeader},
+	{Tag: "form", Func: wrapGinBindFunc((*gin.Context).ShouldBindQuery)},
+	{Tag: "json", Func: wrapGinBindFunc((*gin.Context).ShouldBindJSON)},
+	{Tag: "uri", Func: wrapGinBindFunc((*gin.Context).ShouldBindUri)},
+	{Tag: "header", Func: wrapGinBindFunc((*gin.Context).ShouldBindHeader)},
+	{Tag: "multipart", Func: parseMultipart},
+}
+
+type requestField struct {
+	reflect.StructField
+
+	Name string
 }
 
 type requestBind struct {
 	Tag    string
-	Func   func(g *gin.Context, o interface{}) error
-	Fields []reflect.StructField
+	Func   func(c *Context, reqType *requestType, reqBind *requestBind, reqVal reflect.Value) Error
+	Fields []requestField
 }
 
 type requestType struct {
@@ -71,7 +80,7 @@ func getRequestType(t reflect.Type) *requestType {
 
 func newRequest(reqType *requestType) reflect.Value {
 	if i := reqType.ReqPool.Get(); i != nil {
-		if v, ok := i.(reflect.Value); !ok {
+		if v, ok := i.(reflect.Value); ok {
 			return v
 		}
 	}
@@ -81,13 +90,17 @@ func newRequest(reqType *requestType) reflect.Value {
 
 func delRequest(reqType *requestType, val reflect.Value) {
 	val.Elem().Set(reqType.ReqZero)
-	reqType.ReqPool.Put(val) // nolint
+	reqType.ReqPool.Put(val)
 }
 
-func getStructFieldsByTag(objT reflect.Type, tag string) []reflect.StructField {
-	fields := make([]reflect.StructField, 0, objT.NumField())
+func getStructFieldsByTag(objT reflect.Type, tag string) []requestField {
+	fields := make([]requestField, 0, objT.NumField())
 	for i := 0; i < objT.NumField(); i++ {
 		field := objT.Field(i)
+		if field.Anonymous {
+			continue
+		}
+
 		tagStr, ok := field.Tag.Lookup(tag)
 		if !ok {
 			continue
@@ -96,13 +109,16 @@ func getStructFieldsByTag(objT reflect.Type, tag string) []reflect.StructField {
 			continue
 		}
 
-		fields = append(fields, field)
+		fields = append(fields, requestField{
+			StructField: field,
+			Name:        tagStr,
+		})
 	}
 
 	return fields
 }
 
-func fillHttpRequestByFeilds(dst, src reflect.Value, fields []reflect.StructField) {
+func fillHttpRequestByFeilds(dst, src reflect.Value, fields []requestField) {
 	for _, field := range fields {
 		dst.Type().NumField()
 		valSrc := src.FieldByIndex(field.Index)
@@ -111,5 +127,20 @@ func fillHttpRequestByFeilds(dst, src reflect.Value, fields []reflect.StructFiel
 		}
 		valDst := dst.FieldByIndex(field.Index)
 		valDst.Set(valSrc)
+	}
+}
+
+func wrapGinBindFunc(fn func(g *gin.Context, o interface{}) error) func(c *Context, reqType *requestType, reqBind *requestBind, reqVal reflect.Value) Error {
+	return func(c *Context, reqType *requestType, reqBind *requestBind, reqVal reflect.Value) Error {
+		reqNew := newRequest(reqType)
+		if err := fn(c.Gin(), reqNew.Interface()); err != nil {
+			c.LogE("ShouldBind() fail", zap.String("tag", reqBind.Tag), zap.Error(err))
+			delRequest(reqType, reqNew)
+			return lderr.ErrParseRequest
+		}
+
+		fillHttpRequestByFeilds(reqVal, reqNew.Elem(), reqBind.Fields)
+		delRequest(reqType, reqNew)
+		return nil
 	}
 }
