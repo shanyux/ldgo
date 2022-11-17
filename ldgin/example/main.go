@@ -9,7 +9,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"log"
 	"mime/multipart"
 	"net/http"
@@ -99,7 +99,7 @@ func testMultipart(c *ldgin.Context, req *testMultipartReq) (*testMultipartRsp, 
 	}
 	defer f.Close()
 
-	buf, err := io.ReadAll(f)
+	buf, err := ioutil.ReadAll(f)
 	if err != nil {
 		return nil, lderr.WithDetail(lderr.ErrParseRequest, "read multipart file fail")
 	}
