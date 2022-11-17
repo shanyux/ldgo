@@ -12,32 +12,25 @@ import (
 )
 
 // shouldBind will decode header/uri/json/query(form)
-func shouldBind(ctx *Context, req interface{}) Error {
-	g := ctx.Gin()
-
-	reqV := reflect.ValueOf(req)
-	if reqV.Kind() != reflect.Ptr || reqV.Elem().Kind() != reflect.Struct {
-		ctx.LogE("input request type must be pointer to struct", zap.Stringer("type", reqV.Kind()))
+func shouldBind(c *Context, req interface{}) Error {
+	reqVal := reflect.ValueOf(req)
+	if reqVal.Kind() != reflect.Ptr || reqVal.Elem().Kind() != reflect.Struct {
+		c.LogE("input request type must be pointer to struct", zap.Stringer("type", reqVal.Kind()))
 		return lderr.ErrInvalidRequestType
 	}
 
-	reqV = reqV.Elem()
-	reqT := getRequestType(reqV.Type())
+	reqVal = reqVal.Elem()
+	reqType := getRequestType(reqVal.Type())
 
-	for _, bind := range reqT.Binds {
-		if len(bind.Fields) == 0 {
+	for _, reqBind := range reqType.Binds {
+		if len(reqBind.Fields) == 0 {
 			continue
 		}
 
-		reqNew := newRequest(reqT)
-		if err := bind.Func(g, reqNew.Interface()); err != nil {
-			ctx.LogE("ShouldBind() fail", zap.String("tag", bind.Tag), zap.Error(err))
-			delRequest(reqT, reqNew)
-			return lderr.ErrParseRequest
+		err := reqBind.Func(c, reqType, reqBind, reqVal)
+		if err != nil {
+			return err
 		}
-
-		fillHttpRequestByFeilds(reqV, reqNew.Elem(), bind.Fields)
-		delRequest(reqT, reqNew)
 	}
 
 	return nil
