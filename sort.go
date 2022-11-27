@@ -11,8 +11,9 @@ import (
 // Sort sorts slice with lessOrCompareFunc
 // slice type must be slice
 // lessOrCompareFunc type must be:
-//		func less(a, b TypeOfSliceElement) bool
-//		func compare(a, b TypeOfSliceElement) int
+//
+//	func less(a, b TypeOfSliceElement) bool
+//	func compare(a, b TypeOfSliceElement) int
 func Sort(slice interface{}, lessOrCompareFunc interface{}) {
 	ldsort.Sort(slice, lessOrCompareFunc)
 }

@@ -214,9 +214,10 @@ func (w *GormDb) Where(query interface{}, args ...interface{}) *GormDb {
 }
 
 // Order specify order when retrieve records from database, set reorder to `true` to overwrite defined conditions
-//     db.Order("name DESC")
-//     db.Order("name DESC", true) // reorder
-//     db.Order(gorm.Expr("name = ? DESC", "first")) // sql expression
+//
+//	db.Order("name DESC")
+//	db.Order("name DESC", true) // reorder
+//	db.Order(gorm.Expr("name = ? DESC", "first")) // sql expression
 func (w *GormDb) Order(value interface{}, reorder ...bool) *GormDb {
 	w = w.clone()
 	w.gormDb = w.gormDb.Order(value, reorder...)

@@ -29,7 +29,8 @@ func uniq(s Interface) int {
 // Uniq uniqs slice with compareFunc
 // slice type must be slice
 // compareFunc type must be:
-//		func compare(a, b TypeOfSliceElement) int
+//
+//	func compare(a, b TypeOfSliceElement) int
 func Uniq(slice interface{}, compareFunc interface{}) int {
 	if slice == nil {
 		return 0
