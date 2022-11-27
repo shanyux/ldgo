@@ -25,7 +25,7 @@ jobs:
           go-version: "1.12.17"
       - run: make setup
       - run: |
-          git-diff-go-format -mode all --func-input-num 4 -func-context-error-match=0
+          git-diff-go-format
 
   go-cognitive-job:
     runs-on: ubuntu-latest
@@ -37,8 +37,7 @@ jobs:
           go-version: "1.12.17"
       - run: make setup
       - run: |
-          go-cognitive -over 15 .
-          go-cognitive -top 10 .
+          go-cognitive
 
   go-test-job:
     runs-on: ubuntu-latest
@@ -62,4 +61,4 @@ jobs:
       - run: go mod download
       - run: make setup
       - run: make go-test-coverage
-      - run: git-diff-go-coverage -mode all -rate 0.55 -file log/coverage.out
+      - run: git-diff-go-coverage -file log/go-coverage.out

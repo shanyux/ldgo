@@ -77,12 +77,12 @@ go-test-report-dir:
 .PHONY: go-test-coverage
 go-test-coverage: go-test-report-dir
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) ./... \
-		-coverprofile="$(GO_TEST_REPORT_DIR)/coverage.out"
+		-coverprofile="$(GO_TEST_REPORT_DIR)/go-coverage.out"
 
 go-test-report: go-test-report-dir
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) ./... \
-		-coverprofile="$(GO_TEST_REPORT_DIR)/coverage.out" \
-		-json > "$(GO_TEST_REPORT_DIR)/test.json"
+		-coverprofile="$(GO_TEST_REPORT_DIR)/go-coverage.out" \
+		-json > "$(GO_TEST_REPORT_DIR)/go-test.json"
 
 .PHONY: go-test
 go-test:
@@ -104,8 +104,7 @@ setup:
 
 .PHONY: cognitive
 cognitive: setup
-	go-cognitive -over 15 .
-	go-cognitive -top 10 .
+	go-cognitive
 
 .PHONY: format
 format: setup

@@ -46,6 +46,7 @@ var fastSourceXor [16]uint64 = [...]uint64{
 // compiles down to zero instructions.
 // USE CAREFULLY!
 // This was copied from the runtime; see issues 23382 and 7921.
+//
 //go:nosplit
 //go:nocheckptr
 func noescape(p unsafe.Pointer) unsafe.Pointer {
@@ -79,14 +80,6 @@ func (r *fastSource) Seed(seed int64) {
 	n := initFastSourceXor(seed, r.xor[:])
 	atomic.StoreUint64(&r.seed, n)
 }
-
-// func (r *fastSource) ExpFloat64() float64 {
-// 	return r.rand.ExpFloat64()
-// }
-
-// func (r *fastSource) NormFloat64() float64 {
-// 	return r.rand.NormFloat64()
-// }
 
 func (r *fastSource) Uint64() uint64 {
 	return fastSourceNext(&r.seed, r.xor[:])

@@ -114,8 +114,9 @@ func getSortInterface(slice interface{}, lessOrCompareFunc interface{}) sort.Int
 // Sort sorts slice with lessOrCompareFunc
 // slice type must be slice
 // lessOrCompareFunc type must be:
-//		func compare(a, b TypeOfSliceElement) int
-//		func less(a, b TypeOfSliceElement) bool
+//
+//	func compare(a, b TypeOfSliceElement) int
+//	func less(a, b TypeOfSliceElement) bool
 func Sort(slice interface{}, lessOrCompareFunc interface{}) {
 	if slice == nil {
 		return
@@ -127,8 +128,9 @@ func Sort(slice interface{}, lessOrCompareFunc interface{}) {
 // IsSorted reports whether data is sorted.
 // slice type must be slice
 // lessOrCompareFunc type must be:
-//		func compare(a, b TypeOfSliceElement) int
-//		func less(a, b TypeOfSliceElement) bool
+//
+//	func compare(a, b TypeOfSliceElement) int
+//	func less(a, b TypeOfSliceElement) bool
 func IsSorted(slice interface{}, lessOrCompareFunc interface{}) bool {
 	if slice == nil {
 		return true

@@ -38,8 +38,8 @@ func AbsInt64(n int64) int64 {
 }
 
 // AbsFloat64 returns the absolute value of x.
-//
 // Special cases are:
+//
 //	Abs(±Inf) = +Inf
 //	Abs(NaN) = NaN
 func AbsFloat64(n float64) float64 { return math.Abs(n) }
