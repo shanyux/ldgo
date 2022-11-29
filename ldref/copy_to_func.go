@@ -11,9 +11,9 @@ import (
 
 func init() {
 	registerCopyFunc(map[copyPair]copyFuncType{
-		{To: reflect.Func, From: reflect.Invalid}:       copyReflectToFuncFromInvalid,
-		{To: reflect.Func, From: reflect.Func}:          copyReflectToFuncFromFunc,
-		{To: reflect.Func, From: reflect.UnsafePointer}: copyReflectToFuncFromUnsafePointer,
+		{To: reflect.Func, From: reflect.Invalid}: copyReflectToFuncFromInvalid,
+		{To: reflect.Func, From: reflect.Func}:    copyReflectToFuncFromFunc,
+		// {To: reflect.Func, From: reflect.UnsafePointer}: copyReflectToFuncFromUnsafePointer,
 	})
 }
 

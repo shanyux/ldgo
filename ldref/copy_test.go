@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"sort"
 	"testing"
+	"unsafe"
 
 	"github.com/distroy/ldgo/lderr"
 	"github.com/smartystreets/goconvey/convey"
@@ -230,6 +231,16 @@ func TestCopy(t *testing.T) {
 				convey.So(err.Error(), convey.ShouldEqual, "func(interface {}) bool can not copy to *string")
 				// convey.So(err, convey.ShouldBeNil)
 				// convey.So(target, convey.ShouldEqual, "github.com/distroy/ldgo/ldref.IsZero")
+			})
+
+			convey.Convey("func to unsafe.Pointer", func() {
+				var (
+					target unsafe.Pointer
+					source func(interface{}) bool = IsZero
+				)
+
+				err := Copy(&target, source)
+				convey.So(err.Error(), convey.ShouldEqual, "func(interface {}) bool can not copy to *unsafe.Pointer")
 			})
 		})
 

@@ -14,7 +14,7 @@ func init() {
 		{To: reflect.UnsafePointer, From: reflect.Invalid}:       copyReflectToUnsafePointerFromInvalid,
 		{To: reflect.UnsafePointer, From: reflect.UnsafePointer}: copyReflectToUnsafePointerFromUnsafePointer,
 		{To: reflect.UnsafePointer, From: reflect.Ptr}:           copyReflectToUnsafePointerFromPtr,
-		{To: reflect.UnsafePointer, From: reflect.Func}:          copyReflectToUnsafePointerFromPtr,
+		// {To: reflect.UnsafePointer, From: reflect.Func}:          copyReflectToUnsafePointerFromPtr,
 	})
 }
 
