@@ -9,34 +9,19 @@ import (
 	"unsafe"
 )
 
+func init() {
+	registerCopyFunc(map[copyPair]copyFuncType{
+		// {To: reflect.Struct, From: reflect.Invalid}: copyReflectToStructFromInvalid,
+		{To: reflect.Struct, From: reflect.Struct}: copyReflectToStructFromStruct,
+		{To: reflect.Struct, From: reflect.Map}:    copyReflectToStructFromMap,
+	})
+}
+
 func clearCopyStructIgnoreField(c *context, v reflect.Value, info *copyStructInfo) {
 	for _, f := range info.Ignores {
 		field := v.Field(f.Index)
 		field.Set(reflect.Zero(f.Type))
 	}
-}
-
-func copyReflectToStruct(c *context, target, source reflect.Value) bool {
-	// source, _ = prepareCopySourceReflect(c, source)
-	source, _ = indirectSourceReflect(source)
-
-	switch source.Kind() {
-	default:
-		return false
-
-	case reflect.Invalid:
-		tTyp := target.Type()
-		target.Set(reflect.Zero(tTyp))
-
-	case reflect.Struct:
-		return copyReflectToStructFromStruct(c, target, source)
-
-	case reflect.Map:
-		return copyReflectToStructFromMap(c, target, source)
-
-	}
-
-	return true
 }
 
 func copyReflectToStructFromStruct(c *context, target, source reflect.Value) bool {

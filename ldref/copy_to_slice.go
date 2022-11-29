@@ -9,30 +9,18 @@ import (
 	"strconv"
 )
 
-func copyReflectToArray(c *context, target, source reflect.Value) bool {
-	return copyReflectToSlice(c, target, source)
+func init() {
+	registerCopyFunc(map[copyPair]copyFuncType{
+		{To: reflect.Slice, From: reflect.Invalid}: copyReflectToSliceFromInvalid,
+		{To: reflect.Slice, From: reflect.String}:  copyReflectToSliceFromString,
+		{To: reflect.Slice, From: reflect.Slice}:   copyReflectToSliceFromSlice,
+		{To: reflect.Slice, From: reflect.Array}:   copyReflectToSliceFromArray,
+		{To: reflect.Slice, From: reflect.Map}:     copyReflectToSliceFromMap,
+	})
 }
 
-func copyReflectToSlice(c *context, target, source reflect.Value) bool {
-	source, _ = indirectSourceReflect(source)
-
-	switch source.Kind() {
-	default:
-		return false
-
-	case reflect.Invalid:
-		target.Set(reflect.Zero(target.Type()))
-
-	case reflect.Array, reflect.Slice:
-		return copyReflectToSliceFromSlice(c, target, source)
-
-	case reflect.Map:
-		return copyReflectToSliceFromMapWithEmptyStructValue(c, target, source)
-
-	case reflect.String:
-		return copyReflectToSliceFromString(c, target, source)
-	}
-
+func copyReflectToSliceFromInvalid(c *context, target, source reflect.Value) bool {
+	target.Set(reflect.Zero(target.Type()))
 	return true
 }
 
@@ -48,23 +36,13 @@ func copyReflectToSliceFromString(c *context, target, source reflect.Value) bool
 		source = reflect.ValueOf([]rune(source.String()))
 	}
 
-	if target.Kind() == reflect.Slice {
-		target.Set(source)
-		return true
-	}
-
-	// target.Kind() == reflect.Array
-	l := source.Len()
-	if l > target.Len() {
-		l = target.Len()
-	}
-	for i := 0; i < l; i++ {
-		tItem := target.Index(i)
-		sItem := source.Index(i)
-		tItem.Set(sItem)
-	}
-
+	target.Set(source)
 	return true
+}
+
+func copyReflectToSliceFromArray(c *context, target, source reflect.Value) bool {
+	sVal := source.Slice(0, source.Len())
+	return copyReflectToSliceFromSlice(c, target, sVal)
 }
 
 func copyReflectToSliceFromSlice(c *context, target, source reflect.Value) bool {
@@ -75,28 +53,13 @@ func copyReflectToSliceFromSlice(c *context, target, source reflect.Value) bool 
 		return true
 	}
 
-	if source.Kind() == reflect.Invalid {
-		target.Set(reflect.Zero(tTyp))
-		return true
-	}
-
-	if source.Kind() != reflect.Array {
-		source = source.Slice(0, source.Len())
-	}
-
 	if source.Kind() != reflect.Slice || !isCopyTypeConvertible(tTyp.Elem(), sTyp.Elem()) {
 		return false
 	}
 
 	l := source.Len()
 	if l > target.Len() {
-		if target.Kind() == reflect.Array {
-			c.AddErrorf("%s has %d elements, can not convert to %s", sTyp.String(), l, tTyp.String())
-			l = target.Len()
-
-		} else {
-			target.Set(reflect.MakeSlice(tTyp, l, l))
-		}
+		target.Set(reflect.MakeSlice(tTyp, l, l))
 	}
 
 	for i := 0; i < l; i++ {
@@ -111,13 +74,18 @@ func copyReflectToSliceFromSlice(c *context, target, source reflect.Value) bool 
 	return true
 }
 
+func copyReflectToSliceFromMap(c *context, target, source reflect.Value) bool {
+	sTyp := source.Type()
+
+	if isEmptyStruct(sTyp.Elem()) {
+		return copyReflectToSliceFromMapWithEmptyStructValue(c, target, source)
+	}
+	return false
+}
+
 func copyReflectToSliceFromMapWithEmptyStructValue(c *context, target, source reflect.Value) bool {
 	tTyp := target.Type()
 	sTyp := source.Type()
-
-	if !isEmptyStruct(sTyp.Elem()) {
-		return false
-	}
 
 	if isCopyTypeConvertible(sTyp.Elem(), sTyp.Key()) {
 		return false
@@ -134,8 +102,8 @@ func copyReflectToSliceFromMapWithEmptyStructValue(c *context, target, source re
 		}
 	}
 
+	// sTyp.Comparable()
 	i := 0
-	sTyp.Comparable()
 	for it := source.MapRange(); i < l && it.Next(); i++ {
 		tItem := target.Index(i)
 		sItem := it.Key()

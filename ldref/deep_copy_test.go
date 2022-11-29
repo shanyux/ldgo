@@ -138,7 +138,7 @@ func TestDeepCopy(t *testing.T) {
 				err := DeepCopy(&target, source)
 				convey.So(err, convey.ShouldBeNil)
 				convey.So(target, convey.ShouldNotEqual, source)
-				convey.So(target, convey.ShouldResemble, *source)
+				convey.So(target, convey.ShouldResemble, source)
 			})
 		})
 
@@ -185,8 +185,7 @@ func TestDeepCopy(t *testing.T) {
 
 				err := DeepCopy(&target, source)
 				convey.So(err, convey.ShouldBeNil)
-				convey.So(target, convey.ShouldNotEqual, nil)
-				convey.So(*target, convey.ShouldEqual, 0)
+				convey.So(target, convey.ShouldBeNil)
 			})
 		})
 
@@ -750,13 +749,14 @@ func TestDeepCopy(t *testing.T) {
 				)
 
 				err := DeepCopy(&target, source)
-				convey.So(err, convey.ShouldBeNil)
-				convey.So(target, convey.ShouldResemble, map[string]string{
-					`0`: "abc",
-					`1`: "xyz",
-					`2`: "123",
-					`3`: "zzz",
-				})
+				convey.So(err.Error(), convey.ShouldEqual, "[]string can not copy to *map[string]string")
+				// convey.So(err, convey.ShouldBeNil)
+				// convey.So(target, convey.ShouldResemble, map[string]string{
+				// 	`0`: "abc",
+				// 	`1`: "xyz",
+				// 	`2`: "123",
+				// 	`3`: "zzz",
+				// })
 			})
 
 			convey.Convey("[]string to *map[string]struct{}", func() {
@@ -846,8 +846,9 @@ func TestDeepCopy(t *testing.T) {
 				)
 
 				err := DeepCopy(&target, source)
-				convey.So(err, convey.ShouldBeNil)
-				convey.So(&target, convey.ShouldResemble, &testCopyStruct{})
+				convey.So(err.Error(), convey.ShouldEqual, "nil can not copy to *ldref.testCopyStruct")
+				// convey.So(err, convey.ShouldBeNil)
+				// convey.So(&target, convey.ShouldResemble, &testCopyStruct{})
 			})
 
 			convey.Convey("*struct to *struct", func() {

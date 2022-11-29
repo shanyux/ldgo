@@ -16,66 +16,91 @@ func typeNameOfReflect(v reflect.Value) string {
 
 	return v.Type().String()
 }
+func init() {
+	registerCopyFunc(map[copyPair]copyFuncType{
+		{To: reflect.String, From: reflect.Invalid}:    copyReflectToStringFromInvalid,
+		{To: reflect.String, From: reflect.Bool}:       copyReflectToStringFromBool,
+		{To: reflect.String, From: reflect.Complex64}:  copyReflectToStringFromComplex,
+		{To: reflect.String, From: reflect.Complex128}: copyReflectToStringFromComplex,
+		{To: reflect.String, From: reflect.Float32}:    copyReflectToStringFromFloat,
+		{To: reflect.String, From: reflect.Float64}:    copyReflectToStringFromFloat,
+		{To: reflect.String, From: reflect.Int}:        copyReflectToStringFromInt,
+		{To: reflect.String, From: reflect.Int8}:       copyReflectToStringFromInt,
+		{To: reflect.String, From: reflect.Int16}:      copyReflectToStringFromInt,
+		{To: reflect.String, From: reflect.Int32}:      copyReflectToStringFromInt,
+		{To: reflect.String, From: reflect.Int64}:      copyReflectToStringFromInt,
+		{To: reflect.String, From: reflect.Uint}:       copyReflectToStringFromUint,
+		{To: reflect.String, From: reflect.Uint8}:      copyReflectToStringFromUint,
+		{To: reflect.String, From: reflect.Uint16}:     copyReflectToStringFromUint,
+		{To: reflect.String, From: reflect.Uint32}:     copyReflectToStringFromUint,
+		{To: reflect.String, From: reflect.Uint64}:     copyReflectToStringFromUint,
+		{To: reflect.String, From: reflect.Uintptr}:    copyReflectToStringFromUint,
+		{To: reflect.String, From: reflect.String}:     copyReflectToStringFromString,
+		{To: reflect.String, From: reflect.Array}:      copyReflectToStringFromArray,
+		{To: reflect.String, From: reflect.Slice}:      copyReflectToStringFromSlice,
+	})
+}
 
-func copyReflectToString(c *context, target, source reflect.Value) bool {
-	// source, _ = prepareCopySourceReflect(c, source)
-	source, _ = indirectSourceReflect(source)
+func copyReflectToStringFromInvalid(c *context, target, source reflect.Value) bool {
+	target.SetString("")
+	return true
+}
 
-	switch source.Kind() {
+func copyReflectToStringFromBool(c *context, target, source reflect.Value) bool {
+	b := source.Bool()
+	if b {
+		target.SetString("true")
+	} else {
+		target.SetString("false")
+	}
+	return true
+}
+
+func copyReflectToStringFromFloat(c *context, target, source reflect.Value) bool {
+	n := source.Float()
+	target.SetString(strconv.FormatFloat(n, 'f', -1, 64))
+	return true
+}
+
+func copyReflectToStringFromComplex(c *context, target, source reflect.Value) bool {
+	n := source.Complex()
+	target.SetString(strconv.FormatComplex(n, 'f', -1, 128))
+	return true
+}
+
+func copyReflectToStringFromInt(c *context, target, source reflect.Value) bool {
+	n := source.Int()
+	target.SetString(strconv.FormatInt(n, 10))
+	return true
+}
+
+func copyReflectToStringFromUint(c *context, target, source reflect.Value) bool {
+	n := source.Uint()
+	target.SetString(strconv.FormatUint(n, 10))
+	return true
+}
+
+func copyReflectToStringFromString(c *context, target, source reflect.Value) bool {
+	s := source.String()
+	target.SetString(s)
+	return true
+}
+
+func copyReflectToStringFromArray(c *context, target, source reflect.Value) bool {
+	sVal := source.Slice(0, source.Len())
+	return copyReflectToStringFromSlice(c, target, sVal)
+}
+
+func copyReflectToStringFromSlice(c *context, target, source reflect.Value) bool {
+	switch ss := source.Interface().(type) {
 	default:
 		return false
 
-	case reflect.Invalid:
-		target.SetString("")
+	case []byte:
+		target.SetString(string(ss))
 
-	case reflect.Bool:
-		b := source.Bool()
-		if b {
-			target.SetString("true")
-		} else {
-			target.SetString("false")
-		}
-
-	case reflect.Float32, reflect.Float64:
-		n := source.Float()
-		target.SetString(strconv.FormatFloat(n, 'f', -1, 64))
-
-	// case reflect.Complex64, reflect.Complex128:
-	// 	n := source.Complex()
-	// 	target.SetString(strconv.FormatComplex(n, 'f', -1, 128))
-
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		n := source.Int()
-		target.SetString(strconv.FormatInt(n, 10))
-
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		n := source.Uint()
-		target.SetString(strconv.FormatUint(n, 10))
-
-	case reflect.String:
-		s := source.String()
-		target.SetString(s)
-
-	case reflect.Array:
-		source = source.Slice(0, source.Len())
-		fallthrough
-
-	case reflect.Slice:
-		switch ss := source.Interface().(type) {
-		default:
-			return false
-
-		case []byte:
-			target.SetString(string(ss))
-
-		case []rune:
-			target.SetString(string(ss))
-		}
-
-		// case reflect.Func:
-		// 	funcName := runtime.FuncForPC(source.Pointer()).Name()
-		// 	target.SetString(funcName)
+	case []rune:
+		target.SetString(string(ss))
 	}
-
 	return true
 }
