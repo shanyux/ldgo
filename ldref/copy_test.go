@@ -241,6 +241,13 @@ func TestCopy(t *testing.T) {
 
 				err := Copy(&target, source)
 				convey.So(err.Error(), convey.ShouldEqual, "func(interface {}) bool can not copy to *unsafe.Pointer")
+
+				// err := Copy(&target, source)
+				// convey.So(err, convey.ShouldBeNil)
+				//
+				// var target1 func(interface{}) bool
+				// err = Copy(&target1, target)
+				// convey.So(err, convey.ShouldBeNil)
 			})
 		})
 
