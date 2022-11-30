@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"sort"
 	"testing"
+	"unsafe"
 
 	"github.com/distroy/ldgo/lderr"
 	"github.com/smartystreets/goconvey/convey"
@@ -138,7 +139,7 @@ func TestDeepCopy(t *testing.T) {
 				err := DeepCopy(&target, source)
 				convey.So(err, convey.ShouldBeNil)
 				convey.So(target, convey.ShouldNotEqual, source)
-				convey.So(target, convey.ShouldResemble, *source)
+				convey.So(target, convey.ShouldResemble, source)
 			})
 		})
 
@@ -185,8 +186,7 @@ func TestDeepCopy(t *testing.T) {
 
 				err := DeepCopy(&target, source)
 				convey.So(err, convey.ShouldBeNil)
-				convey.So(target, convey.ShouldNotEqual, nil)
-				convey.So(*target, convey.ShouldEqual, 0)
+				convey.So(target, convey.ShouldBeNil)
 			})
 		})
 
@@ -209,7 +209,7 @@ func TestDeepCopy(t *testing.T) {
 				)
 
 				err := DeepCopy(&target, source)
-				convey.So(err.Error(), convey.ShouldEqual, "func() can not convert to int")
+				convey.So(err.Error(), convey.ShouldEqual, "func() can not copy to *int")
 				convey.So(target, convey.ShouldEqual, 0)
 			})
 
@@ -220,8 +220,19 @@ func TestDeepCopy(t *testing.T) {
 				)
 
 				err := DeepCopy(&target, source)
-				convey.So(err, convey.ShouldBeNil)
-				convey.So(target, convey.ShouldEqual, "github.com/distroy/ldgo/ldref.IsZero")
+				convey.So(err.Error(), convey.ShouldEqual, "func(interface {}) bool can not copy to *string")
+				// convey.So(err, convey.ShouldBeNil)
+				// convey.So(target, convey.ShouldEqual, "github.com/distroy/ldgo/ldref.IsZero")
+			})
+
+			convey.Convey("func to unsafe.Pointer", func() {
+				var (
+					target unsafe.Pointer
+					source func(interface{}) bool = IsZero
+				)
+
+				err := DeepCopy(&target, source)
+				convey.So(err.Error(), convey.ShouldEqual, "func(interface {}) bool can not copy to *unsafe.Pointer")
 			})
 		})
 
@@ -749,13 +760,14 @@ func TestDeepCopy(t *testing.T) {
 				)
 
 				err := DeepCopy(&target, source)
-				convey.So(err, convey.ShouldBeNil)
-				convey.So(target, convey.ShouldResemble, map[string]string{
-					`0`: "abc",
-					`1`: "xyz",
-					`2`: "123",
-					`3`: "zzz",
-				})
+				convey.So(err.Error(), convey.ShouldEqual, "[]string can not copy to *map[string]string")
+				// convey.So(err, convey.ShouldBeNil)
+				// convey.So(target, convey.ShouldResemble, map[string]string{
+				// 	`0`: "abc",
+				// 	`1`: "xyz",
+				// 	`2`: "123",
+				// 	`3`: "zzz",
+				// })
 			})
 
 			convey.Convey("[]string to *map[string]struct{}", func() {
@@ -845,29 +857,32 @@ func TestDeepCopy(t *testing.T) {
 				)
 
 				err := DeepCopy(&target, source)
-				convey.So(err, convey.ShouldBeNil)
-				convey.So(&target, convey.ShouldResemble, &testCopyStruct{})
+				convey.So(err.Error(), convey.ShouldEqual, "nil can not copy to *ldref.testCopyStruct")
+				// convey.So(err, convey.ShouldBeNil)
+				// convey.So(&target, convey.ShouldResemble, &testCopyStruct{})
 			})
 
 			convey.Convey("*struct to *struct", func() {
 				var (
 					target testCopyStruct
 					source *testCopyStruct = &testCopyStruct{
-						Id:     100,
-						Ignore: true,
-						Name:   "abc",
-						Age:    23,
-						Female: true,
+						Id:        100,
+						Ignore:    true,
+						Name:      "abc",
+						Age:       23,
+						Female:    true,
+						unexpored: new(int),
 					}
 				)
 
 				err := DeepCopy(&target, source)
 				convey.So(err, convey.ShouldBeNil)
 				convey.So(&target, convey.ShouldResemble, &testCopyStruct{
-					Id:     100,
-					Name:   "abc",
-					Age:    23,
-					Female: true,
+					Id:        100,
+					Name:      "abc",
+					Age:       23,
+					Female:    true,
+					unexpored: new(int),
 				})
 			})
 

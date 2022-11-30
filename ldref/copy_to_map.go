@@ -9,31 +9,43 @@ import (
 	"reflect"
 )
 
-func copyReflectToMap(c *context, target, source reflect.Value) bool {
-	source, _ = indirectSourceReflect(source)
+func init() {
+	registerCopyFunc(map[copyPair]copyFuncType{
+		{To: reflect.Map, From: reflect.Invalid}: copyReflectToMapFromInvalid,
+		{To: reflect.Map, From: reflect.Struct}:  copyReflectToMapFromStruct,
+		{To: reflect.Map, From: reflect.Map}:     copyReflectToMapFromMap,
+		{To: reflect.Map, From: reflect.Slice}:   copyReflectToMapFromSlice,
+		{To: reflect.Map, From: reflect.Array}:   copyReflectToMapFromArray,
+	})
+}
 
-	switch source.Kind() {
-	default:
-		return false
+func isEmptyStruct(typ reflect.Type) bool {
+	if typ.Kind() == reflect.Struct && typ.NumField() == 0 {
+		return true
+	}
+	return false
+}
 
-	case reflect.Invalid:
-		target.Set(reflect.Zero(target.Type()))
+func copyReflectToMapFromInvalid(c *context, target, source reflect.Value) bool {
+	target.Set(reflect.Zero(target.Type()))
+	return true
+}
 
-	case reflect.Struct:
-		return copyReflectToMapFromStruct(c, target, source)
+func copyReflectToMapFromArray(c *context, target, source reflect.Value) bool {
+	source = source.Slice(0, source.Len())
+	return copyReflectToMapFromSlice(c, target, source)
+}
 
-	case reflect.Map:
-		return copyReflectToMapFromMap(c, target, source)
+func isStructFieldNilPtr(v reflect.Value) bool {
+	for v.Kind() == reflect.Ptr {
+		if v.IsNil() {
+			return true
+		}
 
-	case reflect.Array:
-		source = source.Slice(0, source.Len())
-		fallthrough
-
-	case reflect.Slice:
-		return copyReflectToMapFromSlice(c, target, source)
+		v = v.Elem()
 	}
 
-	return true
+	return false
 }
 
 func copyReflectToMapFromStruct(c *context, target, source reflect.Value) bool {
@@ -51,9 +63,13 @@ func copyReflectToMapFromStruct(c *context, target, source reflect.Value) bool {
 
 	sInfo := getCopyTypeInfo(source.Type())
 	for _, sFieldInfo := range sInfo.Fields {
+		sField := source.Field(sFieldInfo.Index)
+		if isStructFieldNilPtr(sField) {
+			continue
+		}
+
 		key := reflect.ValueOf(sFieldInfo.Name)
 		value := reflect.New(valTyp).Elem()
-		sField := source.Field(sFieldInfo.Index)
 
 		c.PushField(sFieldInfo.Name)
 		copyReflect(c, value, sField)
@@ -82,7 +98,6 @@ func copyReflectToMapFromMap(c *context, target, source reflect.Value) bool {
 	if !isCopyTypeConvertible(tKeyTyp, sKeyTyp) {
 		return false
 	}
-
 	if !isCopyTypeConvertible(tValTyp, sValTyp) {
 		return false
 	}
@@ -120,12 +135,20 @@ func copyReflectToMapFromMap(c *context, target, source reflect.Value) bool {
 
 func copyReflectToMapFromSlice(c *context, target, source reflect.Value) bool {
 	tTyp := target.Type()
-	tKeyTyp := tTyp.Key()
 	tValTyp := tTyp.Elem()
 
-	if tValTyp == typeOfEmptyStruct {
+	if isEmptyStruct(tValTyp) {
 		return copyReflectToMapFromSliceWithEmptyStructValue(c, target, source)
 	}
+
+	return false
+	// return copyReflectToMapFromSliceWithIndexBeKey(c, target, source)
+}
+
+func copyReflectToMapFromSliceWithIndexBeKey(c *context, target, source reflect.Value) bool {
+	tTyp := target.Type()
+	tKeyTyp := tTyp.Key()
+	tValTyp := tTyp.Elem()
 
 	sTyp := source.Type()
 	sKeyTyp := reflect.TypeOf(int(0))
