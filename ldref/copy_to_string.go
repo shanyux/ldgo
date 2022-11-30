@@ -18,26 +18,26 @@ func typeNameOfReflect(v reflect.Value) string {
 }
 func init() {
 	registerCopyFunc(map[copyPair]copyFuncType{
-		{To: reflect.String, From: reflect.Invalid}:    copyReflectToStringFromInvalid,
-		{To: reflect.String, From: reflect.Bool}:       copyReflectToStringFromBool,
-		{To: reflect.String, From: reflect.Complex64}:  copyReflectToStringFromComplex,
-		{To: reflect.String, From: reflect.Complex128}: copyReflectToStringFromComplex,
-		{To: reflect.String, From: reflect.Float32}:    copyReflectToStringFromFloat,
-		{To: reflect.String, From: reflect.Float64}:    copyReflectToStringFromFloat,
-		{To: reflect.String, From: reflect.Int}:        copyReflectToStringFromInt,
-		{To: reflect.String, From: reflect.Int8}:       copyReflectToStringFromInt,
-		{To: reflect.String, From: reflect.Int16}:      copyReflectToStringFromInt,
-		{To: reflect.String, From: reflect.Int32}:      copyReflectToStringFromInt,
-		{To: reflect.String, From: reflect.Int64}:      copyReflectToStringFromInt,
-		{To: reflect.String, From: reflect.Uint}:       copyReflectToStringFromUint,
-		{To: reflect.String, From: reflect.Uint8}:      copyReflectToStringFromUint,
-		{To: reflect.String, From: reflect.Uint16}:     copyReflectToStringFromUint,
-		{To: reflect.String, From: reflect.Uint32}:     copyReflectToStringFromUint,
-		{To: reflect.String, From: reflect.Uint64}:     copyReflectToStringFromUint,
-		{To: reflect.String, From: reflect.Uintptr}:    copyReflectToStringFromUint,
-		{To: reflect.String, From: reflect.String}:     copyReflectToStringFromString,
-		{To: reflect.String, From: reflect.Array}:      copyReflectToStringFromArray,
-		{To: reflect.String, From: reflect.Slice}:      copyReflectToStringFromSlice,
+		{To: reflect.String, From: reflect.Invalid}: copyReflectToStringFromInvalid,
+		{To: reflect.String, From: reflect.Bool}:    copyReflectToStringFromBool,
+		{To: reflect.String, From: reflect.Float32}: copyReflectToStringFromFloat,
+		{To: reflect.String, From: reflect.Float64}: copyReflectToStringFromFloat,
+		{To: reflect.String, From: reflect.Int}:     copyReflectToStringFromInt,
+		{To: reflect.String, From: reflect.Int8}:    copyReflectToStringFromInt,
+		{To: reflect.String, From: reflect.Int16}:   copyReflectToStringFromInt,
+		{To: reflect.String, From: reflect.Int32}:   copyReflectToStringFromInt,
+		{To: reflect.String, From: reflect.Int64}:   copyReflectToStringFromInt,
+		{To: reflect.String, From: reflect.Uint}:    copyReflectToStringFromUint,
+		{To: reflect.String, From: reflect.Uint8}:   copyReflectToStringFromUint,
+		{To: reflect.String, From: reflect.Uint16}:  copyReflectToStringFromUint,
+		{To: reflect.String, From: reflect.Uint32}:  copyReflectToStringFromUint,
+		{To: reflect.String, From: reflect.Uint64}:  copyReflectToStringFromUint,
+		{To: reflect.String, From: reflect.Uintptr}: copyReflectToStringFromUint,
+		{To: reflect.String, From: reflect.String}:  copyReflectToStringFromString,
+		{To: reflect.String, From: reflect.Array}:   copyReflectToStringFromArray,
+		{To: reflect.String, From: reflect.Slice}:   copyReflectToStringFromSlice,
+		// {To: reflect.String, From: reflect.Complex64}:  copyReflectToStringFromComplex,
+		// {To: reflect.String, From: reflect.Complex128}: copyReflectToStringFromComplex,
 	})
 }
 
@@ -62,11 +62,11 @@ func copyReflectToStringFromFloat(c *context, target, source reflect.Value) bool
 	return true
 }
 
-func copyReflectToStringFromComplex(c *context, target, source reflect.Value) bool {
-	n := source.Complex()
-	target.SetString(strconv.FormatComplex(n, 'f', -1, 128))
-	return true
-}
+// func copyReflectToStringFromComplex(c *context, target, source reflect.Value) bool {
+// 	n := source.Complex()
+// 	target.SetString(strconv.FormatComplex(n, 'f', -1, 128))
+// 	return true
+// }
 
 func copyReflectToStringFromInt(c *context, target, source reflect.Value) bool {
 	n := source.Int()
