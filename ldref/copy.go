@@ -14,17 +14,17 @@ func Copy(target, source interface{}) error {
 	c := getContext(false)
 	defer putContext(c)
 
-	return copyWithContext(c, target, source)
+	return copyWithCheckTarget(c, target, source)
 }
 
 func DeepCopy(target, source interface{}) error {
 	c := getContext(true)
 	defer putContext(c)
 
-	return copyWithContext(c, target, source)
+	return copyWithCheckTarget(c, target, source)
 }
 
-func copyWithContext(c *context, target, source interface{}) lderr.Error {
+func copyWithCheckTarget(c *context, target, source interface{}) lderr.Error {
 	sVal := valueOf(source)
 	// sVal, _ = valueElment(sVal)
 
@@ -106,30 +106,9 @@ func copyReflect(c *context, target, source reflect.Value) bool {
 	if !target.CanAddr() {
 		target = target.Elem()
 	}
-	// if !source.CanAddr() && source.Kind() == reflect.Ptr {
-	// 	source = source.Elem()
-	// }
 
-	pair := copyPair{To: target.Kind(), From: source.Kind()}
-	copyFunc := copyFuncMap[pair]
-	if copyFunc == nil {
-		if target.Kind() != reflect.Ptr && source.Kind() == reflect.Ptr {
-			source, _ = indirectCopySource(source)
-
-		} else if source.Kind() == reflect.Interface {
-			source = reflect.ValueOf(source.Interface())
-
-		}
-
-		pair := copyPair{To: target.Kind(), From: source.Kind()}
-		copyFunc = copyFuncMap[pair]
-	}
-
-	if copyFunc != nil {
-		end := copyFunc(c, target, source)
-		if end {
-			return true
-		}
+	if end := copyReflectWithIndirect(c, target, source); end {
+		return end
 	}
 
 	// clear target
@@ -141,6 +120,28 @@ func copyReflect(c *context, target, source reflect.Value) bool {
 
 	c.AddErrorf("%s can not copy to %s", typeNameOfReflect(_source), typeNameOfReflect(_target))
 	return false
+}
+
+func copyReflectWithIndirect(c *context, target, source reflect.Value) bool {
+	for {
+		pair := copyPair{To: target.Kind(), From: source.Kind()}
+		fnCopy := copyFuncMap[pair]
+		if fnCopy != nil {
+			return fnCopy(c, target, source)
+		}
+
+		switch source.Kind() {
+		case reflect.Interface:
+			source = reflect.ValueOf(source.Interface())
+			continue
+
+		case reflect.Ptr:
+			source, _ = indirectCopySource(source)
+			continue
+		}
+
+		return false
+	}
 }
 
 func isCopyTypeConvertible(toType, fromType reflect.Type) bool {
