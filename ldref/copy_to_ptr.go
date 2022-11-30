@@ -47,13 +47,13 @@ func copyReflectToPtrFromInvalid(c *context, target, source reflect.Value) bool 
 }
 
 func copyReflectToPtrFromPtr(c *context, target, source reflect.Value) bool {
-	sVal, sPtrLvl := indirectCopySourceV2(source)
+	sVal, sPtrLvl := indirectCopySource(source)
 	if sVal.Kind() == reflect.Ptr {
 		target.Set(reflect.Zero(target.Type()))
 		return true
 	}
 
-	tTyp, tPtrLvl := indirectTypeV2(target.Type())
+	tTyp, tPtrLvl := indirectType(target.Type())
 
 	if !c.IsDeep && tTyp == sVal.Type() {
 		tVal := target
@@ -72,7 +72,7 @@ func copyReflectToPtrFromPtr(c *context, target, source reflect.Value) bool {
 		return true
 	}
 
-	tVal, _ := indirectCopyTargetV2(target)
+	tVal, _ := indirectCopyTarget(target)
 	return copyReflect(c, tVal, sVal)
 }
 
@@ -91,6 +91,6 @@ func copyReflectToPtrFromIface(c *context, target, source reflect.Value) bool {
 
 func copyReflectToPtrFromOthers(c *context, target, source reflect.Value) bool {
 	sVal := source
-	tVal, _ := indirectCopyTargetV2(target)
+	tVal, _ := indirectCopyTarget(target)
 	return copyReflect(c, tVal, sVal)
 }

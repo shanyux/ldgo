@@ -64,23 +64,7 @@ func valueOf(v interface{}) reflect.Value {
 	return reflect.ValueOf(v)
 }
 
-func elementOfReflect(v reflect.Value) (reflect.Value, bool) {
-	if v.Kind() == reflect.Ptr && !v.IsNil() {
-		return v.Elem(), true
-	}
-	return v, false
-}
-
-func indirectType(_type reflect.Type) (typ reflect.Type, isTypePtr bool) {
-	typ = _type
-	for typ.Kind() == reflect.Ptr {
-		isTypePtr = true
-		typ = typ.Elem()
-	}
-	return
-}
-
-func indirectTypeV2(_type reflect.Type) (typ reflect.Type, lvl int) {
+func indirectType(_type reflect.Type) (typ reflect.Type, lvl int) {
 	typ = _type
 	lvl = 0
 	for typ.Kind() == reflect.Ptr {
@@ -90,7 +74,7 @@ func indirectTypeV2(_type reflect.Type) (typ reflect.Type, lvl int) {
 	return
 }
 
-func indirectCopySourceV2(_source reflect.Value) (source reflect.Value, lvl int) {
+func indirectCopySource(_source reflect.Value) (source reflect.Value, lvl int) {
 	source = _source
 	lvl = 0
 	for source.Kind() == reflect.Ptr && !source.IsNil() {
@@ -100,7 +84,7 @@ func indirectCopySourceV2(_source reflect.Value) (source reflect.Value, lvl int)
 	return
 }
 
-func indirectCopyTargetV2(_target reflect.Value) (target reflect.Value, lvl int) {
+func indirectCopyTarget(_target reflect.Value) (target reflect.Value, lvl int) {
 	target = _target
 	lvl = 0
 	for target.Kind() == reflect.Ptr {
@@ -113,70 +97,6 @@ func indirectCopyTargetV2(_target reflect.Value) (target reflect.Value, lvl int)
 	}
 
 	return
-}
-
-func indirectSourceReflect(_source reflect.Value) (source reflect.Value, isSourcePtr bool) {
-	source = _source
-	for source.Kind() == reflect.Interface || (source.Kind() == reflect.Ptr && !source.IsNil()) {
-		if source.Kind() == reflect.Interface {
-			source = reflect.ValueOf(source.Interface())
-			continue
-		}
-
-		isSourcePtr = true
-		source = source.Elem()
-	}
-
-	return
-}
-
-func indirectTargetReflect(_target reflect.Value) (target reflect.Value, isTargetPtr bool) {
-	target = _target
-	for target.Kind() == reflect.Ptr {
-		isTargetPtr = true
-		if target.IsNil() {
-			target.Set(reflect.New(target.Type().Elem()))
-		}
-
-		target = target.Elem()
-	}
-
-	return
-}
-
-func newSourceForDeepCopy(c *context, value reflect.Value, isPtr bool) reflect.Value {
-	if !isPtr {
-		return value
-	}
-
-	cp := reflect.New(value.Type())
-	if !c.IsDeep {
-		cp.Elem().Set(value)
-	} else {
-		copyReflect(c, cp.Elem(), value)
-	}
-	return cp
-}
-
-func prepareCopyTargetReflect(c *context, _target reflect.Value) (target reflect.Value, isTargetPtr bool) {
-	target = _target
-	if !c.IsDeep {
-		return elementOfReflect(target)
-	}
-
-	return indirectTargetReflect(target)
-}
-
-func prepareCopySourceReflect(c *context, _source reflect.Value) (source reflect.Value, isSourcePtr bool) {
-	source = _source
-	if !c.IsDeep {
-		if source.Kind() == reflect.Interface {
-			source = reflect.ValueOf(source.Interface())
-		}
-		return elementOfReflect(source)
-	}
-
-	return indirectSourceReflect(source)
 }
 
 func copyReflect(c *context, target, source reflect.Value) bool {
@@ -194,7 +114,7 @@ func copyReflect(c *context, target, source reflect.Value) bool {
 	copyFunc := copyFuncMap[pair]
 	if copyFunc == nil {
 		if target.Kind() != reflect.Ptr && source.Kind() == reflect.Ptr {
-			source, _ = indirectCopySourceV2(source)
+			source, _ = indirectCopySource(source)
 
 		} else if source.Kind() == reflect.Interface {
 			source = reflect.ValueOf(source.Interface())
@@ -224,8 +144,8 @@ func copyReflect(c *context, target, source reflect.Value) bool {
 }
 
 func isCopyTypeConvertible(toType, fromType reflect.Type) bool {
-	toType, _ = indirectTypeV2(toType)
-	fromType, _ = indirectTypeV2(fromType)
+	toType, _ = indirectType(toType)
+	fromType, _ = indirectType(fromType)
 
 	pair := copyPair{To: toType.Kind(), From: fromType.Kind()}
 	_, ok := copyFuncMap[pair]
