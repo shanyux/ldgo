@@ -64,21 +64,29 @@ func (s *FlagSet) EnableDefault(on bool) {
 	s.noDefault = !on
 }
 
+func (s *FlagSet) SetOutput(w io.Writer) {
+	s.init()
+	s.command.SetOutput(w)
+}
+
 func (s *FlagSet) printUsage() {
+	w := s.command.Output()
+	s.writeUsage(w)
+}
+
+func (s *FlagSet) writeUsage(w io.Writer) {
 	// log.Printf("flags: %s", jsoncore.MustMarshalToString(s.model.Interface()))
 
-	w := s.command.Output()
-
-	s.printUsageHeader(w)
+	s.writeUsageHeader(w)
 
 	flags := s.flagSlice
 	// flags := s.sortedFlags()
 	for _, f := range flags {
-		s.printFlagUsage(w, f)
+		s.writeFlagUsage(w, f)
 	}
 }
 
-func (s *FlagSet) printUsageHeader(w io.Writer) {
+func (s *FlagSet) writeUsageHeader(w io.Writer) {
 	name := s.name
 	if name == "" {
 		name = "<command>"
@@ -100,7 +108,7 @@ func (s *FlagSet) printUsageHeader(w io.Writer) {
 	fmt.Fprintf(w, "Flags:\n")
 }
 
-func (s *FlagSet) printFlagUsage(w io.Writer, f *Flag) {
+func (s *FlagSet) writeFlagUsage(w io.Writer, f *Flag) {
 	const (
 		tab           = "        "
 		nameSize      = len(tab) * 2
@@ -139,7 +147,7 @@ func (s *FlagSet) printFlagUsage(w io.Writer, f *Flag) {
 	switch v := f.Value.(type) {
 	default:
 		if strings.Index(f.Default, "\n") > 0 {
-			fmt.Fprint(b, usagePrefix, "default: ")
+			fmt.Fprint(b, usagePrefix, "default:")
 			fmt.Fprint(b, defaultPrefix, strings.ReplaceAll(f.Default, "\n", defaultPrefix))
 		} else {
 			fmt.Fprintf(b, " (default: %v)", f.Default)
@@ -149,7 +157,7 @@ func (s *FlagSet) printFlagUsage(w io.Writer, f *Flag) {
 		fmt.Fprintf(b, " (default: %q)", f.Default)
 
 	case *stringsValue:
-		fmt.Fprint(b, usagePrefix, "default: ")
+		fmt.Fprint(b, usagePrefix, "default:")
 		for _, s := range *v {
 			fmt.Fprintf(b, "%s%q", defaultPrefix, s)
 		}
@@ -250,6 +258,9 @@ func (s *FlagSet) addFlag(f *Flag) {
 
 	if f.Default == "" {
 		f.Default = v.String()
+		if vv, _ := v.(valueWithDefault); vv != nil {
+			f.Default = vv.Default()
+		}
 	}
 
 	s.command.Var(v, f.Name, f.Usage)
@@ -261,6 +272,10 @@ func (s *FlagSet) addFlag(f *Flag) {
 func (s *FlagSet) getFlagValue(f *Flag) (flagVal Value, refVal reflect.Value) {
 	val := f.val
 	if v, ok := val.Interface().(Value); ok {
+		return v, val
+	}
+
+	if v := getAddrValue(val); v != nil {
 		return v, val
 	}
 
@@ -303,6 +318,9 @@ func (s *FlagSet) parseStruct(lvl int, val reflect.Value) {
 		fVal := val.Field(i)
 
 		if _, ok := fVal.Interface().(Value); ok {
+			if fVal.Kind() == reflect.Ptr && fVal.IsNil() {
+				fVal.Set(reflect.New(fVal.Type().Elem()))
+			}
 			s.parseFieldFlag(lvl, fVal, field)
 			continue
 		}

@@ -5,23 +5,37 @@
 package ldflag
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"strconv"
-	"strings"
 	"time"
+
+	"github.com/distroy/ldgo/ldconv"
 )
 
 type Value interface {
 	flag.Value
 }
 
+type valueWithDefault interface {
+	Value
+
+	Default() string
+}
+
 func mustMarshalJson(v interface{}) string {
-	b := &strings.Builder{}
+	b := bytes.NewBuffer(nil)
 	e := json.NewEncoder(b)
 	e.SetEscapeHTML(false)
 	e.Encode(v)
-	return b.String()
+
+	s := b.Bytes()
+	if l := len(s) - 1; l >= 0 && s[l] == '\n' {
+		s = s[:l]
+	}
+
+	return ldconv.BytesToStrUnsafe(s)
 }
 
 // duration
