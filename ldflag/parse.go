@@ -157,17 +157,47 @@ func unquoteUsage(f *Flag) (meta string, usage string) {
 	return meta, usage
 }
 
+func getAddrValue(v reflect.Value) Value {
+	if !v.CanAddr() {
+		return nil
+	}
+
+	vv, _ := v.Addr().Interface().(Value)
+	return vv
+}
+
 func isFlagDefaultZero(f *Flag) bool {
 	value := f.Value
 	defaultValue := f.Default
 
+	if defaultValue == "" {
+		return true
+	}
+
+	if f.val.Kind() == reflect.Slice {
+		return defaultValue == "null" || defaultValue == "[]"
+	}
+
 	val := f.val
+	if getAddrValue(val) != nil {
+		typ := val.Type()
+		v := reflect.New(typ)
+		v.Elem().Set(reflect.New(typ.Elem()))
+
+		z, _ := v.Interface().(Value)
+		return defaultValue == z.String()
+	}
+
 	if val.Kind() == reflect.Ptr {
 		typ := val.Type()
 		v := reflect.New(typ).Elem()
 		v.Set(reflect.New(typ.Elem()))
 		// v := reflect.New(typ.Elem())
-		z := fillFlagFuncMap[typ](v)
+
+		z, _ := v.Interface().(Value)
+		if z == nil {
+			z = fillFlagFuncMap[typ](v)
+		}
 		return defaultValue == z.String()
 	}
 

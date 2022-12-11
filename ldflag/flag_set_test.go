@@ -13,16 +13,36 @@ import (
 	"github.com/smartystreets/goconvey/convey"
 )
 
-func TestNewFlagSet(t *testing.T) {
-	convey.Convey(t.Name(), t, func() {
-		convey.Convey("", func() {
-			s := NewFlagSet()
-			convey.So(s, convey.ShouldNotBeNil)
-		})
-	})
+const (
+	testCommandName = "unittest"
+)
+
+type testIncludes []string
+
+func (p *testIncludes) Default() string { return strings.Join(nil, "\n") }
+func (p *testIncludes) String() string  { return mustMarshalJson(*p) }
+func (p *testIncludes) Set(s string) error {
+	*p = append(*p, s)
+	return nil
 }
 
-func TestFlagSet_printUsageHeader(t *testing.T) {
+type testExcludes []string
+
+func (p *testExcludes) Default() string { return strings.Join([]string{"a", "b"}, "\n") }
+func (p *testExcludes) String() string  { return mustMarshalJson(*p) }
+func (p *testExcludes) Set(s string) error {
+	*p = append(*p, s)
+	return nil
+}
+
+func newTestFlagSet() *FlagSet {
+	s := NewFlagSet()
+	s.init()
+	s.name = testCommandName
+	return s
+}
+
+func TestFlagSet_wrigeUsageHeader(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
 		convey.Convey(`name == "" && no args`, func() {
 			s := &FlagSet{
@@ -30,7 +50,7 @@ func TestFlagSet_printUsageHeader(t *testing.T) {
 				args: nil,
 			}
 			b := &strings.Builder{}
-			s.printUsageHeader(b)
+			s.writeUsageHeader(b)
 			convey.So(b.String(), convey.ShouldEqual, "Usage of <command>:\nFlags:\n")
 		})
 		convey.Convey(`name == "abc" && args.meta == ""`, func() {
@@ -39,8 +59,122 @@ func TestFlagSet_printUsageHeader(t *testing.T) {
 				args: &Flag{Meta: ""},
 			}
 			b := &strings.Builder{}
-			s.printUsageHeader(b)
+			s.writeUsageHeader(b)
 			convey.So(b.String(), convey.ShouldEqual, "Usage: abc [<flags>] [<arg>...]\n\nFlags:\n")
+		})
+	})
+}
+
+func TestFlagSet_wrigeUsage(t *testing.T) {
+	convey.Convey(t.Name(), t, func() {
+		b := &strings.Builder{}
+		s := newTestFlagSet()
+
+		convey.Convey("normal value", func() {
+			type Flags struct {
+				Top      int      `flag:"name:top; meta:N; usage:show the top <N>"`
+				Avg      bool     `flag:"usage:show the average complexity"`
+				DebugLog bool     `flag:"usage:print debug log; bool"`
+				Rate     float64  `flag:"default:0.65; usage:"`
+				Branch   string   `flag:"meta:branch; usage:git branch name"`
+				Includes []string `flag:"name:include; meta:regexp; usage:include file regexps"`
+				Excludes []string `flag:"name:exclude; meta:regexp; usage:exclude file regexps"`
+				Pathes   []string `flag:"args; meta:path; default:."`
+			}
+
+			flags := &Flags{
+				Excludes: []string{
+					`(^|/)vendor/`,
+					`\.pb\.go$`,
+				},
+			}
+			s.Model(flags)
+			s.writeUsage(b)
+
+			convey.So(b.String(), convey.ShouldEqual, `Usage: unittest [<flags>] [path...]
+
+Flags:
+        -top <N>
+                show the top <N>
+        -avg <bool>
+                show the average complexity
+        -debug-log
+                print debug log
+        -rate <float> (default: 0.65)
+        -branch <branch>
+                git branch name
+        -include <regexp>
+                include file regexps
+        -exclude <regexp>
+                exclude file regexps
+                default:
+                        "(^|/)vendor/"
+                        "\\.pb\\.go$"
+`)
+		})
+
+		convey.Convey("pointer value", func() {
+			type Flags struct {
+				Top      *int     `flag:"name:top; meta:N; usage:show the top <N>"`
+				Avg      *bool    `flag:"usage:show the average complexity"`
+				DebugLog *bool    `flag:"usage:print debug log; bool"`
+				Rate     *float64 `flag:"default:0.65; usage:"`
+				Branch   *string  `flag:"meta:branch; usage:git branch name"`
+				Includes []string `flag:"name:include; meta:regexp; usage:include file regexps"`
+				Excludes []string `flag:"name:exclude; meta:regexp; usage:exclude file regexps"`
+				Pathes   []string `flag:"args; meta:path; default:."`
+			}
+
+			flags := &Flags{
+				Excludes: []string{
+					`(^|/)vendor/`,
+					`\.pb\.go$`,
+				},
+			}
+			s.Model(flags)
+			s.writeUsage(b)
+
+			convey.So(b.String(), convey.ShouldEqual, `Usage: unittest [<flags>] [path...]
+
+Flags:
+        -top <N>
+                show the top <N>
+        -avg <bool>
+                show the average complexity
+        -debug-log
+                print debug log
+        -rate <float> (default: 0.65)
+        -branch <branch>
+                git branch name
+        -include <regexp>
+                include file regexps
+        -exclude <regexp>
+                exclude file regexps
+                default:
+                        "(^|/)vendor/"
+                        "\\.pb\\.go$"
+`)
+		})
+		convey.Convey("value with default", func() {
+			type Flags struct {
+				Includes testIncludes `flag:"name:include; meta:regexp; usage:include file regexps"`
+				Excludes testExcludes `flag:"name:exclude; meta:regexp; usage:exclude file regexps"`
+			}
+
+			flags := &Flags{}
+			s.Model(flags)
+			s.writeUsage(b)
+
+			convey.So(b.String(), convey.ShouldEqual, `Usage of unittest:
+Flags:
+        -include <regexp>
+                include file regexps
+        -exclude <regexp>
+                exclude file regexps
+                default:
+                        a
+                        b
+`)
 		})
 	})
 }
@@ -138,6 +272,8 @@ func TestFlagSet_Model(t *testing.T) {
 
 func TestFlagSet_Parse(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
+		s := newTestFlagSet()
+
 		convey.Convey("normal value", func() {
 			type Flags struct {
 				Top      int      `flag:"name:top; meta:N; usage:show the top <N>"`
@@ -150,7 +286,6 @@ func TestFlagSet_Parse(t *testing.T) {
 
 			convey.Convey("no set default", func() {
 				flags := &Flags{}
-				s := NewFlagSet()
 				s.EnableDefault(false)
 				s.Model(flags)
 
@@ -172,7 +307,6 @@ func TestFlagSet_Parse(t *testing.T) {
 
 			convey.Convey("set default", func() {
 				flags := &Flags{}
-				s := NewFlagSet()
 				s.EnableDefault(true)
 				s.Model(flags)
 
@@ -206,7 +340,6 @@ func TestFlagSet_Parse(t *testing.T) {
 
 			convey.Convey("no set default", func() {
 				flags := &Flags{}
-				s := NewFlagSet()
 				s.EnableDefault(false)
 				s.Model(flags)
 
@@ -229,7 +362,6 @@ func TestFlagSet_Parse(t *testing.T) {
 
 			convey.Convey("set default", func() {
 				flags := &Flags{}
-				s := NewFlagSet()
 				s.EnableDefault(true)
 				s.Model(flags)
 
