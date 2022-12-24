@@ -41,12 +41,12 @@ func init() {
 	})
 }
 
-func copyReflectToStringFromInvalid(c *context, target, source reflect.Value) bool {
+func copyReflectToStringFromInvalid(c *copyContext, target, source reflect.Value) bool {
 	target.SetString("")
 	return true
 }
 
-func copyReflectToStringFromBool(c *context, target, source reflect.Value) bool {
+func copyReflectToStringFromBool(c *copyContext, target, source reflect.Value) bool {
 	b := source.Bool()
 	if b {
 		target.SetString("true")
@@ -56,7 +56,7 @@ func copyReflectToStringFromBool(c *context, target, source reflect.Value) bool 
 	return true
 }
 
-func copyReflectToStringFromFloat(c *context, target, source reflect.Value) bool {
+func copyReflectToStringFromFloat(c *copyContext, target, source reflect.Value) bool {
 	n := source.Float()
 	target.SetString(strconv.FormatFloat(n, 'f', -1, 64))
 	return true
@@ -68,30 +68,30 @@ func copyReflectToStringFromFloat(c *context, target, source reflect.Value) bool
 // 	return true
 // }
 
-func copyReflectToStringFromInt(c *context, target, source reflect.Value) bool {
+func copyReflectToStringFromInt(c *copyContext, target, source reflect.Value) bool {
 	n := source.Int()
 	target.SetString(strconv.FormatInt(n, 10))
 	return true
 }
 
-func copyReflectToStringFromUint(c *context, target, source reflect.Value) bool {
+func copyReflectToStringFromUint(c *copyContext, target, source reflect.Value) bool {
 	n := source.Uint()
 	target.SetString(strconv.FormatUint(n, 10))
 	return true
 }
 
-func copyReflectToStringFromString(c *context, target, source reflect.Value) bool {
+func copyReflectToStringFromString(c *copyContext, target, source reflect.Value) bool {
 	s := source.String()
 	target.SetString(s)
 	return true
 }
 
-func copyReflectToStringFromArray(c *context, target, source reflect.Value) bool {
+func copyReflectToStringFromArray(c *copyContext, target, source reflect.Value) bool {
 	sVal := source.Slice(0, source.Len())
 	return copyReflectToStringFromSlice(c, target, sVal)
 }
 
-func copyReflectToStringFromSlice(c *context, target, source reflect.Value) bool {
+func copyReflectToStringFromSlice(c *copyContext, target, source reflect.Value) bool {
 	switch ss := source.Interface().(type) {
 	default:
 		return false

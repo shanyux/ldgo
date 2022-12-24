@@ -17,20 +17,20 @@ func init() {
 	})
 }
 
-func clearCopyStructIgnoreField(c *context, v reflect.Value, info *copyStructInfo) {
+func clearCopyStructIgnoreField(c *copyContext, v reflect.Value, info *copyStructInfo) {
 	for _, f := range info.Ignores {
 		field := v.Field(f.Index)
 		field.Set(reflect.Zero(f.Type))
 	}
 }
 
-func copyReflectToStructFromStruct(c *context, target, source reflect.Value) bool {
+func copyReflectToStructFromStruct(c *copyContext, target, source reflect.Value) bool {
 	tTyp := target.Type()
 	tInfo := getCopyTypeInfo(tTyp)
 
 	sTyp := source.Type()
 	sInfo := getCopyTypeInfo(sTyp)
-	if !c.IsDeep && tTyp == sTyp {
+	if !c.Clone && tTyp == sTyp {
 		target.Set(source)
 		clearCopyStructIgnoreField(c, target, tInfo)
 		return true
@@ -54,7 +54,7 @@ func copyReflectToStructFromStruct(c *context, target, source reflect.Value) boo
 	return true
 }
 
-func copyReflectToStructFromMap(c *context, target, source reflect.Value) bool {
+func copyReflectToStructFromMap(c *copyContext, target, source reflect.Value) bool {
 	tTyp := target.Type()
 	tInfo := getCopyTypeInfo(tTyp)
 

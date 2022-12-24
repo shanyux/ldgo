@@ -37,12 +37,12 @@ func init() {
 	})
 }
 
-func copyReflectToIfaceFromInvalid(c *context, target, source reflect.Value) bool {
+func copyReflectToIfaceFromInvalid(c *copyContext, target, source reflect.Value) bool {
 	target.Set(reflect.Zero(target.Type()))
 	return true
 }
 
-func copyReflectToIfaceFromPtr(c *context, target, source reflect.Value) bool {
+func copyReflectToIfaceFromPtr(c *copyContext, target, source reflect.Value) bool {
 	tTyp := target.Type()
 	sTyp := source.Type()
 
@@ -51,7 +51,7 @@ func copyReflectToIfaceFromPtr(c *context, target, source reflect.Value) bool {
 	}
 
 	sVal := source
-	if c.IsDeep && !sVal.IsNil() {
+	if c.Clone && !sVal.IsNil() {
 		sVal = deepClone(sVal)
 	}
 
@@ -59,7 +59,7 @@ func copyReflectToIfaceFromPtr(c *context, target, source reflect.Value) bool {
 	return true
 }
 
-func copyReflectToIfaceFromStruct(c *context, target, source reflect.Value) bool {
+func copyReflectToIfaceFromStruct(c *copyContext, target, source reflect.Value) bool {
 	tTyp := target.Type()
 	sTyp := source.Type()
 
@@ -68,7 +68,7 @@ func copyReflectToIfaceFromStruct(c *context, target, source reflect.Value) bool
 	}
 
 	sVal := source
-	if c.IsDeep {
+	if c.Clone {
 		sVal = deepClone(sVal)
 	}
 
@@ -76,7 +76,7 @@ func copyReflectToIfaceFromStruct(c *context, target, source reflect.Value) bool
 	return true
 }
 
-func copyReflectToIfaceFromOthers(c *context, target, source reflect.Value) bool {
+func copyReflectToIfaceFromOthers(c *copyContext, target, source reflect.Value) bool {
 	tTyp := target.Type()
 	sTyp := source.Type()
 

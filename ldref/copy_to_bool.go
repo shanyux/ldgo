@@ -40,42 +40,42 @@ func bool2int(b bool) int {
 	return 0
 }
 
-func copyReflectToBoolFromInvalid(c *context, target, source reflect.Value) bool {
+func copyReflectToBoolFromInvalid(c *copyContext, target, source reflect.Value) bool {
 	target.SetBool(false)
 	return true
 }
 
-func copyReflectToBoolFromBool(c *context, target, source reflect.Value) bool {
+func copyReflectToBoolFromBool(c *copyContext, target, source reflect.Value) bool {
 	b := source.Bool()
 	target.SetBool(b)
 	return true
 }
 
-func copyReflectToBoolFromComplex(c *context, target, source reflect.Value) bool {
+func copyReflectToBoolFromComplex(c *copyContext, target, source reflect.Value) bool {
 	n := source.Complex()
 	target.SetBool(n != 0)
 	return true
 }
 
-func copyReflectToBoolFromFloat(c *context, target, source reflect.Value) bool {
+func copyReflectToBoolFromFloat(c *copyContext, target, source reflect.Value) bool {
 	n := source.Float()
 	target.SetBool(n != 0)
 	return true
 }
 
-func copyReflectToBoolFromInt(c *context, target, source reflect.Value) bool {
+func copyReflectToBoolFromInt(c *copyContext, target, source reflect.Value) bool {
 	n := source.Int()
 	target.SetBool(n != 0)
 	return true
 }
 
-func copyReflectToBoolFromUint(c *context, target, source reflect.Value) bool {
+func copyReflectToBoolFromUint(c *copyContext, target, source reflect.Value) bool {
 	n := source.Uint()
 	target.SetBool(n != 0)
 	return true
 }
 
-func copyReflectToBoolFromString(c *context, target, source reflect.Value) bool {
+func copyReflectToBoolFromString(c *copyContext, target, source reflect.Value) bool {
 	s := source.String()
 
 	if len(s) <= 5 {

@@ -51,18 +51,18 @@ func init() {
 	})
 }
 
-func copyReflectToFloatFromInvalid(c *context, target, source reflect.Value) bool {
+func copyReflectToFloatFromInvalid(c *copyContext, target, source reflect.Value) bool {
 	target.SetFloat(0)
 	return true
 }
 
-func copyReflectToFloatFromBool(c *context, target, source reflect.Value) bool {
+func copyReflectToFloatFromBool(c *copyContext, target, source reflect.Value) bool {
 	b := source.Bool()
 	target.SetFloat(float64(bool2int(b)))
 	return true
 }
 
-func copyReflectToFloatFromFloat(c *context, target, source reflect.Value) bool {
+func copyReflectToFloatFromFloat(c *copyContext, target, source reflect.Value) bool {
 	n := source.Float()
 	target.SetFloat(n)
 	if target.OverflowFloat(n) {
@@ -71,7 +71,7 @@ func copyReflectToFloatFromFloat(c *context, target, source reflect.Value) bool 
 	return true
 }
 
-func copyReflectToFloatFromComplex(c *context, target, source reflect.Value) bool {
+func copyReflectToFloatFromComplex(c *copyContext, target, source reflect.Value) bool {
 	n := source.Complex()
 	r := real(n)
 	target.SetFloat(r)
@@ -81,7 +81,7 @@ func copyReflectToFloatFromComplex(c *context, target, source reflect.Value) boo
 	return true
 }
 
-func copyReflectToFloatFromInt(c *context, target, source reflect.Value) bool {
+func copyReflectToFloatFromInt(c *copyContext, target, source reflect.Value) bool {
 	n := source.Int()
 	target.SetFloat(float64(n))
 	if target.OverflowFloat(float64(n)) {
@@ -90,7 +90,7 @@ func copyReflectToFloatFromInt(c *context, target, source reflect.Value) bool {
 	return true
 }
 
-func copyReflectToFloatFromUint(c *context, target, source reflect.Value) bool {
+func copyReflectToFloatFromUint(c *copyContext, target, source reflect.Value) bool {
 	n := source.Uint()
 	target.SetFloat(float64(n))
 	if target.OverflowFloat(float64(n)) {
@@ -99,7 +99,7 @@ func copyReflectToFloatFromUint(c *context, target, source reflect.Value) bool {
 	return true
 }
 
-func copyReflectToFloatFromString(c *context, target, source reflect.Value) bool {
+func copyReflectToFloatFromString(c *copyContext, target, source reflect.Value) bool {
 	s := source.String()
 	n, err := strconv.ParseFloat(s, 64)
 	target.SetFloat(n)

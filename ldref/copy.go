@@ -10,21 +10,37 @@ import (
 	"github.com/distroy/ldgo/lderr"
 )
 
-func Copy(target, source interface{}) error {
-	c := getContext(false)
-	defer putContext(c)
+type CopyConfig struct {
+	Clone bool
+}
+
+func Copy(target, source interface{}, cfg ...*CopyConfig) lderr.Error {
+	c := &copyContext{
+		context:    getContext(),
+		CopyConfig: &CopyConfig{},
+	}
+	defer putContext(c.context)
+
+	if len(cfg) > 0 && cfg[0] != nil {
+		c.CopyConfig = cfg[0]
+	}
 
 	return copyWithCheckTarget(c, target, source)
 }
 
-func DeepCopy(target, source interface{}) error {
-	c := getContext(true)
-	defer putContext(c)
-
-	return copyWithCheckTarget(c, target, source)
+func DeepCopy(target, source interface{}) lderr.Error {
+	cfg := &CopyConfig{
+		Clone: true,
+	}
+	return Copy(target, source, cfg)
 }
 
-func copyWithCheckTarget(c *context, target, source interface{}) lderr.Error {
+type copyContext struct {
+	*context
+	*CopyConfig
+}
+
+func copyWithCheckTarget(c *copyContext, target, source interface{}) lderr.Error {
 	sVal := valueOf(source)
 	// sVal, _ = valueElment(sVal)
 
@@ -99,7 +115,7 @@ func indirectCopyTarget(_target reflect.Value) (target reflect.Value, lvl int) {
 	return
 }
 
-func copyReflect(c *context, target, source reflect.Value) bool {
+func copyReflect(c *copyContext, target, source reflect.Value) bool {
 	_target := target
 	_source := source
 
@@ -122,7 +138,7 @@ func copyReflect(c *context, target, source reflect.Value) bool {
 	return false
 }
 
-func copyReflectWithIndirect(c *context, target, source reflect.Value) bool {
+func copyReflectWithIndirect(c *copyContext, target, source reflect.Value) bool {
 	for {
 		pair := copyPair{To: target.Kind(), From: source.Kind()}
 		fnCopy := copyFuncMap[pair]

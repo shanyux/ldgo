@@ -41,12 +41,12 @@ func init() {
 	})
 }
 
-func copyReflectToPtrFromInvalid(c *context, target, source reflect.Value) bool {
+func copyReflectToPtrFromInvalid(c *copyContext, target, source reflect.Value) bool {
 	target.Set(reflect.Zero(target.Type()))
 	return true
 }
 
-func copyReflectToPtrFromPtr(c *context, target, source reflect.Value) bool {
+func copyReflectToPtrFromPtr(c *copyContext, target, source reflect.Value) bool {
 	sVal, sPtrLvl := indirectCopySource(source)
 	if sVal.Kind() == reflect.Ptr {
 		target.Set(reflect.Zero(target.Type()))
@@ -55,7 +55,7 @@ func copyReflectToPtrFromPtr(c *context, target, source reflect.Value) bool {
 
 	tTyp, tPtrLvl := indirectType(target.Type())
 
-	if !c.IsDeep && tTyp == sVal.Type() {
+	if !c.Clone && tTyp == sVal.Type() {
 		tVal := target
 		sVal := source
 		for i := 0; i+sPtrLvl < tPtrLvl; i++ {
@@ -76,20 +76,20 @@ func copyReflectToPtrFromPtr(c *context, target, source reflect.Value) bool {
 	return copyReflect(c, tVal, sVal)
 }
 
-func copyReflectToPtrFromUnsafePointer(c *context, target, source reflect.Value) bool {
+func copyReflectToPtrFromUnsafePointer(c *copyContext, target, source reflect.Value) bool {
 	tAddr := unsafe.Pointer(target.UnsafeAddr())
 	tTemp := reflect.NewAt(source.Type(), tAddr).Elem()
 	tTemp.Set(source)
 	return true
 }
 
-func copyReflectToPtrFromIface(c *context, target, source reflect.Value) bool {
+func copyReflectToPtrFromIface(c *copyContext, target, source reflect.Value) bool {
 	sVal := reflect.ValueOf(source.Interface())
 	tVal := target
 	return copyReflect(c, tVal, sVal)
 }
 
-func copyReflectToPtrFromOthers(c *context, target, source reflect.Value) bool {
+func copyReflectToPtrFromOthers(c *copyContext, target, source reflect.Value) bool {
 	sVal := source
 	tVal, _ := indirectCopyTarget(target)
 	return copyReflect(c, tVal, sVal)
