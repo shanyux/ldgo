@@ -11,23 +11,38 @@ import (
 	"github.com/distroy/ldgo/lderr"
 )
 
-// DeepFill will fill the fields of struct, if field is nil pointer
+type FillConfig struct {
+	Deep bool
+}
+
 func DeepFill(v interface{}) error {
-	c := getContext(true)
-	err := fillWithContext(c, v)
-	putContext(c)
-	return err
+	cfg := &FillConfig{
+		Deep: true,
+	}
+	return Fill(v, cfg)
 }
 
 // Fill will fill the fields of struct, if field is nil pointer
-func Fill(v interface{}) error {
-	c := getContext(false)
-	err := fillWithContext(c, v)
-	putContext(c)
-	return err
+func Fill(v interface{}, cfg ...*FillConfig) error {
+	c := &fillContext{
+		context:    getContext(),
+		FillConfig: &FillConfig{},
+	}
+	putContext(c.context)
+
+	if len(cfg) > 0 && cfg[0] != nil {
+		c.FillConfig = cfg[0]
+	}
+
+	return fillWithContext(c, v)
 }
 
-func fillWithContext(c *context, v interface{}) lderr.Error {
+type fillContext struct {
+	*context
+	*FillConfig
+}
+
+func fillWithContext(c *fillContext, v interface{}) lderr.Error {
 	vv := valueOf(v)
 	if vv.Kind() == reflect.Ptr {
 		if vv.IsNil() {
@@ -49,7 +64,7 @@ func fillWithContext(c *context, v interface{}) lderr.Error {
 	return c.Error()
 }
 
-func fillReflectStruct(c *context, v reflect.Value) {
+func fillReflectStruct(c *fillContext, v reflect.Value) {
 	t := v.Type()
 	num := v.NumField()
 	for i := 0; i < num; i++ {
@@ -69,7 +84,7 @@ func fillReflectStruct(c *context, v reflect.Value) {
 	}
 }
 
-func fillReflectNotDeep(c *context, v reflect.Value) {
+func fillReflectNotDeep(c *fillContext, v reflect.Value) {
 	var fnNew func(typ reflect.Type) reflect.Value
 	switch v.Kind() {
 	// default:
@@ -90,8 +105,8 @@ func fillReflectNotDeep(c *context, v reflect.Value) {
 	}
 }
 
-func fillReflect(c *context, v reflect.Value) {
-	if !c.IsDeep {
+func fillReflect(c *fillContext, v reflect.Value) {
+	if !c.Deep {
 		fillReflectNotDeep(c, v)
 		return
 	}
