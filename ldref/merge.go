@@ -13,23 +13,25 @@ import (
 
 type any = interface{}
 
-func Merge(target, source any) lderr.Error {
-	c := &mergeContext{
-		IsDeep: false,
-	}
-	return mergeWithContext(c, target, source)
+type MergeConfig struct {
+	Clone     bool
+	ArrayElem bool // if merge array element
+	SliceElem bool // if merge slice element
 }
 
-func DeepMerge(target, source any) lderr.Error {
+func Merge(target, source any, cfg ...*MergeConfig) lderr.Error {
 	c := &mergeContext{
-		IsDeep: true,
+		MergeConfig: &MergeConfig{},
 	}
+	if len(cfg) > 0 && cfg[0] != nil {
+		c.MergeConfig = cfg[0]
+	}
+
 	return mergeWithContext(c, target, source)
 }
 
 type mergeContext struct {
-	IsDeep           bool
-	IsMergeSliceElme bool
+	*MergeConfig
 }
 
 func mergeWithContext(c *mergeContext, target, source any) lderr.Error {
@@ -74,7 +76,7 @@ func mergeWithContext(c *mergeContext, target, source any) lderr.Error {
 
 func cloneForMerge(c *mergeContext, x reflect.Value) reflect.Value {
 	v := x
-	if c.IsDeep {
+	if c.Clone {
 		v = deepClone(v)
 	}
 	return v
@@ -88,8 +90,14 @@ func mergeReflect(c *mergeContext, target, source reflect.Value) {
 	case reflect.Invalid:
 		break
 
-	case reflect.Ptr, reflect.Func, reflect.Chan, reflect.Interface:
+	case reflect.Interface:
+		mergeReflectIface(c, target, source)
+
+	case reflect.Ptr:
 		mergeReflectPtr(c, target, source)
+
+	case reflect.Func, reflect.Chan:
+		mergeReflectFunc(c, target, source)
 
 	case reflect.Map:
 		mergeReflectMap(c, target, source)
@@ -105,7 +113,53 @@ func mergeReflect(c *mergeContext, target, source reflect.Value) {
 	}
 }
 
+func mergeReflectIface(c *mergeContext, target, source reflect.Value) {
+	if target.IsNil() {
+		source = cloneForMerge(c, source)
+		target.Set(source)
+		return
+	}
+
+	if source.IsNil() {
+		return
+	}
+
+	// target = reflect.ValueOf(target.Interface())
+	// source = reflect.ValueOf(source.Interface())
+	// if target.Type() != source.Type() {
+	// 	return
+	// }
+
+	tDataTyp := reflect.TypeOf(target.Interface())
+	source = reflect.ValueOf(source.Interface())
+	if tDataTyp != source.Type() {
+		return
+	}
+
+	tDataVal := reflect.New(tDataTyp).Elem()
+	tDataVal.Set(reflect.ValueOf(target.Interface()))
+	mergeReflect(c, tDataVal, source)
+
+	// log.Printf(" === %s: %#v", target.Type().String(), target.Interface())
+	// log.Printf(" === %s: %#v", tDataVal.Type().String(), tDataVal.Interface())
+	target.Set(tDataVal)
+}
+
 func mergeReflectPtr(c *mergeContext, target, source reflect.Value) {
+	if target.IsNil() {
+		source = cloneForMerge(c, source)
+		target.Set(source)
+		return
+	}
+
+	if source.IsNil() {
+		return
+	}
+
+	mergeReflect(c, target.Elem(), source.Elem())
+}
+
+func mergeReflectFunc(c *mergeContext, target, source reflect.Value) {
 	if target.IsNil() {
 		source = cloneForMerge(c, source)
 		target.Set(source)
@@ -133,7 +187,10 @@ func mergeReflectMap(c *mergeContext, target, source reflect.Value) {
 			continue
 		}
 
-		mergeReflect(c, tVal, sVal)
+		tmp := reflect.New(tVal.Type()).Elem()
+		tmp.Set(tVal)
+		mergeReflect(c, tmp, sVal)
+		target.SetMapIndex(key, tmp)
 	}
 }
 
@@ -144,7 +201,7 @@ func mergeReflectSlice(c *mergeContext, target, source reflect.Value) {
 		return
 	}
 
-	if !c.IsMergeSliceElme {
+	if !c.SliceElem {
 		return
 	}
 
@@ -174,19 +231,16 @@ func mergeReflectSlice(c *mergeContext, target, source reflect.Value) {
 }
 
 func mergeReflectArray(c *mergeContext, target, source reflect.Value) {
-	// if target.IsNil() {
-	// 	source = cloneForMerge(c, source)
-	// 	target.Set(source)
-	// 	return
-	// }
-	//
-	// if !c.IsMergeSliceElme {
-	// 	return
-	// }
+	if !c.ArrayElem {
+		if target.IsZero() {
+			source = cloneForMerge(c, source)
+			target.Set(source)
+		}
+		return
+	}
 
-	len := source.Len()
-
-	for i := 0; i < len; i++ {
+	l := source.Len()
+	for i := 0; i < l; i++ {
 		tVal := target.Index(i)
 		sVal := source.Index(i)
 

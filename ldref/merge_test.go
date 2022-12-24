@@ -96,14 +96,27 @@ func TestMerge(t *testing.T) {
 			})
 
 			convey.Convey("ptr", func() {
-				var (
-					target (*int)
-					source = 1234
-				)
+				convey.Convey("no clone", func() {
+					var (
+						target (*int)
+						source = 1234
+					)
 
-				err := Merge(&target, &source)
-				convey.So(err, convey.ShouldBeNil)
-				convey.So(target, convey.ShouldEqual, &source)
+					err := Merge(&target, &source)
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldEqual, &source)
+				})
+				convey.Convey("clone", func() {
+					var (
+						target (*int)
+						source = 1234
+					)
+
+					err := Merge(&target, &source, &MergeConfig{Clone: true})
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldNotEqual, &source)
+					convey.So(target, convey.ShouldResemble, &source)
+				})
 			})
 
 			convey.Convey("struct", func() {
@@ -122,6 +135,95 @@ func TestMerge(t *testing.T) {
 				convey.So(target, convey.ShouldResemble, &testCloneStruct{
 					Int:    1234,
 					String: "abc",
+				})
+			})
+
+			convey.Convey("map", func() {
+				var (
+					target = map[string]any{
+						"a": 1234,
+						"c": &testCloneStruct{
+							String: "abc",
+						},
+					}
+					source = map[string]any{
+						"a": 2345,
+						"b": "abc",
+						"c": &testCloneStruct{
+							Int:    1234,
+							String: "xyz",
+						},
+					}
+				)
+
+				err := Merge(&target, &source)
+				convey.So(err, convey.ShouldBeNil)
+				convey.So(target, convey.ShouldResemble, map[string]any{
+					"a": 1234,
+					"b": "abc",
+					"c": &testCloneStruct{
+						Int:    1234,
+						String: "abc",
+					},
+				})
+			})
+
+			convey.Convey("slice", func() {
+				convey.Convey("no merge elem", func() {
+					var (
+						target = map[string]any{
+							"a": []any(nil),
+						}
+						source = map[string]any{
+							"a": []any{1, 2, 4},
+						}
+					)
+
+					err := Merge(&target, &source)
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldResemble, map[string]any{
+						"a": []any{1, 2, 4},
+					})
+				})
+
+				convey.Convey("merge elem", func() {
+					var (
+						target = map[string]any{
+							"a": []any{0, 3, 0},
+						}
+						source = map[string]any{
+							"a": []any{1, 2, 4, 7},
+						}
+					)
+
+					err := Merge(&target, &source, &MergeConfig{SliceElem: true})
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldResemble, map[string]any{
+						"a": []any{1, 3, 4, 7},
+					})
+				})
+			})
+
+			convey.Convey("array", func() {
+				convey.Convey("no merge elem", func() {
+					var (
+						target = [4]any{}
+						source = [4]any{1, 2, 4}
+					)
+
+					err := Merge(&target, &source)
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldResemble, [4]any{1, 2, 4})
+				})
+				convey.Convey("merge elem", func() {
+					var (
+						target = [4]any{0, 0, 5}
+						source = [4]any{0, 2, 0, 14}
+					)
+
+					err := Merge(&target, &source, &MergeConfig{ArrayElem: true})
+					convey.So(err, convey.ShouldBeNil)
+					convey.So(target, convey.ShouldResemble, [4]any{0, 2, 5, 14})
 				})
 			})
 		})
