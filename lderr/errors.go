@@ -16,8 +16,9 @@ var (
 	ErrCtxDeadlineExceeded = New(http.StatusOK, -12, "context deadline exceeded")
 
 	ErrReflectError        = New(http.StatusOK, -21, "reflect error")
-	ErrReflectTargetNotPtr = New(http.StatusOK, -22, "reflect target not be pointer")
-	ErrReflectTargetNilPtr = New(http.StatusOK, -23, "reflect target be nil pointer")
+	ErrReflectTargetNotPtr = New(http.StatusOK, -22, "reflect target is not pointer")
+	ErrReflectTargetNilPtr = New(http.StatusOK, -23, "reflect target is nil pointer")
+	ErrReflectTypeNotEqual = New(http.StatusOK, -24, "reflect types of target and source are not equal")
 
 	ErrNonAuthoritativeInfo = New(http.StatusNonAuthoritativeInfo, -101, "http non authoritative info")
 	ErrUnauthorized         = New(http.StatusUnauthorized, -102, "http unauthorized")
