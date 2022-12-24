@@ -19,12 +19,12 @@ func init() {
 	})
 }
 
-func copyReflectToArrayFromInvalid(c *context, target, source reflect.Value) bool {
+func copyReflectToArrayFromInvalid(c *copyContext, target, source reflect.Value) bool {
 	target.Set(reflect.Zero(target.Type()))
 	return true
 }
 
-func copyReflectToArrayFromString(c *context, target, source reflect.Value) bool {
+func copyReflectToArrayFromString(c *copyContext, target, source reflect.Value) bool {
 	tTyp := target.Type()
 	sTyp := source.Type()
 
@@ -55,15 +55,15 @@ func copyReflectToArrayFromString(c *context, target, source reflect.Value) bool
 	return true
 }
 
-func copyReflectToArrayFromArray(c *context, target, source reflect.Value) bool {
+func copyReflectToArrayFromArray(c *copyContext, target, source reflect.Value) bool {
 	sVal := source.Slice(0, source.Len())
 	return copyReflectToArrayFromSlice(c, target, sVal)
 }
 
-func copyReflectToArrayFromSlice(c *context, target, source reflect.Value) bool {
+func copyReflectToArrayFromSlice(c *copyContext, target, source reflect.Value) bool {
 	tTyp := target.Type()
 	sTyp := source.Type()
-	if !c.IsDeep && tTyp == sTyp {
+	if !c.Clone && tTyp == sTyp {
 		target.Set(source)
 		return true
 	}
@@ -90,7 +90,7 @@ func copyReflectToArrayFromSlice(c *context, target, source reflect.Value) bool 
 	return true
 }
 
-func copyReflectToArrayFromMapWithEmptyStructValue(c *context, target, source reflect.Value) bool {
+func copyReflectToArrayFromMapWithEmptyStructValue(c *copyContext, target, source reflect.Value) bool {
 	tTyp := target.Type()
 	sTyp := source.Type()
 

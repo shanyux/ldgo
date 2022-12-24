@@ -16,7 +16,7 @@ var (
 	contextPool = &sync.Pool{}
 )
 
-func getContext(isDeep bool) *context {
+func getContext() *context {
 	c, _ := contextPool.Get().(*context)
 	if c == nil {
 		c = &context{
@@ -25,7 +25,6 @@ func getContext(isDeep bool) *context {
 		}
 	}
 
-	c.IsDeep = isDeep
 	return c
 }
 
@@ -37,8 +36,6 @@ func putContext(c *context) {
 type context struct {
 	fields []string
 	errors []string
-
-	IsDeep bool
 }
 
 func (c *context) Reset() {

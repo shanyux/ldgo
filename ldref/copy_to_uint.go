@@ -128,18 +128,18 @@ func init() {
 	})
 }
 
-func copyReflectToUintFromInvalid(c *context, target, source reflect.Value) bool {
+func copyReflectToUintFromInvalid(c *copyContext, target, source reflect.Value) bool {
 	target.SetUint(0)
 	return true
 }
 
-func copyReflectToUintFromBool(c *context, target, source reflect.Value) bool {
+func copyReflectToUintFromBool(c *copyContext, target, source reflect.Value) bool {
 	b := source.Bool()
 	target.SetUint(uint64(bool2int(b)))
 	return true
 }
 
-func copyReflectToUintFromFloat(c *context, target, source reflect.Value) bool {
+func copyReflectToUintFromFloat(c *copyContext, target, source reflect.Value) bool {
 	n := source.Float()
 	target.SetUint(uint64(n))
 	if target.OverflowUint(uint64(n)) {
@@ -148,7 +148,7 @@ func copyReflectToUintFromFloat(c *context, target, source reflect.Value) bool {
 	return true
 }
 
-func copyReflectToUintFromComplex(c *context, target, source reflect.Value) bool {
+func copyReflectToUintFromComplex(c *copyContext, target, source reflect.Value) bool {
 	n := source.Complex()
 	r := real(n)
 	target.SetUint(uint64(r))
@@ -158,7 +158,7 @@ func copyReflectToUintFromComplex(c *context, target, source reflect.Value) bool
 	return true
 }
 
-func copyReflectToUintFromInt(c *context, target, source reflect.Value) bool {
+func copyReflectToUintFromInt(c *copyContext, target, source reflect.Value) bool {
 	n := source.Int()
 	target.SetUint(uint64(n))
 	if n < 0 || target.OverflowUint(uint64(n)) {
@@ -168,7 +168,7 @@ func copyReflectToUintFromInt(c *context, target, source reflect.Value) bool {
 	return true
 }
 
-func copyReflectToUintFromUint(c *context, target, source reflect.Value) bool {
+func copyReflectToUintFromUint(c *copyContext, target, source reflect.Value) bool {
 	n := source.Uint()
 	target.SetUint(n)
 	if target.OverflowUint(n) {
@@ -177,7 +177,7 @@ func copyReflectToUintFromUint(c *context, target, source reflect.Value) bool {
 	return true
 }
 
-func copyReflectToUintFromString(c *context, target, source reflect.Value) bool {
+func copyReflectToUintFromString(c *copyContext, target, source reflect.Value) bool {
 	s := source.String()
 	n, err := strconv.ParseUint(s, 10, 64)
 	target.SetUint(n)

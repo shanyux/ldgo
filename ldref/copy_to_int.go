@@ -109,18 +109,18 @@ func init() {
 	})
 }
 
-func copyReflectToIntFromInvalid(c *context, target, source reflect.Value) bool {
+func copyReflectToIntFromInvalid(c *copyContext, target, source reflect.Value) bool {
 	target.SetInt(0)
 	return true
 }
 
-func copyReflectToIntFromBool(c *context, target, source reflect.Value) bool {
+func copyReflectToIntFromBool(c *copyContext, target, source reflect.Value) bool {
 	b := source.Bool()
 	target.SetInt(int64(bool2int(b)))
 	return true
 }
 
-func copyReflectToIntFromFloat(c *context, target, source reflect.Value) bool {
+func copyReflectToIntFromFloat(c *copyContext, target, source reflect.Value) bool {
 	n := source.Float()
 	target.SetInt(int64(n))
 	if target.OverflowInt(int64(n)) {
@@ -129,7 +129,7 @@ func copyReflectToIntFromFloat(c *context, target, source reflect.Value) bool {
 	return true
 }
 
-func copyReflectToIntFromComplex(c *context, target, source reflect.Value) bool {
+func copyReflectToIntFromComplex(c *copyContext, target, source reflect.Value) bool {
 	n := source.Complex()
 	r := real(n)
 	target.SetInt(int64(r))
@@ -139,7 +139,7 @@ func copyReflectToIntFromComplex(c *context, target, source reflect.Value) bool 
 	return true
 }
 
-func copyReflectToIntFromInt(c *context, target, source reflect.Value) bool {
+func copyReflectToIntFromInt(c *copyContext, target, source reflect.Value) bool {
 	n := source.Int()
 	target.SetInt(n)
 	if target.OverflowInt(n) {
@@ -149,7 +149,7 @@ func copyReflectToIntFromInt(c *context, target, source reflect.Value) bool {
 	return true
 }
 
-func copyReflectToIntFromUint(c *context, target, source reflect.Value) bool {
+func copyReflectToIntFromUint(c *copyContext, target, source reflect.Value) bool {
 	n := source.Uint()
 	target.SetInt(int64(n))
 	if n > math.MaxInt64 || target.OverflowInt(int64(n)) {
@@ -158,7 +158,7 @@ func copyReflectToIntFromUint(c *context, target, source reflect.Value) bool {
 	return true
 }
 
-func copyReflectToIntFromString(c *context, target, source reflect.Value) bool {
+func copyReflectToIntFromString(c *copyContext, target, source reflect.Value) bool {
 	s := source.String()
 	n, err := strconv.ParseInt(s, 10, 64)
 	target.SetInt(n)

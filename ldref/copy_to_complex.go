@@ -48,18 +48,18 @@ func init() {
 	})
 }
 
-func copyReflectToComplexFromInvalid(c *context, target, source reflect.Value) bool {
+func copyReflectToComplexFromInvalid(c *copyContext, target, source reflect.Value) bool {
 	target.SetComplex(0)
 	return true
 }
 
-func copyReflectToComplexFromBool(c *context, target, source reflect.Value) bool {
+func copyReflectToComplexFromBool(c *copyContext, target, source reflect.Value) bool {
 	b := source.Bool()
 	target.SetComplex(complex(float64(bool2int(b)), 0))
 	return true
 }
 
-func copyReflectToComplexFromComplex(c *context, target, source reflect.Value) bool {
+func copyReflectToComplexFromComplex(c *copyContext, target, source reflect.Value) bool {
 	n := source.Complex()
 	target.SetComplex(n)
 	if target.OverflowComplex(n) {
@@ -68,7 +68,7 @@ func copyReflectToComplexFromComplex(c *context, target, source reflect.Value) b
 	return true
 }
 
-func copyReflectToComplexFromFloat(c *context, target, source reflect.Value) bool {
+func copyReflectToComplexFromFloat(c *copyContext, target, source reflect.Value) bool {
 	n := source.Float()
 	x := complex(n, 0)
 	target.SetComplex(x)
@@ -78,7 +78,7 @@ func copyReflectToComplexFromFloat(c *context, target, source reflect.Value) boo
 	return true
 }
 
-func copyReflectToComplexFromInt(c *context, target, source reflect.Value) bool {
+func copyReflectToComplexFromInt(c *copyContext, target, source reflect.Value) bool {
 	n := source.Int()
 	x := complex(float64(n), 0)
 	target.SetComplex(x)
@@ -88,7 +88,7 @@ func copyReflectToComplexFromInt(c *context, target, source reflect.Value) bool 
 	return true
 }
 
-func copyReflectToComplexFromUint(c *context, target, source reflect.Value) bool {
+func copyReflectToComplexFromUint(c *copyContext, target, source reflect.Value) bool {
 	n := source.Uint()
 	x := complex(float64(n), 0)
 	target.SetComplex(x)

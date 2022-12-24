@@ -17,12 +17,12 @@ func init() {
 	})
 }
 
-func copyReflectToFuncFromInvalid(c *context, target, source reflect.Value) bool {
+func copyReflectToFuncFromInvalid(c *copyContext, target, source reflect.Value) bool {
 	target.Set(reflect.Zero(target.Type()))
 	return true
 }
 
-func copyReflectToFuncFromFunc(c *context, target, source reflect.Value) bool {
+func copyReflectToFuncFromFunc(c *copyContext, target, source reflect.Value) bool {
 	if target.Type() != source.Type() {
 		return false
 	}
@@ -31,7 +31,7 @@ func copyReflectToFuncFromFunc(c *context, target, source reflect.Value) bool {
 	return true
 }
 
-func copyReflectToFuncFromUnsafePointer(c *context, target, source reflect.Value) bool {
+func copyReflectToFuncFromUnsafePointer(c *copyContext, target, source reflect.Value) bool {
 	// log.Printf(" === source:%#x", source.Pointer())
 	// log.Printf(" === target:%#x", target.Pointer())
 

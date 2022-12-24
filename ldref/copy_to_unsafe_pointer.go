@@ -18,17 +18,17 @@ func init() {
 	})
 }
 
-func copyReflectToUnsafePointerFromInvalid(c *context, target, source reflect.Value) bool {
+func copyReflectToUnsafePointerFromInvalid(c *copyContext, target, source reflect.Value) bool {
 	target.Set(reflect.Zero(target.Type()))
 	return true
 }
 
-func copyReflectToUnsafePointerFromUnsafePointer(c *context, target, source reflect.Value) bool {
+func copyReflectToUnsafePointerFromUnsafePointer(c *copyContext, target, source reflect.Value) bool {
 	target.Set(source)
 	return true
 }
 
-func copyReflectToUnsafePointerFromPtr(c *context, target, source reflect.Value) bool {
+func copyReflectToUnsafePointerFromPtr(c *copyContext, target, source reflect.Value) bool {
 	target.SetPointer(unsafe.Pointer(source.Pointer()))
 	return true
 }

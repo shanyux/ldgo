@@ -11,7 +11,7 @@ type copyPair struct {
 	From reflect.Kind
 }
 
-type copyFuncType = func(c *context, target, source reflect.Value) (end bool)
+type copyFuncType = func(c *copyContext, target, source reflect.Value) (end bool)
 
 var copyFuncMap = map[copyPair]copyFuncType{}
 

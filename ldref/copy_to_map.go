@@ -26,12 +26,12 @@ func isEmptyStruct(typ reflect.Type) bool {
 	return false
 }
 
-func copyReflectToMapFromInvalid(c *context, target, source reflect.Value) bool {
+func copyReflectToMapFromInvalid(c *copyContext, target, source reflect.Value) bool {
 	target.Set(reflect.Zero(target.Type()))
 	return true
 }
 
-func copyReflectToMapFromArray(c *context, target, source reflect.Value) bool {
+func copyReflectToMapFromArray(c *copyContext, target, source reflect.Value) bool {
 	source = source.Slice(0, source.Len())
 	return copyReflectToMapFromSlice(c, target, source)
 }
@@ -48,7 +48,7 @@ func isStructFieldNilPtr(v reflect.Value) bool {
 	return false
 }
 
-func copyReflectToMapFromStruct(c *context, target, source reflect.Value) bool {
+func copyReflectToMapFromStruct(c *copyContext, target, source reflect.Value) bool {
 	tTyp := target.Type()
 	keyTyp := tTyp.Key()
 	valTyp := tTyp.Elem()
@@ -81,7 +81,7 @@ func copyReflectToMapFromStruct(c *context, target, source reflect.Value) bool {
 	return true
 }
 
-func copyReflectToMapFromMap(c *context, target, source reflect.Value) bool {
+func copyReflectToMapFromMap(c *copyContext, target, source reflect.Value) bool {
 	tTyp := target.Type()
 	tKeyTyp := tTyp.Key()
 	tValTyp := tTyp.Elem()
@@ -90,7 +90,7 @@ func copyReflectToMapFromMap(c *context, target, source reflect.Value) bool {
 	sKeyTyp := sTyp.Key()
 	sValTyp := sTyp.Elem()
 
-	if !c.IsDeep && tTyp == sTyp {
+	if !c.Clone && tTyp == sTyp {
 		target.Set(source)
 		return true
 	}
@@ -133,7 +133,7 @@ func copyReflectToMapFromMap(c *context, target, source reflect.Value) bool {
 	return true
 }
 
-func copyReflectToMapFromSlice(c *context, target, source reflect.Value) bool {
+func copyReflectToMapFromSlice(c *copyContext, target, source reflect.Value) bool {
 	tTyp := target.Type()
 	tValTyp := tTyp.Elem()
 
@@ -145,7 +145,7 @@ func copyReflectToMapFromSlice(c *context, target, source reflect.Value) bool {
 	// return copyReflectToMapFromSliceWithIndexBeKey(c, target, source)
 }
 
-func copyReflectToMapFromSliceWithIndexBeKey(c *context, target, source reflect.Value) bool {
+func copyReflectToMapFromSliceWithIndexBeKey(c *copyContext, target, source reflect.Value) bool {
 	tTyp := target.Type()
 	tKeyTyp := tTyp.Key()
 	tValTyp := tTyp.Elem()
@@ -193,7 +193,7 @@ func copyReflectToMapFromSliceWithIndexBeKey(c *context, target, source reflect.
 	return true
 }
 
-func copyReflectToMapFromSliceWithEmptyStructValue(c *context, target, source reflect.Value) bool {
+func copyReflectToMapFromSliceWithEmptyStructValue(c *copyContext, target, source reflect.Value) bool {
 	tTyp := target.Type()
 	tElemTyp := tTyp.Key()
 
