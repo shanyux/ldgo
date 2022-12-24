@@ -232,7 +232,7 @@ func mergeReflectSlice(c *mergeContext, target, source reflect.Value) {
 
 func mergeReflectArray(c *mergeContext, target, source reflect.Value) {
 	if !c.ArrayElem {
-		if target.IsZero() {
+		if IsValZero(target) {
 			source = cloneForMerge(c, source)
 			target.Set(source)
 		}
@@ -263,7 +263,7 @@ func mergeReflectStruct(c *mergeContext, target, source reflect.Value) {
 }
 
 func mergeReflectNormal(c *mergeContext, target, source reflect.Value) {
-	if target.IsZero() {
+	if IsValZero(target) {
 		target.Set(source)
 	}
 }
