@@ -44,7 +44,7 @@ func testConvFloat(s string, rf32 float32, rf64 float64, ri64 int64) {
 }
 
 func TestConvInt(t *testing.T) {
-	convey.Convey("", t, func() {
+	convey.Convey(t.Name(), t, func() {
 		testConvInt("0", 0)
 		testConvInt("123", 123)
 		testConvInt("123.1", 123)
@@ -64,7 +64,7 @@ func TestConvInt(t *testing.T) {
 }
 
 func TestConvUint(t *testing.T) {
-	convey.Convey("", t, func() {
+	convey.Convey(t.Name(), t, func() {
 		testConvUint("0", 0)
 		testConvUint("123", 123)
 		testConvUint("123.1", 123)
@@ -83,7 +83,7 @@ func TestConvUint(t *testing.T) {
 }
 
 func TestConvFloat(t *testing.T) {
-	convey.Convey("", t, func() {
+	convey.Convey(t.Name(), t, func() {
 		testConvFloat("0", 0, 0, 0*_TEST_FLOAT_MUL_BASE)
 		testConvFloat("9.9", 9.9, 9.9, 9.9*_TEST_FLOAT_MUL_BASE)
 		testConvFloat("20.09", 20.09, 20.09, 20.09*_TEST_FLOAT_MUL_BASE)
