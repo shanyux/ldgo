@@ -5,6 +5,7 @@
 package ldconv
 
 import (
+	"encoding/json"
 	"math/big"
 	"strconv"
 	"time"
@@ -62,6 +63,11 @@ func ToBool(v interface{}) (bool, error) {
 		return convBool(vv)
 	case string:
 		return convBool(StrToBytesUnsafe(vv))
+
+	case json.Number:
+		return (*jsonNumber)(&vv).Bool()
+	case *json.Number:
+		return (*jsonNumber)(vv).Bool()
 	}
 	return false, _ERR_UNKOWN_TYPE
 }
@@ -129,6 +135,11 @@ func ToInt64(v interface{}) (int64, error) {
 		return vv.BigInt().Int64(), nil
 	case *decimalNumber:
 		return vv.BigInt().Int64(), nil
+
+	case json.Number:
+		return (*jsonNumber)(&vv).Int64()
+	case *json.Number:
+		return (*jsonNumber)(vv).Int64()
 
 	case []byte:
 		return convInt(vv)
@@ -202,6 +213,11 @@ func ToUint64(v interface{}) (uint64, error) {
 	case *decimalNumber:
 		return vv.BigInt().Uint64(), nil
 
+	case json.Number:
+		return (*jsonNumber)(&vv).Uint64()
+	case *json.Number:
+		return (*jsonNumber)(vv).Uint64()
+
 	case []byte:
 		return convUint(vv)
 	case string:
@@ -241,7 +257,7 @@ func ToFloat32(v interface{}) (float32, error) {
 		return float32(vv), nil
 
 	case float32:
-		return float32(vv), nil
+		return vv, nil
 	case float64:
 		return float32(vv), nil
 
@@ -258,6 +274,11 @@ func ToFloat32(v interface{}) (float32, error) {
 	case *decimalNumber:
 		r, _ := vv.Rat().Float32()
 		return r, nil
+
+	case json.Number:
+		return (*jsonNumber)(&vv).Float32()
+	case *json.Number:
+		return (*jsonNumber)(vv).Float32()
 
 	case []byte:
 		f, err := convFloat(vv)
@@ -320,6 +341,11 @@ func ToFloat64(v interface{}) (float64, error) {
 		r, _ := vv.Rat().Float64()
 		return r, nil
 
+	case json.Number:
+		return (*jsonNumber)(&vv).Float64()
+	case *json.Number:
+		return (*jsonNumber)(vv).Float64()
+
 	case []byte:
 		f, err := convFloat(vv)
 		r, _ := f.Rat().Float64()
@@ -379,6 +405,11 @@ func ToString(v interface{}) (string, error) {
 	case string:
 		return vv, nil
 
+	case json.Number:
+		return (*jsonNumber)(&vv).String(), nil
+	case *json.Number:
+		return (*jsonNumber)(vv).String(), nil
+
 	case time.Time:
 		return vv.Format(timeFormat), nil
 	case *time.Time:
@@ -391,6 +422,7 @@ func ToString(v interface{}) (string, error) {
 	}
 	return "", _ERR_UNKOWN_TYPE
 }
+
 func toBigFloat(v interface{}) (*big.Float, error) {
 	f := &big.Float{}
 	switch vv := v.(type) {
@@ -437,6 +469,11 @@ func toBigFloat(v interface{}) (*big.Float, error) {
 		return vv.BigFloat(), nil
 	case *decimalNumber:
 		return vv.BigFloat(), nil
+
+	case json.Number:
+		return (*jsonNumber)(&vv).BigFloat()
+	case *json.Number:
+		return (*jsonNumber)(vv).BigFloat()
 
 	case []byte:
 		d, err := convFloat(vv)
@@ -494,6 +531,11 @@ func toDecimal(v interface{}) (decimalNumber, error) {
 		return vv, nil
 	case *decimalNumber:
 		return *vv, nil
+
+	case json.Number:
+		return (*jsonNumber)(&vv).Decimal()
+	case *json.Number:
+		return (*jsonNumber)(vv).Decimal()
 
 	case []byte:
 		return convFloat(vv)
