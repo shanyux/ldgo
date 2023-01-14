@@ -544,3 +544,25 @@ func toDecimal(v interface{}) (decimalNumber, error) {
 	}
 	return newDecimalZero(), _ERR_UNKOWN_TYPE
 }
+
+func ToJsonNumber(v interface{}) (json.Number, error) {
+	switch vv := v.(type) {
+	case bool:
+		if vv {
+			return "1", nil
+		} else {
+			return "0", nil
+		}
+
+	case json.Number:
+		return vv, nil
+	case *json.Number:
+		return *vv, nil
+
+		// case string:
+		// case []byte:
+	}
+
+	s, err := ToString(v)
+	return json.Number(s), err
+}
