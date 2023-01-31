@@ -54,3 +54,68 @@ func newDecimalFromIntStr(s string, negative bool, base int) (decimalNumber, err
 	}
 	return decimal.NewFromBigInt(i, 0), nil
 }
+
+type internalDecimal decimalNumber
+
+func (p *internalDecimal) get() *decimalNumber { return (*decimalNumber)(p) }
+
+func (p *internalDecimal) String() string {
+	if p == nil {
+		return ""
+	}
+	return p.get().String()
+}
+
+func (p *internalDecimal) Bytes() []byte {
+	if p == nil {
+		return nil
+	}
+	return StrToBytes(p.get().String())
+}
+
+func (p *internalDecimal) IsZero() bool {
+	if p == nil {
+		return true
+	}
+	return p.get().IsZero()
+}
+
+func (p *internalDecimal) Int64() int64 {
+	if p == nil {
+		return 0
+	}
+	return p.get().BigInt().Int64()
+}
+
+func (p *internalDecimal) Uint64() uint64 {
+	if p == nil {
+		return 0
+	}
+	return p.get().BigInt().Uint64()
+}
+
+func (p *internalDecimal) Float32() float32 {
+	if p == nil {
+		return 0
+	}
+
+	f, _ := p.get().Rat().Float32()
+	return f
+}
+
+func (p *internalDecimal) Float64() float64 {
+	if p == nil {
+		return 0
+	}
+
+	f, _ := p.get().Rat().Float64()
+	return f
+}
+
+func (p *internalDecimal) BigFloat() *big.Float {
+	if p == nil {
+		return nil
+	}
+
+	return p.get().BigFloat()
+}

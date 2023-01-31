@@ -52,14 +52,14 @@ func ToBool(v interface{}) (bool, error) {
 		return vv != 0, nil
 
 	case big.Float:
-		return vv.Cmp(newBigFloatZero()) != 0, nil
+		return !(*bigFloat)(&vv).IsZero(), nil
 	case *big.Float:
-		return vv.Cmp(newBigFloatZero()) != 0, nil
+		return !(*bigFloat)(vv).IsZero(), nil
 
 	case decimalNumber:
-		return !vv.IsZero(), nil
+		return !(*internalDecimal)(&vv).IsZero(), nil
 	case *decimalNumber:
-		return !vv.IsZero(), nil
+		return !(*internalDecimal)(vv).IsZero(), nil
 
 	case json.Number:
 		return (*jsonNumber)(&vv).Bool()
@@ -127,16 +127,14 @@ func ToInt64(v interface{}) (int64, error) {
 		return int64(vv), nil
 
 	case big.Float:
-		r, _ := vv.Int64()
-		return r, nil
+		return (*bigFloat)(&vv).Int64(), nil
 	case *big.Float:
-		r, _ := vv.Int64()
-		return r, nil
+		return (*bigFloat)(vv).Int64(), nil
 
 	case decimalNumber:
-		return vv.BigInt().Int64(), nil
+		return (*internalDecimal)(&vv).Int64(), nil
 	case *decimalNumber:
-		return vv.BigInt().Int64(), nil
+		return (*internalDecimal)(vv).Int64(), nil
 
 	case json.Number:
 		return (*jsonNumber)(&vv).Int64()
@@ -204,16 +202,14 @@ func ToUint64(v interface{}) (uint64, error) {
 		return uint64(vv), nil
 
 	case big.Float:
-		r, _ := vv.Int64()
-		return uint64(r), nil
+		return (*bigFloat)(&vv).Uint64(), nil
 	case *big.Float:
-		r, _ := vv.Uint64()
-		return uint64(r), nil
+		return (*bigFloat)(vv).Uint64(), nil
 
 	case decimalNumber:
-		return vv.BigInt().Uint64(), nil
+		return (*internalDecimal)(&vv).Uint64(), nil
 	case *decimalNumber:
-		return vv.BigInt().Uint64(), nil
+		return (*internalDecimal)(vv).Uint64(), nil
 
 	case json.Number:
 		return (*jsonNumber)(&vv).Uint64()
@@ -264,18 +260,14 @@ func ToFloat32(v interface{}) (float32, error) {
 		return float32(vv), nil
 
 	case big.Float:
-		r, _ := vv.Float32()
-		return r, nil
+		return (*bigFloat)(&vv).Float32(), nil
 	case *big.Float:
-		r, _ := vv.Float32()
-		return r, nil
+		return (*bigFloat)(vv).Float32(), nil
 
 	case decimalNumber:
-		r, _ := vv.Rat().Float32()
-		return r, nil
+		return (*internalDecimal)(&vv).Float32(), nil
 	case *decimalNumber:
-		r, _ := vv.Rat().Float32()
-		return r, nil
+		return (*internalDecimal)(vv).Float32(), nil
 
 	case json.Number:
 		return (*jsonNumber)(&vv).Float32()
@@ -330,18 +322,14 @@ func ToFloat64(v interface{}) (float64, error) {
 		return float64(vv), nil
 
 	case big.Float:
-		r, _ := vv.Float64()
-		return r, nil
+		return (*bigFloat)(&vv).Float64(), nil
 	case *big.Float:
-		r, _ := vv.Float64()
-		return r, nil
+		return (*bigFloat)(vv).Float64(), nil
 
 	case decimalNumber:
-		r, _ := vv.Rat().Float64()
-		return r, nil
+		return (*internalDecimal)(&vv).Float64(), nil
 	case *decimalNumber:
-		r, _ := vv.Rat().Float64()
-		return r, nil
+		return (*internalDecimal)(vv).Float64(), nil
 
 	case json.Number:
 		return (*jsonNumber)(&vv).Float64()
@@ -393,14 +381,14 @@ func ToString(v interface{}) (string, error) {
 		return strconv.FormatFloat(float64(vv), 'f', -1, 64), nil
 
 	case big.Float:
-		return vv.String(), nil
+		return (*bigFloat)(&vv).String(), nil
 	case *big.Float:
-		return vv.String(), nil
+		return (*bigFloat)(vv).String(), nil
 
 	case decimalNumber:
-		return vv.String(), nil
+		return (*internalDecimal)(&vv).String(), nil
 	case *decimalNumber:
-		return vv.String(), nil
+		return (*internalDecimal)(vv).String(), nil
 
 	case []byte:
 		return BytesToStrUnsafe(vv), nil
@@ -423,6 +411,71 @@ func ToString(v interface{}) (string, error) {
 		return vv.String(), nil
 	}
 	return "", _ERR_UNKOWN_TYPE
+}
+
+func ToBytes(v interface{}) ([]byte, error) {
+	switch vv := v.(type) {
+	case bool:
+		return StrToBytes(strconv.FormatBool(vv)), nil
+
+	case int:
+		return StrToBytes(strconv.FormatInt(int64(vv), 10)), nil
+	case int8:
+		return StrToBytes(strconv.FormatInt(int64(vv), 10)), nil
+	case int16:
+		return StrToBytes(strconv.FormatInt(int64(vv), 10)), nil
+	case int32:
+		return StrToBytes(strconv.FormatInt(int64(vv), 10)), nil
+	case int64:
+		return StrToBytes(strconv.FormatInt(int64(vv), 10)), nil
+
+	case uint:
+		return StrToBytes(strconv.FormatUint(uint64(vv), 10)), nil
+	case uint8:
+		return StrToBytes(strconv.FormatUint(uint64(vv), 10)), nil
+	case uint16:
+		return StrToBytes(strconv.FormatUint(uint64(vv), 10)), nil
+	case uint32:
+		return StrToBytes(strconv.FormatUint(uint64(vv), 10)), nil
+	case uint64:
+		return StrToBytes(strconv.FormatUint(uint64(vv), 10)), nil
+
+	case float32:
+		return StrToBytes(strconv.FormatFloat(float64(vv), 'f', -1, 64)), nil
+	case float64:
+		return StrToBytes(strconv.FormatFloat(float64(vv), 'f', -1, 64)), nil
+
+	case big.Float:
+		return (*bigFloat)(&vv).Bytes(), nil
+	case *big.Float:
+		return (*bigFloat)(vv).Bytes(), nil
+
+	case decimalNumber:
+		return (*internalDecimal)(&vv).Bytes(), nil
+	case *decimalNumber:
+		return (*internalDecimal)(vv).Bytes(), nil
+
+	case []byte:
+		return vv, nil
+	case string:
+		return StrToBytes(vv), nil
+
+	case json.Number:
+		return (*jsonNumber)(&vv).Bytes(), nil
+	case *json.Number:
+		return (*jsonNumber)(vv).Bytes(), nil
+
+	case time.Time:
+		return StrToBytes(vv.Format(timeFormat)), nil
+	case *time.Time:
+		return StrToBytes(vv.Format(timeFormat)), nil
+
+	case time.Duration:
+		return StrToBytes(vv.String()), nil
+	case *time.Duration:
+		return StrToBytes(vv.String()), nil
+	}
+	return nil, _ERR_UNKOWN_TYPE
 }
 
 func toBigFloat(v interface{}) (*big.Float, error) {
@@ -468,9 +521,9 @@ func toBigFloat(v interface{}) (*big.Float, error) {
 		return vv, nil
 
 	case decimalNumber:
-		return vv.BigFloat(), nil
+		return (*internalDecimal)(&vv).BigFloat(), nil
 	case *decimalNumber:
-		return vv.BigFloat(), nil
+		return (*internalDecimal)(vv).BigFloat(), nil
 
 	case json.Number:
 		return (*jsonNumber)(&vv).BigFloat()

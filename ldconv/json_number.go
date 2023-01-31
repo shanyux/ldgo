@@ -7,7 +7,6 @@ package ldconv
 import (
 	"encoding/json"
 	"math/big"
-	"strconv"
 )
 
 type jsonNumber json.Number
@@ -19,29 +18,54 @@ func (p *jsonNumber) String() string {
 	return (*json.Number)(p).String()
 }
 
-func (p *jsonNumber) Int64() (int64, error) {
-	s := p.String()
-	if s == "" {
-		return 0, nil
+func (p *jsonNumber) Bytes() []byte {
+	if p == nil {
+		return nil
 	}
-	return strconv.ParseInt(s, 10, 64)
+	return StrToBytes(p.String())
+}
+
+func (p *jsonNumber) BytesUnsafe() []byte {
+	if p == nil {
+		return nil
+	}
+	return StrToBytesUnsafe(p.String())
+}
+
+func (p *jsonNumber) Int64() (int64, error) {
+	return convInt(p.BytesUnsafe())
+
+	// s := p.String()
+	// if s == "" {
+	// 	return 0, nil
+	// }
+	// return strconv.ParseInt(s, 10, 64)
 }
 
 func (p *jsonNumber) Uint64() (uint64, error) {
-	s := p.String()
-	if s == "" {
-		return 0, nil
-	}
-	return strconv.ParseUint(s, 10, 64)
+	return convUint(p.BytesUnsafe())
+
+	// s := p.String()
+	// if s == "" {
+	// 	return 0, nil
+	// }
+	// return strconv.ParseUint(s, 10, 64)
 }
 
 func (p *jsonNumber) Float64() (float64, error) {
-	s := p.String()
-	if s == "" {
-		return 0, nil
+	d, err := convFloat(p.BytesUnsafe())
+	if err != nil {
+		return 0, err
 	}
+	f, _ := d.Float64()
+	return f, nil
 
-	return strconv.ParseFloat(s, 64)
+	// s := p.String()
+	// if s == "" {
+	// 	return 0, nil
+	// }
+	//
+	// return strconv.ParseFloat(s, 64)
 }
 
 func (p *jsonNumber) Float32() (float32, error) {
@@ -58,29 +82,31 @@ func (p *jsonNumber) Float32() (float32, error) {
 }
 
 func (p *jsonNumber) Bool() (bool, error) {
-	s := p.String()
-	if s == "" {
+	if p == nil {
 		return false, nil
 	}
+	return convBool(p.BytesUnsafe())
 
-	if s[0] == '-' {
-		n, err := p.Int64()
-		if err == nil {
-			return n != 0, nil
-		}
-
-	} else {
-		n, err := p.Uint64()
-		if err == nil {
-			return n != 0, nil
-		}
-	}
-
-	n, err := p.Decimal()
-	return !n.IsZero(), err
-
-	// n, err := p.Float64()
-	// return n != 0, err
+	// s := p.String()
+	// if s == "" {
+	// 	return false, nil
+	// }
+	//
+	// if s[0] == '-' {
+	// 	n, err := p.Int64()
+	// 	if err == nil {
+	// 		return n != 0, nil
+	// 	}
+	//
+	// } else {
+	// 	n, err := p.Uint64()
+	// 	if err == nil {
+	// 		return n != 0, nil
+	// 	}
+	// }
+	//
+	// n, err := p.Decimal()
+	// return !n.IsZero(), err
 }
 
 func (p *jsonNumber) BigFloat() (*big.Float, error) {
