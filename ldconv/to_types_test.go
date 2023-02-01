@@ -9,6 +9,7 @@ import (
 	"math/big"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/smartystreets/goconvey/convey"
 )
@@ -22,6 +23,11 @@ func testNewAny(v interface{}) interface{} {
 	res := reflect.New(vv.Type())
 	res.Elem().Set(vv)
 	return res.Interface()
+}
+
+func testMakeTime(value string) time.Time {
+	t, _ := time.Parse(timeFormat, value)
+	return t
 }
 
 func TestToBool(t *testing.T) {
@@ -333,6 +339,12 @@ func TestToString(t *testing.T) {
 
 		{name: `string - ++1234.56`, args: "++1234.56", want: "++1234.56", wantErr: false},
 		{name: `string - ""`, args: "", want: "", wantErr: false},
+
+		{name: `time.Time`, args: testMakeTime("2023-02-01T13:05:55+0800"), want: "2023-02-01T13:05:55+0800", wantErr: false},
+		{name: `*time.Time`, args: testNewAny(testMakeTime("2023-02-01T13:05:55+0800")), want: "2023-02-01T13:05:55+0800", wantErr: false},
+
+		{name: `time.Duration`, args: time.Minute + 2*time.Second, want: "1m2s", wantErr: false},
+		{name: `*time.Duration`, args: testNewAny(time.Second + 2*time.Millisecond), want: "1.002s", wantErr: false},
 	}
 	convey.Convey(t.Name(), t, func() {
 		for _, tt := range tests {
@@ -387,6 +399,11 @@ func TestToBytes(t *testing.T) {
 
 		{name: `string - ++1234.56`, args: "++1234.56", want: "++1234.56", wantErr: false},
 		{name: `string - ""`, args: "", want: "", wantErr: false},
+
+		{name: `time.Time`, args: testMakeTime("2023-02-01T13:05:55+0800"), want: "2023-02-01T13:05:55+0800", wantErr: false},
+		{name: `*time.Time`, args: testNewAny(testMakeTime("2023-02-01T13:05:55+0800")), want: "2023-02-01T13:05:55+0800", wantErr: false},
+
+		{name: `time.Duration`, args: time.Minute + 2*time.Second, want: "1m2s", wantErr: false},
 	}
 	convey.Convey(t.Name(), t, func() {
 		for _, tt := range tests {

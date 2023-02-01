@@ -415,36 +415,6 @@ func ToString(v interface{}) (string, error) {
 
 func ToBytes(v interface{}) ([]byte, error) {
 	switch vv := v.(type) {
-	case bool:
-		return StrToBytes(strconv.FormatBool(vv)), nil
-
-	case int:
-		return StrToBytes(strconv.FormatInt(int64(vv), 10)), nil
-	case int8:
-		return StrToBytes(strconv.FormatInt(int64(vv), 10)), nil
-	case int16:
-		return StrToBytes(strconv.FormatInt(int64(vv), 10)), nil
-	case int32:
-		return StrToBytes(strconv.FormatInt(int64(vv), 10)), nil
-	case int64:
-		return StrToBytes(strconv.FormatInt(int64(vv), 10)), nil
-
-	case uint:
-		return StrToBytes(strconv.FormatUint(uint64(vv), 10)), nil
-	case uint8:
-		return StrToBytes(strconv.FormatUint(uint64(vv), 10)), nil
-	case uint16:
-		return StrToBytes(strconv.FormatUint(uint64(vv), 10)), nil
-	case uint32:
-		return StrToBytes(strconv.FormatUint(uint64(vv), 10)), nil
-	case uint64:
-		return StrToBytes(strconv.FormatUint(uint64(vv), 10)), nil
-
-	case float32:
-		return StrToBytes(strconv.FormatFloat(float64(vv), 'f', -1, 64)), nil
-	case float64:
-		return StrToBytes(strconv.FormatFloat(float64(vv), 'f', -1, 64)), nil
-
 	case big.Float:
 		return (*bigFloat)(&vv).Bytes(), nil
 	case *big.Float:
@@ -464,18 +434,14 @@ func ToBytes(v interface{}) ([]byte, error) {
 		return (*jsonNumber)(&vv).Bytes(), nil
 	case *json.Number:
 		return (*jsonNumber)(vv).Bytes(), nil
-
-	case time.Time:
-		return StrToBytes(vv.Format(timeFormat)), nil
-	case *time.Time:
-		return StrToBytes(vv.Format(timeFormat)), nil
-
-	case time.Duration:
-		return StrToBytes(vv.String()), nil
-	case *time.Duration:
-		return StrToBytes(vv.String()), nil
 	}
-	return nil, _ERR_UNKOWN_TYPE
+
+	s, err := ToString(v)
+	if err != nil {
+		return nil, err
+	}
+
+	return StrToBytes(s), nil
 }
 
 func toBigFloat(v interface{}) (*big.Float, error) {
@@ -605,9 +571,8 @@ func ToJsonNumber(v interface{}) (json.Number, error) {
 	case bool:
 		if vv {
 			return "1", nil
-		} else {
-			return "0", nil
 		}
+		return "0", nil
 
 	case json.Number:
 		if vv == "" {
