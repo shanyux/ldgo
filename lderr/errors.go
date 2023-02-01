@@ -20,6 +20,8 @@ var (
 	ErrReflectTargetNilPtr = New(http.StatusOK, -23, "reflect target is nil pointer")
 	ErrReflectTypeNotEqual = New(http.StatusOK, -24, "reflect types of target and source are not equal")
 
+	ErrNumberOverflow = New(http.StatusOK, -31, "number overflow")
+
 	ErrNonAuthoritativeInfo = New(http.StatusNonAuthoritativeInfo, -101, "http non authoritative info")
 	ErrUnauthorized         = New(http.StatusUnauthorized, -102, "http unauthorized")
 	ErrInternalServerError  = New(http.StatusInternalServerError, -103, "http internal server error")

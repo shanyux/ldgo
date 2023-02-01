@@ -4,7 +4,10 @@
 
 package ldconv
 
-import "math/big"
+import (
+	"encoding/json"
+	"math/big"
+)
 
 func AsByte(val interface{}, def ...byte) byte { return AsUint8(val, def...) }
 
@@ -173,4 +176,15 @@ func asDecimal(val interface{}, def ...decimalNumber) decimalNumber {
 		return def[0]
 	}
 	return newDecimalZero()
+}
+
+func AsJsonNumber(val interface{}, def ...json.Number) json.Number {
+	v, err := ToJsonNumber(val)
+	if err == nil {
+		return v
+	}
+	if len(def) > 0 {
+		return def[0]
+	}
+	return "0"
 }
