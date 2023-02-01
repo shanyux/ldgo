@@ -71,7 +71,7 @@ func ToBool(v interface{}) (bool, error) {
 	case string:
 		return convBool(StrToBytesUnsafe(vv))
 	}
-	return false, _ERR_UNKOWN_TYPE
+	return false, _ERR_INVALID_TYPE
 }
 
 func ToInt(v interface{}) (int, error) {
@@ -146,7 +146,7 @@ func ToInt64(v interface{}) (int64, error) {
 	case string:
 		return convInt(StrToBytesUnsafe(vv))
 	}
-	return 0, _ERR_UNKOWN_TYPE
+	return 0, _ERR_INVALID_TYPE
 }
 
 func ToUint(v interface{}) (uint, error) {
@@ -221,7 +221,7 @@ func ToUint64(v interface{}) (uint64, error) {
 	case string:
 		return convUint(StrToBytesUnsafe(vv))
 	}
-	return 0, _ERR_UNKOWN_TYPE
+	return 0, _ERR_INVALID_TYPE
 }
 
 func ToFloat32(v interface{}) (float32, error) {
@@ -283,7 +283,7 @@ func ToFloat32(v interface{}) (float32, error) {
 		r, _ := f.Rat().Float32()
 		return r, err
 	}
-	return 0, _ERR_UNKOWN_TYPE
+	return 0, _ERR_INVALID_TYPE
 }
 
 func ToFloat64(v interface{}) (float64, error) {
@@ -345,7 +345,7 @@ func ToFloat64(v interface{}) (float64, error) {
 		r, _ := f.Rat().Float64()
 		return r, err
 	}
-	return 0, _ERR_UNKOWN_TYPE
+	return 0, _ERR_INVALID_TYPE
 }
 
 func ToString(v interface{}) (string, error) {
@@ -410,7 +410,7 @@ func ToString(v interface{}) (string, error) {
 	case *time.Duration:
 		return vv.String(), nil
 	}
-	return "", _ERR_UNKOWN_TYPE
+	return "", _ERR_INVALID_TYPE
 }
 
 func ToBytes(v interface{}) ([]byte, error) {
@@ -504,7 +504,7 @@ func toBigFloat(v interface{}) (*big.Float, error) {
 		return d.BigFloat(), err
 	}
 
-	return newBigFloatZero(), _ERR_UNKOWN_TYPE
+	return newBigFloatZero(), _ERR_INVALID_TYPE
 }
 
 func toDecimal(v interface{}) (decimalNumber, error) {
@@ -563,7 +563,7 @@ func toDecimal(v interface{}) (decimalNumber, error) {
 	case string:
 		return convFloat(StrToBytesUnsafe(vv))
 	}
-	return newDecimalZero(), _ERR_UNKOWN_TYPE
+	return newDecimalZero(), _ERR_INVALID_TYPE
 }
 
 func ToJsonNumber(v interface{}) (json.Number, error) {
