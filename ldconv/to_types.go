@@ -610,12 +610,16 @@ func ToJsonNumber(v interface{}) (json.Number, error) {
 		}
 
 	case json.Number:
+		if vv == "" {
+			return "0", nil
+		}
 		return vv, nil
-	case *json.Number:
-		return *vv, nil
 
-		// case string:
-		// case []byte:
+	case *json.Number:
+		if vv == nil || *vv == "" {
+			return "0", nil
+		}
+		return *vv, nil
 	}
 
 	s, err := ToString(v)
