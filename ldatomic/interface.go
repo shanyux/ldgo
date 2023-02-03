@@ -4,13 +4,9 @@
 
 package ldatomic
 
-import (
-	"unsafe"
-)
-
 // Interface provides an atomic load and store of an any typed value.
 // The zero value for a Value returns nil from Load.
-type Interface Pointer
+type Interface Value
 
 func NewInterface(d interface{}) *Interface {
 	p := &Interface{}
@@ -20,24 +16,29 @@ func NewInterface(d interface{}) *Interface {
 	return p
 }
 
-func (p *Interface) get() *Pointer { return (*Pointer)(p) }
+func (p *Interface) get() *Value { return (*Value)(p) }
 
-func (p *Interface) Store(d interface{}) { p.get().Store(p.toPointer(d)) }
-func (p *Interface) Load() interface{}   { return p.toIface(p.get().Load()) }
+func (p *Interface) Store(d interface{}) { p.get().Store(p.pack(d)) }
+func (p *Interface) Load() interface{}   { return p.unpack(p.get().Load()) }
 func (p *Interface) Swap(new interface{}) (old interface{}) {
-	return p.toIface(p.get().Swap(p.toPointer(new)))
+	return p.unpack(p.get().Swap(p.pack(new)))
 }
 
-func (p *Interface) toPointer(d interface{}) unsafe.Pointer {
-	if d == nil {
-		return nil
-	}
-	return unsafe.Pointer(&d)
+func (p *Interface) CompareAndSwap(old, new interface{}) (swapped bool) {
+	return p.get().CompareAndSwap(p.pack(old), p.pack(new))
 }
-func (p *Interface) toIface(addr unsafe.Pointer) interface{} {
+
+func (p *Interface) pack(d interface{}) ifaceData {
+	return ifaceData{Data: d}
+}
+func (p *Interface) unpack(addr interface{}) interface{} {
 	if addr == nil {
 		return nil
 	}
-	x := (*interface{})(addr)
-	return *x
+	x := addr.(ifaceData)
+	return x.Data
+}
+
+type ifaceData struct {
+	Data interface{}
 }
