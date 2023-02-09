@@ -11,7 +11,7 @@ import (
 )
 
 func TestStrMapReplace(t *testing.T) {
-	convey.Convey("", t, func() {
+	convey.Convey(t.Name(), t, func() {
 		m := map[string]string{
 			"a":   "A",
 			"b":   "B",
@@ -24,7 +24,7 @@ func TestStrMapReplace(t *testing.T) {
 }
 
 func TestStrIMapReplace(t *testing.T) {
-	convey.Convey("", t, func() {
+	convey.Convey(t.Name(), t, func() {
 		s0 := "a}{{a}{abc}{b}{}.{{a}}"
 		m0 := map[string]string{
 			"a": "A",
@@ -37,5 +37,31 @@ func TestStrIMapReplace(t *testing.T) {
 			"b": 2,
 		}
 		convey.So(StrIMapReplace(s0, m1, "{", "}"), convey.ShouldEqual, "a}{1{abc}2{}.{1}")
+	})
+}
+
+func TestStrMapParse(t *testing.T) {
+	convey.Convey(t.Name(), t, func() {
+		var (
+			tmpl string
+			text string
+			res  map[string]string
+			err  error
+		)
+
+		tmpl = "{}: {user}"
+		text = "user: xxx"
+		res, err = StrMapParse(tmpl, text)
+		convey.So(err, convey.ShouldBeNil)
+		convey.So(res, convey.ShouldResemble, map[string]string{`user`: "xxx"})
+
+		tmpl = "{key}: {value}"
+		text = "user: xxx"
+		res, err = StrMapParse(tmpl, text)
+		convey.So(err, convey.ShouldBeNil)
+		convey.So(res, convey.ShouldResemble, map[string]string{
+			`key`:   "user",
+			`value`: "xxx",
+		})
 	})
 }

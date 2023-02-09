@@ -5,6 +5,7 @@
 package ldstr
 
 import (
+	"log"
 	"reflect"
 	"strings"
 
@@ -24,9 +25,9 @@ func getReplaceSplits(splits []string) (l, r string) {
 
 // StrMapReplace returns new string.
 //
-//	StrMapReplace("user: {user}", map[string]string{"user", "x"}) returns "user: x"
-//	StrMapReplace("user: #user#", map[string]string{"user", "x"}, "#") returns "user: x"
-//	StrMapReplace("user: <user>", map[string]string{"user", "<", ">"}, "#") returns "user: x"
+//	StrMapReplace("user: {user}", map[string]string{"user": "x"}) returns "user: x"
+//	StrMapReplace("user: #user#", map[string]string{"user": "x"}, "#") returns "user: x"
+//	StrMapReplace("user: <user>", map[string]string{"user": "x"}, "<", ">") returns "user: x"
 func StrMapReplace(tmpl string, m map[string]string, splits ...string) string {
 	if len(m) == 0 {
 		return tmpl
@@ -52,9 +53,11 @@ func StrMapReplace(tmpl string, m map[string]string, splits ...string) string {
 
 // StrIMapReplace returns new string.
 //
-//	StrIMapReplace("user: {user}", map[interface{}]interface{}{"user", "x"}) returns "user: x"
-//	StrIMapReplace("user: #user#", map[interface{}]interface{}{"user", "x"}, "#") returns "user: x"
-//	StrIMapReplace("user: <user>", map[interface{}]interface{}{"user", "<", ">"}, "#") returns "user: x"
+// m can be any map:
+//
+//	StrIMapReplace("user: {user}", map[interface{}]string{"user": "x"}) returns "user: x"
+//	StrIMapReplace("user: #user#", map[interface{}]interface{}{"user": "x"}, "#") returns "user: x"
+//	StrIMapReplace("count: <count>", map[string]int{"count": 123}, "<", ">") returns "count: 123"
 func StrIMapReplace(tmpl string, m interface{}, splits ...string) string {
 	if m, ok := m.(map[string]string); ok {
 		return StrMapReplace(tmpl, m, splits...)
@@ -93,4 +96,19 @@ func StrIMapReplace(tmpl string, m interface{}, splits ...string) string {
 
 	replacer := strings.NewReplacer(replaceKeyValues...)
 	return replacer.Replace(tmpl)
+}
+
+func StrMapParse(tmpl, text string, splits ...string) (map[string]string, error) {
+	l, r := getReplaceSplits(splits)
+	parser := &strMapParser{}
+
+	err := parser.Init(tmpl, l, r)
+	log.Printf("%#v", parser.fields)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := parser.Parse(text)
+	parser.Done()
+	return res, err
 }
