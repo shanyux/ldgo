@@ -58,7 +58,7 @@ type strMapParseContext struct {
 	Fields []strMapFieldContext
 }
 
-type strMapParser struct {
+type StrMapParser struct {
 	template    string
 	left, right string
 
@@ -66,7 +66,7 @@ type strMapParser struct {
 	fields []strMapField
 }
 
-func (p *strMapParser) Done() {
+func (p *StrMapParser) Done() {
 	p.delFieldsBuf(p.fields)
 	p.template = ""
 	p.left = ""
@@ -75,8 +75,10 @@ func (p *strMapParser) Done() {
 	p.before = ""
 }
 
-func (p *strMapParser) Init(tmpl string, l, r string) lderr.Error {
-	p.delFieldsBuf(p.fields)
+func (p *StrMapParser) Init(tmpl string, splits ...string) lderr.Error {
+	l, r := getReplaceSplits(splits)
+
+	p.Done()
 	p.fields = p.newFieldsBuf()
 
 	p.template = tmpl
@@ -97,7 +99,7 @@ func (p *strMapParser) Init(tmpl string, l, r string) lderr.Error {
 	return nil
 }
 
-func (p *strMapParser) initFieldsByTemplate() lderr.Error {
+func (p *StrMapParser) initFieldsByTemplate() lderr.Error {
 	tmpl := p.template
 	l, r := p.left, p.right
 
@@ -111,10 +113,11 @@ func (p *strMapParser) initFieldsByTemplate() lderr.Error {
 			break
 		}
 
-		lIdx = strings.LastIndex(tmpl[:lIdx+1+rIdx], l)
+		rIdx = lIdx + 1 + rIdx
+		lIdx = strings.LastIndex(tmpl[:rIdx], l)
 
 		before := tmpl[:lIdx]
-		key := tmpl[lIdx+1 : lIdx+1+rIdx]
+		key := tmpl[lIdx+1 : rIdx]
 		if len(p.fields) == 0 {
 			p.before = before
 
@@ -126,10 +129,11 @@ func (p *strMapParser) initFieldsByTemplate() lderr.Error {
 			Key:       key,
 			After:     "",
 			PrevIndex: -1,
+			NextIndex: -1,
 			DupIndex:  -1,
 		})
 
-		tmpl = tmpl[lIdx+1+rIdx+1:]
+		tmpl = tmpl[rIdx+1:]
 	}
 
 	if len(p.fields) == 0 {
@@ -141,11 +145,13 @@ func (p *strMapParser) initFieldsByTemplate() lderr.Error {
 	return nil
 }
 
-func (p *strMapParser) initFieldsDuplicate() lderr.Error {
+func (p *StrMapParser) initFieldsDuplicate() lderr.Error {
 	if len(p.fields) <= 32 {
 		return p.initFieldsDuplicateSmall()
 	}
-
+	return p.initFieldsDuplicateBig()
+}
+func (p *StrMapParser) initFieldsDuplicateBig() lderr.Error {
 	fieldKeys := make(map[string]int)
 	for i := range p.fields {
 		v := &p.fields[i]
@@ -157,16 +163,15 @@ func (p *strMapParser) initFieldsDuplicate() lderr.Error {
 
 		if idx, ok := fieldKeys[v.Key]; ok {
 			v.DupIndex = idx
+			p.fields[idx].DupFirst = true
 			continue
 		}
 
 		fieldKeys[v.Key] = i
 	}
-
 	return nil
 }
-
-func (p *strMapParser) initFieldsDuplicateSmall() lderr.Error {
+func (p *StrMapParser) initFieldsDuplicateSmall() lderr.Error {
 	for i := 1; i < len(p.fields); i++ {
 		vi := &p.fields[i]
 		vi.DupIndex = -1
@@ -179,6 +184,7 @@ func (p *strMapParser) initFieldsDuplicateSmall() lderr.Error {
 			vj := &p.fields[j]
 			if vi.Key == vj.Key {
 				vi.DupIndex = j
+				p.fields[j].DupFirst = true
 				break
 			}
 		}
@@ -187,38 +193,71 @@ func (p *strMapParser) initFieldsDuplicateSmall() lderr.Error {
 	return nil
 }
 
-func (p *strMapParser) initFieldsPrevIndex() lderr.Error {
-	for i := 0; i < len(p.fields); i++ {
-		curr := &p.fields[i]
-		if i > 0 {
-			prev := &p.fields[i-1]
-			curr.PrevIndex = i - 1
-			prev.NextIndex = i
-		}
+func (p *StrMapParser) initFieldsPrevIndex() lderr.Error {
+	for i := 1; i < len(p.fields); i++ {
+		vi := &p.fields[i]
+		prev := &p.fields[i-1]
+		vi.PrevIndex = i - 1
+		prev.NextIndex = i
+	}
 
-		if curr.After != "" || curr.DupIndex >= 0 || i == len(p.fields)-1 {
+	// log.Printf(" === abc %s", mustMarshalJson(p.fields))
+	for i := 0; i < len(p.fields); i++ {
+		vi := &p.fields[i]
+		if vi.After != "" || vi.DupIndex >= 0 || vi.DupFirst {
 			continue
 		}
 
-		j := i + 1
-		for ; j < len(p.fields) && p.fields[j].After == ""; j++ {
-			next := &p.fields[j]
-			if next.After == "" && next.DupIndex < 0 {
-				next.Skip = true
-				continue
-			}
-
-			curr.After = next.After
-			curr.NextIndex = j
-			next.PrevIndex = i
-			break
-		}
+		j := p.indexFieldNext(i)
 		i = j
 	}
 	return nil
 }
 
-func (p *strMapParser) Parse(text string) (map[string]string, lderr.Error) {
+func (p *StrMapParser) indexFieldNext(pos int) int {
+	curr := &p.fields[pos]
+
+	i := pos + 1
+	for ; i < len(p.fields); i++ {
+		vi := &p.fields[i]
+		if vi.After == "" && vi.DupIndex < 0 && !vi.DupFirst {
+			vi.Skip = true
+			vi.PrevIndex = -1
+			vi.NextIndex = -1
+			continue
+		}
+
+		break
+	}
+
+	if i >= len(p.fields) {
+		return i
+	}
+
+	vi := &p.fields[i]
+	if vi.DupIndex >= 0 || vi.DupFirst {
+		curr.NextIndex = i
+		vi.PrevIndex = pos
+		return i
+	}
+
+	curr.After = vi.After
+	vi.After = ""
+	vi.Skip = true
+	vi.PrevIndex = -1
+	vi.NextIndex = -1
+
+	if i+1 < len(p.fields) {
+		next := &p.fields[i+1]
+
+		curr.NextIndex = i + 1
+		next.PrevIndex = pos
+	}
+
+	return i + 1
+}
+
+func (p *StrMapParser) Parse(text string) (map[string]string, lderr.Error) {
 	if len(p.fields) == 0 {
 		if p.before != text {
 			return nil, lderr.ErrInvalidTemplateSyntax
@@ -267,32 +306,20 @@ func (p *strMapParser) Parse(text string) (map[string]string, lderr.Error) {
 	return res, nil
 }
 
-func (p *strMapParser) parseField(c *strMapFieldContext) (*strMapFieldContext, bool) {
-	after := c.Field.After
-
+func (p *StrMapParser) parseField(c *strMapFieldContext) (*strMapFieldContext, bool) {
 	if c.Duplicate != nil {
-		if c.LastIndex >= 0 {
-			return p.nextField(c)
-		}
+		return p.parseFieldDuplicate(c)
+	}
 
-		c.Value = c.Duplicate.Value
-		idx := len(c.Value)
-		if !strings.HasPrefix(c.Text, c.Value) {
-			return p.prevField(c)
-
-		} else if !strings.HasPrefix(c.Text[idx:], after) {
-			return p.prevField(c)
-		}
-
-		c.LastIndex = idx
-
-		return p.nextField(c)
+	after := c.Field.After
+	if after == "" {
+		return p.parseFieldEmptyAfter(c)
 	}
 
 	text := c.Text
 	if c.LastIndex >= 0 {
 		pos := c.LastIndex + len(after) - 1
-		text = c.Text[:pos]
+		text = text[:pos]
 	}
 
 	idx := strings.LastIndex(text, after)
@@ -300,13 +327,52 @@ func (p *strMapParser) parseField(c *strMapFieldContext) (*strMapFieldContext, b
 		return p.prevField(c)
 	}
 
-	c.Value = c.Text[:idx]
+	c.Value = text[:idx]
 	c.LastIndex = idx
 
 	return p.nextField(c)
 }
+func (p *StrMapParser) parseFieldDuplicate(c *strMapFieldContext) (*strMapFieldContext, bool) {
+	after := c.Field.After
+	text := c.Text
 
-func (p *strMapParser) nextField(c *strMapFieldContext) (*strMapFieldContext, bool) {
+	if c.LastIndex >= 0 {
+		return p.nextField(c)
+	}
+
+	c.Value = c.Duplicate.Value
+	idx := len(c.Value)
+	if !strings.HasPrefix(text, c.Value) {
+		return p.prevField(c)
+
+	} else if !strings.HasPrefix(text[idx:], after) {
+		return p.prevField(c)
+	}
+
+	c.LastIndex = idx
+
+	return p.nextField(c)
+}
+func (p *StrMapParser) parseFieldEmptyAfter(c *strMapFieldContext) (*strMapFieldContext, bool) {
+	text := c.Text
+	idx := c.LastIndex
+
+	if idx < 0 {
+		idx = len(text)
+	} else {
+		idx--
+	}
+
+	if idx < 0 {
+		return p.prevField(c)
+	}
+
+	c.LastIndex = idx
+	c.Value = text[:idx]
+	return p.nextField(c)
+}
+
+func (p *StrMapParser) nextField(c *strMapFieldContext) (*strMapFieldContext, bool) {
 	nextIdx := c.LastIndex + len(c.Field.After)
 	nextText := c.Text[nextIdx:]
 
@@ -324,23 +390,23 @@ func (p *strMapParser) nextField(c *strMapFieldContext) (*strMapFieldContext, bo
 	return c, false
 }
 
-func (p *strMapParser) prevField(c *strMapFieldContext) (*strMapFieldContext, bool) {
+func (p *StrMapParser) prevField(c *strMapFieldContext) (*strMapFieldContext, bool) {
 	return c.Prev, false
 }
 
-func (p *strMapParser) newFieldsBuf() []strMapField {
+func (p *StrMapParser) newFieldsBuf() []strMapField {
 	buf := strMapFieldsPool.Get().([]strMapField)
 	buf = buf[:0]
 	return buf
 }
 
-func (p *strMapParser) delFieldsBuf(buf []strMapField) {
+func (p *StrMapParser) delFieldsBuf(buf []strMapField) {
 	if buf != nil {
 		strMapFieldsPool.Put(buf)
 	}
 }
 
-func (p *strMapParser) newContext() *strMapParseContext {
+func (p *StrMapParser) newContext() *strMapParseContext {
 	c := strMapParseContextPool.Get().(*strMapParseContext)
 
 	c.Fields = c.Fields[:0]
@@ -370,7 +436,7 @@ func (p *strMapParser) newContext() *strMapParseContext {
 
 	return c
 }
-func (p *strMapParser) delContext(c *strMapParseContext) {
+func (p *StrMapParser) delContext(c *strMapParseContext) {
 	c.Fields = c.Fields[:0]
 	strMapParseContextPool.Put(c)
 }

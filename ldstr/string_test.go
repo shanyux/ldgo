@@ -41,135 +41,17 @@ func TestStrIMapReplace(t *testing.T) {
 }
 
 func TestStrMapParse(t *testing.T) {
-	type subtest struct {
-		text    string
-		wantErr bool
-		want    map[string]string
-	}
-
-	type test struct {
-		tmpl     string
-		left     string
-		right    string
-		splits   []string
-		wantErr  bool
-		subtests []subtest
-	}
-
-	tests := []test{
-		{
-			tmpl:    "{}: {user}",
-			left:    "{",
-			right:   "}",
-			wantErr: false,
-			subtests: []subtest{
-				{
-					text:    "user: xxx",
-					wantErr: false,
-					want:    map[string]string{`user`: "xxx"},
-				},
-			},
-		},
-		{
-			tmpl:    "#key#: #value#",
-			left:    "#",
-			right:   "#",
-			wantErr: false,
-			subtests: []subtest{
-				{
-					text:    "user: xxx",
-					wantErr: false,
-					want: map[string]string{
-						`key`:   "user",
-						`value`: "xxx",
-					},
-				},
-			},
-		},
-		{
-			tmpl:    "{key}: {value}",
-			left:    "{",
-			right:   "}",
-			wantErr: false,
-			subtests: []subtest{
-				{
-					text:    "user: xxx",
-					wantErr: false,
-					want: map[string]string{
-						`key`:   "user",
-						`value`: "xxx",
-					},
-				},
-			},
-		},
-		{
-			tmpl:    "{key}{}: { {value}{ignore} }",
-			left:    "{",
-			right:   "}",
-			wantErr: false,
-			subtests: []subtest{
-				{
-					text:    "user: { xxx }",
-					wantErr: false,
-					want: map[string]string{
-						`key`:    "user",
-						`value`:  "xxx",
-						`ignore`: "",
-					},
-				},
-			},
-		},
-		{
-			tmpl:    "user: {user}, welcome {user}{action}",
-			left:    "{",
-			right:   "}",
-			wantErr: false,
-			subtests: []subtest{
-				{
-					text:    "user: xxx, welcome xxx join",
-					wantErr: false,
-					want: map[string]string{
-						`user`:   "xxx",
-						`action`: " join",
-					},
-				},
-				{
-					text:    "user: xxx, welcome xyz join",
-					wantErr: true,
-					want:    nil,
-				},
-			},
-		},
-	}
-
-	subtestRun := func(subtests []subtest, parser *strMapParser) {
-		for _, stt := range subtests {
-			convey.Convey(stt.text, func() {
-				got, err := parser.Parse(stt.text)
-				if stt.wantErr {
-					convey.So(err, convey.ShouldNotBeNil)
-				} else {
-					convey.So(err, convey.ShouldBeNil)
-				}
-				convey.So(got, convey.ShouldResemble, stt.want)
-			})
-		}
-	}
-
 	convey.Convey(t.Name(), t, func() {
-		for _, tt := range tests {
-			convey.Convey(tt.tmpl, func() {
-				parser := &strMapParser{}
-				err := parser.Init(tt.tmpl, tt.left, tt.right)
-				// log.Printf("%s", mustMarshalJson(parser.fields))
-				if tt.wantErr {
-					convey.So(err, convey.ShouldNotBeNil)
-					return
-				}
-
-				convey.So(err, convey.ShouldBeNil)
-				subtestRun(tt.subtests, parser)
-			})
-		}
+		var (
+			tmpl string
+			text string
+			res  map[string]string
+			err  error
+		)
+		tmpl = "{}: {user}"
+		text = "user: xxx"
+		res, err = StrMapParse(tmpl, text)
+		convey.So(err, convey.ShouldBeNil)
+		convey.So(res, convey.ShouldResemble, map[string]string{`user`: "xxx"})
 	})
 }

@@ -97,9 +97,10 @@ func StrIMapReplace(tmpl string, m interface{}, splits ...string) string {
 	return replacer.Replace(tmpl)
 }
 
+// StrMapParse use template to extract a string map form the text
 func StrMapParse(tmpl, text string, splits ...string) (map[string]string, error) {
 	l, r := getReplaceSplits(splits)
-	parser := &strMapParser{}
+	parser := &StrMapParser{}
 
 	err := parser.Init(tmpl, l, r)
 	// log.Printf("%s", mustMarshalJson(parser.fields))
