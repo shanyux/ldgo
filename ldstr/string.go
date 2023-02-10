@@ -5,7 +5,6 @@
 package ldstr
 
 import (
-	"log"
 	"reflect"
 	"strings"
 
@@ -103,7 +102,7 @@ func StrMapParse(tmpl, text string, splits ...string) (map[string]string, error)
 	parser := &strMapParser{}
 
 	err := parser.Init(tmpl, l, r)
-	log.Printf("%#v", parser.fields)
+	// log.Printf("%s", mustMarshalJson(parser.fields))
 	if err != nil {
 		return nil, err
 	}
