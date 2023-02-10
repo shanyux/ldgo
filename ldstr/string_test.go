@@ -5,7 +5,6 @@
 package ldstr
 
 import (
-	"log"
 	"testing"
 
 	"github.com/smartystreets/goconvey/convey"
@@ -72,6 +71,22 @@ func TestStrMapParse(t *testing.T) {
 			},
 		},
 		{
+			tmpl:    "#key#: #value#",
+			left:    "#",
+			right:   "#",
+			wantErr: false,
+			subtests: []subtest{
+				{
+					text:    "user: xxx",
+					wantErr: false,
+					want: map[string]string{
+						`key`:   "user",
+						`value`: "xxx",
+					},
+				},
+			},
+		},
+		{
 			tmpl:    "{key}: {value}",
 			left:    "{",
 			right:   "}",
@@ -88,19 +103,40 @@ func TestStrMapParse(t *testing.T) {
 			},
 		},
 		{
-			tmpl:    "{key}{}: {value}{ignore}",
+			tmpl:    "{key}{}: { {value}{ignore} }",
 			left:    "{",
 			right:   "}",
 			wantErr: false,
 			subtests: []subtest{
 				{
-					text:    "user: xxx",
+					text:    "user: { xxx }",
 					wantErr: false,
 					want: map[string]string{
 						`key`:    "user",
 						`value`:  "xxx",
 						`ignore`: "",
 					},
+				},
+			},
+		},
+		{
+			tmpl:    "user: {user}, welcome {user}{action}",
+			left:    "{",
+			right:   "}",
+			wantErr: false,
+			subtests: []subtest{
+				{
+					text:    "user: xxx, welcome xxx join",
+					wantErr: false,
+					want: map[string]string{
+						`user`:   "xxx",
+						`action`: " join",
+					},
+				},
+				{
+					text:    "user: xxx, welcome xyz join",
+					wantErr: true,
+					want:    nil,
 				},
 			},
 		},
@@ -125,7 +161,7 @@ func TestStrMapParse(t *testing.T) {
 			convey.Convey(tt.tmpl, func() {
 				parser := &strMapParser{}
 				err := parser.Init(tt.tmpl, tt.left, tt.right)
-				log.Printf("%s", mustMarshalJson(parser.fields))
+				// log.Printf("%s", mustMarshalJson(parser.fields))
 				if tt.wantErr {
 					convey.So(err, convey.ShouldNotBeNil)
 					return

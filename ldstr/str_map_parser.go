@@ -188,11 +188,13 @@ func (p *strMapParser) initFieldsDuplicateSmall() lderr.Error {
 }
 
 func (p *strMapParser) initFieldsPrevIndex() lderr.Error {
-	for i := 1; i < len(p.fields); i++ {
+	for i := 0; i < len(p.fields); i++ {
 		curr := &p.fields[i]
-		prev := &p.fields[i-1]
-		curr.PrevIndex = i - 1
-		prev.NextIndex = i
+		if i > 0 {
+			prev := &p.fields[i-1]
+			curr.PrevIndex = i - 1
+			prev.NextIndex = i
+		}
 
 		if curr.After != "" || curr.DupIndex >= 0 || i == len(p.fields)-1 {
 			continue
