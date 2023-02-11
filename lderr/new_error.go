@@ -52,6 +52,14 @@ func Wrap(err error, def ...Error) Error {
 	}
 }
 
+func Override(err Error, message string) Error {
+	return &commError{
+		error:  strError{text: message},
+		status: err.Status(),
+		code:   err.Code(),
+	}
+}
+
 func GetByCode(code int) Error {
 	v, _ := errMap.Load(code)
 	if v == nil {
