@@ -4,7 +4,9 @@
 
 package ldatomic
 
-type Strings Interface
+type Strings struct {
+	d Interface
+}
 
 func NewStrings(d []string) *Strings {
 	p := &Strings{}
@@ -14,7 +16,7 @@ func NewStrings(d []string) *Strings {
 	return p
 }
 
-func (p *Strings) get() *Interface          { return (*Interface)(p) }
+func (p *Strings) get() *Interface          { return &p.d }
 func (p *Strings) pack(d []string) []string { return d }
 func (p *Strings) unpack(i interface{}) []string {
 	d, _ := i.([]string)
@@ -28,7 +30,9 @@ func (p *Strings) CompareAndSwap(old, new []string) (swapped bool) {
 	return p.get().CompareAndSwap(p.pack(old), p.pack(new))
 }
 
-type Bytes Interface
+type Bytes struct {
+	d Interface
+}
 
 func NewBytes(d []byte) *Bytes {
 	p := &Bytes{}
@@ -38,7 +42,7 @@ func NewBytes(d []byte) *Bytes {
 	return p
 }
 
-func (p *Bytes) get() *Interface      { return (*Interface)(p) }
+func (p *Bytes) get() *Interface      { return &p.d }
 func (p *Bytes) pack(d []byte) []byte { return d }
 func (p *Bytes) unpack(i interface{}) []byte {
 	d, _ := i.([]byte)
