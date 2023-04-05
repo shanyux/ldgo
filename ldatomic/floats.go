@@ -4,7 +4,9 @@
 
 package ldatomic
 
-type Float32s Interface
+type Float32s struct {
+	d Interface
+}
 
 func NewFloat32s(d []float32) *Float32s {
 	p := &Float32s{}
@@ -14,7 +16,7 @@ func NewFloat32s(d []float32) *Float32s {
 	return p
 }
 
-func (p *Float32s) get() *Interface            { return (*Interface)(p) }
+func (p *Float32s) get() *Interface            { return &p.d }
 func (p *Float32s) pack(d []float32) []float32 { return d }
 func (p *Float32s) unpack(i interface{}) []float32 {
 	d, _ := i.([]float32)
@@ -28,7 +30,9 @@ func (p *Float32s) CompareAndSwap(old, new []float32) (swapped bool) {
 	return p.get().CompareAndSwap(p.pack(old), p.pack(new))
 }
 
-type Float64s Interface
+type Float64s struct {
+	d Interface
+}
 
 func NewFloat64s(d []float64) *Float64s {
 	p := &Float64s{}
@@ -38,7 +42,7 @@ func NewFloat64s(d []float64) *Float64s {
 	return p
 }
 
-func (p *Float64s) get() *Interface            { return (*Interface)(p) }
+func (p *Float64s) get() *Interface            { return &p.d }
 func (p *Float64s) pack(d []float64) []float64 { return d }
 func (p *Float64s) unpack(i interface{}) []float64 {
 	d, _ := i.([]float64)

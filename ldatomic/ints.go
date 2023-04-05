@@ -4,7 +4,9 @@
 
 package ldatomic
 
-type Ints Interface
+type Ints struct {
+	d Interface
+}
 
 func NewInts(d []int) *Ints {
 	p := &Ints{}
@@ -14,7 +16,7 @@ func NewInts(d []int) *Ints {
 	return p
 }
 
-func (p *Ints) get() *Interface    { return (*Interface)(p) }
+func (p *Ints) get() *Interface    { return &p.d }
 func (p *Ints) pack(d []int) []int { return d }
 func (p *Ints) unpack(i interface{}) []int {
 	d, _ := i.([]int)
@@ -28,7 +30,9 @@ func (p *Ints) CompareAndSwap(old, new []int) (swapped bool) {
 	return p.get().CompareAndSwap(p.pack(old), p.pack(new))
 }
 
-type Int8s Interface
+type Int8s struct {
+	d Interface
+}
 
 func NewInt8s(d []int8) *Int8s {
 	p := &Int8s{}
@@ -38,7 +42,7 @@ func NewInt8s(d []int8) *Int8s {
 	return p
 }
 
-func (p *Int8s) get() *Interface      { return (*Interface)(p) }
+func (p *Int8s) get() *Interface      { return &p.d }
 func (p *Int8s) pack(d []int8) []int8 { return d }
 func (p *Int8s) unpack(i interface{}) []int8 {
 	d, _ := i.([]int8)
@@ -52,7 +56,9 @@ func (p *Int8s) CompareAndSwap(old, new []int8) (swapped bool) {
 	return p.get().CompareAndSwap(p.pack(old), p.pack(new))
 }
 
-type Int16s Interface
+type Int16s struct {
+	d Interface
+}
 
 func NewInt16s(d []int16) *Int16s {
 	p := &Int16s{}
@@ -62,7 +68,7 @@ func NewInt16s(d []int16) *Int16s {
 	return p
 }
 
-func (p *Int16s) get() *Interface        { return (*Interface)(p) }
+func (p *Int16s) get() *Interface        { return &p.d }
 func (p *Int16s) pack(d []int16) []int16 { return d }
 func (p *Int16s) unpack(i interface{}) []int16 {
 	d, _ := i.([]int16)
@@ -76,7 +82,9 @@ func (p *Int16s) CompareAndSwap(old, new []int16) (swapped bool) {
 	return p.get().CompareAndSwap(p.pack(old), p.pack(new))
 }
 
-type Int32s Interface
+type Int32s struct {
+	d Interface
+}
 
 func NewInt32s(d []int32) *Int32s {
 	p := &Int32s{}
@@ -86,7 +94,7 @@ func NewInt32s(d []int32) *Int32s {
 	return p
 }
 
-func (p *Int32s) get() *Interface        { return (*Interface)(p) }
+func (p *Int32s) get() *Interface        { return &p.d }
 func (p *Int32s) pack(d []int32) []int32 { return d }
 func (p *Int32s) unpack(i interface{}) []int32 {
 	d, _ := i.([]int32)
@@ -100,7 +108,9 @@ func (p *Int32s) CompareAndSwap(old, new []int32) (swapped bool) {
 	return p.get().CompareAndSwap(p.pack(old), p.pack(new))
 }
 
-type Int64s Interface
+type Int64s struct {
+	d Interface
+}
 
 func NewInt64s(d []int64) *Int64s {
 	p := &Int64s{}
@@ -110,7 +120,7 @@ func NewInt64s(d []int64) *Int64s {
 	return p
 }
 
-func (p *Int64s) get() *Interface        { return (*Interface)(p) }
+func (p *Int64s) get() *Interface        { return &p.d }
 func (p *Int64s) pack(d []int64) []int64 { return d }
 func (p *Int64s) unpack(i interface{}) []int64 {
 	d, _ := i.([]int64)
