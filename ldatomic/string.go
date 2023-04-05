@@ -6,6 +6,8 @@ package ldatomic
 
 var _zeroString string
 
+type Byte = Uint8
+
 type String struct {
 	d Interface
 }

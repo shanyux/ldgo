@@ -59,3 +59,39 @@ func (p *Int) Swap(new int) (old int)  { return int(p.get().Swap(int64(new))) }
 func (p *Int) CompareAndSwap(old, new int) (swapped bool) {
 	return p.get().CompareAndSwap(int64(old), int64(new))
 }
+
+type Int8 int32
+
+func NewInt8(d int8) *Int8 {
+	v := Int8(d)
+	return &v
+}
+
+func (p *Int8) get() *Int32 { return (*Int32)(p) }
+
+func (p *Int8) Add(delta int8) (new int8) { return int8(p.get().Add(int32(delta))) }
+func (p *Int8) Sub(delta int8) (new int8) { return int8(p.get().Sub(int32(delta))) }
+func (p *Int8) Store(d int8)              { p.get().Store(int32(d)) }
+func (p *Int8) Load() int8                { return int8(p.get().Load()) }
+func (p *Int8) Swap(new int8) (old int8)  { return int8(p.get().Swap(int32(new))) }
+func (p *Int8) CompareAndSwap(old, new int8) (swapped bool) {
+	return p.get().CompareAndSwap(int32(old), int32(new))
+}
+
+type Int16 int32
+
+func NewInt16(d int16) *Int16 {
+	v := Int16(d)
+	return &v
+}
+
+func (p *Int16) get() *Int32 { return (*Int32)(p) }
+
+func (p *Int16) Add(delta int16) (new int16) { return int16(p.get().Add(int32(delta))) }
+func (p *Int16) Sub(delta int16) (new int16) { return int16(p.get().Sub(int32(delta))) }
+func (p *Int16) Store(d int16)               { p.get().Store(int32(d)) }
+func (p *Int16) Load() int16                 { return int16(p.get().Load()) }
+func (p *Int16) Swap(new int16) (old int16)  { return int16(p.get().Swap(int32(new))) }
+func (p *Int16) CompareAndSwap(old, new int16) (swapped bool) {
+	return p.get().CompareAndSwap(int32(old), int32(new))
+}
