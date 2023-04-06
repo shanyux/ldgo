@@ -6,61 +6,14 @@ package gorm
 
 import (
 	"fmt"
-	"sync/atomic"
+	"strings"
 	"testing"
 
 	"github.com/distroy/ldgo/ldhook"
+	"github.com/distroy/ldgo/ldrand"
 	"github.com/jinzhu/gorm"
 	"github.com/smartystreets/goconvey/convey"
 )
-
-var (
-	testErrTransaction = fmt.Errorf("transaction error")
-)
-
-type transactionMockData struct {
-	Begin                   int32
-	Commit                  int32
-	Rollback                int32
-	RollbackUnlessCommitted int32
-}
-
-func mockTransaction(patches ldhook.Patches) *transactionMockData {
-	data := &transactionMockData{}
-
-	patches.Applys([]ldhook.Hook{
-		ldhook.FuncHook{
-			Target: (*gorm.DB).Begin,
-			Double: func(db *gorm.DB) *gorm.DB {
-				atomic.AddInt32(&data.Begin, 1)
-				return db
-			},
-		},
-		ldhook.FuncHook{
-			Target: (*gorm.DB).Commit,
-			Double: func(db *gorm.DB) *gorm.DB {
-				atomic.AddInt32(&data.Commit, 1)
-				return db
-			},
-		},
-		ldhook.FuncHook{
-			Target: (*gorm.DB).Rollback,
-			Double: func(db *gorm.DB) *gorm.DB {
-				atomic.AddInt32(&data.Rollback, 1)
-				return db
-			},
-		},
-		ldhook.FuncHook{
-			Target: (*gorm.DB).RollbackUnlessCommitted,
-			Double: func(db *gorm.DB) *gorm.DB {
-				atomic.AddInt32(&data.RollbackUnlessCommitted, 1)
-				return db
-			},
-		},
-	})
-
-	return data
-}
 
 func TestGormDb_Transaction(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
@@ -465,4 +418,84 @@ func TestGormDb_Begin_RollbackUnlessCommitted(t *testing.T) {
 			})
 		})
 	})
+}
+
+func TestGormDb_WithQueryHint(t *testing.T) {
+	tests := []struct {
+		name string
+		args []func(db *GormDb) *GormDb
+		want bool
+	}{
+		{
+			name: "select",
+			want: true,
+			args: []func(db *GormDb) *GormDb{
+				func(db *GormDb) *GormDb { return db.Find(&[]*testTable{}) },
+			},
+		},
+		{
+			name: "select limit 1",
+			want: true,
+			args: []func(db *GormDb) *GormDb{
+				func(db *GormDb) *GormDb { return db.First(&testTable{}) },
+			},
+		},
+		{
+			name: "insert",
+			want: false,
+			args: []func(db *GormDb) *GormDb{
+				func(db *GormDb) *GormDb { return db.Create(&testTable{ProjectId: 1}) },
+			},
+		},
+		{
+			name: "save",
+			want: false,
+			args: []func(db *GormDb) *GormDb{
+				func(db *GormDb) *GormDb { return db.Save(&testTable{ProjectId: 1}) },
+			},
+		},
+		{
+			name: "update",
+			want: false,
+			args: []func(db *GormDb) *GormDb{
+				func(db *GormDb) *GormDb { return db.Update(&testTable{ProjectId: 1}) },
+			},
+		},
+	}
+
+	hint := ldrand.String(8)
+	prefix := fmt.Sprintf("/* %s */", hint)
+
+	db := testGetGorm()
+	defer db.Close()
+	db = db.WithQueryHint(hint)
+
+	db.Save(&testTable{
+		ProjectId: 1,
+		ChannelId: 2,
+		Type:      3,
+		VersionId: 4,
+	})
+
+	var sql string
+	db.Callback().Query().After("gorm:query").Register("ldgorm:after_query", func(scope *gorm.Scope) {
+		sql = scope.SQL
+	})
+	db.Callback().Create().After("gorm:create").Register("ldgorm:after_create", func(scope *gorm.Scope) {
+		sql = scope.SQL
+	})
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sql = ""
+
+			for _, fn := range tt.args {
+				db = fn(db)
+			}
+
+			if got := strings.HasPrefix(sql, prefix); got != tt.want {
+				t.Errorf("GormDb.WithQueryHint() = %v, want %v, sql = %s", got, tt.want, sql)
+			}
+		})
+	}
 }

@@ -59,7 +59,7 @@ _go_install =  ( \
 	);
 
 .PHONY: all
-all: setup go-test
+all: go-test
 
 .PHONY: $(GO_TEST_DIRS_NAME)
 $(GO_TEST_DIRS_NAME):
@@ -71,7 +71,7 @@ pb:
 	@$(foreach i, $(PROTOS), $(call _mk_protobuf,$(i)))
 
 .PHONY: dep
-dep: setup
+dep:
 	$(GO) mod tidy
 	# $(GO) mod vendor
 
