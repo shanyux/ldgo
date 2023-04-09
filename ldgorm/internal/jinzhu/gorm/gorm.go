@@ -5,6 +5,9 @@
 package gorm
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/distroy/ldgo/ldlog"
 	"github.com/jinzhu/gorm"
 )
@@ -214,9 +217,10 @@ func (w *GormDb) Where(query interface{}, args ...interface{}) *GormDb {
 }
 
 // Order specify order when retrieve records from database, set reorder to `true` to overwrite defined conditions
-//     db.Order("name DESC")
-//     db.Order("name DESC", true) // reorder
-//     db.Order(gorm.Expr("name = ? DESC", "first")) // sql expression
+//
+//	db.Order("name DESC")
+//	db.Order("name DESC", true) // reorder
+//	db.Order(gorm.Expr("name = ? DESC", "first")) // sql expression
 func (w *GormDb) Order(value interface{}, reorder ...bool) *GormDb {
 	w = w.clone()
 	w.gormDb = w.gormDb.Order(value, reorder...)
@@ -316,5 +320,18 @@ func (w *GormDb) Raw(sql string, values ...interface{}) *GormDb {
 func (w *GormDb) Scan(out interface{}) *GormDb {
 	w = w.clone()
 	w.gormDb = w.gormDb.Scan(out)
+	return w
+}
+
+// WithQueryHint add hint comment before sql
+func (w *GormDb) WithQueryHint(hint string) *GormDb {
+	replacer := strings.NewReplacer("/*", " ", "*/", " ")
+	hint = replacer.Replace(hint)
+	hint = fmt.Sprintf("/* %s */ ", hint)
+
+	w = w.clone()
+
+	w.gormDb = w.gormDb.Set("gorm:query_hint", hint)
+
 	return w
 }

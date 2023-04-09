@@ -6,8 +6,12 @@ package main
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"mime/multipart"
 	"net/http"
 
 	"github.com/distroy/ldgo/ldctx"
@@ -71,6 +75,47 @@ func testValidate(c *ldgin.Context, req *testValidateReq) ldgin.Error {
 	return nil
 }
 
+type testMultipartReq struct {
+	Name string                `form:"name"`
+	File *multipart.FileHeader `multipart:"file"`
+}
+
+type testMultipartRsp struct {
+	Hash string `json:"hash"`
+	Name string `json:"name"`
+}
+
+func testMultipart(c *ldgin.Context, req *testMultipartReq) (*testMultipartRsp, ldgin.Error) {
+	name := req.Name
+
+	file := req.File
+	if file == nil {
+		return nil, lderr.WithDetail(lderr.ErrParseRequest, "parse multipart fail")
+	}
+
+	if name == "" {
+		name = file.Filename
+	}
+
+	f, err := file.Open()
+	if err != nil {
+		return nil, lderr.WithDetail(lderr.ErrParseRequest, "open multipart file fail")
+	}
+	defer f.Close()
+
+	buf, err := ioutil.ReadAll(f)
+	if err != nil {
+		return nil, lderr.WithDetail(lderr.ErrParseRequest, "read multipart file fail")
+	}
+
+	md5Sum := md5.Sum(buf)
+	hash := hex.EncodeToString(md5Sum[:])
+	return &testMultipartRsp{
+		Hash: hash,
+		Name: name,
+	}, nil
+}
+
 type testParseReq struct {
 	Query1 string `form:"query1"`
 	Query2 int64  `form:"query2"`
@@ -115,6 +160,7 @@ func initRouter(c ldctx.Context, router gin.IRouter) {
 	r.GET("/validate", testValidate)
 	r.GET("/parse", testParse)
 	r.GET("/midware_error", testSucc, midware3)
+	r.POST("/multipart", testMultipart)
 }
 
 func main() {

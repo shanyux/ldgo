@@ -50,11 +50,16 @@ _mk_protobuf = ( \
 	cd $(PROJECT_ROOT); \
 	);
 
-_go_install =  \
-	go install $(1) || go install $(1)@latest
+_go_install =  ( \
+	_work_dir="$$PWD"; \
+	cd /; \
+	echo "go install $(1)@latest || go install $(1)"; \
+	go install $(1)@latest || go install $(1); \
+	cd "$$_work_dir"; \
+	);
 
 .PHONY: all
-all: setup go-test
+all: go-test
 
 .PHONY: $(GO_TEST_DIRS_NAME)
 $(GO_TEST_DIRS_NAME):
@@ -66,7 +71,7 @@ pb:
 	@$(foreach i, $(PROTOS), $(call _mk_protobuf,$(i)))
 
 .PHONY: dep
-dep: setup
+dep:
 	$(GO) mod tidy
 	# $(GO) mod vendor
 
@@ -77,12 +82,16 @@ go-test-report-dir:
 .PHONY: go-test-coverage
 go-test-coverage: go-test-report-dir
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) ./... \
-		-coverprofile="$(GO_TEST_REPORT_DIR)/coverage.out"
+		-coverprofile="$(GO_TEST_REPORT_DIR)/go-coverage.out"
+	$(GO) tool cover -html $(GO_TEST_REPORT_DIR)/go-coverage.out \
+		-o $(GO_TEST_REPORT_DIR)/go-coverage.html
 
 go-test-report: go-test-report-dir
 	$(GO) test $(GO_FLAGS) $(GO_TEST_FLAGS) ./... \
-		-coverprofile="$(GO_TEST_REPORT_DIR)/coverage.out" \
-		-json > "$(GO_TEST_REPORT_DIR)/test.json"
+		-coverprofile="$(GO_TEST_REPORT_DIR)/go-coverage.out" \
+		-json > "$(GO_TEST_REPORT_DIR)/go-test.json"
+	$(GO) tool cover -html $(GO_TEST_REPORT_DIR)/go-coverage.out \
+		-o $(GO_TEST_REPORT_DIR)/go-coverage.html
 
 .PHONY: go-test
 go-test:
@@ -90,20 +99,19 @@ go-test:
 
 .PHONY: setup
 setup:
+	git submodule init
+	git submodule update
 	git config core.hooksPath "git-go-tool/git-hook"
-	@cd
-	$(call _go_install,github.com/distroy/git-go-tool/cmd/git-diff-go-cognitive)
-	$(call _go_install,github.com/distroy/git-go-tool/cmd/git-diff-go-coverage)
-	$(call _go_install,github.com/distroy/git-go-tool/cmd/git-diff-go-format)
-	$(call _go_install,github.com/distroy/git-go-tool/cmd/go-cognitive)
-	$(call _go_install,github.com/distroy/git-go-tool/cmd/go-format)
-	@cd "$(PROJECT_ROOT)"
+	@$(call _go_install,github.com/distroy/git-go-tool/cmd/git-diff-go-cognitive)
+	@$(call _go_install,github.com/distroy/git-go-tool/cmd/git-diff-go-coverage)
+	@$(call _go_install,github.com/distroy/git-go-tool/cmd/git-diff-go-format)
+	@$(call _go_install,github.com/distroy/git-go-tool/cmd/go-cognitive)
+	@$(call _go_install,github.com/distroy/git-go-tool/cmd/go-format)
 	@echo $$'\E[32;1m'"setup succ"$$'\E[0m'
 
 .PHONY: cognitive
 cognitive: setup
-	go-cognitive -over 15 .
-	go-cognitive -top 10 .
+	go-cognitive
 
 .PHONY: format
 format: setup

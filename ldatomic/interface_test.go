@@ -29,5 +29,13 @@ func TestInterface(t *testing.T) {
 		convey.So(p.Swap(123), convey.ShouldEqual, "123")
 		convey.So(p.Swap(nil), convey.ShouldEqual, 123)
 		convey.So(p.Load(), convey.ShouldEqual, nil)
+
+		convey.So(p.CompareAndSwap("", "abc"), convey.ShouldEqual, false)
+		convey.So(p.CompareAndSwap(nil, "abc"), convey.ShouldEqual, true)
+		convey.So(p.Load(), convey.ShouldEqual, "abc")
+
+		convey.So(p.CompareAndSwap("", 234), convey.ShouldEqual, false)
+		convey.So(p.CompareAndSwap("abc", 234), convey.ShouldEqual, true)
+		convey.So(p.Load(), convey.ShouldEqual, 234)
 	})
 }

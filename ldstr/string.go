@@ -11,48 +11,60 @@ import (
 	"github.com/distroy/ldgo/ldconv"
 )
 
-func StrMapReplace(s string, m map[string]string, l string, r string) string {
-	if len(m) == 0 {
-		return s
+func getReplaceSplits(splits []string) (l, r string) {
+	switch len(splits) {
+	case 0:
+		return "{", "}"
+	case 1:
+		return splits[0], splits[0]
+	default:
+		return splits[0], splits[1]
 	}
-
-	builder := &strings.Builder{}
-	builder.Grow(len(s))
-	for len(s) > 0 {
-		bpos := strings.Index(s, l)
-		if bpos < 0 {
-			builder.WriteString(s)
-			break
-		}
-		builder.WriteString(s[:bpos])
-		s = s[bpos+len(l):]
-
-		epos := strings.Index(s, r)
-		if epos < 0 {
-			builder.WriteString(l)
-			builder.WriteString(s)
-			break
-		}
-
-		key := s[:epos]
-		val, ok := m[key]
-		if !ok {
-			builder.WriteString(l)
-			continue
-		}
-
-		builder.WriteString(val)
-		s = s[epos+len(r):]
-	}
-	return builder.String()
 }
 
-func StrIMapReplace(s string, _m interface{}, l string, r string) string {
-	if _m, ok := _m.(map[string]string); ok {
-		return StrMapReplace(s, _m, l, r)
+// StrMapReplace returns new string.
+//
+//	StrMapReplace("user: {user}", map[string]string{"user": "x"}) returns "user: x"
+//	StrMapReplace("user: #user#", map[string]string{"user": "x"}, "#") returns "user: x"
+//	StrMapReplace("user: <user>", map[string]string{"user": "x"}, "<", ">") returns "user: x"
+func StrMapReplace(tmpl string, m map[string]string, splits ...string) string {
+	if len(m) == 0 {
+		return tmpl
 	}
 
-	val := reflect.ValueOf(_m)
+	l, r := getReplaceSplits(splits)
+
+	replaceKeyValues := make([]string, 0, len(m)*2)
+	for k, v := range m {
+		kk := k
+		vv := v
+
+		kk = strings.Join([]string{l, kk, r}, "")
+		if kk == "" {
+			continue
+		}
+		replaceKeyValues = append(replaceKeyValues, kk, vv)
+	}
+
+	replacer := strings.NewReplacer(replaceKeyValues...)
+	return replacer.Replace(tmpl)
+}
+
+// StrIMapReplace returns new string.
+//
+// m can be any map:
+//
+//	StrIMapReplace("user: {user}", map[interface{}]string{"user": "x"}) returns "user: x"
+//	StrIMapReplace("user: #user#", map[interface{}]interface{}{"user": "x"}, "#") returns "user: x"
+//	StrIMapReplace("count: <count>", map[string]int{"count": 123}, "<", ">") returns "count: 123"
+func StrIMapReplace(tmpl string, m interface{}, splits ...string) string {
+	if m, ok := m.(map[string]string); ok {
+		return StrMapReplace(tmpl, m, splits...)
+	}
+
+	l, r := getReplaceSplits(splits)
+
+	val := reflect.ValueOf(m)
 	for val.Kind() == reflect.Ptr {
 		if val.IsNil() {
 			return ""
@@ -62,13 +74,41 @@ func StrIMapReplace(s string, _m interface{}, l string, r string) string {
 	if val.Kind() != reflect.Map {
 		return ""
 	}
-	m := make(map[string]string, val.Len())
+	if val.Len() == 0 {
+		return tmpl
+	}
 
+	replaceKeyValues := make([]string, 0, val.Len()*2)
 	for it := val.MapRange(); it.Next(); {
 		k := it.Key().Interface()
 		v := it.Value().Interface()
-		m[ldconv.AsString(k)] = ldconv.AsString(v)
+
+		kk := ldconv.AsString(k)
+		vv := ldconv.AsString(v)
+
+		kk = strings.Join([]string{l, kk, r}, "")
+		if kk == "" {
+			continue
+		}
+		replaceKeyValues = append(replaceKeyValues, kk, vv)
 	}
 
-	return StrMapReplace(s, m, l, r)
+	replacer := strings.NewReplacer(replaceKeyValues...)
+	return replacer.Replace(tmpl)
+}
+
+// StrMapParse use template to extract a string map form the text
+func StrMapParse(tmpl, text string, splits ...string) (map[string]string, error) {
+	l, r := getReplaceSplits(splits)
+	parser := &StrMapParser{}
+
+	err := parser.Init(tmpl, l, r)
+	// log.Printf("%s", mustMarshalJson(parser.fields))
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := parser.Parse(text)
+	parser.Done()
+	return res, err
 }

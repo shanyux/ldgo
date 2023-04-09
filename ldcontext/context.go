@@ -24,17 +24,7 @@ func Console() Context { return ldctx.Console() }
 func Discard() Context { return ldctx.Discard() }
 
 type Context interface {
-	context.Context
-
-	LogD(msg string, fields ...zap.Field)
-	LogI(msg string, fields ...zap.Field)
-	LogW(msg string, fields ...zap.Field)
-	LogE(msg string, fields ...zap.Field)
-
-	LogDf(fmt string, args ...interface{})
-	LogIf(fmt string, args ...interface{})
-	LogWf(fmt string, args ...interface{})
-	LogEf(fmt string, args ...interface{})
+	ldctx.Context
 }
 
 func NewContext(parent context.Context, fields ...zap.Field) Context {

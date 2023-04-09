@@ -103,14 +103,6 @@ func (r *fastSource) Seed(seed int64) {
 	atomic.StoreUint64(&r.seed, n)
 }
 
-// func (r *fastSource) ExpFloat64() float64 {
-// 	return r.rand.ExpFloat64()
-// }
-
-// func (r *fastSource) NormFloat64() float64 {
-// 	return r.rand.NormFloat64()
-// }
-
 func (r *fastSource) Uint64() uint64 {
 	n := fastSourceNext(&r.seed, r.xor[:])
 	n = fastSourceReposition(n, r.pos[:])

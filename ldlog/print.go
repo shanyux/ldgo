@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"sort"
 
-	"github.com/distroy/ldgo/ldcmp"
+	"github.com/distroy/ldgo/ldref"
 	"go.uber.org/zap/buffer"
 	"go.uber.org/zap/zapcore"
 )
@@ -175,4 +175,4 @@ type sortedMap [][2]reflect.Value
 
 func (o sortedMap) Len() int           { return len(o) }
 func (o sortedMap) Swap(i, j int)      { o[i], o[j] = o[j], o[i] }
-func (o sortedMap) Less(i, j int) bool { return ldcmp.CompareReflect(o[i][0], o[j][0]) <= 0 }
+func (o sortedMap) Less(i, j int) bool { return ldref.CompareReflect(o[i][0], o[j][0]) <= 0 }

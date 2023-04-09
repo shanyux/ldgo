@@ -15,6 +15,16 @@ var (
 	ErrCtxCanceled         = New(http.StatusOK, -11, "context canceled")
 	ErrCtxDeadlineExceeded = New(http.StatusOK, -12, "context deadline exceeded")
 
+	ErrReflectError        = New(http.StatusOK, -21, "reflect error")
+	ErrReflectTargetNotPtr = New(http.StatusOK, -22, "reflect target is not pointer")
+	ErrReflectTargetNilPtr = New(http.StatusOK, -23, "reflect target is nil pointer")
+	ErrReflectTypeNotEqual = New(http.StatusOK, -24, "reflect types of target and source are not equal")
+
+	ErrNumberOverflow        = New(http.StatusOK, -31, "number overflow")
+	ErrInvalidNumberSyntax   = New(http.StatusOK, -32, "invalid number syntax")
+	ErrInvalidConvertType    = New(http.StatusOK, -33, "invalid convert type")
+	ErrInvalidTemplateSyntax = New(http.StatusOK, -34, "invalid template syntax")
+
 	ErrNonAuthoritativeInfo = New(http.StatusNonAuthoritativeInfo, -101, "http non authoritative info")
 	ErrUnauthorized         = New(http.StatusUnauthorized, -102, "http unauthorized")
 	ErrInternalServerError  = New(http.StatusInternalServerError, -103, "http internal server error")
