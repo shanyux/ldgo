@@ -6,14 +6,13 @@ package ldrand
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"testing"
 	"time"
 
-	"github.com/distroy/ldgo/ldctx"
 	"github.com/distroy/ldgo/ldmath"
 	"github.com/smartystreets/goconvey/convey"
-	"go.uber.org/zap"
 )
 
 /*
@@ -73,7 +72,6 @@ func (t *testFastSource) Test() {
 	name := fmt.Sprintf("mod=%d,scale=%d,diff=%d", mod, scale, diff)
 	convey.Convey(name, func() {
 		r := New(NewFastSource(time.Now().UnixNano()))
-		ctx := ldctx.Console()
 
 		counts := make([]int, mod)
 		for i := 0; i < mod*scale; i++ {
@@ -86,8 +84,7 @@ func (t *testFastSource) Test() {
 		max := maxInt(counts)
 		ratio := diffRatio(counts)
 
-		ctx.LogI("", zap.Int("diff", max-min), zap.Float64("diffRatio", ratio),
-			zap.Int("minCount", min), zap.Int("maxCount", max))
+		log.Printf("diff:%d, ratio:%.04g, min:%d, max:%d", max-min, ratio, min, max)
 		convey.So(max-min, convey.ShouldBeLessThan, diff)
 	})
 }
@@ -96,25 +93,24 @@ func Test_fastSource_ProbabilityOfOverall(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
 		(&testFastSource{
 			Mod:   100,
-			Scale: 1000 * 100,
-			Diff:  1000 * 2,
+			Scale: 1000 * 200,
+			Diff:  1000 * 4,
 		}).Test()
 		(&testFastSource{
 			Mod:   16,
-			Scale: 1000 * 100,
-			Diff:  1000 * 2,
+			Scale: 1000 * 200,
+			Diff:  1000 * 4,
 		}).Test()
 		(&testFastSource{
 			Mod:   256,
-			Scale: 1000 * 100,
-			Diff:  1000 * 2,
+			Scale: 1000 * 200,
+			Diff:  1000 * 4,
 		}).Test()
 	})
 }
 
 func Test_fastSource_ProbabilityOfVery4Bits(t *testing.T) {
 	r := New(NewFastSource(time.Now().UnixNano()))
-	ctx := ldctx.Console()
 
 	convey.Convey(t.Name(), t, func() {
 		convey.Convey("check the probability of very 4 bits", func() {
@@ -132,13 +128,13 @@ func Test_fastSource_ProbabilityOfVery4Bits(t *testing.T) {
 				}
 			}
 
+			log.Printf("")
 			for i, v := range countsPer4Bits {
 				min := minInt(v[:])
 				max := maxInt(v[:])
 				ratio := diffRatio(v[:])
-				ctx.LogI("", zap.Int("postion", i), zap.Int("diff", max-min),
-					zap.Float64("diffRatio", ratio), zap.Int("minCount", min),
-					zap.Int("maxCount", max))
+				log.Printf("postion:%d, diff:%d, ratio:%.04g, min:%d, max:%d",
+					i, max-min, ratio, min, max)
 				convey.So(max-min, convey.ShouldBeLessThan, diff)
 			}
 		})
@@ -147,7 +143,6 @@ func Test_fastSource_ProbabilityOfVery4Bits(t *testing.T) {
 
 func Test_fastSource_ProbabilityOfVery4BitsWithPreviousNumber(t *testing.T) {
 	r := New(NewFastSource(time.Now().UnixNano()))
-	ctx := ldctx.Console()
 
 	convey.Convey(t.Name(), t, func() {
 		convey.Convey("check the probability of very 4 bits with previous number", func() {
@@ -169,15 +164,14 @@ func Test_fastSource_ProbabilityOfVery4BitsWithPreviousNumber(t *testing.T) {
 				}
 			}
 
+			log.Printf("")
 			for i, v := range countsPer4BitsWithPrev {
 				for j, w := range v {
 					min := minInt(w[:])
 					max := maxInt(w[:])
 					ratio := diffRatio(w[:])
-
-					ctx.LogI("", zap.Int("postion", i), zap.Int("prev", j),
-						zap.Int("diff", max-min), zap.Float64("diffRatio", ratio),
-						zap.Int("minCount", min), zap.Int("maxCount", max))
+					log.Printf("postion:%d, prev:%d, diff:%d, ratio:%.04g, min:%d, max:%d, v:%v",
+						i, j, max-min, ratio, min, max, w[:])
 
 					// sometimes it will be failed
 					// convey.So(max-min, convey.ShouldBeLessThan, diff)
@@ -189,7 +183,6 @@ func Test_fastSource_ProbabilityOfVery4BitsWithPreviousNumber(t *testing.T) {
 
 func Test_fastSource_ProbabilityOfVeryByte(t *testing.T) {
 	r := New(NewFastSource(time.Now().UnixNano()))
-	ctx := ldctx.Console()
 
 	convey.Convey(t.Name(), t, func() {
 		convey.Convey("check the probability of very byte", func() {
@@ -207,13 +200,13 @@ func Test_fastSource_ProbabilityOfVeryByte(t *testing.T) {
 				}
 			}
 
+			log.Printf("")
 			for i, v := range countsPer4Bits {
 				min := minInt(v[:])
 				max := maxInt(v[:])
 				ratio := diffRatio(v[:])
-				ctx.LogI("", zap.Int("postion", i), zap.Int("diff", max-min),
-					zap.Float64("diffRatio", ratio), zap.Int("minCount", min),
-					zap.Int("maxCount", max))
+				log.Printf("postion:%d, diff:%d, ratio:%.04g, min:%d, max:%d",
+					i, max-min, ratio, min, max)
 				convey.So(max-min, convey.ShouldBeLessThan, diff)
 			}
 		})

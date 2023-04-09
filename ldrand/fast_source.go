@@ -18,7 +18,8 @@ var (
 
 const (
 	//                 7654321076543210
-	fastSourceStep = 0x1753715715313157
+	// fastSourceStep = 0x1753715715313157
+	fastSourceStep = 0x5371795313b93157
 )
 
 var fastSourceXor [16]uint64 = [...]uint64{
@@ -38,6 +39,25 @@ var fastSourceXor [16]uint64 = [...]uint64{
 	0xbe5552d1e952f903,
 	0xc83bc15ff1c0a4ba,
 	0x8d406d33bb751a19,
+}
+
+var fastSourcePosition [16]uint64 = [...]uint64{
+	0x3158b9640fa2edc7,
+	0xb364c795f1ea082d,
+	0x59483721bfadec60,
+	0x2405613bd98a7fec,
+	0xd5f0c3b16ae97842,
+	0xc7de804b29f153a6,
+	0x79610fac3d28be45,
+	0x326efd917405bac8,
+	0x0ec92d145f3a76b8,
+	0x0e98f2bd3c46a175,
+	0xc1e9a670d32f548b,
+	0x24db8f93ce57a061,
+	0xd46e9a85013b2c7f,
+	0xb568e9a20471cf3d,
+	0xe3f14d70a29b65c8,
+	0xacfb169238de5704,
 }
 
 // noescape hides a pointer from escape analysis.  noescape is
@@ -61,28 +81,32 @@ func NewFastSource(seed int64) rand.Source64 {
 	return r
 }
 
-func newFastSource(seed int64, xor [16]uint64) *fastSource {
+func newFastSource(seed int64, xor [16]uint64, pos [16]uint64) *fastSource {
 	src := &fastSource{
-		xor:  xor,
 		seed: uint64(seed),
+		xor:  xor,
+		pos:  pos,
 	}
 	// src.rand = rand.New(src)
 	return src
 }
 
 type fastSource struct {
-	xor  [16]uint64
 	seed uint64
+	xor  [16]uint64
+	pos  [16]uint64
 	// rand *rand.Rand
 }
 
 func (r *fastSource) Seed(seed int64) {
-	n := initFastSourceXor(seed, r.xor[:])
+	n := initFastSourceXor(seed, r.xor[:], r.pos[:])
 	atomic.StoreUint64(&r.seed, n)
 }
 
 func (r *fastSource) Uint64() uint64 {
-	return fastSourceNext(&r.seed, r.xor[:])
+	n := fastSourceNext(&r.seed, r.xor[:])
+	n = fastSourceReposition(n, r.pos[:])
+	return n
 }
 
 func (r *fastSource) Int63() int64 {
@@ -197,6 +221,7 @@ func fastSourceNext(seed *uint64, xor []uint64) uint64 {
 	n := atomic.AddUint64(seed, fastSourceStep)
 	x := n
 	b := n & 0xf
+	// b := (n >> 60) & 0xf
 
 	b = b ^ ((n >> 4) & 0xf)
 	b = b ^ ((n >> 8) & 0xf)
@@ -215,23 +240,58 @@ func fastSourceNext(seed *uint64, xor []uint64) uint64 {
 	b = b ^ ((n >> 60) & 0xf)
 
 	x = x | uint64(b)
-	x = ((x & 0xffffffff) << 32) | ((x >> 32) & 0xffffffff)
+	// // x = (x << 4 >> 4) | (b << 60)
+	// x = ((x & 0xffffffff) << 32) | ((x >> 32) & 0xffffffff)
 	return x
 }
 
-func initFastSourceXor(seed int64, xor []uint64) uint64 {
+func fastSourceReposition(n uint64, pos []uint64) uint64 {
+	b := n & 0xf
+	p := pos[b]
+
+	x := uint64(0)
+	for i := 0; i < 16; i++ {
+		b := n & 0xf
+		n = n >> 4
+
+		i := p & 0xf
+		p = p >> 4
+		x |= b << (i * 4)
+	}
+
+	return (x >> 4) | (b << 60)
+	// return x
+}
+
+func initFastSourceXor(seed int64, xor []uint64, pos []uint64) uint64 {
 	buf := [16]byte{}
 	for i := range buf {
 		buf[i] = byte(i)
 	}
 
-	r := New(newFastSource(seed, fastSourceXor))
+	r := New(newFastSource(seed, fastSourceXor, fastSourcePosition))
 
+	// generate xor
 	for i := 0; i < 16; i++ {
 		r.Shuffle(len(buf), func(i, j int) { buf[i], buf[j] = buf[j], buf[i] })
 		for j := range xor {
 			xor[j] = (xor[j] << 4) | uint64(buf[j])
 		}
+	}
+
+	// generate pos
+	for i := 0; i < 16; i++ {
+		r.Shuffle(len(buf), func(i, j int) { buf[i], buf[j] = buf[j], buf[i] })
+		// fmt.Fprintf(os.Stdout, "%#v\n", buf)
+
+		var n uint64
+		for _, v := range buf {
+			if v == 0 {
+				continue
+			}
+			n = (n << 4) | uint64(v)
+		}
+		pos[i] = n << 4
 	}
 
 	return r.Uint64()
