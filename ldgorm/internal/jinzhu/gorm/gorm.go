@@ -6,8 +6,10 @@ package gorm
 
 import (
 	"fmt"
+	"hash/crc32"
 	"strings"
 
+	"github.com/distroy/ldgo/ldconv"
 	"github.com/distroy/ldgo/ldlog"
 	"github.com/distroy/ldgo/ldrand"
 	"github.com/jinzhu/gorm"
@@ -54,6 +56,23 @@ func (w *GormDb) Get() *gorm.DB {
 	return w.gormDb
 }
 
+func (w *GormDb) Close() error {
+	var err error
+
+	db := w.master
+	if e := db.Close(); e != nil {
+		err = e
+	}
+
+	for _, db := range w.slavers {
+		if e := db.Close(); err == nil && e != nil {
+			err = e
+		}
+	}
+
+	return err
+}
+
 // Set will replace the master and the db currently used
 func (w *GormDb) Set(db *gorm.DB) *GormDb {
 	w = w.clone()
@@ -87,20 +106,63 @@ func (w *GormDb) UseMaster() *GormDb {
 }
 
 // UseSlaver must be called before all Query methods
-func (w *GormDb) UseSlaver() *GormDb {
-	if len(w.slavers) == 0 {
+//
+// key must be int/int{8-64}/uint/uint{8-64}/uintptr/string/[]byte.
+// if key is not set, will use rand slaver
+func (w *GormDb) UseSlaver(key ...interface{}) *GormDb {
+	n := len(w.slavers)
+	switch n {
+	case 0:
 		return w
-	}
 
-	w = w.clone()
-	if len(w.slavers) == 1 {
+	case 1:
+		w = w.clone()
 		w.gormDb = w.slavers[0]
 		return w
 	}
 
-	idx := ldrand.Intn(len(w.slavers))
+	hash := w.getHashByKey(key)
+	idx := hash % uint(n)
+
+	w = w.clone()
 	w.gormDb = w.slavers[idx]
 	return w
+}
+
+func (w *GormDb) getHashByKey(keys []interface{}) uint {
+	switch v := keys[0].(type) {
+	case int:
+		return uint(v)
+	case int8:
+		return uint(v)
+	case int16:
+		return uint(v)
+	case int32:
+		return uint(v)
+	case int64:
+		return uint(v)
+
+	case uint:
+		return uint(v)
+	case uint8:
+		return uint(v)
+	case uint16:
+		return uint(v)
+	case uint32:
+		return uint(v)
+	case uint64:
+		return uint(v)
+	case uintptr:
+		return uint(v)
+
+	case string:
+		return uint(crc32.ChecksumIEEE(ldconv.StrToBytesUnsafe(v)))
+
+	case []byte:
+		return uint(crc32.ChecksumIEEE(v))
+	}
+
+	return ldrand.Uint()
 }
 
 func (w *GormDb) withOption(opts ...func(db *gorm.DB) *gorm.DB) *GormDb {
