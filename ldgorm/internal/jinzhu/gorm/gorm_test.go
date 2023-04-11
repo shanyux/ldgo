@@ -15,6 +15,12 @@ import (
 	"github.com/smartystreets/goconvey/convey"
 )
 
+func testNewGorm(db *gorm.DB) *GormDb {
+	p := &GormDb{}
+	p.Set(db)
+	return p
+}
+
 func TestGormDb_Transaction(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
 		patches := ldhook.NewPatches()
@@ -22,7 +28,7 @@ func TestGormDb_Transaction(t *testing.T) {
 
 		data := mockTransaction(patches)
 
-		db := &GormDb{gormDb: &gorm.DB{}}
+		db := testNewGorm(&gorm.DB{})
 
 		convey.Convey("transaction 1 rollback", func() {
 			err := db.Transaction(func(tx *GormDb) error {
