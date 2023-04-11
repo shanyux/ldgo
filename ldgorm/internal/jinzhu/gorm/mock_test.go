@@ -26,33 +26,50 @@ type transactionMockData struct {
 func mockTransaction(patches ldhook.Patches) *transactionMockData {
 	data := &transactionMockData{}
 
+	db := &gorm.DB{}
 	patches.Applys([]ldhook.Hook{
 		ldhook.FuncHook{
 			Target: (*gorm.DB).Begin,
-			Double: func(db *gorm.DB) *gorm.DB {
-				atomic.AddInt32(&data.Begin, 1)
-				return db
+			Double: ldhook.ResultCell{
+				Outputs: ldhook.Values{db},
+				Inputs: ldhook.Values{
+					ldhook.BindInput(0, func(db *gorm.DB) {
+						atomic.AddInt32(&data.Begin, 1)
+					}),
+				},
 			},
 		},
 		ldhook.FuncHook{
 			Target: (*gorm.DB).Commit,
-			Double: func(db *gorm.DB) *gorm.DB {
-				atomic.AddInt32(&data.Commit, 1)
-				return db
+			Double: ldhook.ResultCell{
+				Outputs: ldhook.Values{db},
+				Inputs: ldhook.Values{
+					ldhook.BindInput(0, func(db *gorm.DB) {
+						atomic.AddInt32(&data.Commit, 1)
+					}),
+				},
 			},
 		},
 		ldhook.FuncHook{
 			Target: (*gorm.DB).Rollback,
-			Double: func(db *gorm.DB) *gorm.DB {
-				atomic.AddInt32(&data.Rollback, 1)
-				return db
+			Double: ldhook.ResultCell{
+				Outputs: ldhook.Values{db},
+				Inputs: ldhook.Values{
+					ldhook.BindInput(0, func(db *gorm.DB) {
+						atomic.AddInt32(&data.Rollback, 1)
+					}),
+				},
 			},
 		},
 		ldhook.FuncHook{
 			Target: (*gorm.DB).RollbackUnlessCommitted,
-			Double: func(db *gorm.DB) *gorm.DB {
-				atomic.AddInt32(&data.RollbackUnlessCommitted, 1)
-				return db
+			Double: ldhook.ResultCell{
+				Outputs: ldhook.Values{db},
+				Inputs: ldhook.Values{
+					ldhook.BindInput(0, func(db *gorm.DB) {
+						atomic.AddInt32(&data.RollbackUnlessCommitted, 1)
+					}),
+				},
 			},
 		},
 	})

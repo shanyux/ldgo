@@ -16,9 +16,7 @@ import (
 )
 
 func testNewGorm(db *gorm.DB) *GormDb {
-	p := &GormDb{}
-	p.Set(db)
-	return p
+	return (&GormDb{}).Set(db)
 }
 
 func TestGormDb_Transaction(t *testing.T) {
