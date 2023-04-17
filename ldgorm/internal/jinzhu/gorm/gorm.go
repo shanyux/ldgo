@@ -73,11 +73,22 @@ func (w *GormDb) Close() error {
 	return err
 }
 
-// Set will replace the master and the db currently used
+// Set will set the db currently used.
+// If master is not set, will set the master db also.
 func (w *GormDb) Set(db *gorm.DB) *GormDb {
 	w = w.clone()
-	w.master = db
+
 	w.gormDb = db
+	if w.master == nil {
+		w.master = db
+	}
+
+	return w
+}
+
+func (w *GormDb) SetMaster(db *gorm.DB) *GormDb {
+	w = w.clone()
+	w.master = db
 	return w
 }
 
