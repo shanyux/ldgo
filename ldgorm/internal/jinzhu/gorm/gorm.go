@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/distroy/ldgo/ldconv"
-	"github.com/distroy/ldgo/ldlog"
 	"github.com/distroy/ldgo/ldrand"
 	"github.com/jinzhu/gorm"
 )
@@ -213,10 +212,10 @@ func (w *GormDb) withOption(opts ...func(db *gorm.DB) *gorm.DB) *GormDb {
 }
 
 // WithLogger can be called before or after UseMaster/UseSlaver
-func (w *GormDb) WithLogger(l ldlog.LoggerInterface) *GormDb {
+func (w *GormDb) WithLogger(l gorm.Logger) *GormDb {
 	return w.withOption(func(db *gorm.DB) *gorm.DB {
 		db = db.LogMode(true)
-		db.SetLogger(ldlog.GetWrapper(l))
+		db.SetLogger(l)
 		return db
 	})
 }
