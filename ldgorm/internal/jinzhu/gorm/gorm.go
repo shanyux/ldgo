@@ -227,6 +227,12 @@ func (w *GormDb) Model(value interface{}) *GormDb {
 	return w
 }
 
+func (w *GormDb) Table(table string) *GormDb {
+	w = w.clone()
+	w.gormDb = w.gormDb.Table(table)
+	return w
+}
+
 func (w *GormDb) Transaction(fc func(tx *GormDb) error) (err error) {
 	if w.txLvl > 0 {
 		return fc(w)
