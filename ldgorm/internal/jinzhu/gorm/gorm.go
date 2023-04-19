@@ -16,6 +16,10 @@ import (
 
 type gormDb = gorm.DB
 
+type Logger interface {
+	Print(v ...interface{})
+}
+
 var (
 	// queryHintReplacer = strings.NewReplacer("/*", " ", "*/", " ")
 	queryHintReplacer = strings.NewReplacer("/*", " ", "*/", " ")
@@ -212,7 +216,7 @@ func (w *GormDb) withOption(opts ...func(db *gorm.DB) *gorm.DB) *GormDb {
 }
 
 // WithLogger can be called before or after UseMaster/UseSlaver
-func (w *GormDb) WithLogger(l gorm.Logger) *GormDb {
+func (w *GormDb) WithLogger(l Logger) *GormDb {
 	return w.withOption(func(db *gorm.DB) *gorm.DB {
 		db = db.LogMode(true)
 		db.SetLogger(l)
