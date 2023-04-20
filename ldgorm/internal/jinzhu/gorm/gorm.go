@@ -91,7 +91,12 @@ func (w *GormDb) Set(db *gorm.DB) *GormDb {
 
 func (w *GormDb) SetMaster(db *gorm.DB) *GormDb {
 	w = w.clone()
+
 	w.master = db
+	if w.gormDb == nil {
+		w.gormDb = db
+	}
+
 	return w
 }
 
@@ -101,10 +106,19 @@ func (w *GormDb) AddSlaver(dbs ...*gorm.DB) *GormDb {
 	}
 
 	w = w.clone()
+
 	slavers := make([]*gorm.DB, 0, len(w.slavers)+len(dbs))
 	slavers = append(slavers, w.slavers...)
 	slavers = append(slavers, dbs...)
 	w.slavers = slavers
+
+	if w.gormDb == nil {
+		w.gormDb = dbs[0]
+	}
+	if w.master == nil {
+		w.master = dbs[0]
+	}
+
 	return w
 }
 
