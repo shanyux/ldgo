@@ -50,13 +50,12 @@ func (a *atomicMutexContext) toData(p unsafe.Pointer) *mutexContext {
 	return (*mutexContext)(p)
 }
 
-func (a *atomicMutexContext) Load() *mutexContext { return a.toData(a.d.Load()) }
+func (a *atomicMutexContext) Load() *mutexContext   { return a.toData(a.d.Load()) }
+func (a *atomicMutexContext) Store(d *mutexContext) { a.d.Store(unsafe.Pointer(d)) }
 
-// func (a *atomicMutexContext) Store(d *mutexContext) { a.d.Store(unsafe.Pointer(d)) }
-//
-// func (a *atomicMutexContext) Swap(new *mutexContext) (old *mutexContext) {
-// 	return a.toData(a.d.Swap(unsafe.Pointer(new)))
-// }
+func (a *atomicMutexContext) Swap(new *mutexContext) (old *mutexContext) {
+	return a.toData(a.d.Swap(unsafe.Pointer(new)))
+}
 
 func (a *atomicMutexContext) CompareAndSwap(old, new *mutexContext) (swapped bool) {
 	return a.d.CompareAndSwap(unsafe.Pointer(old), unsafe.Pointer(new))
@@ -68,6 +67,7 @@ type Mutex struct {
 	heartbeatTimeout  time.Duration
 	lockForce         bool
 	lockForceInterval time.Duration
+	lockForceTimeout  time.Duration
 	unlockDelay       time.Duration
 
 	// if equal nil, has not locked
@@ -110,16 +110,30 @@ func (m *Mutex) WithContext(ctx Context) *Mutex {
 
 // WithLockForce returns the redis mutex with lock force
 // but if the context is cancelled, the lock force is not available
-func (m *Mutex) WithLockForce(force bool, interval ...time.Duration) *Mutex {
+//
+// WithLockForce should be called like these:
+//
+//	WithLockForce(false)
+//	WithLockForce(true, {interval})
+//	WithLockForce(true, {interval}, {timeout})
+func (m *Mutex) WithLockForce(force bool, intervalAndTimeout ...time.Duration) *Mutex {
 	m = m.clone()
 	m.lockForce = force
-	if len(interval) > 0 {
-		d := interval[0]
-		if d < mutexMinLockForceInterval {
-			d = mutexMinLockForceInterval
-		}
-		m.lockForceInterval = d
+
+	m.lockForceInterval = 0
+	m.lockForceInterval = mutexMinLockForceInterval
+	if len(intervalAndTimeout) > 0 {
+		m.lockForceInterval = intervalAndTimeout[0]
 	}
+	if m.lockForceInterval < mutexMinLockForceInterval {
+		m.lockForceInterval = mutexMinLockForceInterval
+	}
+
+	m.lockForceTimeout = 0
+	if len(intervalAndTimeout) > 1 {
+		m.lockForceTimeout = intervalAndTimeout[1]
+	}
+
 	return m
 }
 
@@ -202,23 +216,8 @@ func (m *Mutex) Lock(key string) lderr.Error {
 	log = log.With(zap.String("key", key), zap.String("token", token))
 	ctx = ldctx.WithLogger(ctx, log)
 
-	if err := m.internalLock(ctx, key, token); err != nil {
-		if !m.lockForce {
-			return err
-		}
-
-		ticker := time.NewTicker(m.lockForceInterval)
-		for err != nil {
-			select {
-			case <-ctx.Done():
-				ticker.Stop()
-				return err
-
-			case <-ticker.C:
-				err = m.internalLock(ctx, key, token)
-			}
-		}
-		ticker.Stop()
+	if err := m.internalLockOrLockForce(ctx, key, token); err != nil {
+		return err
 	}
 
 	now := time.Now().UnixNano()
@@ -238,6 +237,37 @@ func (m *Mutex) Lock(key string) lderr.Error {
 	go m.goroutine(mc, now)
 
 	ctx.LogD("redis mutex lock succ", getCaller(m.redis.caller))
+	return nil
+}
+
+func (m *Mutex) internalLockOrLockForce(ctx Context, key, token string) lderr.Error {
+	err := m.internalLock(ctx, key, token)
+	if err == nil {
+		return nil
+	}
+
+	if !m.lockForce {
+		return err
+	}
+
+	timeout := m.lockForceTimeout
+	if timeout > 0 {
+		ctx = ldctx.WithTimeout(ctx, timeout)
+	}
+
+	ticker := time.NewTicker(m.lockForceInterval)
+	defer ticker.Stop()
+	for err != nil {
+		select {
+		case <-ctx.Done():
+			ticker.Stop()
+			return err
+
+		case <-ticker.C:
+			err = m.internalLock(ctx, key, token)
+		}
+	}
+
 	return nil
 }
 
