@@ -54,13 +54,13 @@ func (w *wrapper) hasError(err Error) bool {
 	return err != nil && err.Code() != 0
 }
 
-func (w *wrapper) returnError(c *Context, err Error) {
-	c.AbortWithError(err)
-}
-
-func (w *wrapper) returnResponse(c *Context, rsp interface{}) {
-	c.AbortWithData(rsp)
-}
+// func (w *wrapper) returnError(c *Context, err Error) {
+// 	c.AbortWithError(err)
+// }
+//
+// func (w *wrapper) returnResponse(c *Context, rsp interface{}) {
+// 	c.AbortWithData(rsp)
+// }
 
 func (w *wrapper) getOutConv0() outConvType {
 	return func(c *Context, v []reflect.Value) {}
@@ -76,7 +76,8 @@ func (w *wrapper) getOutConv1(outType reflect.Type) outConvType {
 		out0 := outs[0].Interface()
 		if err := out0; err != nil {
 			if e := lderr.Wrap(err.(error)); w.hasError(e) {
-				w.returnError(c, e)
+				// w.returnError(c, e)
+				c.AbortWithError(e)
 				return
 			}
 		}
@@ -245,7 +246,8 @@ func (w *wrapper) call(g *gin.Context, h reflect.Value) {
 			if !ok {
 				err = fmt.Errorf("%v", e)
 			}
-			w.returnError(c, lderr.Wrap(err, lderr.ErrServicePanic))
+			// w.returnError(c, lderr.Wrap(err, lderr.ErrServicePanic))
+			c.AbortWithError(lderr.Wrap(err, lderr.ErrServicePanic))
 		}
 	}()
 
@@ -253,7 +255,8 @@ func (w *wrapper) call(g *gin.Context, h reflect.Value) {
 	for _, conv := range w.InConvs {
 		v, err := conv(c)
 		if w.hasError(err) {
-			w.returnError(c, err)
+			// w.returnError(c, err)
+			c.AbortWithError(err)
 			return
 		}
 		ins = append(ins, v)

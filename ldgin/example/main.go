@@ -26,13 +26,18 @@ type (
 )
 
 var (
-	ErrTestOneError = lderr.New(http.StatusOK, 1, "test 1")
+	ErrTestOneError  = lderr.New(http.StatusOK, 1, "test one error 1")
+	ErrTestDataError = lderr.New(http.StatusOK, 2, "test data error 1")
 )
 
 func testOneError(c *ldgin.Context) ldgin.Error {
 	c.LogI("", zap.String("method", c.GetMethod()), zap.String("path", c.GetPath()),
 		zap.String("handler", c.GetHandler()))
 	return ErrTestOneError
+}
+
+func testDataError(c *ldgin.Context) (string, ldgin.Error) {
+	return "abc", ErrTestDataError
 }
 
 type testBindReq struct {
@@ -155,6 +160,7 @@ func initRouter(c ldctx.Context, router gin.IRouter) {
 
 	r = r.Use(midware2)
 	r.GET("/one_error", testOneError)
+	r.GET("/data_error", testDataError)
 	r.GET("/bind/:uri", testBind)
 	r.GET("/render/", testRender)
 	r.GET("/validate", testValidate)
