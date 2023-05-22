@@ -79,12 +79,14 @@ func (w *handler) getOutConv1(outType reflect.Type) outConvType {
 		out0 := outs[0].Interface()
 		if err := out0; err != nil {
 			if e := lderr.Wrap(err.(error)); w.hasError(e) {
-				w.returnError(c, e)
+				// w.returnError(c, e)
+				c.AbortWithError(e)
 				return
 			}
 		}
 
-		w.returnResponse(c, nil)
+		// w.returnResponse(c, nil)
+		c.AbortWithData(nil)
 	}
 }
 
@@ -104,7 +106,8 @@ func (w *handler) getOutConv2(outTypes []reflect.Type) outConvType {
 
 			if err := out1; err != nil {
 				if e := lderr.Wrap(err.(error)); w.hasError(e) {
-					w.returnError(c, e)
+					// w.returnError(c, e)
+					c.AbortWithError(e)
 					return
 				}
 			}
@@ -120,12 +123,14 @@ func (w *handler) getOutConv2(outTypes []reflect.Type) outConvType {
 
 		if err := out1; err != nil {
 			if e := lderr.Wrap(err.(error)); w.hasError(e) {
-				w.returnError(c, e)
+				// w.returnError(c, e)
+				c.AbortWithErrorData(e, out0)
 				return
 			}
 		}
 
-		w.returnResponse(c, out0)
+		// w.returnResponse(c, out0)
+		c.AbortWithData(out0)
 	}
 }
 
