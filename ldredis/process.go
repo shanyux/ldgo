@@ -61,10 +61,13 @@ func getCmdField(cmd Cmder) zap.Field {
 }
 
 func (c *Redis) defaultProcess(cmd Cmder) error {
-	retry := c.retry
-	reporter := c.reporter
-	log := c.logger()
-	caller := c.caller
+	var (
+		retry         = c.retry
+		retryInterval = c.retryInterval
+		reporter      = c.reporter
+		log           = c.logger()
+		caller        = c.caller
+	)
 
 	for i := 0; ; {
 		begin := time.Now()
@@ -81,15 +84,19 @@ func (c *Redis) defaultProcess(cmd Cmder) error {
 			log.Error("redis cmd fail", zap.Int("retry", i), getCmdField(cmd), zap.Error(err), getCaller(caller))
 			return err
 		}
+
+		time.Sleep(retryInterval)
 	}
 }
 
 func (c *Redis) defaultProcessPipeline(cmds []Cmder) error {
-	retry := c.retry
-	reporter := c.reporter
-	log := c.logger()
-
-	caller := getCaller(c.caller)
+	var (
+		retry         = c.retry
+		retryInterval = c.retryInterval
+		reporter      = c.reporter
+		log           = c.logger()
+		caller        = getCaller(c.caller)
+	)
 	log = log.With(zap.String("pipeline", hex.EncodeToString(ldrand.Bytes(8))))
 
 	for i := 0; ; {
@@ -109,6 +116,8 @@ func (c *Redis) defaultProcessPipeline(cmds []Cmder) error {
 			log.Error("redis pipeline fail", zap.Int("retry", i), zap.Error(err), caller)
 			return err
 		}
+
+		time.Sleep(retryInterval)
 	}
 }
 
