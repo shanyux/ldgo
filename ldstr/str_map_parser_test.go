@@ -151,34 +151,36 @@ func TestStrMapParser(t *testing.T) {
 		},
 	}
 
-	subtestRun := func(parser *StrMapParser, subtests []subtest) {
+	subtestRun := func(c convey.C, parser *StrMapParser, subtests []subtest) {
 		for _, stt := range subtests {
-			convey.Convey(stt.text, func() {
+			c.Convey(stt.text, func(c convey.C) {
 				got, err := parser.Parse(stt.text)
 				if stt.wantErr {
-					convey.So(err, convey.ShouldNotBeNil)
+					c.So(err, convey.ShouldNotBeNil)
 				} else {
-					convey.So(err, convey.ShouldBeNil)
+					c.So(err, convey.ShouldBeNil)
 				}
-				convey.So(got, convey.ShouldResemble, stt.want)
+				c.So(got, convey.ShouldResemble, stt.want)
 			})
 		}
 	}
 
-	convey.Convey(t.Name(), t, func() {
+	convey.Convey(t.Name(), t, func(c convey.C) {
 		for _, tt := range tests {
-			convey.Convey(tt.tmpl, func() {
+			c.Convey(tt.tmpl, func(c convey.C) {
 				// log.Printf("")
 				parser := &StrMapParser{}
 				err := parser.Init(tt.tmpl, tt.splits...)
 				// log.Printf(" === %s", mustMarshalJson(parser.fields))
 				if tt.wantErr {
-					convey.So(err, convey.ShouldNotBeNil)
+					c.So(err, convey.ShouldNotBeNil)
 					return
 				}
 
-				convey.So(err, convey.ShouldBeNil)
-				subtestRun(parser, tt.subtests)
+				c.So(err, convey.ShouldBeNil)
+				c.So(parser.Template(), convey.ShouldEqual, tt.tmpl)
+
+				subtestRun(c, parser, tt.subtests)
 			})
 		}
 	})
