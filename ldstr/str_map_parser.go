@@ -66,6 +66,9 @@ type StrMapParser struct {
 	fields []strMapField
 }
 
+func (p *StrMapParser) Template() string { return p.template }
+func (p *StrMapParser) String() string   { return p.template }
+
 func (p *StrMapParser) Done() {
 	p.delFieldsBuf(p.fields)
 	p.template = ""
