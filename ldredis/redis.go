@@ -28,10 +28,6 @@ const (
 )
 
 func New(cli redis.Cmdable) *Redis {
-	if rds, ok := cli.(*Redis); ok {
-		return rds
-	}
-
 	switch v := cli.(type) {
 	case *Redis:
 		return v
