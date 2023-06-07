@@ -8,23 +8,14 @@ import (
 	"testing"
 	"time"
 
-	miniredis "github.com/alicebob/miniredis/v2"
 	"github.com/distroy/ldgo/ldctx"
 	"github.com/distroy/ldgo/ldgopool"
 	"github.com/distroy/ldgo/ldlog"
-	"github.com/go-redis/redis"
 	"github.com/smartystreets/goconvey/convey"
 )
 
 func testMemoryRedis() *Redis {
-	server, err := miniredis.Run()
-	if err != nil {
-		panic(err)
-	}
-	client := redis.NewClient(&redis.Options{
-		Addr: server.Addr(),
-	})
-	return New(client)
+	return MustNewTestRedis()
 }
 
 func TestMutex_Lock(t *testing.T) {
