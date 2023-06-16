@@ -54,9 +54,9 @@ _go_install =  ( \
 	_work_dir="$$PWD"; \
 	_go_install_dir="$$(mktemp -d)"; \
 	cd "$$_go_install_dir"; \
-	go mod init main; \
+	go mod init main 1>/dev/null 2>/dev/null; \
 	echo "go install $(1)@latest || go install $(1)"; \
-	(go install $(1)@latest || go install $(1)); \
+	go install $(1)@latest || go install $(1); \
 	cd "$$_work_dir"; \
 	rm -rf "$$_go_install_dir"; \
 	);
