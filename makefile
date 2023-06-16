@@ -54,7 +54,7 @@ _go_install =  ( \
 	_work_dir="$$PWD"; \
 	cd /; \
 	echo "go install $(1)@latest || go install $(1)"; \
-	go install $(1)@latest || go install $(1); \
+	(go install $(1)@latest || go install $(1)); \
 	cd "$$_work_dir"; \
 	);
 
