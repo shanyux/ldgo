@@ -69,7 +69,8 @@ func (l *Limiters) Wait(ctx ldctx.Context) lderr.Error {
 func (l *Limiters) WaitN(ctx ldctx.Context, n int) lderr.Error {
 	select {
 	case <-ctx.Done():
-		return lderr.ErrCtxCanceled
+		// return lderr.ErrCtxCanceled
+		return ldctx.GetError(ctx)
 	default:
 	}
 
@@ -101,17 +102,17 @@ func (l *Limiters) WaitN(ctx ldctx.Context, n int) lderr.Error {
 	defer t.Stop()
 	select {
 	case <-t.C:
-		// We can proceed.
-		return nil
+		break
 
 	case <-ctx.Done():
-		break
+		// Context was canceled before we could proceed.  Cancel the
+		// reservation, which may permit other events to proceed sooner.
+		r.Cancel()
+		return ldctx.GetError(ctx)
 	}
 
-	// Context was canceled before we could proceed.  Cancel the
-	// reservation, which may permit other events to proceed sooner.
-	r.Cancel()
-	return lderr.ErrCtxCanceled
+	// We can proceed.
+	return nil
 }
 
 func (l *Limiters) Reserve(ctx ldctx.Context) (*Reservation, lderr.Error) {

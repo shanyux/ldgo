@@ -28,7 +28,7 @@ func newConfig(opts ...Option) config {
 	cfg := config{
 		Burst:     1,
 		Limit:     1,
-		Interval:  ldatomic.Duration(time.Second),
+		Interval:  0,
 		NodeCount: 1,
 	}
 

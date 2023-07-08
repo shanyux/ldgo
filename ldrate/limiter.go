@@ -35,10 +35,6 @@ func NewLimiter(opts ...Option) *Limiter {
 	return l
 }
 
-func (l *Limiter) SetBurst(burst int64)        { l.config.Burst.Store(burst) }
-func (l *Limiter) SetLimit(limit int64)        { l.config.Limit.Store(limit) }
-func (l *Limiter) SetInterval(d time.Duration) { l.config.Interval.Store(d) }
-func (l *Limiter) SetNodeCount(n int64)        { l.config.NodeCount.Store(n) }
 func (l *Limiter) SetOptions(opts ...Option) {
 	cfg := &l.config
 	for _, fn := range opts {
@@ -46,11 +42,23 @@ func (l *Limiter) SetOptions(opts ...Option) {
 	}
 }
 
+func (l *Limiter) SetBurst(burst int64)        { l.config.Burst.Store(burst) }
+func (l *Limiter) SetLimit(limit int64)        { l.config.Limit.Store(limit) }
+func (l *Limiter) SetInterval(d time.Duration) { l.config.Interval.Store(d) }
+func (l *Limiter) SetNodeCount(n int64)        { l.config.NodeCount.Store(n) }
+
+func (l *Limiter) Burst() int64            { return l.config.Burst.Load() }
+func (l *Limiter) Limit() int64            { return l.config.Limit.Load() }
+func (l *Limiter) Interval() time.Duration { return l.config.Interval.Load() }
+func (l *Limiter) NodeCount() int64        { return l.config.NodeCount.Load() }
+
 func (l *Limiter) refresh(ctx ldctx.Context, now time.Time) lderr.Error {
 	cfg := &l.config
 
 	burst := cfg.Burst.Load()
-	burst = ldmath.MaxInt64(burst, 1)
+	if burst <= 0 {
+		burst = ldmath.MaxInt64(l.lastBurst.Load(), 1)
+	}
 	if burst != l.lastBurst.Load() {
 		l.lastBurst.Store(burst)
 		l.limiter.SetBurstAt(now, int(burst))
@@ -61,22 +69,32 @@ func (l *Limiter) refresh(ctx ldctx.Context, now time.Time) lderr.Error {
 	interval := cfg.Interval.Load()
 	nodeCount := cfg.NodeCount.Load()
 
-	if interval < 0 || limit <= 0 || nodeCount <= 0 {
-		ctx.LogE("[distributed limiter] invalid rate every parameters", zap.Int64("limit", limit),
-			zap.Stringer("interval", interval), zap.Int64("nodeCount", nodeCount))
-		return lderr.ErrInternalServerError
+	if limit <= 0 {
+		limit = ldmath.MaxInt64(l.lastLimit.Load(), 1)
 	}
+	if interval < 0 {
+		interval = 0
+	}
+	if nodeCount <= 0 {
+		nodeCount = ldmath.MaxInt64(l.lastNodeCount.Load(), 1)
+	}
+
+	// if interval < 0 || limit <= 0 || nodeCount <= 0 {
+	// 	ctx.LogE("[distributed limiter] invalid rate every parameters", zap.Int64("limit", limit),
+	// 		zap.Stringer("interval", interval), zap.Int64("nodeCount", nodeCount))
+	// 	return lderr.ErrInternalServerError
+	// }
 
 	if limit == l.lastLimit.Load() && interval == l.lastInterval.Load() && nodeCount == l.lastNodeCount.Load() {
 		return nil
 	}
 
 	every := interval * time.Duration(nodeCount) / time.Duration(limit)
-	if every < 0 {
-		ctx.LogE("[distributed limiter] invalid rate every", zap.Int64("limit", limit),
-			zap.Stringer("interval", interval), zap.Int64("serviceCount", nodeCount))
-		return lderr.ErrInternalServerError
-	}
+	// if every < 0 {
+	// 	ctx.LogE("[distributed limiter] invalid rate every", zap.Int64("limit", limit),
+	// 		zap.Stringer("interval", interval), zap.Int64("serviceCount", nodeCount))
+	// 	return lderr.ErrInternalServerError
+	// }
 
 	l.limiter.SetLimitAt(now, rate.Every(every))
 	l.lastLimit.Store(limit)
@@ -101,7 +119,11 @@ func (l *Limiter) WaitN(ctx ldctx.Context, n int) lderr.Error {
 	}
 
 	if err := l.limiter.WaitN(ctx, n); err != nil {
-		ctx.LogE("[distributed limiter]")
+		ctx.LogE("[distributed limiter] wait fail", zap.Int("n", n), zap.Error(err))
+		if e := ldctx.GetError(ctx); e != nil {
+			return e
+		}
+		return lderr.ErrCtxCanceled
 	}
 
 	return nil

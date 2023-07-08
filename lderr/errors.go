@@ -8,9 +8,10 @@ import "net/http"
 
 // error definitions: [-1, -999]
 var (
-	ErrSuccess      = New(http.StatusOK, 0, "success")
-	ErrUnkown       = New(http.StatusOK, -1, "unknown error")
-	ErrServicePanic = New(http.StatusServiceUnavailable, -2, "service panic")
+	ErrSuccess          = New(http.StatusOK, 0, "success")
+	ErrUnkown           = New(http.StatusOK, -1, "unknown error")
+	ErrServicePanic     = New(http.StatusServiceUnavailable, -2, "service panic")
+	ErrInvalidParameter = New(http.StatusOK, -3, "invalid parameter")
 
 	ErrCtxCanceled         = New(http.StatusOK, -11, "context canceled")
 	ErrCtxDeadlineExceeded = New(http.StatusOK, -12, "context deadline exceeded")
