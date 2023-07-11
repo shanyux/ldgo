@@ -62,7 +62,7 @@ func (l *Limiter) refresh(ctx ldctx.Context, now time.Time) lderr.Error {
 	if burst != l.lastBurst.Load() {
 		l.lastBurst.Store(burst)
 		l.limiter.SetBurstAt(now, int(burst))
-		ctx.LogI("[distributed limiter] refresh the burst succ", zap.Int64("burst", burst))
+		ctx.LogI("[limiter] refresh the burst succ", zap.Int64("burst", burst))
 	}
 
 	limit := cfg.Limit.Load()
@@ -80,7 +80,7 @@ func (l *Limiter) refresh(ctx ldctx.Context, now time.Time) lderr.Error {
 	}
 
 	// if interval < 0 || limit <= 0 || nodeCount <= 0 {
-	// 	ctx.LogE("[distributed limiter] invalid rate every parameters", zap.Int64("limit", limit),
+	// 	ctx.LogE("[limiter] invalid rate every parameters", zap.Int64("limit", limit),
 	// 		zap.Stringer("interval", interval), zap.Int64("nodeCount", nodeCount))
 	// 	return lderr.ErrInternalServerError
 	// }
@@ -91,7 +91,7 @@ func (l *Limiter) refresh(ctx ldctx.Context, now time.Time) lderr.Error {
 
 	every := interval * time.Duration(nodeCount) / time.Duration(limit)
 	// if every < 0 {
-	// 	ctx.LogE("[distributed limiter] invalid rate every", zap.Int64("limit", limit),
+	// 	ctx.LogE("[limiter] invalid rate every", zap.Int64("limit", limit),
 	// 		zap.Stringer("interval", interval), zap.Int64("serviceCount", nodeCount))
 	// 	return lderr.ErrInternalServerError
 	// }
@@ -101,7 +101,7 @@ func (l *Limiter) refresh(ctx ldctx.Context, now time.Time) lderr.Error {
 	l.lastInterval.Store(interval)
 	l.lastNodeCount.Store(nodeCount)
 
-	ctx.LogI("[distributed limiter] refresh rate every succ", zap.Int64("limit", limit),
+	ctx.LogI("[limiter] refresh rate every succ", zap.Int64("limit", limit),
 		zap.Stringer("interval", interval), zap.Int64("serviceCount", nodeCount),
 		zap.Stringer("every", every))
 	return nil
@@ -119,7 +119,7 @@ func (l *Limiter) WaitN(ctx ldctx.Context, n int) lderr.Error {
 	}
 
 	if err := l.limiter.WaitN(ctx, n); err != nil {
-		ctx.LogE("[distributed limiter] wait fail", zap.Int("n", n), zap.Error(err))
+		ctx.LogE("[limiter] wait fail", zap.Int("n", n), zap.Error(err))
 		if e := ldctx.GetError(ctx); e != nil {
 			return e
 		}

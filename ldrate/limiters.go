@@ -13,11 +13,11 @@ import (
 )
 
 var (
-	_ LimiterIface = (*Limiter)(nil)
-	_ LimiterIface = (*Limiters)(nil)
+	_ ILimiter = (*Limiter)(nil)
+	_ ILimiter = (*Limiters)(nil)
 )
 
-type LimiterIface interface {
+type ILimiter interface {
 	Wait(ctx ldctx.Context) lderr.Error
 	WaitN(ctx ldctx.Context, n int) lderr.Error
 
@@ -26,16 +26,16 @@ type LimiterIface interface {
 }
 
 type Limiters struct {
-	limiters []LimiterIface
+	limiters []ILimiter
 }
 
-func NewLimiters(limiters ...LimiterIface) *Limiters {
+func NewLimiters(limiters ...ILimiter) *Limiters {
 	l := &Limiters{}
 	l.AddLimiter(limiters...)
 	return l
 }
 
-func (l *Limiters) AddLimiter(limiters ...LimiterIface) *Limiters {
+func (l *Limiters) AddLimiter(limiters ...ILimiter) *Limiters {
 	// l.limiters = append(l.limiters, limiters...)
 
 	count := 0
@@ -47,7 +47,7 @@ func (l *Limiters) AddLimiter(limiters ...LimiterIface) *Limiters {
 		count += n
 	}
 
-	buf := make([]LimiterIface, 0, len(l.limiters)+count)
+	buf := make([]ILimiter, 0, len(l.limiters)+count)
 	buf = append(buf, l.limiters...)
 
 	for _, limiter := range limiters {
