@@ -42,6 +42,7 @@ func (l *Limiter) SetOptions(opts ...Option) {
 	}
 }
 
+func (l *Limiter) SetName(name string)         { l.config.Name = name }
 func (l *Limiter) SetBurst(burst int64)        { l.config.Burst.Store(burst) }
 func (l *Limiter) SetLimit(limit int64)        { l.config.Limit.Store(limit) }
 func (l *Limiter) SetInterval(d time.Duration) { l.config.Interval.Store(d) }
