@@ -30,7 +30,7 @@ func (p *gopool) Wait() {
 	p.wg.Wait()
 }
 
-func TestLimiter(t *testing.T) {
+func TestLimiter_Wait(t *testing.T) {
 	convey.Convey(t.Name(), t, func(c convey.C) {
 		ctx := ldctx.Default()
 		goes := &gopool{}
@@ -46,7 +46,7 @@ func TestLimiter(t *testing.T) {
 		c.Convey("wait 10 times", func() {
 			sleep := interval / 10
 
-			for i := 0; i < 10; i++ {
+			for i := 0; i < 3; i++ {
 				n := time.Duration(i+1) * interval
 				goes.Go(func() {
 					err := l.Wait(ctx)

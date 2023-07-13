@@ -42,13 +42,13 @@ func (l *Limiter) SetOptions(opts ...Option) {
 	}
 }
 
-func (l *Limiter) SetName(name string)         { l.config.Name = name }
+func (l *Limiter) SetName(name string)         { l.config.Name.Store(name) }
 func (l *Limiter) SetBurst(burst int64)        { l.config.Burst.Store(burst) }
 func (l *Limiter) SetLimit(limit int64)        { l.config.Limit.Store(limit) }
 func (l *Limiter) SetInterval(d time.Duration) { l.config.Interval.Store(d) }
 func (l *Limiter) SetNodeCount(n int64)        { l.config.NodeCount.Store(n) }
 
-func (l *Limiter) Name() string            { return l.config.Name }
+func (l *Limiter) Name() string            { return l.config.Name.Load() }
 func (l *Limiter) Burst() int64            { return l.config.Burst.Load() }
 func (l *Limiter) Limit() int64            { return l.config.Limit.Load() }
 func (l *Limiter) Interval() time.Duration { return l.config.Interval.Load() }
