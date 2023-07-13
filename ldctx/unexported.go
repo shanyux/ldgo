@@ -30,6 +30,17 @@ type stringer interface {
 	String() string
 }
 
+func unwrap(c context.Context) context.Context {
+	switch cc := c.(type) {
+	case ctx:
+		return cc.Context
+	case *ctx:
+		return cc.Context
+	}
+
+	return c
+}
+
 type ctx struct {
 	context.Context
 }
@@ -63,16 +74,16 @@ type logCtx struct {
 	logger *ldlog.Logger
 }
 
-func newLogCtx(parent context.Context, log *ldlog.Logger) *logCtx {
-	return &logCtx{
+func newLogCtx(parent context.Context, log *ldlog.Logger) logCtx {
+	return logCtx{
 		Context: parent,
 		logger:  log,
 	}
 }
 
-func (c *logCtx) String() string { return ContextName(c.Context) + ".WithLogger" }
+func (c logCtx) String() string { return ContextName(c.Context) + ".WithLogger" }
 
-func (c *logCtx) Value(key interface{}) interface{} {
+func (c logCtx) Value(key interface{}) interface{} {
 	if key == ctxKeyLogger {
 		return c.logger
 	}
@@ -85,16 +96,16 @@ type cancelCtx struct {
 	cancel CancelFunc
 }
 
-func newCancelCtx(parent context.Context, cancel CancelFunc) *cancelCtx {
-	return &cancelCtx{
+func newCancelCtx(parent context.Context, cancel CancelFunc) cancelCtx {
+	return cancelCtx{
 		Context: parent,
 		cancel:  cancel,
 	}
 }
 
-func (c *cancelCtx) String() string { return ContextName(c.Context) }
+func (c cancelCtx) String() string { return ContextName(c.Context) }
 
-func (c *cancelCtx) Value(key interface{}) interface{} {
+func (c cancelCtx) Value(key interface{}) interface{} {
 	if key == ctxKeyCancel {
 		return c.cancel
 	}

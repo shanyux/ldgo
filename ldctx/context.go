@@ -40,19 +40,27 @@ type Context interface {
 }
 
 func NewContext(parent context.Context, fields ...zap.Field) Context {
-	if len(fields) == 0 {
-		if c, ok := parent.(Context); ok {
+	return New(parent, fields...)
+}
+
+func New(parent context.Context, fields ...zap.Field) Context {
+	if parent == nil {
+		parent = context.Background()
+
+	} else if c, _ := parent.(Context); c != nil {
+		if len(fields) == 0 {
 			return c
 		}
 
-		return Default()
+		parent = unwrap(parent)
 	}
 
-	if parent == nil {
-		return newCtx(newLogCtx(Default(), defaultLogger().With(fields...)))
+	if len(fields) > 0 {
+		l := GetLogger(parent).With(fields...)
+		parent = newLogCtx(parent, l)
 	}
 
-	return newCtx(newLogCtx(parent, GetLogger(parent).With(fields...)))
+	return newCtx(parent)
 }
 
 func ContextName(c context.Context) string {
@@ -84,10 +92,14 @@ func GetError(c StdContext) lderr.Error {
 
 func WithLogger(parent context.Context, log *ldlog.Logger, fields ...zap.Field) Context {
 	if log == nil {
+		if len(fields) == 0 {
+			return newCtx(unwrap(parent))
+		}
+
 		log = GetLogger(parent)
 	}
 	log = log.With(fields...)
-	return newCtx(newLogCtx(parent, log))
+	return newCtx(newLogCtx(unwrap(parent), log))
 }
 
 func GetLogger(c context.Context) *ldlog.Logger {
@@ -99,11 +111,11 @@ func GetLogger(c context.Context) *ldlog.Logger {
 }
 
 func WithValue(parent context.Context, key, val interface{}) Context {
-	return newCtx(context.WithValue(parent, key, val))
+	return newCtx(context.WithValue(unwrap(parent), key, val))
 }
 
 func WithCancel(parent context.Context) Context {
-	child, cancel := context.WithCancel(parent)
+	child, cancel := context.WithCancel(unwrap(parent))
 	return newCtx(newCancelCtx(child, cancel))
 }
 
@@ -122,7 +134,7 @@ func TryCancel(c context.Context) bool {
 }
 
 func WithTimeout(parent context.Context, timeout time.Duration) Context {
-	return WithDeadline(parent, time.Now().Add(timeout))
+	return WithDeadline(unwrap(parent), time.Now().Add(timeout))
 }
 
 func WithDeadline(parent context.Context, deadline time.Time) Context {
@@ -131,6 +143,6 @@ func WithDeadline(parent context.Context, deadline time.Time) Context {
 		return NewContext(parent)
 	}
 
-	child, cancel := context.WithDeadline(parent, deadline)
+	child, cancel := context.WithDeadline(unwrap(parent), deadline)
 	return newCtx(newCancelCtx(child, cancel))
 }
