@@ -22,23 +22,28 @@ type ChunkedRenderer struct {
 	Code        int
 	ContentType string
 	Headers     map[string]string
-	Reader      io.ReadCloser
+	Reader      io.Reader
 }
 
 func (r ChunkedRenderer) Render(c Context) {
 	reader := r.Reader
+	closer := reader.(io.ReadCloser)
+
 	defer func() {
-		reader.Close()
+		if closer != nil {
+			closer.Close()
+		}
 	}()
 
-	c.Status(r.Code)
 	r.writeHeaders(c)
+	c.Status(r.Code)
 
 	// size := 4096
 	buf := make([]byte, 4096)
 	for {
 		n, err := reader.Read(buf)
 		if err == io.EOF {
+			r.writeChunk(c, nil)
 			return
 
 		} else if err != nil {
@@ -60,7 +65,7 @@ func (r ChunkedRenderer) writeChunk(c Context, chunk []byte) lderr.Error {
 	writer := c.Writer
 
 	size := len(chunk)
-	sizeBytes := ldconv.StrToBytesUnsafe(strconv.Itoa(size))
+	sizeBytes := ldconv.StrToBytesUnsafe(strconv.FormatInt(int64(size), 16))
 
 	if _, err := io.Copy(writer, bytes.NewBuffer(sizeBytes)); err != nil {
 		c.LogE("write chunk fail", zap.Int("size", size), zap.ByteString("chunk", chunk), zap.Error(err))
