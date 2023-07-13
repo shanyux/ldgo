@@ -22,7 +22,7 @@ func (_ *testTable) TableName() string { return "test_table" }
 func testGetGorm() *GormDb {
 	v, _ := gorm.Open("sqlite3", ":memory:")
 
-	db := &GormDb{gormDb: v}
+	db := testNewGorm(v)
 	db.SetLogger(ldlog.Discard().Wrapper())
 	// db = db.WithLogger(ldlog.Console())
 	db.CreateTable(&testTable{})

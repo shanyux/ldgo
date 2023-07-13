@@ -6,16 +6,30 @@ package gorm
 
 import (
 	"fmt"
+	"hash/crc32"
 	"strings"
 
-	"github.com/distroy/ldgo/ldlog"
+	"github.com/distroy/ldgo/ldconv"
+	"github.com/distroy/ldgo/ldrand"
 	"github.com/jinzhu/gorm"
 )
 
 type gormDb = gorm.DB
 
+type Logger interface {
+	Print(v ...interface{})
+}
+
+var (
+	// queryHintReplacer = strings.NewReplacer("/*", " ", "*/", " ")
+	queryHintReplacer = strings.NewReplacer("/*", " ", "*/", " ")
+)
+
 type GormDb struct {
-	*gormDb
+	*gormDb // it is currently used db, it is the master by default
+
+	master  *gorm.DB
+	slavers []*gorm.DB
 
 	txLvl int
 	inTx  bool
@@ -45,22 +59,194 @@ func (w *GormDb) Get() *gorm.DB {
 	return w.gormDb
 }
 
+func (w *GormDb) Close() error {
+	var err error
+
+	db := w.master
+	if e := db.Close(); e != nil {
+		err = e
+	}
+
+	for _, db := range w.slavers {
+		if e := db.Close(); err == nil && e != nil {
+			err = e
+		}
+	}
+
+	return err
+}
+
+// Set will set the db currently used.
+// If master is not set, will set the master db also.
 func (w *GormDb) Set(db *gorm.DB) *GormDb {
 	w = w.clone()
+
 	w.gormDb = db
+	if w.master == nil {
+		w.master = db
+	}
+
 	return w
 }
 
-func (w *GormDb) WithLogger(l ldlog.LoggerInterface) *GormDb {
+func (w *GormDb) SetMaster(db *gorm.DB) *GormDb {
 	w = w.clone()
-	w.gormDb = w.gormDb.LogMode(true)
-	w.gormDb.SetLogger(ldlog.GetWrapper(l))
+
+	w.master = db
+	if w.gormDb == nil {
+		w.gormDb = db
+	}
+
 	return w
+}
+
+func (w *GormDb) AddSlaver(dbs ...*gorm.DB) *GormDb {
+	if len(dbs) == 0 {
+		return w
+	}
+
+	w = w.clone()
+
+	slavers := make([]*gorm.DB, 0, len(w.slavers)+len(dbs))
+	slavers = append(slavers, w.slavers...)
+	slavers = append(slavers, dbs...)
+	w.slavers = slavers
+
+	if w.gormDb == nil {
+		w.gormDb = dbs[0]
+	}
+	if w.master == nil {
+		w.master = dbs[0]
+	}
+
+	return w
+}
+
+// UseMaster must be called before all Create/Update/Query/Delete methods
+func (w *GormDb) UseMaster() *GormDb {
+	if w.gormDb == w.master {
+		return w
+	}
+
+	w = w.clone()
+	w.gormDb = w.master
+	return w
+}
+
+// UseSlaver must be called before all Query methods
+//
+// key must be int/int{8-64}/uint/uint{8-64}/uintptr/string/[]byte.
+// if key is not set, will use rand slaver
+func (w *GormDb) UseSlaver(key ...interface{}) *GormDb {
+	n := len(w.slavers)
+	switch n {
+	case 0:
+		return w
+
+	case 1:
+		w = w.clone()
+		w.gormDb = w.slavers[0]
+		return w
+	}
+
+	hash := w.getHashByKey(key)
+	idx := hash % uint(n)
+
+	w = w.clone()
+	w.gormDb = w.slavers[idx]
+	return w
+}
+
+func (w *GormDb) getHashByKey(keys []interface{}) uint {
+	switch v := keys[0].(type) {
+	case int:
+		return uint(v)
+	case int8:
+		return uint(v)
+	case int16:
+		return uint(v)
+	case int32:
+		return uint(v)
+	case int64:
+		return uint(v)
+
+	case uint:
+		return uint(v)
+	case uint8:
+		return uint(v)
+	case uint16:
+		return uint(v)
+	case uint32:
+		return uint(v)
+	case uint64:
+		return uint(v)
+	case uintptr:
+		return uint(v)
+
+	case string:
+		return uint(crc32.ChecksumIEEE(ldconv.StrToBytesUnsafe(v)))
+
+	case []byte:
+		return uint(crc32.ChecksumIEEE(v))
+	}
+
+	return ldrand.Uint()
+}
+
+func (w *GormDb) withOption(opts ...func(db *gorm.DB) *gorm.DB) *GormDb {
+	w = w.clone()
+
+	apply := func(db *gorm.DB, opts []func(db *gorm.DB) *gorm.DB) *gorm.DB {
+		for _, opt := range opts {
+			db = opt(db)
+		}
+		return db
+	}
+
+	master := apply(w.master, opts)
+
+	current := w.gormDb
+	if current == w.master {
+		current = master
+	}
+
+	slavers := make([]*gorm.DB, 0, len(w.slavers))
+	for _, db0 := range w.slavers {
+		db1 := apply(db0, opts)
+		slavers = append(slavers, db1)
+		if current == db0 {
+			current = db1
+		}
+	}
+
+	if current == w.gormDb {
+		current = apply(current, opts)
+	}
+
+	w.master = master
+	w.gormDb = current
+	w.slavers = slavers
+	return w
+}
+
+// WithLogger can be called before or after UseMaster/UseSlaver
+func (w *GormDb) WithLogger(l Logger) *GormDb {
+	return w.withOption(func(db *gorm.DB) *gorm.DB {
+		db = db.LogMode(true)
+		db.SetLogger(l)
+		return db
+	})
 }
 
 func (w *GormDb) Model(value interface{}) *GormDb {
 	w = w.clone()
 	w.gormDb = w.gormDb.Model(value)
+	return w
+}
+
+func (w *GormDb) Table(table string) *GormDb {
+	w = w.clone()
+	w.gormDb = w.gormDb.Table(table)
 	return w
 }
 
@@ -324,14 +510,14 @@ func (w *GormDb) Scan(out interface{}) *GormDb {
 }
 
 // WithQueryHint add hint comment before sql
+//
+// WithQueryHint must be called after UseSlaver
 func (w *GormDb) WithQueryHint(hint string) *GormDb {
-	replacer := strings.NewReplacer("/*", " ", "*/", " ")
+	replacer := queryHintReplacer
 	hint = replacer.Replace(hint)
 	hint = fmt.Sprintf("/* %s */ ", hint)
 
 	w = w.clone()
-
 	w.gormDb = w.gormDb.Set("gorm:query_hint", hint)
-
 	return w
 }

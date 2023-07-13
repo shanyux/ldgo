@@ -5,6 +5,8 @@
 package ldredis
 
 import (
+	"time"
+
 	"github.com/distroy/ldgo/ldctx"
 	"github.com/distroy/ldgo/ldlog"
 	"github.com/go-redis/redis"
@@ -20,11 +22,12 @@ func isErrNil(err error) bool {
 
 var _ Cmdable = (*Redis)(nil)
 
-func New(cli redis.Cmdable) *Redis {
-	if rds, ok := cli.(*Redis); ok {
-		return rds
-	}
+const (
+	redisRetryIntervalMin = 10 * time.Millisecond
+	redisRetryIntervalDef = 1 * time.Second
+)
 
+func New(cli redis.Cmdable) *Redis {
 	switch v := cli.(type) {
 	case *Redis:
 		return v
@@ -81,11 +84,12 @@ type Redis struct {
 	oldProcess         func(cmd Cmder) error
 	oldProcessPipeline func(cmds []Cmder) error
 
-	ctx      Context
-	log      *ldlog.Logger
-	reporter Reporter
-	retry    int
-	caller   bool
+	ctx           Context
+	log           *ldlog.Logger
+	reporter      Reporter
+	retry         int
+	retryInterval time.Duration
+	caller        bool
 }
 
 func (c *Redis) Client() Cmdable  { return c.origin }
@@ -141,9 +145,23 @@ func (c *Redis) WithContext(ctx Context) *Redis {
 // 	return c
 // }
 
-func (c *Redis) WithRetry(retry int) *Redis {
+// WithRetry should be called like these:
+//
+//	WithRetry(3)
+//	WithRetry(3, {interval})
+func (c *Redis) WithRetry(retry int, interval ...time.Duration) *Redis {
 	c = c.clone()
 	c.retry = retry
+
+	c.retryInterval = redisRetryIntervalDef
+	if len(interval) > 0 {
+		d := interval[0]
+		if d < redisRetryIntervalMin {
+			d = redisRetryIntervalMin
+		}
+		c.retryInterval = d
+	}
+
 	return c
 }
 
