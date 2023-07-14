@@ -22,7 +22,7 @@ const (
 var chunkedBufferPool = &sync.Pool{}
 
 type chunkedBuffer struct {
-	Bytes  []byte
+	Chunk  []byte
 	Buffer *bytes.Buffer
 }
 
@@ -31,8 +31,8 @@ func getChunkedBuffer() *chunkedBuffer {
 	if b == nil {
 		size := 4096
 		b = &chunkedBuffer{
-			Bytes:  make([]byte, size),
-			Buffer: bytes.NewBuffer(make([]byte, 0, size+16)),
+			Chunk:  make([]byte, size-32),
+			Buffer: bytes.NewBuffer(make([]byte, 0, size)),
 		}
 	}
 
@@ -45,11 +45,11 @@ func pubChunkedBuffer(b *chunkedBuffer) {
 }
 
 type ChunkedRenderer struct {
-	Headers          map[string]string
-	ContentType      string // default: not set
-	TransferEncoding string // default: chunked
-	Code             int    // default: http.StatusOK
-	Reader           io.Reader
+	Headers          map[string]string // optional.
+	ContentType      string            // optional. default=not set
+	TransferEncoding string            // optional. default=chunked
+	Code             int               // optional. default=http.StatusOK
+	Reader           io.Reader         // required.
 }
 
 func (r ChunkedRenderer) Render(c Context) {
@@ -68,7 +68,7 @@ func (r ChunkedRenderer) Render(c Context) {
 	r.writeHeaders(c)
 
 	for {
-		n, err := reader.Read(buf.Bytes)
+		n, err := reader.Read(buf.Chunk)
 		if err == io.EOF {
 			r.writeChunk(c, buf, nil)
 			break
@@ -80,7 +80,7 @@ func (r ChunkedRenderer) Render(c Context) {
 			return
 		}
 
-		chunk := buf.Bytes[:n]
+		chunk := buf.Chunk[:n]
 		if err := r.writeChunk(c, buf, chunk); err != nil {
 			// c.LogE("write chunk fail", zap.ByteString("chunk", chunk), zap.Error(err))
 			return
