@@ -53,17 +53,15 @@ var (
 )
 
 const (
-	headerContentType = "Content-Type"
+	headerContentType   = "Content-Type"
+	headerContentLength = "Content-Length"
 )
 
 const (
-	lineEnd = "\r\n"
+	crlf = "\r\n"
 )
 
 const (
 	chunkedHeaderKey   = "Transfer-Encoding"
 	chunkedHeaderValue = "chunked"
-
-	chunkedBufferSize  = 4096
-	chunkedReserveSize = 32
 )

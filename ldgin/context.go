@@ -7,6 +7,7 @@ package ldgin
 import (
 	"context"
 	"encoding/hex"
+	"net"
 	"time"
 
 	"github.com/distroy/ldgo/ldctx"
@@ -216,4 +217,20 @@ func (c *Context) setRenderer(renderer interface{}) {
 
 func (c *Context) setRequest(req interface{}) {
 	c.Gin().Set(GinKeyRequest, req)
+}
+
+func (c *Context) getConn() net.Conn {
+	defer func() {
+		recover()
+	}()
+	conn, _, _ := c.Writer.Hijack()
+	return conn
+}
+
+func (c *Context) CloseConn() error {
+	conn := c.getConn()
+	if conn == nil {
+		return nil
+	}
+	return conn.Close()
 }

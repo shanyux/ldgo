@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/distroy/ldgo/ldconv"
 	"github.com/distroy/ldgo/ldctx"
 	"github.com/distroy/ldgo/lderr"
 	"github.com/distroy/ldgo/ldgin"
@@ -175,10 +176,22 @@ func (r *testReaderForChunked) Read(buff []byte) (int, error) {
 	return 0, io.EOF
 }
 
-func testChunked(c *ldgin.Context) (ldgin.ChunkedRenderer, ldgin.Error) {
-	return ldgin.ChunkedRenderer{
+func testChunked(c *ldgin.Context) (ldgin.ReaderRenderer, ldgin.Error) {
+	if ldconv.AsBool(c.Query("download")) {
+		c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", "chunked.text"))
+	}
+
+	var err error
+	if ldconv.AsBool(c.Query("error")) {
+		err = fmt.Errorf("test error")
+	}
+
+	// c.Header("Transfer-Encoding", "chunked")
+	return ldgin.ReaderRenderer{
+		Chunked:     true,
 		ContentType: "text/plain; charset=utf-8",
 		Reader: &testReaderForChunked{
+			Error: err,
 			Lines: []string{
 				strings.Repeat("abc\n", 3),
 				strings.Repeat("xyz\n", 5),
