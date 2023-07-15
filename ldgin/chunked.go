@@ -15,10 +15,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	lineEnd = "\r\n"
-)
-
 var chunkedBufferPool = &sync.Pool{}
 
 type chunkedBuffer struct {
@@ -29,9 +25,9 @@ type chunkedBuffer struct {
 func getChunkedBuffer() *chunkedBuffer {
 	b, _ := chunkedBufferPool.Get().(*chunkedBuffer)
 	if b == nil {
-		size := 4096
+		size := chunkedBufferSize
 		b = &chunkedBuffer{
-			Chunk:  make([]byte, size-32),
+			Chunk:  make([]byte, size-chunkedReserveSize),
 			Buffer: bytes.NewBuffer(make([]byte, 0, size)),
 		}
 	}
@@ -52,15 +48,14 @@ type ChunkedRenderer struct {
 	Reader           io.Reader         // required.
 }
 
-func (r ChunkedRenderer) Render(c Context) {
+func (r ChunkedRenderer) Render(c *Context) {
 	reader := r.Reader
-	closer := reader.(io.ReadCloser)
 
 	buf := getChunkedBuffer()
 
 	defer func() {
 		pubChunkedBuffer(buf)
-		if closer != nil {
+		if closer, _ := reader.(io.Closer); closer != nil {
 			closer.Close()
 		}
 	}()
@@ -70,30 +65,38 @@ func (r ChunkedRenderer) Render(c Context) {
 	for {
 		n, err := reader.Read(buf.Chunk)
 		if err == io.EOF {
-			r.writeChunk(c, buf, nil)
+			e := r.writeChunk(c, buf, nil)
+			c.setError(e)
 			break
 
 		} else if err != nil {
-			c.LogE("read chunk fail", zap.Error(err))
+			c.LogE("[ldgin chunked] read chunk fail", zap.Error(err))
 			e := lderr.WithDetail(lderr.ErrHttpRenderBody, err.Error())
-			c.AbortWithError(e)
+			c.setError(e)
+			writeError(c, e)
 			return
+
+		} else if n == 0 {
+			continue
 		}
 
 		chunk := buf.Chunk[:n]
 		if err := r.writeChunk(c, buf, chunk); err != nil {
-			// c.LogE("write chunk fail", zap.ByteString("chunk", chunk), zap.Error(err))
+			c.setError(err)
+			// c.LogE("[ldgin chunked] write chunk fail", zap.ByteString("chunk", chunk), zap.Error(err))
 			return
 		}
 	}
 }
 
-func (r ChunkedRenderer) writeChunk(c Context, buf *chunkedBuffer, chunk []byte) lderr.Error {
-	writer := c.Writer
+func (r ChunkedRenderer) writeChunk(c *Context, buf *chunkedBuffer, chunk []byte) lderr.Error {
+	g := c.Gin()
+	writer := g.Writer
+
+	size := len(chunk)
 
 	buf.Buffer.Reset()
 
-	size := len(chunk)
 	fmt.Fprintf(buf.Buffer, "%x", size)
 	// fmt.Fprint(buf.Buffer, lineEnd)
 	buf.Buffer.WriteString(lineEnd)
@@ -105,15 +108,17 @@ func (r ChunkedRenderer) writeChunk(c Context, buf *chunkedBuffer, chunk []byte)
 	buf.Buffer.WriteString(lineEnd)
 
 	if _, err := io.Copy(writer, buf.Buffer); err != nil {
-		c.LogE("write chunk fail", zap.Int("size", size), zap.ByteString("chunk", chunk), zap.Error(err))
+		c.LogE("[ldgin chunked] write chunk fail", zap.Int("size", size), zap.ByteString("chunk", chunk), zap.Error(err))
 		return lderr.WithDetail(lderr.ErrHttpRenderBody, err.Error())
 	}
 
 	return nil
 }
 
-func (r ChunkedRenderer) writeHeaders(c Context) {
-	header := c.Writer.Header()
+func (r ChunkedRenderer) writeHeaders(c *Context) {
+	g := c.Gin()
+
+	header := g.Writer.Header()
 	for k, v := range r.Headers {
 		if v != "" {
 			header.Set(k, v)
@@ -121,18 +126,40 @@ func (r ChunkedRenderer) writeHeaders(c Context) {
 	}
 
 	if r.ContentType != "" {
-		header.Set("Content-Type", r.ContentType)
+		header.Set(headerContentType, r.ContentType)
 	}
 
 	if r.TransferEncoding != "" {
-		header.Set("Transfer-Encoding", r.TransferEncoding)
+		header.Set(chunkedHeaderKey, r.TransferEncoding)
 	} else {
-		header.Set("Transfer-Encoding", "chunked")
+		header.Set(chunkedHeaderKey, chunkedHeaderValue)
 	}
 
 	if r.Code > 0 {
-		c.AbortWithStatus(r.Code)
+		g.AbortWithStatus(r.Code)
 	} else {
-		c.AbortWithStatus(http.StatusOK)
+		g.AbortWithStatus(http.StatusOK)
+	}
+}
+
+func writeError(c *Context, err lderr.Error) {
+	g := c.Gin()
+	writer := g.Writer
+
+	fmt.Fprintf(writer, "code: %d%s", err.Code(), lineEnd)
+	fmt.Fprintf(writer, "message: %s%s", err.Error(), lineEnd)
+
+	var details []string
+	if e, _ := err.(lderr.ErrorWithDetails); e != nil {
+		details = e.Details()
+	}
+
+	if len(details) == 0 {
+		return
+	}
+
+	fmt.Fprintf(writer, "details:%s", lineEnd)
+	for _, v := range details {
+		fmt.Fprintf(writer, "    %s%s", v, lineEnd)
 	}
 }

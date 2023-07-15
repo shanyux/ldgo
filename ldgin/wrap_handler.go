@@ -112,7 +112,7 @@ func (w *handler) getOutConv2(outTypes []reflect.Type) outConvType {
 				}
 			}
 
-			c.Set(GinKeyRenderer, out0)
+			c.setRenderer(out0)
 			callRender(c, outs[0])
 		}
 	}
