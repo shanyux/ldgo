@@ -9,10 +9,12 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"mime/multipart"
 	"net/http"
+	"strings"
 
 	"github.com/distroy/ldgo/ldctx"
 	"github.com/distroy/ldgo/lderr"
@@ -151,6 +153,40 @@ func testPanic(c *ldgin.Context) ldgin.Error {
 	return nil
 }
 
+type testReaderForChunked struct {
+	Error error
+	Lines []string
+
+	index int
+}
+
+func (r *testReaderForChunked) Read(buff []byte) (int, error) {
+	if r.index < len(r.Lines) {
+		data := r.Lines[r.index]
+		r.index++
+
+		return copy(buff, data), nil
+	}
+
+	err := r.Error
+	if err != nil {
+		return 0, err
+	}
+	return 0, io.EOF
+}
+
+func testChunked(c *ldgin.Context) (ldgin.ChunkedRenderer, ldgin.Error) {
+	return ldgin.ChunkedRenderer{
+		ContentType: "text/plain; charset=utf-8",
+		Reader: &testReaderForChunked{
+			Lines: []string{
+				strings.Repeat("abc\n", 3),
+				strings.Repeat("xyz\n", 5),
+			},
+		},
+	}, nil
+}
+
 func initRouter(c ldctx.Context, router gin.IRouter) {
 	r := ldgin.WrapGin(router)
 
@@ -167,6 +203,7 @@ func initRouter(c ldctx.Context, router gin.IRouter) {
 	r.GET("/parse", testParse)
 	r.GET("/midware_error", testSucc, midware3)
 	r.POST("/multipart", testMultipart)
+	r.GET("/chunked", testChunked)
 }
 
 func main() {
