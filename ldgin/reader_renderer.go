@@ -42,7 +42,10 @@ func (r ReaderRenderer) Render(c *Context) {
 	c.LogE("[ldgin] render from reader fail", zap.Error(err))
 	e := lderr.WithDetail(lderr.ErrHttpRenderBody, err.Error())
 	c.setError(e)
-	writeError(c, e)
+
+	if r.Chunked || c.Gin().Writer.Header().Get(chunkedHeaderKey) == chunkedHeaderValue {
+		writeError(c, e)
+	}
 
 	c.CloseConn()
 }
