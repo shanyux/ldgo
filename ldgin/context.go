@@ -139,6 +139,8 @@ func (c *Context) clone() *Context {
 func (c *Context) Copy() *Context {
 	c = c.clone()
 	c.ginCtx = c.ginCtx.Copy()
+
+	c.ginCtx.Set(GinKeyContext, c)
 	return c
 }
 
