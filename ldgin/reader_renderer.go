@@ -45,9 +45,8 @@ func (r ReaderRenderer) Render(c *Context) {
 
 	if r.Chunked || c.Gin().Writer.Header().Get(chunkedHeaderKey) == chunkedHeaderValue {
 		writeError(c, e)
+		c.CloseConn()
 	}
-
-	c.CloseConn()
 }
 
 func (r ReaderRenderer) writeHeaders(c *Context) {
