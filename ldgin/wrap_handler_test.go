@@ -6,26 +6,21 @@ package ldgin
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/distroy/ldgo/lderr"
-	"github.com/distroy/ldgo/ldio"
 	"github.com/gin-gonic/gin"
 	"github.com/smartystreets/goconvey/convey"
 )
 
 func TestWrapHandler(t *testing.T) {
 
-	log.SetOutput(ldio.Discard())
-
 	body := `{ "Where": "abc", "channel_id": 123 }`
 
 	convey.Convey(t.Name(), t, func() {
-		gin.SetMode(gin.TestMode)
 		w := httptest.NewRecorder()
 		g, _ := gin.CreateTestContext(w)
 

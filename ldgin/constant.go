@@ -51,3 +51,17 @@ var (
 	// typeOfRenderer    = reflect.TypeOf((*Renderer)(nil)).Elem()
 	// typeOfGinRenderer = reflect.TypeOf((*GinRenderer)(nil)).Elem()
 )
+
+const (
+	headerContentType   = "Content-Type"
+	headerContentLength = "Content-Length"
+)
+
+const (
+	crlf = "\r\n"
+)
+
+const (
+	chunkedHeaderKey   = "Transfer-Encoding"
+	chunkedHeaderValue = "chunked"
+)
