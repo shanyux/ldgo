@@ -140,7 +140,7 @@ func (w *wrapper) getInConv(t reflect.Type) inConvType {
 			}
 		}
 
-		c.Set(GinKeyRequest, v.Interface())
+		c.setRequest(v.Interface())
 		return v, nil
 	}
 }
