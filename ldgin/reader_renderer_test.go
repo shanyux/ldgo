@@ -57,7 +57,6 @@ func TestReaderRenderer_Render(t *testing.T) {
 				c.Convey("only reader", func(c convey.C) {
 					handler := WrapHandler(func(c *Context) (ReaderRenderer, Error) {
 						renderer := ReaderRenderer{
-							Chunked: true,
 							Reader: &testReaderForChunked{
 								Lines: []string{
 									strings.Repeat("abc", 5),
@@ -91,10 +90,44 @@ func TestReaderRenderer_Render(t *testing.T) {
 					handler := WrapHandler(func(c *Context) (ReaderRenderer, Error) {
 						renderer := ReaderRenderer{
 							Code:        220,
-							Chunked:     true,
 							ContentType: "text/html; charset=utf-8",
 							Headers: map[string]string{
 								"x-abc": "aaaa",
+							},
+							Reader: &testReaderForChunked{
+								Lines: []string{
+									strings.Repeat("abc", 5),
+									"",
+									strings.Repeat("xyz", 6),
+								},
+							},
+						}
+						return renderer, nil
+					})
+
+					handler(g)
+					c.So(w.Code, convey.ShouldEqual, 220)
+					c.So(GetError(g), convey.ShouldBeNil)
+
+					c.So(w.Header().Get(headerContentType), convey.ShouldEqual, "text/html; charset=utf-8")
+					c.So(w.Header().Get(chunkedHeaderKey), convey.ShouldEqual, chunkedHeaderValue)
+					c.So(w.Header().Get("x-abc"), convey.ShouldEqual, "aaaa")
+
+					c.So(w.Body.String(), convey.ShouldEqual, buildResultString([]string{
+						strings.Repeat("abc", 5),
+						strings.Repeat("xyz", 6),
+					}))
+				})
+
+				c.Convey("chunked with content length", func(c convey.C) {
+					handler := WrapHandler(func(c *Context) (ReaderRenderer, Error) {
+						renderer := ReaderRenderer{
+							Code:          220,
+							ContentType:   "text/html; charset=utf-8",
+							ContentLength: 100,
+							Headers: map[string]string{
+								"x-abc":          "aaaa",
+								chunkedHeaderKey: chunkedHeaderValue,
 							},
 							Reader: &testReaderForChunked{
 								Lines: []string{
@@ -125,7 +158,6 @@ func TestReaderRenderer_Render(t *testing.T) {
 			c.Convey("read fail", func(c convey.C) {
 				handler := WrapHandler(func(c *Context) (ReaderRenderer, Error) {
 					renderer := ReaderRenderer{
-						Chunked: true,
 						Reader: &testReaderForChunked{
 							Error: fmt.Errorf("test error"),
 							Lines: []string{
@@ -140,6 +172,8 @@ func TestReaderRenderer_Render(t *testing.T) {
 				c.So(w.Code, convey.ShouldEqual, http.StatusOK)
 				c.So(GetError(g), convey.ShouldNotBeNil)
 				c.So(GetError(g).Code(), convey.ShouldEqual, lderr.ErrHttpRenderBody.Code())
+
+				c.So(w.Header().Get(chunkedHeaderKey), convey.ShouldEqual, chunkedHeaderValue)
 
 				c.So(GetRenderer(g), convey.ShouldNotBeNil)
 				c.So(w.Body.String(), convey.ShouldEqual, buildResultString([]string{

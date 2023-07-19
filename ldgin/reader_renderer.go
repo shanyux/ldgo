@@ -17,8 +17,7 @@ import (
 type ReaderRenderer struct {
 	Headers       map[string]string // optional.
 	Code          int               // optional. default=http.StatusOK
-	Chunked       bool              // optional. default=false
-	ContentLength int64             // optional. default=0
+	ContentLength int64             // if equal 0, will set header Transfer-Encoding: chunked
 	ContentType   string            // optional. default=not set
 	Reader        io.Reader         // required.
 }
@@ -43,10 +42,17 @@ func (r ReaderRenderer) Render(c *Context) {
 	e := lderr.WithDetail(lderr.ErrHttpRenderBody, err.Error())
 	c.setError(e)
 
-	if r.Chunked || c.Gin().Writer.Header().Get(chunkedHeaderKey) == chunkedHeaderValue {
+	if r.isChunked(c) {
 		writeError(c, e)
 		c.CloseConn()
 	}
+}
+
+func (r ReaderRenderer) isChunked(c *Context) bool {
+	g := c.Gin()
+	header := g.Writer.Header()
+
+	return header.Get(chunkedHeaderKey) == chunkedHeaderValue
 }
 
 func (r ReaderRenderer) writeHeaders(c *Context) {
@@ -63,13 +69,17 @@ func (r ReaderRenderer) writeHeaders(c *Context) {
 		header.Set(headerContentType, r.ContentType)
 	}
 
-	if r.ContentLength > 0 {
-		header.Set(headerContentLength, strconv.FormatInt(r.ContentLength, 10))
+	// 设置了 chunked header, http 官方库会处理 chunked 格式，不需要上层处理
+	if r.ContentLength == 0 {
+		header.Set(chunkedHeaderKey, chunkedHeaderValue)
+
+	} else if r.isChunked(c) {
+		r.ContentLength = 0
+		header.Del(headerContentLength)
 	}
 
-	// 设置了 chunked header, http 官方库会处理 chunked 格式，不需要上层处理
-	if r.Chunked {
-		header.Set(chunkedHeaderKey, chunkedHeaderValue)
+	if r.ContentLength > 0 {
+		header.Set(headerContentLength, strconv.FormatInt(r.ContentLength, 10))
 	}
 
 	if r.Code > 0 {

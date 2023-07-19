@@ -188,7 +188,6 @@ func testChunked(c *ldgin.Context) (ldgin.ReaderRenderer, ldgin.Error) {
 
 	// c.Header("Transfer-Encoding", "chunked")
 	return ldgin.ReaderRenderer{
-		Chunked:     true,
 		ContentType: "text/plain; charset=utf-8",
 		Reader: &testReaderForChunked{
 			Error: err,
