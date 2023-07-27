@@ -120,5 +120,17 @@ func TestWhereOption(t *testing.T) {
 				Args:  []interface{}{100, 220, 200, 110, 10, 0},
 			})
 		})
+
+		convey.Convey("right(channel_id, 1) = 1 && channel_id = 10 && b(channel_id)", func() {
+			where := Where(&testFilter{
+				ChannelId: Expr(`right({{column}}, ?) = ?`, 1, "%").And(Equal(10)).And(Expr(`b({{column}})`)),
+			})
+
+			where.buildGorm(gormDb).Find(&rows)
+			convey.So(res, convey.ShouldResemble, whereResult{
+				Query: "(right(`channel_id`, ?) = ? AND `channel_id` = ? AND b(`channel_id`))",
+				Args:  []interface{}{1, "%", 10},
+			})
+		})
 	})
 }
