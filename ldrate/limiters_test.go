@@ -50,17 +50,15 @@ func TestLimiters_Wait(t *testing.T) {
 			c.So(time.Now(), convey.ShouldHappenOnOrAfter, begin.Add(interval1))
 		})
 
+		time.Sleep(sleep)
 		goes.Go(func() {
-			time.Sleep(sleep)
-
 			err := l12.Wait(ctx)
 			c.So(err, convey.ShouldBeNil)
 			c.So(time.Now(), convey.ShouldHappenOnOrAfter, begin.Add(interval1*2))
 		})
 
+		time.Sleep(sleep)
 		goes.Go(func() {
-			time.Sleep(sleep)
-
 			err := l02.Wait(ctx)
 			c.So(err, convey.ShouldBeNil)
 			c.So(time.Now(), convey.ShouldHappenOnOrAfter, begin.Add(interval2*2))
