@@ -50,6 +50,7 @@ func (that *whereReflect) buildWhere(val reflect.Value) whereResult {
 		val = val.Elem()
 	}
 
+	buf := make([]byte, 0, 16)
 	wheres := make([]whereResult, 0, len(that.Fields))
 	for _, f := range that.Fields {
 		fw, ok := val.Field(f.FieldOrder).Interface().(FieldWherer)
@@ -60,7 +61,13 @@ func (that *whereReflect) buildWhere(val reflect.Value) whereResult {
 			continue
 		}
 
-		wheres = append(wheres, fw.buildWhere(f.Name))
+		buf = buf[:0]
+		buf = append(buf, '`')
+		buf = append(buf, f.Name...)
+		buf = append(buf, '`')
+
+		field := ldconv.BytesToStrUnsafe(buf)
+		wheres = append(wheres, fw.buildWhere(field))
 	}
 
 	switch len(wheres) {
