@@ -44,7 +44,9 @@ func copyReflectToStructFromStruct(c *copyContext, target, source reflect.Value)
 
 		tFieldAddr := unsafe.Pointer(target.Field(tFieldInfo.Index).UnsafeAddr())
 		tField := reflect.NewAt(tFieldInfo.Type, tFieldAddr).Elem()
-		sField := source.Field(sFieldInfo.Index)
+		// sField := source.Field(sFieldInfo.Index)
+		sFieldAddr := unsafe.Pointer(source.Field(sFieldInfo.Index).UnsafeAddr())
+		sField := reflect.NewAt(sFieldInfo.Type, sFieldAddr).Elem()
 
 		c.PushField(tFieldInfo.Name)
 		copyReflect(c, tField, sField)
