@@ -32,23 +32,25 @@ func Order(o interface{}) Option {
 	ref := getOrderReflect(val.Type())
 
 	return &orderOption{
-		Value: val,
-		Order: ref,
+		Iface: o,
+		value: val,
+		order: ref,
 	}
 }
 
 type orderOption struct {
-	Value reflect.Value
-	Order *orderReflect
+	Iface interface{}   `json:"order"`
+	value reflect.Value `json:"-"`
+	order *orderReflect `json:"-"`
 }
 
 func (that *orderOption) String() string {
-	bytes, _ := json.Marshal(that.Value.Interface())
+	bytes, _ := json.Marshal(that.value.Interface())
 	return ldconv.BytesToStrUnsafe(bytes)
 }
 
 func (that *orderOption) buildGorm(db *GormDb) *GormDb {
-	return that.Order.buildOrder(db, that.Value)
+	return that.order.buildOrder(db, that.value)
 }
 
 type fieldOrderReflect struct {

@@ -19,15 +19,17 @@ type FieldOrderer interface {
 	Desc() FieldOrderer
 	Asc() FieldOrderer
 
+	// ORDER BY FIELD(`{column}`,3,2,1,4)
 	Field(fieldValues interface{}) FieldOrderer
 
 	getOrder() int
 }
 
 type fieldOrder struct {
-	OrderNum int
-	IsDesc   bool
-	Fields   reflect.Value
+	OrderNum int           `json:"order"`
+	IsDesc   bool          `json:"desc"`
+	Fields   interface{}   `json:"fields"`
+	fields   reflect.Value `json:"-"`
 }
 
 func FieldOrder(i int) FieldOrderer {
@@ -39,7 +41,7 @@ func FieldOrder(i int) FieldOrderer {
 func (that fieldOrder) getOrder() int { return that.OrderNum }
 
 func (that fieldOrder) buildGorm(db *GormDb, field string) *GormDb {
-	if that.Fields.IsValid() {
+	if that.fields.IsValid() {
 		return that.buildGormWithField(db, field)
 	}
 
@@ -69,7 +71,8 @@ func (that fieldOrder) Asc() FieldOrderer {
 
 func (that fieldOrder) Field(fieldValues interface{}) FieldOrderer {
 	if fieldValues == nil {
-		that.Fields = reflect.Value{}
+		that.Fields = nil
+		that.fields = reflect.Value{}
 		return that
 	}
 
@@ -89,7 +92,8 @@ func (that fieldOrder) Field(fieldValues interface{}) FieldOrderer {
 		panic(fmt.Sprintf("the paramter of `ORDER BY FIELD` must not be empty array"))
 	}
 
-	that.Fields = v
+	that.Fields = v.Interface()
+	that.fields = v
 	return that
 }
 
@@ -97,10 +101,10 @@ func (that fieldOrder) buildGormWithField(db *GormDb, field string) *GormDb {
 	buf := &strings.Builder{}
 	fmt.Fprintf(buf, "FIELD(`%s`", field)
 
-	l := that.Fields.Len()
+	l := that.fields.Len()
 	args := make([]interface{}, 0, l)
 	for i := 0; i < l; i++ {
-		v := that.Fields.Index(i)
+		v := that.fields.Index(i)
 		fmt.Fprintf(buf, ", ?")
 		args = append(args, v.Interface())
 	}
