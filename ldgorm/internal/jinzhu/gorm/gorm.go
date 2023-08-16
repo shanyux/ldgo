@@ -158,6 +158,10 @@ func (w *GormDb) UseSlaver(key ...interface{}) *GormDb {
 }
 
 func (w *GormDb) getHashByKey(keys []interface{}) uint {
+	if len(keys) == 0 {
+		return ldrand.Uint()
+	}
+
 	switch v := keys[0].(type) {
 	case int:
 		return uint(v)
@@ -210,12 +214,15 @@ func (w *GormDb) withOption(opts ...func(db *gorm.DB) *gorm.DB) *GormDb {
 		current = master
 	}
 
-	slavers := make([]*gorm.DB, 0, len(w.slavers))
-	for _, db0 := range w.slavers {
-		db1 := apply(db0, opts)
-		slavers = append(slavers, db1)
-		if current == db0 {
-			current = db1
+	var slavers []*gorm.DB
+	if len(w.slavers) > 0 {
+		slavers = make([]*gorm.DB, 0, len(w.slavers))
+		for _, db0 := range w.slavers {
+			db1 := apply(db0, opts)
+			slavers = append(slavers, db1)
+			if current == db0 {
+				current = db1
+			}
 		}
 	}
 
@@ -232,7 +239,9 @@ func (w *GormDb) withOption(opts ...func(db *gorm.DB) *gorm.DB) *GormDb {
 // WithLogger can be called before or after UseMaster/UseSlaver
 func (w *GormDb) WithLogger(l Logger) *GormDb {
 	return w.withOption(func(db *gorm.DB) *gorm.DB {
-		db = db.LogMode(true)
+		// LogMode 方法不会返回新的 gorm.DB 实例，需要使用 Debug 方法
+		// db = db.LogMode(true)
+		db = db.Debug()
 		db.SetLogger(l)
 		return db
 	})
