@@ -239,7 +239,9 @@ func (w *GormDb) withOption(opts ...func(db *gorm.DB) *gorm.DB) *GormDb {
 // WithLogger can be called before or after UseMaster/UseSlaver
 func (w *GormDb) WithLogger(l Logger) *GormDb {
 	return w.withOption(func(db *gorm.DB) *gorm.DB {
-		db = db.LogMode(true)
+		// LogMode 方法不会返回新的 gorm.DB 实例，需要使用 Debug 方法
+		// db = db.LogMode(true)
+		db = db.Debug()
 		db.SetLogger(l)
 		return db
 	})
