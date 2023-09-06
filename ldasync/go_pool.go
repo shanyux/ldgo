@@ -6,7 +6,7 @@ package ldasync
 
 import (
 	"log"
-	"runtime"
+	"runtime/debug"
 	"sync"
 )
 
@@ -34,9 +34,7 @@ func (p *GoPool) GoN(n int, fn func()) {
 			p.wg.Done()
 
 			if err := recover(); err != nil {
-				const size = 4 << 10
-				buf := make([]byte, size)
-				buf = buf[:runtime.Stack(buf, false)]
+				buf := debug.Stack()
 
 				// log.Println(err, ldconv.BytesToStrUnsafe(buf))
 				log.Printf("[go pool] go func panic. err:%v, stack:\n%s", err, buf)
