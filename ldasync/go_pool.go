@@ -26,7 +26,7 @@ func (p *GoPool) Wait() { p.wg.Wait() }
 func (p *GoPool) Go(fn func()) { p.GoN(1, fn) }
 func (p *GoPool) GoN(n int, fn func()) {
 	if n <= 0 {
-		return
+		n = 1
 	}
 
 	fnGo := func() {

@@ -25,7 +25,7 @@ func NewAsyncPool(concurrency int) *AsyncPool {
 
 func (p *AsyncPool) Start(concurrency int) {
 	if concurrency <= 0 {
-		return
+		concurrency = 1
 	}
 
 	p.started.Do(func() { p.start(concurrency) })
