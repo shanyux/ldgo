@@ -15,10 +15,20 @@ import (
 )
 
 type testFilter struct {
+	Table     string
 	VersionId FieldWherer `gormwhere:"column:version_id;"`
 	ChannelId FieldWherer `gormwhere:"column:channel_id;order:2;notempty"`
 	ProjectId FieldWherer `gormwhere:"column:project_id;order:1"`
 	Type      FieldWherer `gormwhere:"column:type;"`
+}
+
+type testFilterWithTableName testFilter
+
+func (p testFilterWithTableName) TableName() string {
+	if p.Table != "" {
+		return p.Table
+	}
+	return "test_table"
 }
 
 type testTable struct {
