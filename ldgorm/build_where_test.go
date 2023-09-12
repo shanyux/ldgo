@@ -82,5 +82,31 @@ func TestBuildWhere(t *testing.T) {
 				Args:  []interface{}{20, 30, 100},
 			})
 		})
+
+		convey.Convey("with table name", func(c convey.C) {
+			c.Convey("customer table name", func(c convey.C) {
+				cond := &testFilterWithTableName{}
+				cond.Table = "a"
+				cond.ChannelId = Equal(20)
+				cond.VersionId = Gt(30).Or(Lt(100))
+
+				BuildWhere(gormDb, cond).Find(&rows)
+				c.So(res, convey.ShouldResemble, whereResult{
+					Query: "(`a`.`channel_id` = ? AND (`a`.`version_id` > ? OR `a`.`version_id` < ?))",
+					Args:  []interface{}{20, 30, 100},
+				})
+			})
+			c.Convey("fixed table name", func(c convey.C) {
+				cond := &testFilterWithTableName{}
+				cond.ChannelId = Equal(20)
+				cond.VersionId = Gt(30).Or(Lt(100))
+
+				BuildWhere(gormDb, cond).Find(&rows)
+				c.So(res, convey.ShouldResemble, whereResult{
+					Query: "(`test_table`.`channel_id` = ? AND (`test_table`.`version_id` > ? OR `test_table`.`version_id` < ?))",
+					Args:  []interface{}{20, 30, 100},
+				})
+			})
+		})
 	})
 }
