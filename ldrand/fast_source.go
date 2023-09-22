@@ -178,10 +178,11 @@ again:
 func (r *fastSource) Read(p []byte) (int, error) {
 	pos := 0
 	val := uint64(0)
+	mask := r.Uint64()
 	for n := 0; n < len(p); n++ {
 		if pos == 0 {
-			val = r.Uint64()
-			pos = 7
+			val = r.Uint64() ^ mask
+			pos = 8
 		}
 		p[n] = byte(val)
 		val >>= 8
