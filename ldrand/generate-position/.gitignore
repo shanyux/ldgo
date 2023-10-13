@@ -2,4 +2,5 @@
 .*
 !.gitignore
 
-/generatexor
+
+/generate-position
