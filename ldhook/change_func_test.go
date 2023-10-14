@@ -71,12 +71,12 @@ func TestChangeFunc(t *testing.T) {
 			opts := []ChangeFuncOption{
 				AppendInput(true),
 				SwapInput(0, 2),
-				AddInput(3, "xyz"),
+				InsertInput(3, "xyz"),
 
 				AppendOutput(nil, errType),
 				AppendOutput(true),
 				SwapOutput(1, 2),
-				AddOutput(2, "xyz"),
+				InsertOutput(2, "xyz"),
 			}
 
 			fn0 := ChangeFunc(fn, opts...)
@@ -111,19 +111,19 @@ func TestChangeFunc(t *testing.T) {
 			c.Convey("add input", func(c convey.C) {
 				c.Convey("out of range", func(c convey.C) {
 					c.So(func() {
-						ChangeFunc(fn, AddInput(4, "xyz"))
+						ChangeFunc(fn, InsertInput(4, "xyz"))
 					}, convey.ShouldPanic)
 				})
 				c.Convey("after last", func(c convey.C) {
 					c.So(func() {
-						ChangeFunc(fn, AddInput(3, "xyz"))
+						ChangeFunc(fn, InsertInput(3, "xyz"))
 					}, convey.ShouldPanic)
 				})
 			})
 
 			c.Convey("succ", func(c convey.C) {
 				opts := []ChangeFuncOption{
-					AddInput(2, true),
+					InsertInput(2, true),
 					AppendOutput(nil, errType),
 				}
 
