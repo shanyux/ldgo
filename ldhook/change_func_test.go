@@ -12,20 +12,20 @@ import (
 	"github.com/smartystreets/goconvey/convey"
 )
 
-func TestChangeFunc(t *testing.T) {
+func TestWrapFunc(t *testing.T) {
 	convey.Convey(t.Name(), t, func(c convey.C) {
 		fn := func(a int, b string) string { return fmt.Sprintf("a:%d, b:%s", a, b) }
 
 		errType := reflect.TypeOf((*error)(nil)).Elem()
 
 		c.Convey("append input/output", func(c convey.C) {
-			opts := []ChangeFuncOption{
+			opts := []FuncWrapperOption{
 				AppendInput(true),
 
 				AppendOutput(nil, errType),
 			}
 
-			fn0 := ChangeFunc(fn, opts...)
+			fn0 := WrapFunc(fn, opts...)
 			fn1, ok := fn0.(func(a int, b string, c bool) (string, error))
 			c.So(ok, convey.ShouldBeTrue)
 
@@ -48,7 +48,7 @@ func TestChangeFunc(t *testing.T) {
 		})
 
 		c.Convey("append/swap input/output", func(c convey.C) {
-			opts := []ChangeFuncOption{
+			opts := []FuncWrapperOption{
 				AppendInput(true),
 				SwapInput(0, 2),
 
@@ -57,7 +57,7 @@ func TestChangeFunc(t *testing.T) {
 				SwapOutput(1, 2),
 			}
 
-			fn0 := ChangeFunc(fn, opts...)
+			fn0 := WrapFunc(fn, opts...)
 			fn1, ok := fn0.(func(a bool, b string, c int) (string, bool, error))
 			c.So(ok, convey.ShouldBeTrue)
 
@@ -68,7 +68,7 @@ func TestChangeFunc(t *testing.T) {
 		})
 
 		c.Convey("append/swap/add input/output", func(c convey.C) {
-			opts := []ChangeFuncOption{
+			opts := []FuncWrapperOption{
 				AppendInput(true),
 				SwapInput(0, 2),
 				InsertInput(3, "xyz"),
@@ -79,7 +79,7 @@ func TestChangeFunc(t *testing.T) {
 				InsertOutput(2, "xyz"),
 			}
 
-			fn0 := ChangeFunc(fn, opts...)
+			fn0 := WrapFunc(fn, opts...)
 			fn1 := fn0.(func(a bool, b string, c int, d string) (string, bool, string, error))
 			fn1, ok := fn0.(func(a bool, b string, c int, d string) (string, bool, string, error))
 			c.So(ok, convey.ShouldBeTrue)
@@ -98,36 +98,36 @@ func TestChangeFunc(t *testing.T) {
 
 			c.Convey("swap last input parameter", func(c convey.C) {
 				c.So(func() {
-					ChangeFunc(fn, SwapInput(0, 2))
+					WrapFunc(fn, SwapInput(0, 2))
 				}, convey.ShouldPanic)
 			})
 
 			c.Convey("append input", func(c convey.C) {
 				c.So(func() {
-					ChangeFunc(fn, AppendInput(true))
+					WrapFunc(fn, AppendInput(true))
 				}, convey.ShouldPanic)
 			})
 
 			c.Convey("add input", func(c convey.C) {
 				c.Convey("out of range", func(c convey.C) {
 					c.So(func() {
-						ChangeFunc(fn, InsertInput(4, "xyz"))
+						WrapFunc(fn, InsertInput(4, "xyz"))
 					}, convey.ShouldPanic)
 				})
 				c.Convey("after last", func(c convey.C) {
 					c.So(func() {
-						ChangeFunc(fn, InsertInput(3, "xyz"))
+						WrapFunc(fn, InsertInput(3, "xyz"))
 					}, convey.ShouldPanic)
 				})
 			})
 
 			c.Convey("succ", func(c convey.C) {
-				opts := []ChangeFuncOption{
+				opts := []FuncWrapperOption{
 					InsertInput(2, true),
 					AppendOutput(nil, errType),
 				}
 
-				fn0 := ChangeFunc(fn, opts...)
+				fn0 := WrapFunc(fn, opts...)
 				fn1, ok := fn0.(func(a int, b string, c bool, d ...int) (string, error))
 				c.So(ok, convey.ShouldBeTrue)
 

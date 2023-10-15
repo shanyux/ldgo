@@ -8,40 +8,40 @@ import (
 	"reflect"
 )
 
-type ChangeFuncOption func(p *funcChanger)
+type FuncWrapperOption func(p *funcWrapper)
 
-func SwapInput(a, b int) ChangeFuncOption {
-	return func(p *funcChanger) {
+func SwapInput(a, b int) FuncWrapperOption {
+	return func(p *funcWrapper) {
 		p.SwapInput(a, b)
 	}
 }
 
-func SwapOutput(a, b int) ChangeFuncOption {
-	return func(p *funcChanger) {
+func SwapOutput(a, b int) FuncWrapperOption {
+	return func(p *funcWrapper) {
 		p.SwapOutput(a, b)
 	}
 }
 
-func AppendInput(val interface{}, typ ...reflect.Type) ChangeFuncOption {
-	return func(p *funcChanger) {
+func AppendInput(val interface{}, typ ...reflect.Type) FuncWrapperOption {
+	return func(p *funcWrapper) {
 		p.AppendInput(val, typ...)
 	}
 }
 
-func AppendOutput(val interface{}, typ ...reflect.Type) ChangeFuncOption {
-	return func(p *funcChanger) {
+func AppendOutput(val interface{}, typ ...reflect.Type) FuncWrapperOption {
+	return func(p *funcWrapper) {
 		p.AppendOutput(val, typ...)
 	}
 }
 
-func InsertInput(pos int, val interface{}, typ ...reflect.Type) ChangeFuncOption {
-	return func(p *funcChanger) {
+func InsertInput(pos int, val interface{}, typ ...reflect.Type) FuncWrapperOption {
+	return func(p *funcWrapper) {
 		p.InsertInput(pos, val, typ...)
 	}
 }
 
-func InsertOutput(pos int, val interface{}, typ ...reflect.Type) ChangeFuncOption {
-	return func(p *funcChanger) {
+func InsertOutput(pos int, val interface{}, typ ...reflect.Type) FuncWrapperOption {
+	return func(p *funcWrapper) {
 		p.InsertOutput(pos, val, typ...)
 	}
 }
