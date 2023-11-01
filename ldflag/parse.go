@@ -6,6 +6,7 @@ package ldflag
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"reflect"
 	"strings"
@@ -17,6 +18,7 @@ const (
 )
 
 var (
+	defaultFlagSet *FlagSet
 	defaultOptions = ([]func(s *FlagSet))(nil)
 )
 
@@ -26,12 +28,12 @@ func init() {
 
 func newDefaultFlagSet() *FlagSet {
 	s := NewFlagSet()
-	s.init()
 
 	for _, opt := range defaultOptions {
 		opt(s)
 	}
 
+	defaultFlagSet = s
 	return s
 }
 
@@ -52,6 +54,9 @@ func Parse(v interface{}, args ...[]string) error {
 	s.Model(v)
 	return s.Parse(args...)
 }
+
+func PrintUsage()            { defaultFlagSet.PrintUsage() }
+func WriteUsage(w io.Writer) { defaultFlagSet.WriteUsage(w) }
 
 func parseFlagName(f reflect.StructField) string {
 	name := f.Name
