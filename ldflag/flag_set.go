@@ -69,8 +69,16 @@ func (s *FlagSet) SetOutput(w io.Writer) {
 	s.command.SetOutput(w)
 }
 
+func (s *FlagSet) PrintUsage() {
+	s.printUsage()
+}
+
 func (s *FlagSet) printUsage() {
 	w := s.command.Output()
+	s.writeUsage(w)
+}
+
+func (s *FlagSet) WriteUsage(w io.Writer) {
 	s.writeUsage(w)
 }
 
