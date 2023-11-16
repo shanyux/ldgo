@@ -132,14 +132,16 @@ func (s *FlagSet) writeFlagUsage(w io.Writer, f *Flag) {
 	if len(meta) > 0 {
 		fmt.Fprintf(b, " %s", meta)
 	}
+
 	// Boolean flags of one ASCII letter are so common we
 	// treat them specially, putting their usage on the same line.
-	if b.Len() <= nameSize-2 { // space, space, '-', 'x'.
-		for i := b.Len(); i < nameSize; i++ {
-			fmt.Fprint(b, ' ')
+	if usage != "" {
+		if b.Len() <= nameSize-2 { // space, space, '-', 'x'.
+			for i := b.Len(); i < nameSize; i++ {
+				fmt.Fprint(b, " ")
+			}
 		}
 
-	} else if usage != "" {
 		// Four spaces before the tab triggers good alignment
 		// for both 4- and 8-space tab stops.
 		fmt.Fprint(b, usagePrefix)
