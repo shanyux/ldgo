@@ -3,7 +3,7 @@ go-coverage:
     mode: all
   # exclude:
   #   - '(^|/)3rd/'
-  rate: 0.55
+  rate: 0.65
   top: 10
 
 go-cognitive:

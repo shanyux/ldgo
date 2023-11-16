@@ -66,7 +66,7 @@ func TestFlagSet_wrigeUsageHeader(t *testing.T) {
 }
 
 func TestFlagSet_wrigeUsage(t *testing.T) {
-	convey.Convey(t.Name(), t, func() {
+	convey.Convey(t.Name(), t, func(c convey.C) {
 		b := &strings.Builder{}
 		s := newTestFlagSet()
 
@@ -174,6 +174,22 @@ Flags:
                 default:
                         a
                         b
+`)
+		})
+
+		c.Convey("short flag && no usage", func(c convey.C) {
+			type Flags struct {
+				Csv bool `flag:"bool"`
+			}
+
+			flags := &Flags{}
+
+			s.Model(flags)
+			s.writeUsage(b)
+
+			convey.So(b.String(), convey.ShouldEqual, `Usage of unittest:
+Flags:
+        -csv
 `)
 		})
 	})
