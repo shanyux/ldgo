@@ -45,14 +45,16 @@ func Where(where interface{}) WhereOption {
 	w := getWhereReflect(val.Type())
 
 	return &whereOption{
-		Value: val,
-		Where: w,
+		Iface: where,
+		value: val,
+		where: w,
 	}
 }
 
 type whereOption struct {
-	Value reflect.Value
-	Where *whereReflect
+	Iface interface{}   `json:"where"`
+	value reflect.Value `json:"-"`
+	where *whereReflect `json:"-"`
 }
 
 func (w *whereOption) String() string {
@@ -62,11 +64,11 @@ func (w *whereOption) String() string {
 }
 
 func (w *whereOption) buildGorm(db *GormDb) *GormDb {
-	return w.Where.buildGorm(db, w.Value)
+	return w.where.buildGorm(db, w.value)
 }
 
 func (w *whereOption) buildWhere() whereResult {
-	return w.Where.buildWhere(w.Value)
+	return w.where.buildWhere(w.value)
 }
 
 func (w *whereOption) toTree() *whereOptionTree {

@@ -29,6 +29,7 @@ type done struct {
 func (that *done) Stop() {
 	that.o.Do(func() { close(that.c) })
 }
+
 func (that *done) Chan() <-chan none {
 	return that.c
 }

@@ -15,10 +15,20 @@ import (
 )
 
 type testFilter struct {
+	Table     string
 	VersionId FieldWherer `gormwhere:"column:version_id;"`
 	ChannelId FieldWherer `gormwhere:"column:channel_id;order:2;notempty"`
 	ProjectId FieldWherer `gormwhere:"column:project_id;order:1"`
 	Type      FieldWherer `gormwhere:"column:type;"`
+}
+
+type testFilterWithTableName testFilter
+
+func (p testFilterWithTableName) TableName() string {
+	if p.Table != "" {
+		return p.Table
+	}
+	return "test_table"
 }
 
 type testTable struct {
@@ -118,6 +128,18 @@ func TestWhereOption(t *testing.T) {
 			convey.So(res, convey.ShouldResemble, whereResult{
 				Query: "(((`channel_id` < ? AND `version_id` > ?) OR (`channel_id` > ? AND `version_id` < ?)) AND (`project_id` = ? AND `channel_id` >= ?))",
 				Args:  []interface{}{100, 220, 200, 110, 10, 0},
+			})
+		})
+
+		convey.Convey("right(channel_id, 1) = 1 && channel_id = 10 && b(channel_id)", func() {
+			where := Where(&testFilter{
+				ChannelId: Expr(`right({{column}}, ?) = ?`, 1, "%").And(Equal(10)).And(Expr(`b({{column}})`)),
+			})
+
+			where.buildGorm(gormDb).Find(&rows)
+			convey.So(res, convey.ShouldResemble, whereResult{
+				Query: "(right(`channel_id`, ?) = ? AND `channel_id` = ? AND b(`channel_id`))",
+				Args:  []interface{}{1, "%", 10},
 			})
 		})
 	})

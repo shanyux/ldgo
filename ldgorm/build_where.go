@@ -33,10 +33,6 @@ func BuildWhere(db *GormDb, where interface{}) *GormDb {
 	return w.buildGorm(db)
 }
 
-type whereReflect struct {
-	Fields []*fieldWhereReflect
-}
-
 type fieldWhereReflect struct {
 	Tags       ldtagmap.Tags
 	Name       string
@@ -45,11 +41,25 @@ type fieldWhereReflect struct {
 	NotEmpty   bool
 }
 
+type whereReflect struct {
+	Fields []*fieldWhereReflect
+}
+
+func (that *whereReflect) getTableName(val reflect.Value) string {
+	if v, ok := val.Interface().(TableNamer); ok && v != nil {
+		return v.TableName()
+	}
+	return ""
+}
+
 func (that *whereReflect) buildWhere(val reflect.Value) whereResult {
+	tableName := that.getTableName(val)
+
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()
 	}
 
+	buf := make([]byte, 0, 32)
 	wheres := make([]whereResult, 0, len(that.Fields))
 	for _, f := range that.Fields {
 		fw, ok := val.Field(f.FieldOrder).Interface().(FieldWherer)
@@ -60,7 +70,20 @@ func (that *whereReflect) buildWhere(val reflect.Value) whereResult {
 			continue
 		}
 
-		wheres = append(wheres, fw.buildWhere(f.Name))
+		buf = buf[:0]
+		if tableName != "" {
+			buf = append(buf, '`')
+			buf = append(buf, tableName...)
+			buf = append(buf, '`')
+			buf = append(buf, '.')
+		}
+
+		buf = append(buf, '`')
+		buf = append(buf, f.Name...)
+		buf = append(buf, '`')
+
+		field := ldconv.BytesToStrUnsafe(buf)
+		wheres = append(wheres, fw.buildWhere(field))
 	}
 
 	switch len(wheres) {

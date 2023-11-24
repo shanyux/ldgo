@@ -8,12 +8,14 @@ import "net/http"
 
 // error definitions: [-1, -999]
 var (
-	ErrSuccess      = New(http.StatusOK, 0, "success")
-	ErrUnkown       = New(http.StatusOK, -1, "unknown error")
-	ErrServicePanic = New(http.StatusServiceUnavailable, -2, "service panic")
+	ErrSuccess          = New(http.StatusOK, 0, "success")
+	ErrUnkown           = New(http.StatusOK, -1, "unknown error")
+	ErrServicePanic     = New(http.StatusServiceUnavailable, -2, "service panic")
+	ErrInvalidParameter = New(http.StatusOK, -3, "invalid parameter")
 
-	ErrCtxCanceled         = New(http.StatusOK, -11, "context canceled")
-	ErrCtxDeadlineExceeded = New(http.StatusOK, -12, "context deadline exceeded")
+	ErrCtxCanceled          = New(http.StatusOK, -11, "context canceled")
+	ErrCtxDeadlineExceeded  = New(http.StatusOK, -12, "context deadline exceeded")
+	ErrCtxDeadlineNotEnough = New(http.StatusOK, -13, "context deadline not enough")
 
 	ErrReflectError        = New(http.StatusOK, -21, "reflect error")
 	ErrReflectTargetNotPtr = New(http.StatusOK, -22, "reflect target is not pointer")
@@ -39,6 +41,7 @@ var (
 	ErrHttpReadBody      = New(http.StatusOK, -302, "http read body error")
 	ErrHttpNewRequest    = New(http.StatusOK, -303, "http new request error")
 	ErrHttpInvalidStatus = New(http.StatusOK, -304, "http invalid status")
+	ErrHttpRenderBody    = New(http.StatusOK, -305, "http render body fail")
 
 	ErrRpcCall      = New(http.StatusOK, -311, "rpc call error")
 	ErrRpcTimeout   = New(http.StatusOK, -312, "rpc timeout")

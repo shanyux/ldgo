@@ -6,7 +6,9 @@ package ldgorm
 
 import (
 	"fmt"
+	"log"
 	"reflect"
+	"strings"
 )
 
 type FieldWherer interface {
@@ -121,7 +123,7 @@ type fieldWhere struct {
 
 func (that fieldWhere) buildWhere(field string) whereResult {
 	return whereResult{
-		Query: fmt.Sprintf("`%s`%s", field, that.Query),
+		Query: fmt.Sprintf("%s%s", field, that.Query),
 		Args:  that.Values,
 	}
 }
@@ -156,4 +158,44 @@ func newFieldWhereWithCheck(query string, value interface{}) FieldWherer {
 	}
 
 	return newFieldWhere(query, val)
+}
+
+func newFieldWhereExpr(expr string, args ...interface{}) FieldWherer {
+	return fieldWhereExpr{
+		Expr: expr,
+		Args: args,
+	}
+}
+
+type fieldWhereExpr struct {
+	fieldWhereBase
+
+	Expr string        `json:"expr"`
+	Args []interface{} `json:"args"`
+}
+
+func (that fieldWhereExpr) buildWhere(field string) whereResult {
+	expr := strings.ReplaceAll(that.Expr, "{{column}}", field)
+	log.Printf("expr:%s", expr)
+
+	return whereResult{
+		Query: expr,
+		Args:  that.Args,
+	}
+}
+
+func (that fieldWhereExpr) toTree() fieldWhereTree {
+	return fieldWhereTree{
+		Wheres: []fieldWhereTreeNode{{
+			Where: that,
+		}},
+	}
+}
+
+func (that fieldWhereExpr) And(b FieldWherer) FieldWherer {
+	return that.toTree().And(b)
+}
+
+func (that fieldWhereExpr) Or(b FieldWherer) FieldWherer {
+	return that.toTree().Or(b)
 }

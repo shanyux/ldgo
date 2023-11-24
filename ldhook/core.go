@@ -8,16 +8,16 @@ import (
 	"reflect"
 	"unsafe"
 
-	_ "github.com/agiledragon/gomonkey"
+	_ "github.com/agiledragon/gomonkey/v2"
 )
 
-//go:linkname replace github.com/agiledragon/gomonkey.replace
+//go:linkname replace github.com/agiledragon/gomonkey/v2.replace
 func replace(target, double uintptr) []byte
 
-//go:linkname modifyBinary github.com/agiledragon/gomonkey.modifyBinary
+//go:linkname modifyBinary github.com/agiledragon/gomonkey/v2.modifyBinary
 func modifyBinary(target uintptr, bytes []byte)
 
-//go:linkname getPointer github.com/agiledragon/gomonkey.getPointer
+//go:linkname getPointer github.com/agiledragon/gomonkey/v2.getPointer
 func getPointer(v reflect.Value) unsafe.Pointer
 
 type patchFunc struct {

@@ -32,14 +32,7 @@ type MethodHook struct {
 }
 
 func (h MethodHook) hook(patches *patches) {
-	tType, ok := h.Target.(reflect.Type)
-	if !ok || tType == nil {
-		tType = reflect.TypeOf(h.Target)
-	}
-	method, ok := tType.MethodByName(h.Method)
-	if !ok {
-		panic("retrieve method by name fail")
-	}
+	method := getMethod(h.Target, h.Method)
 
 	mType := method.Type
 	double := getDoubleInterface(mType, h.Double)

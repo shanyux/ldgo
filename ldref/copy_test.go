@@ -21,7 +21,20 @@ type testCopyStruct struct {
 	Age       int64
 	Female    bool
 	unexpored *int
+	Ptr       *int
 }
+
+type testCopyStruct2 struct {
+	Id        int64  `copy:"id"`
+	Ignore    bool   `copy:"-"`
+	Name      string `copy:""`
+	Age       int64
+	Female    bool
+	unexpored *int
+	Ptr       *int
+}
+
+func testNewInt(v int) *int { return &v }
 
 func TestCopy(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
@@ -901,6 +914,30 @@ func TestCopy(t *testing.T) {
 				})
 			})
 
+			convey.Convey("*struct to *struct 2", func() {
+				var (
+					target testCopyStruct2
+					source *testCopyStruct = &testCopyStruct{
+						Id:        100,
+						Ignore:    true,
+						Name:      "abc",
+						Age:       23,
+						Female:    true,
+						unexpored: new(int),
+					}
+				)
+
+				err := Copy(&target, source)
+				convey.So(err, convey.ShouldBeNil)
+				convey.So(&target, convey.ShouldResemble, &testCopyStruct2{
+					Id:        100,
+					Name:      "abc",
+					Age:       23,
+					Female:    true,
+					unexpored: new(int),
+				})
+			})
+
 			convey.Convey("**struct to *struct", func() {
 				var (
 					target testCopyStruct
@@ -949,6 +986,7 @@ func TestCopy(t *testing.T) {
 						`Name`:   "abc",
 						`Age`:    "23",
 						`Female`: "true",
+						`Ptr`:    "1234",
 					}
 				)
 
@@ -959,6 +997,7 @@ func TestCopy(t *testing.T) {
 					Name:   "abc",
 					Age:    23,
 					Female: true,
+					Ptr:    testNewInt(1234),
 				})
 			})
 

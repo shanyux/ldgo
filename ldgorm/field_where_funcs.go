@@ -6,6 +6,8 @@ package ldgorm
 
 import "reflect"
 
+func FieldWhereEmpty() FieldWherer { return fieldWhereEmpty{} }
+
 func Equal(value interface{}) FieldWherer    { return newFieldWhereWithCheck(" = ?", value) }
 func NotEqual(value interface{}) FieldWherer { return newFieldWhereWithCheck(" <> ?", value) }
 
@@ -152,4 +154,16 @@ func NotLikeContain(value string) FieldWherer {
 	value = escapeForLike(value)
 	value = "%" + value + "%"
 	return newFieldWhere(" NOT LIKE ?", value)
+}
+
+// Expr uses {{column}} instead of column name.
+// example:
+//
+//	ldgorm.Expr(`right({{column}}, ?) = ?`,  1, "%")
+func Expr(expr string, args ...interface{}) FieldWherer {
+	if expr == "" {
+		return fieldWhereEmpty{}
+	}
+
+	return newFieldWhereExpr(expr, args...)
 }

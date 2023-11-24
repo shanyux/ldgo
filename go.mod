@@ -3,7 +3,7 @@ module github.com/distroy/ldgo
 go 1.17
 
 require (
-	github.com/agiledragon/gomonkey v2.0.2+incompatible
+	github.com/agiledragon/gomonkey/v2 v2.10.1
 	github.com/alicebob/miniredis/v2 v2.11.1
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-redis/redis v6.15.9+incompatible
@@ -12,6 +12,7 @@ require (
 	github.com/shopspring/decimal v1.2.0
 	github.com/smartystreets/goconvey v1.6.4
 	go.uber.org/zap v1.18.1
+	golang.org/x/time v0.4.0
 	google.golang.org/protobuf v1.30.0
 )
 

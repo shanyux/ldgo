@@ -930,6 +930,30 @@ func TestDeepCopy(t *testing.T) {
 				})
 			})
 
+			convey.Convey("*struct to *struct 2", func() {
+				var (
+					target testCopyStruct2
+					source *testCopyStruct = &testCopyStruct{
+						Id:        100,
+						Ignore:    true,
+						Name:      "abc",
+						Age:       23,
+						Female:    true,
+						unexpored: new(int),
+					}
+				)
+
+				err := DeepCopy(&target, source)
+				convey.So(err, convey.ShouldBeNil)
+				convey.So(&target, convey.ShouldResemble, &testCopyStruct2{
+					Id:        100,
+					Name:      "abc",
+					Age:       23,
+					Female:    true,
+					unexpored: new(int),
+				})
+			})
+
 			convey.Convey("map[string]string to *struct", func() {
 				var (
 					target testCopyStruct

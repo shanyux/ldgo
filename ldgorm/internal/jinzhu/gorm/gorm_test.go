@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/distroy/ldgo/ldhook"
+	"github.com/distroy/ldgo/ldlog"
 	"github.com/distroy/ldgo/ldrand"
 	"github.com/jinzhu/gorm"
 	"github.com/smartystreets/goconvey/convey"
@@ -502,4 +503,79 @@ func TestGormDb_WithQueryHint(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGormDb_WithLogger(t *testing.T) {
+	convey.Convey(t.Name(), t, func(c convey.C) {
+		c.Convey("without slaver", func(c convey.C) {
+			db := testGetGorm()
+			defer db.Close()
+
+			buf := &strings.Builder{}
+
+			db = db.WithLogger(ldlog.NewLogger(ldlog.Writer(buf)).Wrapper())
+
+			db = db.UseSlaver()
+
+			db.Save(&testTable{
+				ProjectId: 1001,
+				ChannelId: 1002,
+				Type:      1003,
+				VersionId: 1004,
+			})
+
+			t.Logf("%s", buf.String())
+			c.SkipSo(buf.String(), convey.ShouldEqual, ``)
+		})
+
+		c.Convey("with slaver", func(c convey.C) {
+			c.Convey("rand", func(c convey.C) {
+				db := testGetGorm()
+				defer db.Close()
+
+				db = db.AddSlaver(testGetGorm().Get())
+				db = db.AddSlaver(testGetGorm().Get())
+
+				db = db.UseSlaver()
+
+				buf := &strings.Builder{}
+
+				db = db.WithLogger(ldlog.NewLogger(ldlog.Writer(buf)).Wrapper())
+
+				db.Save(&testTable{
+					ProjectId: 1001,
+					ChannelId: 1002,
+					Type:      1003,
+					VersionId: 1004,
+				})
+
+				t.Logf("%s", buf.String())
+				c.SkipSo(buf.String(), convey.ShouldEqual, ``)
+			})
+
+			c.Convey("index", func(c convey.C) {
+				db := testGetGorm()
+				defer db.Close()
+
+				db = db.AddSlaver(testGetGorm().Get())
+				db = db.AddSlaver(testGetGorm().Get())
+
+				db = db.UseSlaver(1)
+
+				buf := &strings.Builder{}
+
+				db = db.WithLogger(ldlog.NewLogger(ldlog.Writer(buf)).Wrapper())
+
+				db.Save(&testTable{
+					ProjectId: 1001,
+					ChannelId: 1002,
+					Type:      1003,
+					VersionId: 1004,
+				})
+
+				t.Logf("%s", buf.String())
+				c.SkipSo(buf.String(), convey.ShouldEqual, ``)
+			})
+		})
+	})
 }
