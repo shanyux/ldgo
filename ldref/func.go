@@ -11,12 +11,12 @@ import (
 )
 
 type FuncName struct {
-	Full     string
-	Short    string
-	Path     string
-	Package  string
-	Method   string
-	Receiver string
+	Full     string // github.com/distroy/ldgo/ldref.(*testOject).Func
+	Short    string // ldref.(*testOject).Func
+	Path     string // github.com/distroy/ldgo
+	Package  string // ldref
+	Method   string // Func
+	Receiver string // *testOject
 }
 
 func GetFuncName(f interface{}) FuncName {
