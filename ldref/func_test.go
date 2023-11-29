@@ -51,5 +51,17 @@ func TestGetFuncName(t *testing.T) {
 				Receiver: "*testOject",
 			})
 		})
+
+		c.Convey("testing.Main", func(c convey.C) {
+			f := GetFuncName(testing.Main)
+			c.So(f, convey.ShouldResemble, FuncName{
+				Full:     "testing.Main",
+				Short:    "testing.Main",
+				Path:     "",
+				Package:  "testing",
+				Method:   "Main",
+				Receiver: "",
+			})
+		})
 	})
 }
