@@ -5,14 +5,30 @@
 package ldref
 
 import (
+	"runtime"
 	"testing"
 
 	"github.com/smartystreets/goconvey/convey"
 )
 
-type testOject struct{}
+type testFuncNameStruct struct{}
 
-func (*testOject) Func() {}
+func (*testFuncNameStruct) Func() {}
+func (*testFuncNameStruct) GetFuncName() string {
+	f := func() string {
+		f0 := func(f func() string) string {
+			return f()
+		}
+		f1 := func() string {
+			callerPc, _, _, _ := runtime.Caller(0)
+			fullName := runtime.FuncForPC(callerPc).Name()
+			return fullName
+		}
+		return f0(f1)
+	}
+
+	return f()
+}
 
 func TestGetFuncName(t *testing.T) {
 	convey.Convey(t.Name(), t, func(c convey.C) {
@@ -29,26 +45,26 @@ func TestGetFuncName(t *testing.T) {
 		})
 
 		c.Convey("method", func(c convey.C) {
-			f := GetFuncName((*testOject).Func)
+			f := GetFuncName((*testFuncNameStruct).Func)
 			c.So(f, convey.ShouldResemble, FuncName{
-				Full:     "github.com/distroy/ldgo/ldref.(*testOject).Func",
-				Short:    "ldref.(*testOject).Func",
+				Full:     "github.com/distroy/ldgo/ldref.(*testFuncNameStruct).Func",
+				Short:    "ldref.(*testFuncNameStruct).Func",
 				Path:     "github.com/distroy/ldgo",
 				Package:  "ldref",
 				Method:   "Func",
-				Receiver: "*testOject",
+				Receiver: "*testFuncNameStruct",
 			})
 		})
 
 		c.Convey("method fm", func(c convey.C) {
-			f := GetFuncName((&testOject{}).Func)
+			f := GetFuncName((&testFuncNameStruct{}).Func)
 			c.So(f, convey.ShouldResemble, FuncName{
-				Full:     "github.com/distroy/ldgo/ldref.(*testOject).Func-fm",
-				Short:    "ldref.(*testOject).Func-fm",
+				Full:     "github.com/distroy/ldgo/ldref.(*testFuncNameStruct).Func-fm",
+				Short:    "ldref.(*testFuncNameStruct).Func-fm",
 				Path:     "github.com/distroy/ldgo",
 				Package:  "ldref",
 				Method:   "Func-fm",
-				Receiver: "*testOject",
+				Receiver: "*testFuncNameStruct",
 			})
 		})
 
@@ -60,6 +76,37 @@ func TestGetFuncName(t *testing.T) {
 				Path:     "",
 				Package:  "testing",
 				Method:   "Main",
+				Receiver: "",
+			})
+		})
+	})
+}
+
+func TestParseFuncName(t *testing.T) {
+	convey.Convey(t.Name(), t, func(c convey.C) {
+		c.Convey("unamed func in method", func(c convey.C) {
+			fullName := (&testFuncNameStruct{}).GetFuncName()
+			r := ParseFuncName(fullName)
+			c.So(r, convey.ShouldResemble, FuncName{
+				Full:     "github.com/distroy/ldgo/ldref.(*testFuncNameStruct).GetFuncName.func1.2",
+				Short:    "ldref.(*testFuncNameStruct).GetFuncName.func1.2",
+				Path:     "github.com/distroy/ldgo",
+				Package:  "ldref",
+				Method:   "GetFuncName.func1.2",
+				Receiver: "*testFuncNameStruct",
+			})
+		})
+
+		c.Convey("unamed func in func", func(c convey.C) {
+			callerPc, _, _, _ := runtime.Caller(0)
+			fullName := runtime.FuncForPC(callerPc).Name()
+			r := ParseFuncName(fullName)
+			c.So(r, convey.ShouldResemble, FuncName{
+				Full:     "github.com/distroy/ldgo/ldref.TestParseFuncName.func1.2",
+				Short:    "ldref.TestParseFuncName.func1.2",
+				Path:     "github.com/distroy/ldgo",
+				Package:  "ldref",
+				Method:   "TestParseFuncName.func1.2",
 				Receiver: "",
 			})
 		})
