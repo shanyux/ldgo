@@ -25,7 +25,6 @@ func GetFuncName(f interface{}) FuncName {
 }
 
 func ParseFuncName(fullName string) FuncName {
-	// shortName := path.Base(fullName)
 	shortName := fullName
 	pathName := ""
 	if idx := strings.LastIndex(fullName, "/"); idx >= 0 {
@@ -34,7 +33,6 @@ func ParseFuncName(fullName string) FuncName {
 	}
 
 	firstDotIndex := strings.Index(shortName, ".")
-	lastDotIndex := strings.LastIndex(shortName, ".")
 
 	packageName := shortName
 	if firstDotIndex >= 0 {
@@ -42,17 +40,15 @@ func ParseFuncName(fullName string) FuncName {
 	}
 
 	methodName := shortName
-	if lastDotIndex >= 0 {
-		methodName = shortName[lastDotIndex+1:]
-	}
-
 	receiverName := ""
-	if firstDotIndex >= 0 && lastDotIndex >= 0 && firstDotIndex < lastDotIndex {
-		if firstDotIndex+1 < lastDotIndex-1 && shortName[firstDotIndex+1] == '(' && shortName[lastDotIndex-1] == ')' {
-			receiverName = shortName[firstDotIndex+2 : lastDotIndex-1]
-		} else {
-			receiverName = shortName[firstDotIndex+1 : lastDotIndex]
-		}
+	leftBracketIndex := strings.Index(shortName, "(")
+	if leftBracketIndex < 0 {
+		methodName = shortName[firstDotIndex+1:]
+
+	} else {
+		rightBracketIndex := strings.Index(shortName, ")")
+		receiverName = shortName[leftBracketIndex+1 : rightBracketIndex]
+		methodName = shortName[rightBracketIndex+2:]
 	}
 
 	return FuncName{
