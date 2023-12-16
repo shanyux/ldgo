@@ -33,6 +33,9 @@ type GormDb struct {
 
 	txLvl int
 	inTx  bool
+
+	// these should set after user new gorm db
+	log Logger
 }
 
 func (w *GormDb) panicTxLevelLessZero() {
@@ -130,6 +133,7 @@ func (w *GormDb) UseMaster() *GormDb {
 
 	w = w.clone()
 	w.gormDb = w.master
+	w.initAfterUseNewGormDb()
 	return w
 }
 
@@ -154,7 +158,19 @@ func (w *GormDb) UseSlaver(key ...interface{}) *GormDb {
 
 	w = w.clone()
 	w.gormDb = w.slavers[idx]
+	w.initAfterUseNewGormDb()
 	return w
+}
+
+func (w *GormDb) initAfterUseNewGormDb() {
+	db := w.gormDb
+
+	if w.log != nil {
+		db = db.Debug()
+		db.SetLogger(w.log)
+	}
+
+	w.gormDb = db
 }
 
 func (w *GormDb) getHashByKey(keys []interface{}) uint {
@@ -197,54 +213,15 @@ func (w *GormDb) getHashByKey(keys []interface{}) uint {
 	return ldrand.Uint()
 }
 
-func (w *GormDb) withOption(opts ...func(db *gorm.DB) *gorm.DB) *GormDb {
-	w = w.clone()
-
-	apply := func(db *gorm.DB, opts []func(db *gorm.DB) *gorm.DB) *gorm.DB {
-		for _, opt := range opts {
-			db = opt(db)
-		}
-		return db
-	}
-
-	master := apply(w.master, opts)
-
-	current := w.gormDb
-	if current == w.master {
-		current = master
-	}
-
-	var slavers []*gorm.DB
-	if len(w.slavers) > 0 {
-		slavers = make([]*gorm.DB, 0, len(w.slavers))
-		for _, db0 := range w.slavers {
-			db1 := apply(db0, opts)
-			slavers = append(slavers, db1)
-			if current == db0 {
-				current = db1
-			}
-		}
-	}
-
-	if current == w.gormDb {
-		current = apply(current, opts)
-	}
-
-	w.master = master
-	w.gormDb = current
-	w.slavers = slavers
-	return w
-}
-
 // WithLogger can be called before or after UseMaster/UseSlaver
 func (w *GormDb) WithLogger(l Logger) *GormDb {
-	return w.withOption(func(db *gorm.DB) *gorm.DB {
-		// LogMode 方法不会返回新的 gorm.DB 实例，需要使用 Debug 方法
-		// db = db.LogMode(true)
-		db = db.Debug()
-		db.SetLogger(l)
-		return db
-	})
+	w = w.clone()
+	// LogMode 方法不会返回新的 gorm.DB 实例，需要使用 Debug 方法
+	// w.gormDb = w.gormDb.LogMode(true)
+	w.gormDb = w.gormDb.Debug()
+	w.gormDb.SetLogger(l)
+	w.log = l
+	return w
 }
 
 func (w *GormDb) Model(value interface{}) *GormDb {

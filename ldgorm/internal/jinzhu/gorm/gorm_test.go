@@ -512,7 +512,6 @@ func TestGormDb_WithLogger(t *testing.T) {
 			defer db.Close()
 
 			buf := &strings.Builder{}
-
 			db = db.WithLogger(ldlog.NewLogger(ldlog.Writer(buf)).Wrapper())
 
 			db = db.UseSlaver()
@@ -525,7 +524,7 @@ func TestGormDb_WithLogger(t *testing.T) {
 			})
 
 			t.Logf("%s", buf.String())
-			c.SkipSo(buf.String(), convey.ShouldEqual, ``)
+			c.So(buf.String(), convey.ShouldNotEqual, ``)
 		})
 
 		c.Convey("with slaver", func(c convey.C) {
@@ -539,7 +538,6 @@ func TestGormDb_WithLogger(t *testing.T) {
 				db = db.UseSlaver()
 
 				buf := &strings.Builder{}
-
 				db = db.WithLogger(ldlog.NewLogger(ldlog.Writer(buf)).Wrapper())
 
 				db.Save(&testTable{
@@ -550,7 +548,7 @@ func TestGormDb_WithLogger(t *testing.T) {
 				})
 
 				t.Logf("%s", buf.String())
-				c.SkipSo(buf.String(), convey.ShouldEqual, ``)
+				c.So(buf.String(), convey.ShouldNotEqual, ``)
 			})
 
 			c.Convey("index", func(c convey.C) {
@@ -563,7 +561,6 @@ func TestGormDb_WithLogger(t *testing.T) {
 				db = db.UseSlaver(1)
 
 				buf := &strings.Builder{}
-
 				db = db.WithLogger(ldlog.NewLogger(ldlog.Writer(buf)).Wrapper())
 
 				db.Save(&testTable{
@@ -574,7 +571,7 @@ func TestGormDb_WithLogger(t *testing.T) {
 				})
 
 				t.Logf("%s", buf.String())
-				c.SkipSo(buf.String(), convey.ShouldEqual, ``)
+				c.So(buf.String(), convey.ShouldNotEqual, ``)
 			})
 		})
 	})
