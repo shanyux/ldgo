@@ -52,14 +52,21 @@ func (that *whereReflect) getTableName(val reflect.Value) string {
 	return ""
 }
 
-func (that *whereReflect) buildWhere(val reflect.Value) whereResult {
+func (that *whereReflect) quote(db *GormDb, name string) string {
+	if db == nil || db.Get() == nil || db.Get().Dialect() == nil {
+		return name
+	}
+	return db.Get().Dialect().Quote(name)
+}
+
+func (that *whereReflect) buildWhere(db *GormDb, val reflect.Value) whereResult {
 	tableName := that.getTableName(val)
 
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()
 	}
 
-	buf := make([]byte, 0, 32)
+	buf := make([]string, 0, 2)
 	wheres := make([]whereResult, 0, len(that.Fields))
 	for _, f := range that.Fields {
 		fw, ok := val.Field(f.FieldOrder).Interface().(FieldWherer)
@@ -72,17 +79,12 @@ func (that *whereReflect) buildWhere(val reflect.Value) whereResult {
 
 		buf = buf[:0]
 		if tableName != "" {
-			buf = append(buf, '`')
-			buf = append(buf, tableName...)
-			buf = append(buf, '`')
-			buf = append(buf, '.')
+			buf = append(buf, that.quote(db, tableName))
 		}
 
-		buf = append(buf, '`')
-		buf = append(buf, f.Name...)
-		buf = append(buf, '`')
+		buf = append(buf, that.quote(db, f.Name))
 
-		field := ldconv.BytesToStrUnsafe(buf)
+		field := strings.Join(buf, ".")
 		wheres = append(wheres, fw.buildWhere(field))
 	}
 
@@ -106,7 +108,7 @@ func (that *whereReflect) buildWhere(val reflect.Value) whereResult {
 }
 
 func (that *whereReflect) buildGorm(db *GormDb, val reflect.Value) *GormDb {
-	res := that.buildWhere(val)
+	res := that.buildWhere(db, val)
 	if strings.HasPrefix(res.Query, "(") && strings.HasSuffix(res.Query, ")") {
 		res.Query = res.Query[1 : len(res.Query)-1]
 	}

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/distroy/ldgo/ldhook"
 	"github.com/distroy/ldgo/ldlog"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
@@ -62,8 +63,18 @@ func testGetWhereFromSql(scope *gorm.Scope) string {
 
 func TestWhereOption(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
+		patches := ldhook.NewPatches()
+		defer patches.Reset()
+
 		gormDb := testGetGorm()
 		defer gormDb.Close()
+
+		patches.Apply(ldhook.FuncHook{
+			Target: (*whereReflect).quote,
+			Double: func(w *whereReflect, db *GormDb, name string) string {
+				return strings.Join([]string{"`", name, "`"}, "")
+			},
+		})
 
 		var res whereResult
 		gormDb.Callback().Query().After("gorm:query").Register("ldgorm:after_query", func(scope *gorm.Scope) {

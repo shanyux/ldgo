@@ -34,7 +34,7 @@ func TestBuildWhere(t *testing.T) {
 
 			BuildWhere(gormDb, cond).Find(&rows)
 			convey.So(res, convey.ShouldResemble, whereResult{
-				Query: "(`channel_id` = ?)",
+				Query: `("channel_id" = ?)`,
 				Args:  []interface{}{20},
 			})
 		})
@@ -44,7 +44,7 @@ func TestBuildWhere(t *testing.T) {
 
 			BuildWhere(gormDb, cond).Find(&rows)
 			convey.So(res, convey.ShouldResemble, whereResult{
-				Query: "(`project_id` = ? AND `channel_id` = ?)",
+				Query: `("project_id" = ? AND "channel_id" = ?)`,
 				Args:  []interface{}{10, 20},
 			})
 		})
@@ -55,7 +55,7 @@ func TestBuildWhere(t *testing.T) {
 
 			BuildWhere(gormDb, cond).Find(&rows)
 			convey.So(res, convey.ShouldResemble, whereResult{
-				Query: "(`project_id` = ? AND `channel_id` = ? AND `version_id` > ?)",
+				Query: `("project_id" = ? AND "channel_id" = ? AND "version_id" > ?)`,
 				Args:  []interface{}{10, 20, 30},
 			})
 		})
@@ -67,7 +67,7 @@ func TestBuildWhere(t *testing.T) {
 
 			BuildWhere(gormDb, cond).Find(&rows)
 			convey.So(res, convey.ShouldResemble, whereResult{
-				Query: "(`channel_id` = ? AND `version_id` > ? AND `type` IN (?,?,?))",
+				Query: `("channel_id" = ? AND "version_id" > ? AND "type" IN (?,?,?))`,
 				Args:  []interface{}{20, 30, 1, 2, 3},
 			})
 		})
@@ -78,7 +78,7 @@ func TestBuildWhere(t *testing.T) {
 
 			BuildWhere(gormDb, cond).Find(&rows)
 			convey.So(res, convey.ShouldResemble, whereResult{
-				Query: "(`channel_id` = ? AND (`version_id` > ? OR `version_id` < ?))",
+				Query: `("channel_id" = ? AND ("version_id" > ? OR "version_id" < ?))`,
 				Args:  []interface{}{20, 30, 100},
 			})
 		})
@@ -92,7 +92,7 @@ func TestBuildWhere(t *testing.T) {
 
 				BuildWhere(gormDb, cond).Find(&rows)
 				c.So(res, convey.ShouldResemble, whereResult{
-					Query: "(`a`.`channel_id` = ? AND (`a`.`version_id` > ? OR `a`.`version_id` < ?))",
+					Query: `("a"."channel_id" = ? AND ("a"."version_id" > ? OR "a"."version_id" < ?))`,
 					Args:  []interface{}{20, 30, 100},
 				})
 			})
@@ -103,7 +103,7 @@ func TestBuildWhere(t *testing.T) {
 
 				BuildWhere(gormDb, cond).Find(&rows)
 				c.So(res, convey.ShouldResemble, whereResult{
-					Query: "(`test_table`.`channel_id` = ? AND (`test_table`.`version_id` > ? OR `test_table`.`version_id` < ?))",
+					Query: `("test_table"."channel_id" = ? AND ("test_table"."version_id" > ? OR "test_table"."version_id" < ?))`,
 					Args:  []interface{}{20, 30, 100},
 				})
 			})
