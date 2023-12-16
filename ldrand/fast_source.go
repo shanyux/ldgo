@@ -19,7 +19,8 @@ var (
 const (
 	//                 7654321076543210
 	// fastSourceStep = 0x1753715715313157
-	fastSourceStep = 0x5371795313b93157
+	// fastSourceStep = 0x5371795313b93157
+	fastSourceStep = 0x5371795313b93d57
 )
 
 var fastSourceXor [16]uint64 = [...]uint64{
@@ -178,10 +179,11 @@ again:
 func (r *fastSource) Read(p []byte) (int, error) {
 	pos := 0
 	val := uint64(0)
+	mask := r.Uint64()
 	for n := 0; n < len(p); n++ {
 		if pos == 0 {
-			val = r.Uint64()
-			pos = 7
+			val = r.Uint64() ^ mask
+			pos = 8
 		}
 		p[n] = byte(val)
 		val >>= 8
