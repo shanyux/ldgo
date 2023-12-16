@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"runtime"
 
-	"github.com/agiledragon/gomonkey"
+	gomonkey "github.com/agiledragon/gomonkey/v2"
 )
 
 type Values = []interface{}

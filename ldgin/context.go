@@ -7,6 +7,7 @@ package ldgin
 import (
 	"context"
 	"encoding/hex"
+	"net"
 	"time"
 
 	"github.com/distroy/ldgo/ldctx"
@@ -21,8 +22,8 @@ type (
 )
 
 var (
-	_ context.Context = &Context{}
-	_ ldctx.Context   = &Context{}
+	_ context.Context = (*Context)(nil)
+	_ ldctx.Context   = (*Context)(nil)
 )
 
 func GetContext(g *gin.Context) *Context {
@@ -43,30 +44,28 @@ func GetGin(c context.Context) *gin.Context {
 
 func GetBeginTime(c context.Context) time.Time {
 	if ctx := getCtxByCommCtx(c); ctx != nil {
-		return ctx.beginTime
+		return ctx.GetBeginTime()
 	}
 	return time.Time{}
 }
 
 func GetSequence(c context.Context) string {
 	if ctx := getCtxByCommCtx(c); ctx != nil {
-		return ctx.sequence
+		return ctx.GetSequence()
 	}
 	return ""
 }
 
-func GetRequest(c context.Context) interface{}  { return GetGin(c).Value(GinKeyRequest) }
-func GetRenderer(c context.Context) interface{} { return GetGin(c).Value(GinKeyRenderer) }
+func GetRequest(c context.Context) interface{}  { return c.Value(GinKeyRequest) }
+func GetRenderer(c context.Context) interface{} { return c.Value(GinKeyRenderer) }
 
 func GetError(c StdContext) Error {
-	v := GetGin(c).Value(GinKeyError)
-	r, _ := v.(Error)
+	r, _ := c.Value(GinKeyError).(Error)
 	return r
 }
 
 func GetResponse(c context.Context) *CommResponse {
-	v := GetGin(c).Value(GinKeyResponse)
-	r, _ := v.(*CommResponse)
+	r, _ := c.Value(GinKeyResponse).(*CommResponse)
 	return r
 }
 
@@ -84,12 +83,8 @@ func getCtxByCommCtx(child context.Context) *Context {
 }
 
 func getCtxByGinCtx(g *gin.Context) *Context {
-	c, ok := g.Value(GinKeyContext).(*Context)
-	if ok {
-		return c
-	}
-
-	return nil
+	c, _ := g.Value(GinKeyContext).(*Context)
+	return c
 }
 
 func newCtxIfNotExists(g *gin.Context) *Context {
@@ -139,6 +134,8 @@ func (c *Context) clone() *Context {
 func (c *Context) Copy() *Context {
 	c = c.clone()
 	c.ginCtx = c.ginCtx.Copy()
+
+	c.ginCtx.Set(GinKeyContext, c)
 	return c
 }
 
@@ -184,10 +181,8 @@ func (c *Context) AbortWithErrorData(err Error, data interface{}) {
 		response.ErrDetails = e.Details()
 	}
 
-	if err != lderr.ErrSuccess {
-		c.Set(GinKeyError, err)
-	}
-	c.Set(GinKeyResponse, response)
+	c.setError(err)
+	c.setResponce(response)
 	c.AbortWithStatusJSON(err.Status(), response)
 }
 
@@ -203,14 +198,41 @@ func (c *Context) GetMethod() string  { return c.method }
 func (c *Context) GetBeginTime() time.Time { return c.beginTime }
 func (c *Context) GetSequence() string     { return c.sequence }
 
-func (c *Context) GetError() Error {
-	v := c.Gin().Value(GinKeyError)
-	r, _ := v.(Error)
-	return r
+func (c *Context) GetError() Error            { return GetError(c.Gin()) }
+func (c *Context) GetResponse() *CommResponse { return GetResponse(c.Gin()) }
+func (c *Context) GetRequest() interface{}    { return GetRequest(c.Gin()) }
+func (c *Context) GetRenderer() interface{}   { return GetRenderer(c.Gin()) }
+
+func (c Context) setError(err Error) {
+	if err != nil && err.Code() != lderr.ErrSuccess.Code() {
+		c.Gin().Set(GinKeyError, err)
+	}
 }
 
-func (c *Context) GetResponse() *CommResponse {
-	v := c.Gin().Value(GinKeyResponse)
-	r, _ := v.(*CommResponse)
-	return r
+func (c *Context) setResponce(rsp *CommResponse) {
+	c.Gin().Set(GinKeyResponse, rsp)
+}
+
+func (c *Context) setRenderer(renderer interface{}) {
+	c.Gin().Set(GinKeyRenderer, renderer)
+}
+
+func (c *Context) setRequest(req interface{}) {
+	c.Gin().Set(GinKeyRequest, req)
+}
+
+func (c *Context) getConn() net.Conn {
+	defer func() {
+		recover()
+	}()
+	conn, _, _ := c.Writer.Hijack()
+	return conn
+}
+
+func (c *Context) CloseConn() error {
+	conn := c.getConn()
+	if conn == nil {
+		return nil
+	}
+	return conn.Close()
 }
