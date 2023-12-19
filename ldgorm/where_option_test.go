@@ -42,9 +42,7 @@ type testTable struct {
 func (_ *testTable) TableName() string { return "test_table" }
 
 func testGetGorm() *GormDb {
-	v, _ := gorm.Open("sqlite3", ":memory:")
-
-	db := NewGormDb(v)
+	db := MustNewTestGormDb()
 	// convey.So(err, convey.ShouldBeNil)
 	db.SetLogger(ldlog.Discard().Wrapper())
 	db.CreateTable(&testTable{})
