@@ -7,7 +7,7 @@ package ldconv
 import (
 	"math/big"
 
-	"github.com/distroy/ldgo/lderr"
+	"github.com/distroy/ldgo/v2/lderr"
 )
 
 var (

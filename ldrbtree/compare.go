@@ -5,7 +5,7 @@
 package ldrbtree
 
 import (
-	"github.com/distroy/ldgo/ldcmp"
+	"github.com/distroy/ldgo/v2/ldcmp"
 )
 
 func DefaultCompare(a, b interface{}) int {

@@ -7,8 +7,8 @@ package main
 import (
 	"net/http"
 
-	"github.com/distroy/ldgo/lderr"
-	"github.com/distroy/ldgo/ldgin"
+	"github.com/distroy/ldgo/v2/lderr"
+	"github.com/distroy/ldgo/v2/ldgin"
 )
 
 func midware1(c *ldgin.Context) {

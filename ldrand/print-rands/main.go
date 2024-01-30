@@ -10,7 +10,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/distroy/ldgo/ldrand"
+	"github.com/distroy/ldgo/v2/ldrand"
 )
 
 func printf(format string, args ...interface{}) {

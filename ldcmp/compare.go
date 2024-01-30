@@ -7,7 +7,7 @@ package ldcmp
 import (
 	"time"
 
-	"github.com/distroy/ldgo/internal/cmp"
+	"github.com/distroy/ldgo/v2/internal/cmp"
 )
 
 func CompareInterface(a, b interface{}) int {

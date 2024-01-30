@@ -9,8 +9,8 @@ import (
 	"hash/crc32"
 	"strings"
 
-	"github.com/distroy/ldgo/ldconv"
-	"github.com/distroy/ldgo/ldrand"
+	"github.com/distroy/ldgo/v2/ldconv"
+	"github.com/distroy/ldgo/v2/ldrand"
 	"github.com/jinzhu/gorm"
 )
 

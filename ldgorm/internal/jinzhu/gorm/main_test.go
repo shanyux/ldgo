@@ -5,7 +5,7 @@
 package gorm
 
 import (
-	"github.com/distroy/ldgo/ldlog"
+	"github.com/distroy/ldgo/v2/ldlog"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )

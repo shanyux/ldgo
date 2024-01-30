@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/distroy/ldgo/ldhook"
-	"github.com/distroy/ldgo/ldlog"
+	"github.com/distroy/ldgo/v2/ldhook"
+	"github.com/distroy/ldgo/v2/ldlog"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/smartystreets/goconvey/convey"

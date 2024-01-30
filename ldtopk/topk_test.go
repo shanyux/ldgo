@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/distroy/ldgo/ldmath"
-	"github.com/distroy/ldgo/ldrand"
-	"github.com/distroy/ldgo/ldsort"
+	"github.com/distroy/ldgo/v2/ldmath"
+	"github.com/distroy/ldgo/v2/ldrand"
+	"github.com/distroy/ldgo/v2/ldsort"
 	"github.com/smartystreets/goconvey/convey"
 )
 

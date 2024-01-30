@@ -3,7 +3,7 @@ package ldredis
 import (
 	"testing"
 
-	"github.com/distroy/ldgo/ldhook"
+	"github.com/distroy/ldgo/v2/ldhook"
 	"github.com/go-redis/redis"
 	"github.com/smartystreets/goconvey/convey"
 )

@@ -7,8 +7,8 @@ package ldredis
 import (
 	"time"
 
-	"github.com/distroy/ldgo/ldctx"
-	"github.com/distroy/ldgo/ldlog"
+	"github.com/distroy/ldgo/v2/ldctx"
+	"github.com/distroy/ldgo/v2/ldlog"
 	"github.com/go-redis/redis"
 )
 

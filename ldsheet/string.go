@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"unicode"
 
-	"github.com/distroy/ldgo/ldconv"
+	"github.com/distroy/ldgo/v2/ldconv"
 )
 
 var _CONV_FUNC_MAP = map[reflect.Kind]func(s string) (interface{}, error){

@@ -11,14 +11,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/distroy/ldgo/ldlog"
-	"github.com/distroy/ldgo/ldrand"
+	"github.com/distroy/ldgo/v2/ldlog"
+	"github.com/distroy/ldgo/v2/ldrand"
 	"go.uber.org/zap"
 )
 
 const (
-	ldRedisSrcPath = "/ldgo/ldredis"
-	exampleSrcPath = "/ldgo/ldredis/example"
+	ldRedisSrcPath = "/ldredis"
+	exampleSrcPath = "/ldredis/example"
 	goRedisSrcPath = "/github.com/go-redis/redis"
 )
 

@@ -13,12 +13,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/distroy/ldgo/ldmath"
+	"github.com/distroy/ldgo/v2/ldmath"
 	"github.com/smartystreets/goconvey/convey"
 )
 
 /*
- * pkg: github.com/distroy/ldgo/ldrand
+ * pkg: github.com/distroy/ldgo/v2/ldrand
  * cpu: Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz
  * BenchmarkRandGo
  * BenchmarkRandGo-12      18746797                63.71 ns/op

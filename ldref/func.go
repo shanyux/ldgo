@@ -11,9 +11,9 @@ import (
 )
 
 type FuncName struct {
-	Full     string // github.com/distroy/ldgo/ldref.(*testOject).Func
+	Full     string // github.com/distroy/ldgo/v2/ldref.(*testOject).Func
 	Short    string // ldref.(*testOject).Func
-	Path     string // github.com/distroy/ldgo
+	Path     string // github.com/distroy/ldgo/v2
 	Package  string // ldref
 	Method   string // Func
 	Receiver string // *testOject
