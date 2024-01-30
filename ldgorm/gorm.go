@@ -7,7 +7,7 @@ package ldgorm
 import (
 	"fmt"
 
-	gorm2 "github.com/distroy/ldgo/ldgorm/internal/jinzhu/gorm"
+	gorm2 "github.com/distroy/ldgo/v2/ldgorm/internal/jinzhu/gorm"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )

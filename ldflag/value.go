@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/distroy/ldgo/ldconv"
+	"github.com/distroy/ldgo/v2/ldconv"
 )
 
 type Value interface {

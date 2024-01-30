@@ -5,7 +5,7 @@
 package ldlog
 
 import (
-	"github.com/distroy/ldgo/ldconv"
+	"github.com/distroy/ldgo/v2/ldconv"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

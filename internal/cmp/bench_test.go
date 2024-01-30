@@ -16,7 +16,7 @@ import (
 
 // goos: darwin
 // goarch: amd64
-// pkg: github.com/distroy/ldgo/ldcmp
+// pkg: github.com/distroy/ldgo/v2/ldcmp
 // cpu: Intel(R) Core(TM) i7-4770HQ CPU @ 2.20GHz
 // BenchmarkStringsCompareRand
 // BenchmarkStringsCompareRand-8                   1000000000               6.996 ns/op

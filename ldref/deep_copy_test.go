@@ -10,7 +10,7 @@ import (
 	"testing"
 	"unsafe"
 
-	"github.com/distroy/ldgo/lderr"
+	"github.com/distroy/ldgo/v2/lderr"
 	"github.com/smartystreets/goconvey/convey"
 )
 
@@ -222,7 +222,7 @@ func TestDeepCopy(t *testing.T) {
 				err := DeepCopy(&target, source)
 				convey.So(err.Error(), convey.ShouldEqual, "func(interface {}) bool can not copy to *string")
 				// convey.So(err, convey.ShouldBeNil)
-				// convey.So(target, convey.ShouldEqual, "github.com/distroy/ldgo/ldref.IsZero")
+				// convey.So(target, convey.ShouldEqual, "github.com/distroy/ldgo/v2/ldref.IsZero")
 			})
 
 			convey.Convey("func to unsafe.Pointer", func() {

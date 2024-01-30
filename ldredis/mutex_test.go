@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/distroy/ldgo/ldctx"
-	"github.com/distroy/ldgo/ldgopool"
-	"github.com/distroy/ldgo/ldlog"
+	"github.com/distroy/ldgo/v2/ldasync"
+	"github.com/distroy/ldgo/v2/ldctx"
+	"github.com/distroy/ldgo/v2/ldlog"
 	"github.com/smartystreets/goconvey/convey"
 )
 
@@ -92,17 +92,17 @@ func TestMutex_WithLockForce(t *testing.T) {
 			m1 := NewMutex(r)
 			m1 = m1.WithLockForce(true, interval)
 
-			gos := ldgopool.NewGoPool()
+			gos := &ldasync.GoPool{}
 
 			c.So(m0.Lock(lockKey), convey.ShouldBeNil)
-			gos.Run(func() {
+			gos.Go(func() {
 				time.Sleep(timeout0)
 				c.So(m0.Unlock(), convey.ShouldBeNil)
 
 				t0 = time.Now()
 			})
 
-			gos.Run(func() {
+			gos.Go(func() {
 				c.So(m1.Lock(lockKey), convey.ShouldBeNil)
 				t1 = time.Now()
 
@@ -122,10 +122,10 @@ func TestMutex_WithLockForce(t *testing.T) {
 				m1 := NewMutex(r)
 				m1 = m1.WithLockForce(true, interval, timeout1)
 
-				gos := ldgopool.NewGoPool()
+				gos := &ldasync.GoPool{}
 
 				c.So(m0.Lock(lockKey), convey.ShouldBeNil)
-				gos.Run(func() {
+				gos.Go(func() {
 
 					time.Sleep(timeout0)
 					c.So(m0.Unlock(), convey.ShouldBeNil)
@@ -133,7 +133,7 @@ func TestMutex_WithLockForce(t *testing.T) {
 					t0 = time.Now()
 				})
 
-				gos.Run(func() {
+				gos.Go(func() {
 					m := m1
 					c.So(m.Lock(lockKey), convey.ShouldNotBeNil)
 					t1 = time.Now()
@@ -151,10 +151,10 @@ func TestMutex_WithLockForce(t *testing.T) {
 				m1 := NewMutex(r)
 				m1 = m1.WithLockForce(true, interval, timeout0-time.Second)
 
-				gos := ldgopool.NewGoPool()
+				gos := &ldasync.GoPool{}
 
 				c.So(m0.Lock(lockKey), convey.ShouldBeNil)
-				gos.Run(func() {
+				gos.Go(func() {
 
 					time.Sleep(timeout0)
 					c.So(m0.Unlock(), convey.ShouldBeNil)
@@ -162,7 +162,7 @@ func TestMutex_WithLockForce(t *testing.T) {
 					t0 = time.Now()
 				})
 
-				gos.Run(func() {
+				gos.Go(func() {
 					m := m1
 					c.So(m.Lock(lockKey), convey.ShouldNotBeNil)
 					t1 = time.Now()

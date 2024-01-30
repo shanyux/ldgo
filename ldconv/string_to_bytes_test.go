@@ -14,7 +14,7 @@ import (
 
 // goos: darwin
 // goarch: amd64
-// pkg: github.com/distroy/ldgo/ldconv
+// pkg: github.com/distroy/ldgo/v2/ldconv
 // cpu: Intel(R) Core(TM) i7-4770HQ CPU @ 2.20GHz
 // BenchmarkStrToBytesUnsafe1
 // BenchmarkStrToBytesUnsafe1-8    1000000000               1.360 ns/op

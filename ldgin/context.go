@@ -10,9 +10,9 @@ import (
 	"net"
 	"time"
 
-	"github.com/distroy/ldgo/ldctx"
-	"github.com/distroy/ldgo/lderr"
-	"github.com/distroy/ldgo/ldrand"
+	"github.com/distroy/ldgo/v2/ldctx"
+	"github.com/distroy/ldgo/v2/lderr"
+	"github.com/distroy/ldgo/v2/ldrand"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )

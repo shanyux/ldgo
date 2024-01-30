@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/distroy/ldgo/ldctx"
+	"github.com/distroy/ldgo/v2/ldctx"
 	"github.com/smartystreets/goconvey/convey"
 )
 

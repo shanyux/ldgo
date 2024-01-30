@@ -8,8 +8,8 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/distroy/ldgo/lderr"
-	"github.com/distroy/ldgo/ldref"
+	"github.com/distroy/ldgo/v2/lderr"
+	"github.com/distroy/ldgo/v2/ldref"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )

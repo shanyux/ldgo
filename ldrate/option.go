@@ -7,7 +7,7 @@ package ldrate
 import (
 	"time"
 
-	"github.com/distroy/ldgo/ldatomic"
+	"github.com/distroy/ldgo/v2/ldatomic"
 )
 
 type Option = func(cfg *config)

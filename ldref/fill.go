@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"unsafe"
 
-	"github.com/distroy/ldgo/lderr"
+	"github.com/distroy/ldgo/v2/lderr"
 )
 
 type FillConfig struct {
