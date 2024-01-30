@@ -7,7 +7,7 @@ package ldredis
 import (
 	"context"
 
-	"github.com/go-redis/redis"
+	redis "github.com/redis/go-redis/v9"
 )
 
 type cmdable interface {

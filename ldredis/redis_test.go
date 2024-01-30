@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/distroy/ldgo/v2/ldhook"
-	"github.com/go-redis/redis"
+	redis "github.com/redis/go-redis/v9"
 	"github.com/smartystreets/goconvey/convey"
 )
 

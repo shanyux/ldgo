@@ -19,7 +19,7 @@ import (
 const (
 	ldRedisSrcPath = "/ldredis"
 	exampleSrcPath = "/ldredis/example"
-	goRedisSrcPath = "/github.com/go-redis/redis"
+	goRedisSrcPath = "/github.com/redis/go-redis"
 )
 
 func isCallerFilePath(file string) bool {

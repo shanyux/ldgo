@@ -9,7 +9,7 @@ import (
 
 	"github.com/distroy/ldgo/v2/ldctx"
 	"github.com/distroy/ldgo/v2/ldlog"
-	"github.com/go-redis/redis"
+	redis "github.com/redis/go-redis/v9"
 )
 
 const (

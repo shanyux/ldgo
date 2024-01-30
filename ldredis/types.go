@@ -5,10 +5,11 @@
 package ldredis
 
 import (
+	"context"
 	"time"
 
 	"github.com/distroy/ldgo/v2/ldctx"
-	"github.com/go-redis/redis"
+	redis "github.com/redis/go-redis/v9"
 )
 
 type (
@@ -71,7 +72,7 @@ type (
 type Cmdable interface {
 	redis.Cmdable
 
-	Do(args ...interface{}) *Cmd
+	Do(ctx context.Context, args ...interface{}) *Cmd
 	Process(cmd Cmder) error
 	Close() error
 	// Discard() error
