@@ -11,8 +11,8 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/distroy/ldgo/ldconv"
-	"github.com/distroy/ldgo/ldtagmap"
+	"github.com/distroy/ldgo/v2/ldconv"
+	"github.com/distroy/ldgo/v2/ldtagmap"
 )
 
 const _ORDER_TAG = "gormorder"

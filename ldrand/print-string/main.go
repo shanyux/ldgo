@@ -8,9 +8,9 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/distroy/ldgo/ldflag"
-	"github.com/distroy/ldgo/ldmath"
-	"github.com/distroy/ldgo/ldrand"
+	"github.com/distroy/ldgo/v2/ldflag"
+	"github.com/distroy/ldgo/v2/ldmath"
+	"github.com/distroy/ldgo/v2/ldrand"
 )
 
 type Flags struct {

@@ -4,7 +4,7 @@
 
 package ldtopk
 
-import "github.com/distroy/ldgo/ldcmp"
+import "github.com/distroy/ldgo/v2/ldcmp"
 
 type LessFunc = func(a, b interface{}) bool
 

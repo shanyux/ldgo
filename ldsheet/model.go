@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/distroy/ldgo/ldtagmap"
+	"github.com/distroy/ldgo/v2/ldtagmap"
 )
 
 type model struct {

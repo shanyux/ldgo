@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/distroy/ldgo/ldconv"
-	"github.com/distroy/ldgo/ldptr"
-	"github.com/distroy/ldgo/proto/ldtestproto"
+	"github.com/distroy/ldgo/v2/ldconv"
+	"github.com/distroy/ldgo/v2/ldptr"
+	"github.com/distroy/ldgo/v2/proto/ldtestproto"
 	"github.com/golang/protobuf/proto"
 	"github.com/smartystreets/goconvey/convey"
 	protov2 "google.golang.org/protobuf/proto"

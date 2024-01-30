@@ -9,8 +9,8 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/distroy/ldgo/lderr"
-	"github.com/distroy/ldgo/ldlog"
+	"github.com/distroy/ldgo/v2/lderr"
+	"github.com/distroy/ldgo/v2/ldlog"
 	"go.uber.org/zap"
 )
 

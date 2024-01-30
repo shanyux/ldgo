@@ -7,16 +7,18 @@ package ldrand
 import (
 	"fmt"
 	"log"
+	"math"
 	"math/rand"
+	"reflect"
 	"testing"
 	"time"
 
-	"github.com/distroy/ldgo/ldmath"
+	"github.com/distroy/ldgo/v2/ldmath"
 	"github.com/smartystreets/goconvey/convey"
 )
 
 /*
- * pkg: github.com/distroy/ldgo/ldrand
+ * pkg: github.com/distroy/ldgo/v2/ldrand
  * cpu: Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz
  * BenchmarkRandGo
  * BenchmarkRandGo-12      18746797                63.71 ns/op
@@ -140,20 +142,31 @@ func Test_fastSource_ProbabilityOfVery4Bits(t *testing.T) {
 		})
 	})
 }
+func testGetDiffThresholdBySliceFunc(diff1, diff2 int) func(idx int, slice interface{}) int {
+	return func(idx int, slice interface{}) int {
+		sliceV := reflect.ValueOf(slice)
+		if idx == sliceV.Len()-1 {
+			return diff2
+		}
+		return diff1
+	}
+}
 
 func Test_fastSource_ProbabilityOfVery4BitsWithPreviousNumber(t *testing.T) {
 	r := New(NewFastSource(time.Now().UnixNano()))
+	const (
+		scale = 1000 * 100 * 16 * 16
+		diff1 = 4000
+		diff2 = 6000
+	)
+
+	getDiffThreshold := testGetDiffThresholdBySliceFunc(diff1, diff2)
 
 	convey.Convey(t.Name(), t, func() {
 		convey.Convey("check the probability of very 4 bits with previous number", func() {
-			const (
-				scale = 1000 * 100
-				diff  = 1000 * 40
-			)
-
 			countsPer4BitsWithPrev := [16][16][16]int{}
 			var prevNum uint64
-			for i := 0; i < scale*16*16; i++ {
+			for i := 0; i < scale; i++ {
 				v := r.Uint64()
 				p := prevNum
 				prevNum = v
@@ -173,8 +186,9 @@ func Test_fastSource_ProbabilityOfVery4BitsWithPreviousNumber(t *testing.T) {
 					log.Printf("postion:%d, prev:%d, diff:%d, ratio:%.04g, min:%d, max:%d, v:%v",
 						i, j, max-min, ratio, min, max, w[:])
 
+					diff := getDiffThreshold(i, countsPer4BitsWithPrev[:])
 					// sometimes it will be failed
-					// convey.So(max-min, convey.ShouldBeLessThan, diff)
+					convey.So(max-min, convey.ShouldBeLessThan, diff)
 				}
 			}
 		})
@@ -229,5 +243,44 @@ func Test_fastSource_Repeated(t *testing.T) {
 				m[x] = struct{}{}
 			}
 		})
+	})
+}
+
+func testGreatestCommonDivisor(a, b uint64) uint64 {
+	for b != 0 {
+		a %= b
+		a, b = b, a
+	}
+
+	return a
+}
+
+func Test_testGreatestCommonDivisor(t *testing.T) {
+	type Case struct {
+		A, B, R uint64
+	}
+	cases := []*Case{
+		{A: 0, B: 2, R: 2},
+		{A: 2, B: 0, R: 2},
+		{A: 2, B: 100, R: 2},
+		{A: 2, B: 3, R: 1},
+		{A: 10, B: 6, R: 2},
+		{A: 6, B: 10, R: 2},
+	}
+	convey.Convey(t.Name(), t, func(c convey.C) {
+		for _, v := range cases {
+			name := fmt.Sprintf("a:%d, b:%d", v.A, v.B)
+			c.Convey(name, func(c convey.C) {
+				r := testGreatestCommonDivisor(v.A, v.B)
+				c.So(r, convey.ShouldEqual, v.R)
+			})
+		}
+	})
+}
+
+func Test__fastSourceStep(t *testing.T) {
+	convey.Convey(t.Name(), t, func(c convey.C) {
+		r := testGreatestCommonDivisor(math.MaxUint64, fastSourceStep)
+		c.So(r, convey.ShouldEqual, 1)
 	})
 }

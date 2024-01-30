@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/distroy/ldgo/lderr"
+	"github.com/distroy/ldgo/v2/lderr"
 	"github.com/gin-gonic/gin"
 	"github.com/smartystreets/goconvey/convey"
 )

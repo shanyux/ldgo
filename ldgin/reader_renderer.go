@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/distroy/ldgo/lderr"
+	"github.com/distroy/ldgo/v2/lderr"
 	"go.uber.org/zap"
 )
 

@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/distroy/ldgo/ldconv"
+	"github.com/distroy/ldgo/v2/ldconv"
 )
 
 type WhereOption interface {
@@ -68,7 +68,7 @@ func (w *whereOption) buildGorm(db *GormDb) *GormDb {
 }
 
 func (w *whereOption) buildWhere() whereResult {
-	return w.where.buildWhere(w.value)
+	return w.where.buildWhere(nil, w.value)
 }
 
 func (w *whereOption) toTree() *whereOptionTree {

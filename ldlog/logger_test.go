@@ -10,8 +10,8 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/distroy/ldgo/ldhook"
-	"github.com/distroy/ldgo/ldptr"
+	"github.com/distroy/ldgo/v2/ldhook"
+	"github.com/distroy/ldgo/v2/ldptr"
 	"github.com/smartystreets/goconvey/convey"
 	"go.uber.org/zap"
 )

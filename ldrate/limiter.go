@@ -7,10 +7,10 @@ package ldrate
 import (
 	"time"
 
-	"github.com/distroy/ldgo/ldatomic"
-	"github.com/distroy/ldgo/ldctx"
-	"github.com/distroy/ldgo/lderr"
-	"github.com/distroy/ldgo/ldmath"
+	"github.com/distroy/ldgo/v2/ldatomic"
+	"github.com/distroy/ldgo/v2/ldctx"
+	"github.com/distroy/ldgo/v2/lderr"
+	"github.com/distroy/ldgo/v2/ldmath"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
 )

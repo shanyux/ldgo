@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/distroy/ldgo/lderr"
+	"github.com/distroy/ldgo/v2/lderr"
 )
 
 var (

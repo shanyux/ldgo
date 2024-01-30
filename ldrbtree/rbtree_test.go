@@ -7,8 +7,8 @@ package ldrbtree
 import (
 	"testing"
 
-	"github.com/distroy/ldgo/ldcmp"
-	"github.com/distroy/ldgo/ldrand"
+	"github.com/distroy/ldgo/v2/ldcmp"
+	"github.com/distroy/ldgo/v2/ldrand"
 	"github.com/smartystreets/goconvey/convey"
 )
 

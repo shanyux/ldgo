@@ -4,7 +4,7 @@
 
 package ldlog
 
-import "github.com/distroy/ldgo/ldio"
+import "github.com/distroy/ldgo/v2/ldio"
 
 var (
 	defLogger = NewLogger()

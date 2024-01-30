@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/distroy/ldgo/ldptr"
+	"github.com/distroy/ldgo/v2/ldptr"
 )
 
 // duration

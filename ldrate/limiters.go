@@ -5,8 +5,8 @@
 package ldrate
 
 import (
-	"github.com/distroy/ldgo/ldctx"
-	"github.com/distroy/ldgo/lderr"
+	"github.com/distroy/ldgo/v2/ldctx"
+	"github.com/distroy/ldgo/v2/lderr"
 	"golang.org/x/time/rate"
 )
 

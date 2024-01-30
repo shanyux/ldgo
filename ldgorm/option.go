@@ -7,7 +7,7 @@ package ldgorm
 import (
 	"fmt"
 
-	"github.com/distroy/ldgo/ldmath"
+	"github.com/distroy/ldgo/v2/ldmath"
 )
 
 type Option interface {

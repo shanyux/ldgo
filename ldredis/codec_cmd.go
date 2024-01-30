@@ -5,7 +5,7 @@
 package ldredis
 
 import (
-	"github.com/distroy/ldgo/ldconv"
+	"github.com/distroy/ldgo/v2/ldconv"
 )
 
 type errorMarshaler struct {
