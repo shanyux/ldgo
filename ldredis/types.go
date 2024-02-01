@@ -38,7 +38,7 @@ type (
 	SliceCmd    = redis.SliceCmd
 
 	StringsCmd         = redis.StringSliceCmd
-	StringStringMapCmd = redis.StringStringMapCmd
+	StringStringMapCmd = redis.MapStringStringCmd
 	StringSetCmd       = redis.StringStructMapCmd
 
 	ZMember     = redis.Z
@@ -73,118 +73,118 @@ type Cmdable interface {
 	redis.Cmdable
 
 	Do(ctx context.Context, args ...interface{}) *Cmd
-	Process(cmd Cmder) error
+	Process(ctx context.Context, cmd Cmder) error
 	Close() error
 	// Discard() error
 	// Exec() ([]Cmder, error)
 
-	Subscribe(channels ...string) *PubSub
-	PSubscribe(channels ...string) *PubSub
+	Subscribe(ctx context.Context, channels ...string) *PubSub
+	PSubscribe(ctx context.Context, channels ...string) *PubSub
 }
 
 type CodecCmdable interface {
-	Get(key string) *CodecCmd                                               //
-	GetBit(key string, offset int64) *IntCmd                                // same as Cmdable
-	GetRange(key string, start, end int64) *StringCmd                       // same as Cmdable
-	GetSet(key string, value interface{}) *CodecCmd                         //
-	Incr(key string) *IntCmd                                                // same as Cmdable
-	IncrBy(key string, value int64) *IntCmd                                 // same as Cmdable
-	IncrByFloat(key string, value float64) *FloatCmd                        // same as Cmdable
-	MGet(keys ...string) *CodecSliceCmd                                     //
-	MSet(pairs ...interface{}) *StatusCmd                                   //
-	MSetNX(pairs ...interface{}) *BoolCmd                                   //
-	Set(key string, value interface{}, expiration time.Duration) *StatusCmd //
-	SetBit(key string, offset int64, value int) *IntCmd                     // same as Cmdable
-	SetNX(key string, value interface{}, expiration time.Duration) *BoolCmd //
-	SetXX(key string, value interface{}, expiration time.Duration) *BoolCmd //
-	SetRange(key string, offset int64, value string) *IntCmd                // same as Cmdable
-	StrLen(key string) *IntCmd                                              // same as Cmdable
+	Get(c context.Context, key string) *CodecCmd                                               //
+	GetBit(c context.Context, key string, offset int64) *IntCmd                                // same as Cmdable
+	GetRange(c context.Context, key string, start, end int64) *StringCmd                       // same as Cmdable
+	GetSet(c context.Context, key string, value interface{}) *CodecCmd                         //
+	Incr(c context.Context, key string) *IntCmd                                                // same as Cmdable
+	IncrBy(c context.Context, key string, value int64) *IntCmd                                 // same as Cmdable
+	IncrByFloat(c context.Context, key string, value float64) *FloatCmd                        // same as Cmdable
+	MGet(c context.Context, keys ...string) *CodecSliceCmd                                     //
+	MSet(c context.Context, pairs ...interface{}) *StatusCmd                                   //
+	MSetNX(c context.Context, pairs ...interface{}) *BoolCmd                                   //
+	Set(c context.Context, key string, value interface{}, expiration time.Duration) *StatusCmd //
+	SetBit(c context.Context, key string, offset int64, value int) *IntCmd                     // same as Cmdable
+	SetNX(c context.Context, key string, value interface{}, expiration time.Duration) *BoolCmd //
+	SetXX(c context.Context, key string, value interface{}, expiration time.Duration) *BoolCmd //
+	SetRange(c context.Context, key string, offset int64, value string) *IntCmd                // same as Cmdable
+	StrLen(c context.Context, key string) *IntCmd                                              // same as Cmdable
 
-	HDel(key string, fields ...string) *IntCmd                  // same as Cmdable
-	HExists(key, field string) *BoolCmd                         // same as Cmdable
-	HGet(key, field string) *CodecCmd                           //
-	HGetAll(key string) *StringCodecMapCmd                      //
-	HIncrBy(key, field string, incr int64) *IntCmd              // same as Cmdable
-	HIncrByFloat(key, field string, incr float64) *FloatCmd     // same as Cmdable
-	HKeys(key string) *StringsCmd                               // same as Cmdable
-	HLen(key string) *IntCmd                                    // same as Cmdable
-	HMGet(key string, fields ...string) *CodecSliceCmd          //
-	HMSet(key string, fields map[string]interface{}) *StatusCmd //
-	HSet(key, field string, value interface{}) *BoolCmd         //
-	HSetNX(key, field string, value interface{}) *BoolCmd       //
-	HVals(key string) *CodecsCmd                                //
+	HDel(c context.Context, key string, fields ...string) *IntCmd                  // same as Cmdable
+	HExists(c context.Context, key, field string) *BoolCmd                         // same as Cmdable
+	HGet(c context.Context, key, field string) *CodecCmd                           //
+	HGetAll(c context.Context, key string) *StringCodecMapCmd                      //
+	HIncrBy(c context.Context, key, field string, incr int64) *IntCmd              // same as Cmdable
+	HIncrByFloat(c context.Context, key, field string, incr float64) *FloatCmd     // same as Cmdable
+	HKeys(c context.Context, key string) *StringsCmd                               // same as Cmdable
+	HLen(c context.Context, key string) *IntCmd                                    // same as Cmdable
+	HMGet(c context.Context, key string, fields ...string) *CodecSliceCmd          //
+	HMSet(c context.Context, key string, fields map[string]interface{}) *StatusCmd //
+	HSet(c context.Context, key, field string, value interface{}) *BoolCmd         //
+	HSetNX(c context.Context, key, field string, value interface{}) *BoolCmd       //
+	HVals(c context.Context, key string) *CodecsCmd                                //
 
-	BLPop(timeout time.Duration, keys ...string) *CodecsCmd                 //
-	BRPop(timeout time.Duration, keys ...string) *CodecsCmd                 //
-	BRPopLPush(source, destination string, timeout time.Duration) *CodecCmd //
-	LIndex(key string, index int64) *CodecCmd                               //
-	LInsert(key, op string, pivot, value interface{}) *IntCmd               //
-	LInsertBefore(key string, pivot, value interface{}) *IntCmd             //
-	LInsertAfter(key string, pivot, value interface{}) *IntCmd              //
-	LLen(key string) *IntCmd                                                // same as Cmdable
-	LPop(key string) *CodecCmd                                              //
-	LPush(key string, values ...interface{}) *IntCmd                        //
-	LPushX(key string, value interface{}) *IntCmd                           //
-	LRange(key string, start, stop int64) *CodecsCmd                        //
-	LRem(key string, count int64, value interface{}) *IntCmd                //
-	LSet(key string, index int64, value interface{}) *StatusCmd             //
-	LTrim(key string, start, stop int64) *StatusCmd                         // same as Cmdable
-	RPop(key string) *CodecCmd                                              //
-	RPopLPush(source, destination string) *CodecCmd                         //
-	RPush(key string, values ...interface{}) *IntCmd                        //
-	RPushX(key string, value interface{}) *IntCmd                           //
+	BLPop(c context.Context, timeout time.Duration, keys ...string) *CodecsCmd                 //
+	BRPop(c context.Context, timeout time.Duration, keys ...string) *CodecsCmd                 //
+	BRPopLPush(c context.Context, source, destination string, timeout time.Duration) *CodecCmd //
+	LIndex(c context.Context, key string, index int64) *CodecCmd                               //
+	LInsert(c context.Context, key, op string, pivot, value interface{}) *IntCmd               //
+	LInsertBefore(c context.Context, key string, pivot, value interface{}) *IntCmd             //
+	LInsertAfter(c context.Context, key string, pivot, value interface{}) *IntCmd              //
+	LLen(c context.Context, key string) *IntCmd                                                // same as Cmdable
+	LPop(c context.Context, key string) *CodecCmd                                              //
+	LPush(c context.Context, key string, values ...interface{}) *IntCmd                        //
+	LPushX(c context.Context, key string, value interface{}) *IntCmd                           //
+	LRange(c context.Context, key string, start, stop int64) *CodecsCmd                        //
+	LRem(c context.Context, key string, count int64, value interface{}) *IntCmd                //
+	LSet(c context.Context, key string, index int64, value interface{}) *StatusCmd             //
+	LTrim(c context.Context, key string, start, stop int64) *StatusCmd                         // same as Cmdable
+	RPop(c context.Context, key string) *CodecCmd                                              //
+	RPopLPush(c context.Context, source, destination string) *CodecCmd                         //
+	RPush(c context.Context, key string, values ...interface{}) *IntCmd                        //
+	RPushX(c context.Context, key string, value interface{}) *IntCmd                           //
 
-	SAdd(key string, members ...interface{}) *IntCmd               //
-	SCard(key string) *IntCmd                                      // same as Cmdable
-	SDiff(keys ...string) *CodecsCmd                               //
-	SDiffStore(destination string, keys ...string) *IntCmd         // same as Cmdable
-	SInter(keys ...string) *CodecsCmd                              //
-	SInterStore(destination string, keys ...string) *IntCmd        // same as Cmdable
-	SIsMember(key string, member interface{}) *BoolCmd             //
-	SMembers(key string) *CodecsCmd                                //
-	SMembersMap(key string) *CodecSetCmd                           //
-	SMove(source, destination string, member interface{}) *BoolCmd //
-	SPop(key string) *CodecCmd                                     //
-	SPopN(key string, count int64) *CodecsCmd                      //
-	SRandMember(key string) *CodecCmd                              //
-	SRandMemberN(key string, count int64) *CodecsCmd               //
-	SRem(key string, members ...interface{}) *IntCmd               //
-	SUnion(keys ...string) *CodecsCmd                              //
-	SUnionStore(destination string, keys ...string) *IntCmd        // same as Cmdable
+	SAdd(c context.Context, key string, members ...interface{}) *IntCmd               //
+	SCard(c context.Context, key string) *IntCmd                                      // same as Cmdable
+	SDiff(c context.Context, keys ...string) *CodecsCmd                               //
+	SDiffStore(c context.Context, destination string, keys ...string) *IntCmd         // same as Cmdable
+	SInter(c context.Context, keys ...string) *CodecsCmd                              //
+	SInterStore(c context.Context, destination string, keys ...string) *IntCmd        // same as Cmdable
+	SIsMember(c context.Context, key string, member interface{}) *BoolCmd             //
+	SMembers(c context.Context, key string) *CodecsCmd                                //
+	SMembersMap(c context.Context, key string) *CodecSetCmd                           //
+	SMove(c context.Context, source, destination string, member interface{}) *BoolCmd //
+	SPop(c context.Context, key string) *CodecCmd                                     //
+	SPopN(c context.Context, key string, count int64) *CodecsCmd                      //
+	SRandMember(c context.Context, key string) *CodecCmd                              //
+	SRandMemberN(c context.Context, key string, count int64) *CodecsCmd               //
+	SRem(c context.Context, key string, members ...interface{}) *IntCmd               //
+	SUnion(c context.Context, keys ...string) *CodecsCmd                              //
+	SUnionStore(c context.Context, destination string, keys ...string) *IntCmd        // same as Cmdable
 
 	// XAdd(a *XAddArgs) *StringCmd
 
-	ZAdd(key string, members ...ZMember) *IntCmd                          //
-	ZAddNX(key string, members ...ZMember) *IntCmd                        //
-	ZAddXX(key string, members ...ZMember) *IntCmd                        //
-	ZAddCh(key string, members ...ZMember) *IntCmd                        //
-	ZAddNXCh(key string, members ...ZMember) *IntCmd                      //
-	ZAddXXCh(key string, members ...ZMember) *IntCmd                      //
-	ZIncr(key string, member ZMember) *FloatCmd                           //
-	ZIncrNX(key string, member ZMember) *FloatCmd                         //
-	ZIncrXX(key string, member ZMember) *FloatCmd                         //
-	ZCard(key string) *IntCmd                                             // same as Cmdable
-	ZCount(key, min, max string) *IntCmd                                  // same as Cmdable
-	ZLexCount(key, min, max string) *IntCmd                               // same as Cmdable
-	ZIncrBy(key string, increment float64, member interface{}) *FloatCmd  //
-	ZInterStore(destination string, store ZStore, keys ...string) *IntCmd // same as Cmdable
-	ZPopMax(key string, count ...int64) *ZCodecSliceCmd                   //
-	ZPopMin(key string, count ...int64) *ZCodecSliceCmd                   //
-	ZRange(key string, start, stop int64) *CodecsCmd                      //
-	ZRangeWithScores(key string, start, stop int64) *ZCodecSliceCmd       //
-	ZRangeByScore(key string, opt ZRangeBy) *CodecsCmd                    //
-	ZRangeByLex(key string, opt ZRangeBy) *CodecsCmd                      //
-	ZRangeByScoreWithScores(key string, opt ZRangeBy) *ZCodecSliceCmd     //
-	ZRank(key, member interface{}) *IntCmd                                //
-	ZRem(key string, members ...interface{}) *IntCmd                      //
-	ZRemRangeByRank(key string, start, stop int64) *IntCmd                // same as Cmdable
-	ZRemRangeByScore(key, min, max string) *IntCmd                        // same as Cmdable
-	ZRemRangeByLex(key, min, max string) *IntCmd                          // same as Cmdable
-	ZRevRange(key string, start, stop int64) *CodecsCmd                   //
-	ZRevRangeWithScores(key string, start, stop int64) *ZCodecSliceCmd    //
-	ZRevRangeByScore(key string, opt ZRangeBy) *CodecsCmd                 //
-	ZRevRangeByLex(key string, opt ZRangeBy) *CodecsCmd                   //
-	ZRevRangeByScoreWithScores(key string, opt ZRangeBy) *ZCodecSliceCmd  //
-	ZRevRank(key, member interface{}) *IntCmd                             //
-	ZScore(key, member interface{}) *FloatCmd                             //
+	ZAdd(c context.Context, key string, members ...ZMember) *IntCmd                         //
+	ZAddNX(c context.Context, key string, members ...ZMember) *IntCmd                       //
+	ZAddXX(c context.Context, key string, members ...ZMember) *IntCmd                       //
+	ZAddCh(c context.Context, key string, members ...ZMember) *IntCmd                       //
+	ZAddNXCh(c context.Context, key string, members ...ZMember) *IntCmd                     //
+	ZAddXXCh(c context.Context, key string, members ...ZMember) *IntCmd                     //
+	ZIncr(c context.Context, key string, member ZMember) *FloatCmd                          //
+	ZIncrNX(c context.Context, key string, member ZMember) *FloatCmd                        //
+	ZIncrXX(c context.Context, key string, member ZMember) *FloatCmd                        //
+	ZCard(c context.Context, key string) *IntCmd                                            // same as Cmdable
+	ZCount(c context.Context, key, min, max string) *IntCmd                                 // same as Cmdable
+	ZLexCount(c context.Context, key, min, max string) *IntCmd                              // same as Cmdable
+	ZIncrBy(c context.Context, key string, increment float64, member interface{}) *FloatCmd //
+	ZInterStore(c context.Context, destination string, store *ZStore) *IntCmd               // same as Cmdable
+	ZPopMax(c context.Context, key string, count ...int64) *ZCodecSliceCmd                  //
+	ZPopMin(c context.Context, key string, count ...int64) *ZCodecSliceCmd                  //
+	ZRange(c context.Context, key string, start, stop int64) *CodecsCmd                     //
+	ZRangeWithScores(c context.Context, key string, start, stop int64) *ZCodecSliceCmd      //
+	ZRangeByScore(c context.Context, key string, opt ZRangeBy) *CodecsCmd                   //
+	ZRangeByLex(c context.Context, key string, opt ZRangeBy) *CodecsCmd                     //
+	ZRangeByScoreWithScores(c context.Context, key string, opt ZRangeBy) *ZCodecSliceCmd    //
+	ZRank(c context.Context, key, member interface{}) *IntCmd                               //
+	ZRem(c context.Context, key string, members ...interface{}) *IntCmd                     //
+	ZRemRangeByRank(c context.Context, key string, start, stop int64) *IntCmd               // same as Cmdable
+	ZRemRangeByScore(c context.Context, key, min, max string) *IntCmd                       // same as Cmdable
+	ZRemRangeByLex(c context.Context, key, min, max string) *IntCmd                         // same as Cmdable
+	ZRevRange(c context.Context, key string, start, stop int64) *CodecsCmd                  //
+	ZRevRangeWithScores(c context.Context, key string, start, stop int64) *ZCodecSliceCmd   //
+	ZRevRangeByScore(c context.Context, key string, opt ZRangeBy) *CodecsCmd                //
+	ZRevRangeByLex(c context.Context, key string, opt ZRangeBy) *CodecsCmd                  //
+	ZRevRangeByScoreWithScores(c context.Context, key string, opt ZRangeBy) *ZCodecSliceCmd //
+	ZRevRank(c context.Context, key, member interface{}) *IntCmd                            //
+	ZScore(c context.Context, key, member interface{}) *FloatCmd                            //
 }

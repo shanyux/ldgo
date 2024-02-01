@@ -7,8 +7,6 @@ package ldredis
 import (
 	"time"
 
-	"github.com/distroy/ldgo/v2/ldctx"
-	"github.com/distroy/ldgo/v2/ldlog"
 	redis "github.com/redis/go-redis/v9"
 )
 
@@ -36,10 +34,10 @@ func New(cli redis.Cmdable) *Redis {
 		return newRedis(v)
 
 	case *redis.Client:
-		return newRedis(redisClientWrapper{Client: v})
+		return newRedis(v)
 
 	case *redis.ClusterClient:
-		return newRedis(redisClusterWrapper{ClusterClient: v})
+		return newRedis(v)
 	}
 
 	panic("redis client type must be `*ldredis.Redis` or `*redis.Client` or `*redis.ClusterClient`")
@@ -54,25 +52,14 @@ func NewByConfig(cfg *Config) *Redis {
 }
 
 func newRedis(cli cmdable) *Redis {
-	ctx := ldctx.NewContext(cli.Context())
 	c := &Redis{
 		cmdable:  cli,
 		origin:   cli,
-		ctx:      ctx,
 		reporter: discardReporter{},
 		caller:   true,
 	}
 
-	c.cmdable = c.cmdable.withContext(ctx)
-	c.cmdable.WrapProcess(func(oldProcess func(cmd Cmder) error) func(cmd Cmder) error {
-		c.oldProcess = oldProcess
-		return c.defaultProcess
-	})
-	c.cmdable.WrapProcessPipeline(func(oldProcess func(cmds []Cmder) error) func(cmds []Cmder) error {
-		c.oldProcessPipeline = oldProcess
-		return c.defaultProcessPipeline
-	})
-
+	c.cmdable.AddHook(newHook(c))
 	return c
 }
 
@@ -84,39 +71,17 @@ type Redis struct {
 	oldProcess         func(cmd Cmder) error
 	oldProcessPipeline func(cmds []Cmder) error
 
-	ctx           Context
-	log           *ldlog.Logger
 	reporter      Reporter
 	retry         int
 	retryInterval time.Duration
 	caller        bool
 }
 
-func (c *Redis) Client() Cmdable  { return c.origin }
-func (c *Redis) context() Context { return c.ctx }
+func (c *Redis) Client() Cmdable { return c.origin }
 
-func (c *Redis) logger() *ldlog.Logger {
-	if c.log != nil {
-		return c.log
-	}
-	return ldctx.GetLogger(c.context())
-}
-
-func (c *Redis) clone(ctx ...Context) *Redis {
+func (c *Redis) clone() *Redis {
 	cp := *c
 	c = &cp
-
-	if len(ctx) != 0 {
-		c.origin = c.origin.withContext(ctx[0])
-	}
-
-	c.cmdable = c.origin.withContext(c.origin.Context())
-	c.cmdable.WrapProcess(func(oldProcess func(cmd Cmder) error) func(cmd Cmder) error {
-		return c.defaultProcess
-	})
-	c.cmdable.WrapProcessPipeline(func(oldProcess func(cmds []Cmder) error) func(cmds []Cmder) error {
-		return c.defaultProcessPipeline
-	})
 
 	return c
 }
@@ -127,23 +92,6 @@ func (c *Redis) WithCodec(codec Codec) *CodecRedis {
 		codec:  codec,
 	}
 }
-
-func (c *Redis) WithContext(ctx Context) *Redis {
-	if ctx == nil {
-		ctx = ldctx.Default()
-	}
-
-	c = c.clone(ctx)
-	c.ctx = ctx
-	c.log = nil
-	return c
-}
-
-// func (c *Redis) WithLogger(l *ldlog.Logger) *Redis {
-// 	c = c.clone()
-// 	c.log = l
-// 	return c
-// }
 
 // WithRetry should be called like these:
 //

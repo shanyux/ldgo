@@ -5,6 +5,7 @@
 package ldredis
 
 import (
+	"context"
 	"reflect"
 
 	"github.com/distroy/ldgo/v2/ldconv"
@@ -92,20 +93,21 @@ func (c *CodecRedis) marshalZMembers(members []ZMember) []ZMember {
 
 // ***** redis unmarshal begin *****
 
-func (c *CodecRedis) unmarshal(bytes []byte) (interface{}, error) {
+func (c *CodecRedis) unmarshal(cc context.Context, bytes []byte) (interface{}, error) {
 	if len(bytes) == 0 {
 		return nil, nil
 	}
 	v, err := c.codec.Unmarshal(bytes)
 	if err != nil {
-		c.logger().Error("redis codec unmarshal fail", zap.Error(err),
+		ctx := newContext(cc)
+		ctx.LogE("redis codec unmarshal fail", zap.Error(err),
 			getCaller(c.caller))
 		return nil, lderr.ErrCacheUnmarshal
 	}
 	return v, nil
 }
 
-func (c *CodecRedis) unmarshalInterface(i interface{}) (interface{}, error) {
+func (c *CodecRedis) unmarshalInterface(cc context.Context, i interface{}) (interface{}, error) {
 	if i == nil {
 		return nil, nil
 	}
@@ -117,11 +119,12 @@ func (c *CodecRedis) unmarshalInterface(i interface{}) (interface{}, error) {
 	case string:
 		bytes = ldconv.StrToBytesUnsafe(tmp)
 	default:
-		c.logger().Error("redis codec cannot unmarshal the type",
+		ctx := newContext(cc)
+		ctx.LogE("redis codec cannot unmarshal the type",
 			zap.Stringer("type", reflect.TypeOf(i)), getCaller(c.caller))
 		return nil, lderr.ErrCacheUnmarshal
 	}
-	return c.unmarshal(bytes)
+	return c.unmarshal(cc, bytes)
 }
 
 // ***** redis unmarshal end *****

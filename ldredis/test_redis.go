@@ -5,7 +5,6 @@
 package ldredis
 
 import (
-	"context"
 	"fmt"
 
 	miniredis "github.com/alicebob/miniredis/v2"
@@ -23,7 +22,7 @@ func NewTestRedis() (*Redis, error) {
 	})
 
 	return New(&testRedisWrapper{
-		cmdable: redisClientWrapper{Client: client},
+		cmdable: client,
 		closer:  server,
 	}), nil
 }
@@ -31,7 +30,7 @@ func NewTestRedis() (*Redis, error) {
 func MustNewTestRedis() *Redis {
 	r, err := NewTestRedis()
 	if err != nil {
-		panic(fmt.Sprintf("new test redis fail. err:%v", err))
+		panic(fmt.Errorf("new test redis fail. err:%w", err))
 	}
 	return r
 }
@@ -44,11 +43,6 @@ type testRedisWrapper struct {
 	cmdable
 
 	closer closer
-}
-
-func (r testRedisWrapper) withContext(ctx context.Context) cmdable {
-	r.cmdable = r.cmdable.withContext(ctx)
-	return r
 }
 
 func (r testRedisWrapper) Close() error {
