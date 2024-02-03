@@ -16,7 +16,7 @@ import (
 	"github.com/distroy/ldgo/v2/ldtagmap"
 )
 
-const _WHERE_TAG = "gormwhere"
+const _WHERE_TAG = "ldgormwhere"
 
 var (
 	_WHERE_FIELD_TYPE = reflect.TypeOf((*FieldWherer)(nil)).Elem()

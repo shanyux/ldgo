@@ -72,14 +72,14 @@ func TestFlagSet_wrigeUsage(t *testing.T) {
 
 		convey.Convey("normal value", func() {
 			type Flags struct {
-				Top      int      `flag:"name:top; meta:N; usage:show the top <N>"`
-				Avg      bool     `flag:"usage:show the average complexity"`
-				DebugLog bool     `flag:"usage:print debug log; bool"`
-				Rate     float64  `flag:"default:0.65; usage:"`
-				Branch   string   `flag:"meta:branch; usage:git branch name"`
-				Includes []string `flag:"name:include; meta:regexp; usage:include file regexps"`
-				Excludes []string `flag:"name:exclude; meta:regexp; usage:exclude file regexps"`
-				Pathes   []string `flag:"args; meta:path; default:."`
+				Top      int      `ldflag:"name:top; meta:N; usage:show the top <N>"`
+				Avg      bool     `ldflag:"usage:show the average complexity"`
+				DebugLog bool     `ldflag:"usage:print debug log; bool"`
+				Rate     float64  `ldflag:"default:0.65; usage:"`
+				Branch   string   `ldflag:"meta:branch; usage:git branch name"`
+				Includes []string `ldflag:"name:include; meta:regexp; usage:include file regexps"`
+				Excludes []string `ldflag:"name:exclude; meta:regexp; usage:exclude file regexps"`
+				Pathes   []string `ldflag:"args; meta:path; default:."`
 			}
 
 			flags := &Flags{
@@ -115,14 +115,14 @@ Flags:
 
 		convey.Convey("pointer value", func() {
 			type Flags struct {
-				Top      *int     `flag:"name:top; meta:N; usage:show the top <N>"`
-				Avg      *bool    `flag:"usage:show the average complexity"`
-				DebugLog *bool    `flag:"usage:print debug log; bool"`
-				Rate     *float64 `flag:"default:0.65; usage:"`
-				Branch   *string  `flag:"meta:branch; usage:git branch name"`
-				Includes []string `flag:"name:include; meta:regexp; usage:include file regexps"`
-				Excludes []string `flag:"name:exclude; meta:regexp; usage:exclude file regexps"`
-				Pathes   []string `flag:"args; meta:path; default:."`
+				Top      *int     `ldflag:"name:top; meta:N; usage:show the top <N>"`
+				Avg      *bool    `ldflag:"usage:show the average complexity"`
+				DebugLog *bool    `ldflag:"usage:print debug log; bool"`
+				Rate     *float64 `ldflag:"default:0.65; usage:"`
+				Branch   *string  `ldflag:"meta:branch; usage:git branch name"`
+				Includes []string `ldflag:"name:include; meta:regexp; usage:include file regexps"`
+				Excludes []string `ldflag:"name:exclude; meta:regexp; usage:exclude file regexps"`
+				Pathes   []string `ldflag:"args; meta:path; default:."`
 			}
 
 			flags := &Flags{
@@ -157,8 +157,8 @@ Flags:
 		})
 		convey.Convey("value with default", func() {
 			type Flags struct {
-				Includes testIncludes `flag:"name:include; meta:regexp; usage:include file regexps"`
-				Excludes testExcludes `flag:"name:exclude; meta:regexp; usage:exclude file regexps"`
+				Includes testIncludes `ldflag:"name:include; meta:regexp; usage:include file regexps"`
+				Excludes testExcludes `ldflag:"name:exclude; meta:regexp; usage:exclude file regexps"`
 			}
 
 			flags := &Flags{}
@@ -179,7 +179,7 @@ Flags:
 
 		c.Convey("short flag && no usage", func(c convey.C) {
 			type Flags struct {
-				Csv bool `flag:"bool"`
+				Csv bool `ldflag:"bool"`
 			}
 
 			flags := &Flags{}
@@ -210,12 +210,12 @@ func TestFlagSet_Model(t *testing.T) {
 	}
 
 	type Flags struct {
-		Top      int      `flag:"name:top; meta:N; usage:show the top <N>"`
-		Avg      bool     `flag:"usage:show the average complexity"`
-		DebugLog bool     `flag:"usage:print debug log; bool"`
-		Rate     float64  `flag:"default:0.65; usage:"`
-		Branch   string   `flag:"meta:branch; usage:git branch name"`
-		Pathes   []string `flag:"args; meta:path; default:."`
+		Top      int      `ldflag:"name:top; meta:N; usage:show the top <N>"`
+		Avg      bool     `ldflag:"usage:show the average complexity"`
+		DebugLog bool     `ldflag:"usage:print debug log; bool"`
+		Rate     float64  `ldflag:"default:0.65; usage:"`
+		Branch   string   `ldflag:"meta:branch; usage:git branch name"`
+		Pathes   []string `ldflag:"args; meta:path; default:."`
 	}
 
 	convey.Convey(t.Name(), t, func() {
@@ -292,12 +292,12 @@ func TestFlagSet_Parse(t *testing.T) {
 
 		convey.Convey("normal value", func() {
 			type Flags struct {
-				Top      int      `flag:"name:top; meta:N; usage:show the top <N>"`
-				Avg      bool     `flag:"usage:show the average complexity"`
-				DebugLog bool     `flag:"usage:print debug log; bool"`
-				Rate     float64  `flag:"default:0.65; usage:"`
-				Branch   string   `flag:"meta:branch; usage:git branch name"`
-				Pathes   []string `flag:"args; meta:path; default:."`
+				Top      int      `ldflag:"name:top; meta:N; usage:show the top <N>"`
+				Avg      bool     `ldflag:"usage:show the average complexity"`
+				DebugLog bool     `ldflag:"usage:print debug log; bool"`
+				Rate     float64  `ldflag:"default:0.65; usage:"`
+				Branch   string   `ldflag:"meta:branch; usage:git branch name"`
+				Pathes   []string `ldflag:"args; meta:path; default:."`
 			}
 
 			convey.Convey("no set default", func() {
@@ -345,13 +345,13 @@ func TestFlagSet_Parse(t *testing.T) {
 
 		convey.Convey("ptr value", func() {
 			type Flags struct {
-				Over     *int     `flag:"name:over; meta:N; default:15; usage:show functions with complexity <N>"`
-				Top      *int     `flag:"name:top; meta:N; usage:show the top <N>"`
-				Avg      *bool    `flag:"usage:show the average complexity"`
-				DebugLog *bool    `flag:"usage:print debug log; bool"`
-				Rate     *float64 `flag:"default:0.65; usage:"`
-				Branch   *string  `flag:"meta:branch; usage:git branch name"`
-				Pathes   []string `flag:"args; meta:path; default:."`
+				Over     *int     `ldflag:"name:over; meta:N; default:15; usage:show functions with complexity <N>"`
+				Top      *int     `ldflag:"name:top; meta:N; usage:show the top <N>"`
+				Avg      *bool    `ldflag:"usage:show the average complexity"`
+				DebugLog *bool    `ldflag:"usage:print debug log; bool"`
+				Rate     *float64 `ldflag:"default:0.65; usage:"`
+				Branch   *string  `ldflag:"meta:branch; usage:git branch name"`
+				Pathes   []string `ldflag:"args; meta:path; default:."`
 			}
 
 			convey.Convey("no set default", func() {
