@@ -4,7 +4,7 @@
 
 package ldrbtree
 
-func (rbt *RBTree) rotateLeft(node *rbtreeNode) {
+func (rbt *RBTree[T]) rotateLeft(node *rbtreeNode[T]) {
 	//    N             T
 	//   / \           / \
 	//  a   T   -->   N   c
@@ -35,7 +35,7 @@ func (rbt *RBTree) rotateLeft(node *rbtreeNode) {
 	node.Parent = temp
 }
 
-func (rbt *RBTree) rotateRight(node *rbtreeNode) {
+func (rbt *RBTree[T]) rotateRight(node *rbtreeNode[T]) {
 	//      N         T
 	//     / \       / \
 	//    T   c --> a   N

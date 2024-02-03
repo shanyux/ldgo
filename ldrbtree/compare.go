@@ -8,6 +8,6 @@ import (
 	"github.com/distroy/ldgo/v2/ldcmp"
 )
 
-func DefaultCompare(a, b interface{}) int {
+func DefaultCompare[T any](a, b T) int {
 	return ldcmp.CompareInterface(a, b)
 }

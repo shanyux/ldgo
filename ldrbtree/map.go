@@ -4,15 +4,14 @@
 
 package ldrbtree
 
-type Map struct {
-	tree       RBTree
-	KeyCompare CompareFunc
-	// ValueCompare CompareFunc
+type Map[K any, V any] struct {
+	tree       RBTree[Pair[K, V]]
+	KeyCompare CompareFunc[K]
 }
 
-func (m *Map) init() {
+func (m *Map[K, V]) init() {
 	if m.KeyCompare == nil {
-		m.KeyCompare = DefaultCompare
+		m.KeyCompare = DefaultCompare[K]
 	}
 	// if m.ValueCompare == nil {
 	// 	m.ValueCompare = DefaultCompare
@@ -24,154 +23,154 @@ func (m *Map) init() {
 	m.tree.init()
 }
 
-func (m *Map) Len() int {
+func (m *Map[K, V]) Len() int {
 	m.init()
 	return m.tree.Len()
 }
 
-func (m *Map) Clear() {
+func (m *Map[K, V]) Clear() {
 	m.init()
 	m.tree.Clear()
 }
 
-func (m *Map) Insert(key, value interface{}) MapIterator {
+func (m *Map[K, V]) Insert(key K, value V) MapIterator[K, V] {
 	m.init()
-	return MapIterator(m.tree.Insert(Pair{Key: key, Value: value}))
+	return MapIterator[K, V](m.tree.Insert(Pair[K, V]{Key: key, Value: value}))
 }
 
-func (m *Map) InsertOrSearch(key, value interface{}) MapIterator {
+func (m *Map[K, V]) InsertOrSearch(key K, value V) MapIterator[K, V] {
 	m.init()
-	return MapIterator(m.tree.InsertOrSearch(Pair{Key: key, Value: value}))
+	return MapIterator[K, V](m.tree.InsertOrSearch(Pair[K, V]{Key: key, Value: value}))
 }
 
-func (m *Map) InsertOrAssign(key, value interface{}) MapIterator {
+func (m *Map[K, V]) InsertOrAssign(key K, value V) MapIterator[K, V] {
 	m.init()
-	return MapIterator(m.tree.InsertOrAssign(Pair{Key: key, Value: value}))
+	return MapIterator[K, V](m.tree.InsertOrAssign(Pair[K, V]{Key: key, Value: value}))
 }
 
-func (m *Map) Count(key interface{}) int {
+func (m *Map[K, V]) Count(key K) int {
 	m.init()
-	return m.tree.Count(Pair{Key: key})
+	return m.tree.Count(Pair[K, V]{Key: key})
 }
 
-func (m *Map) Delete(it MapIterator) MapIterator {
+func (m *Map[K, V]) Delete(it MapIterator[K, V]) MapIterator[K, V] {
 	m.init()
-	return MapIterator(m.tree.Delete(RBTreeIterator(it)))
+	return MapIterator[K, V](m.tree.Delete(RBTreeIterator[Pair[K, V]](it)))
 }
 
 // Search returns the first pair.key == key
-func (m *Map) Search(key interface{}) MapIterator {
+func (m *Map[K, V]) Search(key K) MapIterator[K, V] {
 	m.init()
-	return MapIterator(m.tree.Search(Pair{Key: key}))
+	return MapIterator[K, V](m.tree.Search(Pair[K, V]{Key: key}))
 }
 
 // SearchRange returns the node range [first pair.key == key, first pair.key > key)
-func (m *Map) SearchRange(key interface{}) *MapRange {
+func (m *Map[K, V]) SearchRange(key K) *MapRange[K, V] {
 	m.init()
-	it := m.tree.SearchRange(Pair{Key: key})
-	return &MapRange{
-		Begin: MapIterator(it.Begin),
-		End:   MapIterator(it.End),
+	it := m.tree.SearchRange(Pair[K, V]{Key: key})
+	return &MapRange[K, V]{
+		Begin: MapIterator[K, V](it.Begin),
+		End:   MapIterator[K, V](it.End),
 	}
 }
 
 // LowerBound returns the first pair.key >= key
-func (m *Map) LowerBound(key interface{}) MapIterator {
+func (m *Map[K, V]) LowerBound(key K) MapIterator[K, V] {
 	m.init()
-	return MapIterator{
+	return MapIterator[K, V]{
 		tree: &m.tree,
-		node: rbtreeLowerBound(Pair{Key: key}, forward(&m.tree)),
+		node: rbtreeLowerBound(Pair[K, V]{Key: key}, forward(&m.tree)),
 	}
 }
 
 // UpperBound returns the first pair.key > key
-func (m *Map) UpperBound(key interface{}) MapIterator {
+func (m *Map[K, V]) UpperBound(key K) MapIterator[K, V] {
 	m.init()
-	return MapIterator{
+	return MapIterator[K, V]{
 		tree: &m.tree,
-		node: rbtreeUpperBound(Pair{Key: key}, forward(&m.tree)),
+		node: rbtreeUpperBound(Pair[K, V]{Key: key}, forward(&m.tree)),
 	}
 }
 
-func (m *Map) Range() *MapRange {
+func (m *Map[K, V]) Range() *MapRange[K, V] {
 	m.init()
-	return &MapRange{
-		Begin: MapIterator(rbtreeBeginIterator(forward(&m.tree))),
-		End:   MapIterator(rbtreeEndIterator(forward(&m.tree))),
+	return &MapRange[K, V]{
+		Begin: MapIterator[K, V](rbtreeBeginIterator(forward(&m.tree))),
+		End:   MapIterator[K, V](rbtreeEndIterator(forward(&m.tree))),
 	}
 }
 
-func (m *Map) Begin() MapIterator {
+func (m *Map[K, V]) Begin() MapIterator[K, V] {
 	m.init()
-	return MapIterator(rbtreeBeginIterator(forward(&m.tree)))
+	return MapIterator[K, V](rbtreeBeginIterator(forward(&m.tree)))
 }
 
-func (m *Map) End() MapIterator {
+func (m *Map[K, V]) End() MapIterator[K, V] {
 	m.init()
-	return MapIterator(rbtreeEndIterator(forward(&m.tree)))
+	return MapIterator[K, V](rbtreeEndIterator(forward(&m.tree)))
 }
 
 // RDelete is reverse delete
-func (m *Map) RDelete(it MapReverseIterator) MapReverseIterator {
+func (m *Map[K, V]) RDelete(it MapReverseIterator[K, V]) MapReverseIterator[K, V] {
 	m.init()
-	return MapReverseIterator(m.tree.RDelete(RBTreeReverseIterator(it)))
+	return MapReverseIterator[K, V](m.tree.RDelete(RBTreeReverseIterator[Pair[K, V]](it)))
 }
 
 // RSearch is reverse search
 // RSearch returns the last pair.key == key
-func (m *Map) RSearch(key interface{}) MapReverseIterator {
+func (m *Map[K, V]) RSearch(key K) MapReverseIterator[K, V] {
 	m.init()
-	return MapReverseIterator(m.tree.RSearch(Pair{Key: key}))
+	return MapReverseIterator[K, V](m.tree.RSearch(Pair[K, V]{Key: key}))
 }
 
 // RSearchRange is reverse search range
 // RSearchRange returns the node range [last pair.key == key, last pair.key < key)
-func (m *Map) RSearchRange(key interface{}) *MapReverseRange {
+func (m *Map[K, V]) RSearchRange(key K) *MapReverseRange[K, V] {
 	m.init()
-	it := m.tree.RSearchRange(Pair{Key: key})
-	return &MapReverseRange{
-		Begin: MapReverseIterator(it.Begin),
-		End:   MapReverseIterator(it.End),
+	it := m.tree.RSearchRange(Pair[K, V]{Key: key})
+	return &MapReverseRange[K, V]{
+		Begin: MapReverseIterator[K, V](it.Begin),
+		End:   MapReverseIterator[K, V](it.End),
 	}
 }
 
 // RLowerBound is reverse lower bound
 // RLowerBound returns the last pair.key <= key
-func (m *Map) RLowerBound(key interface{}) MapReverseIterator {
+func (m *Map[K, V]) RLowerBound(key K) MapReverseIterator[K, V] {
 	m.init()
-	return MapReverseIterator{
+	return MapReverseIterator[K, V]{
 		tree: &m.tree,
-		node: rbtreeLowerBound(Pair{Key: key}, reverse(&m.tree)),
+		node: rbtreeLowerBound(Pair[K, V]{Key: key}, reverse(&m.tree)),
 	}
 }
 
 // RUpperBound is reverse upper bound
 // RUpperBound returns the last pair.key < key
-func (m *Map) RUpperBound(key interface{}) MapReverseIterator {
+func (m *Map[K, V]) RUpperBound(key K) MapReverseIterator[K, V] {
 	m.init()
-	return MapReverseIterator{
+	return MapReverseIterator[K, V]{
 		tree: &m.tree,
-		node: rbtreeUpperBound(Pair{Key: key}, reverse(&m.tree)),
+		node: rbtreeUpperBound(Pair[K, V]{Key: key}, reverse(&m.tree)),
 	}
 }
 
 // RRange is reverse range
-func (m *Map) RRange() *MapReverseRange {
+func (m *Map[K, V]) RRange() *MapReverseRange[K, V] {
 	m.init()
-	return &MapReverseRange{
-		Begin: MapReverseIterator(rbtreeBeginIterator(reverse(&m.tree))),
-		End:   MapReverseIterator(rbtreeEndIterator(reverse(&m.tree))),
+	return &MapReverseRange[K, V]{
+		Begin: MapReverseIterator[K, V](rbtreeBeginIterator(reverse(&m.tree))),
+		End:   MapReverseIterator[K, V](rbtreeEndIterator(reverse(&m.tree))),
 	}
 }
 
 // RBegin is reverse begin
-func (m *Map) RBegin() MapReverseIterator {
+func (m *Map[K, V]) RBegin() MapReverseIterator[K, V] {
 	m.init()
-	return MapReverseIterator(rbtreeBeginIterator(reverse(&m.tree)))
+	return MapReverseIterator[K, V](rbtreeBeginIterator(reverse(&m.tree)))
 }
 
 // REnd is reverse end
-func (m *Map) REnd() MapReverseIterator {
+func (m *Map[K, V]) REnd() MapReverseIterator[K, V] {
 	m.init()
-	return MapReverseIterator(rbtreeEndIterator(reverse(&m.tree)))
+	return MapReverseIterator[K, V](rbtreeEndIterator(reverse(&m.tree)))
 }

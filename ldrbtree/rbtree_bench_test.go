@@ -26,8 +26,8 @@ func benchmarkRBTree_Insert(b *testing.B, size int) {
 		// b.ReportAllocs()
 		b.RunParallel(func(p *testing.PB) {
 			for p.Next() {
-				rbtree := &RBTree{
-					Compare: func(a, b interface{}) int { return ldcmp.CompareInt(a.(int), b.(int)) },
+				rbtree := &RBTree[int]{
+					Compare: func(a, b int) int { return ldcmp.CompareInt(a, b) },
 				}
 				for i := 0; i < size; i++ {
 					rbtree.Insert(ldrand.Int())
@@ -40,8 +40,8 @@ func benchmarkRBTree_Insert(b *testing.B, size int) {
 }
 
 func benchmarkRBTree_Search(b *testing.B, size int) {
-	rbtree := &RBTree{
-		Compare: func(a, b interface{}) int { return ldcmp.CompareInt(a.(int), b.(int)) },
+	rbtree := &RBTree[int]{
+		Compare: func(a, b int) int { return ldcmp.CompareInt(a, b) },
 	}
 	for i := 0; i < size; i++ {
 		rbtree.Insert(ldrand.Int())

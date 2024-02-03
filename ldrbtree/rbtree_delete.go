@@ -5,11 +5,11 @@
 package ldrbtree
 
 // node must not be sentinel
-func (rbt *RBTree) deleteNode(node *rbtreeNode) {
+func (rbt *RBTree[T]) deleteNode(node *rbtreeNode[T]) {
 	root := &rbt.root
 	sentinel := rbt.sentinel
 
-	var subst, temp *rbtreeNode
+	var subst, temp *rbtreeNode[T]
 	switch {
 	case node.Left == sentinel:
 		temp = node.Right
@@ -32,7 +32,7 @@ func (rbt *RBTree) deleteNode(node *rbtreeNode) {
 
 	if subst == *root {
 		*root = temp
-		temp.Color = _colorBlack
+		temp.Color = colorBlack
 		if temp != sentinel {
 			temp.Parent = sentinel
 		}
@@ -47,13 +47,13 @@ func (rbt *RBTree) deleteNode(node *rbtreeNode) {
 	rbt.deleteNodeWithSubst(node, subst, temp)
 	// ldlog.Default().Info("==== debug", zap.Reflect("tree", rbt.toMap()))
 
-	if substColor != _colorRed {
+	if substColor != colorRed {
 		// ldlog.Default().Info("==== debug ======")
 		rbt.deleteFixup(temp)
 	}
 }
 
-func (rbt *RBTree) deleteNodeWithSubst(node *rbtreeNode, subst, temp *rbtreeNode) {
+func (rbt *RBTree[T]) deleteNodeWithSubst(node *rbtreeNode[T], subst, temp *rbtreeNode[T]) {
 	root := &rbt.root
 	sentinel := rbt.sentinel
 
@@ -102,11 +102,11 @@ func (rbt *RBTree) deleteNodeWithSubst(node *rbtreeNode, subst, temp *rbtreeNode
 	}
 }
 
-func (rbt *RBTree) deleteFixup(temp *rbtreeNode) {
+func (rbt *RBTree[T]) deleteFixup(temp *rbtreeNode[T]) {
 	root := &rbt.root
 	// ldlog.Default().Info("==== fixup", zap.Reflect("temp", temp.toMap(rbt.sentinel)))
 	// ldlog.Default().Info("==== fixup", zap.Bool("temp != *root", temp != *root), zap.Bool("temp.Color == _colorBlack", temp.Color == _colorBlack))
-	for temp != *root && temp.Color == _colorBlack {
+	for temp != *root && temp.Color == colorBlack {
 		if temp == temp.Parent.Left {
 			// ldlog.Default().Info("==== deleteFixupLeftNode")
 			rbt.deleteFixupLeftNode(&temp)
@@ -116,41 +116,41 @@ func (rbt *RBTree) deleteFixup(temp *rbtreeNode) {
 		}
 	}
 
-	temp.Color = _colorBlack
+	temp.Color = colorBlack
 	// ldlog.Default().Info("==== debug", zap.Reflect("tree", rbt.toMap()))
 }
 
-func (rbt *RBTree) deleteFixupLeftNode(temp **rbtreeNode) {
+func (rbt *RBTree[T]) deleteFixupLeftNode(temp **rbtreeNode[T]) {
 	root := &rbt.root
 	sibling := (*temp).Parent.Right
-	if sibling.Color == _colorRed {
+	if sibling.Color == colorRed {
 		// case 1: left rotate at parent
 		//     P               S
 		//    / \             / \
 		//   N   s    -->    p   Sr
 		//      / \         / \
 		//     Sl  Sr      N   Sl
-		sibling.Color = _colorBlack
-		(*temp).Parent.Color = _colorRed
+		sibling.Color = colorBlack
+		(*temp).Parent.Color = colorRed
 		rbt.rotateLeft((*temp).Parent)
 		sibling = (*temp).Parent.Right
 		// ldlog.Default().Info("==== debug", zap.Reflect("tree", rbt.toMap()))
 	}
 
-	if sibling.Left.Color == _colorBlack && sibling.Right.Color == _colorBlack {
+	if sibling.Left.Color == colorBlack && sibling.Right.Color == colorBlack {
 		// case 2: sibling color flip
 		//     p             p
 		//    / \           / \
 		//   N   S    -->  N   s
 		//      / \           / \
 		//     Sl  Sr        Sl  Sr
-		sibling.Color = _colorRed
+		sibling.Color = colorRed
 		(*temp) = (*temp).Parent
 		// ldlog.Default().Info("==== debug", zap.Reflect("tree", rbt.toMap()))
 		return
 	}
 
-	if sibling.Right.Color == _colorBlack {
+	if sibling.Right.Color == colorBlack {
 		// case 3: right rotate at sibling
 		// (p could be either color here)
 		//    p             p
@@ -160,8 +160,8 @@ func (rbt *RBTree) deleteFixupLeftNode(temp **rbtreeNode) {
 		//    sl  Sr            S
 		//                       \
 		//                        Sr
-		sibling.Left.Color = _colorBlack
-		sibling.Color = _colorRed
+		sibling.Left.Color = colorBlack
+		sibling.Color = colorRed
 		rbt.rotateRight(sibling)
 		sibling = (*temp).Parent.Right
 		// ldlog.Default().Info("==== debug", zap.Reflect("tree", rbt.toMap()))
@@ -177,39 +177,39 @@ func (rbt *RBTree) deleteFixupLeftNode(temp **rbtreeNode) {
 	//        / \         / \
 	//       sl  sr      N   sl
 	sibling.Color = (*temp).Parent.Color
-	(*temp).Parent.Color = _colorBlack
-	sibling.Right.Color = _colorBlack
+	(*temp).Parent.Color = colorBlack
+	sibling.Right.Color = colorBlack
 	rbt.rotateLeft((*temp).Parent)
 
 	(*temp) = *root
 	// ldlog.Default().Info("==== debug", zap.Reflect("tree", rbt.toMap()))
 }
 
-func (rbt *RBTree) deleteFixupRightNode(temp **rbtreeNode) {
+func (rbt *RBTree[T]) deleteFixupRightNode(temp **rbtreeNode[T]) {
 	root := &rbt.root
 
 	sibling := (*temp).Parent.Left
-	if sibling.Color == _colorRed {
+	if sibling.Color == colorRed {
 		// case 1
-		sibling.Color = _colorBlack
-		(*temp).Parent.Color = _colorRed
+		sibling.Color = colorBlack
+		(*temp).Parent.Color = colorRed
 		rbt.rotateRight((*temp).Parent)
 		sibling = (*temp).Parent.Left
 		// ldlog.Default().Info("==== debug", zap.Reflect("tree", rbt.toMap()))
 	}
 
-	if sibling.Left.Color == _colorBlack && sibling.Right.Color == _colorBlack {
+	if sibling.Left.Color == colorBlack && sibling.Right.Color == colorBlack {
 		// case 2
-		sibling.Color = _colorRed
+		sibling.Color = colorRed
 		(*temp) = (*temp).Parent
 		// ldlog.Default().Info("==== debug", zap.Reflect("tree", rbt.toMap()))
 		return
 	}
 
-	if sibling.Left.Color == _colorBlack {
+	if sibling.Left.Color == colorBlack {
 		// case 3
-		sibling.Right.Color = _colorBlack
-		sibling.Color = _colorRed
+		sibling.Right.Color = colorBlack
+		sibling.Color = colorRed
 		rbt.rotateLeft(sibling)
 		sibling = (*temp).Parent.Left
 		// ldlog.Default().Info("==== debug", zap.Reflect("tree", rbt.toMap()))
@@ -217,8 +217,8 @@ func (rbt *RBTree) deleteFixupRightNode(temp **rbtreeNode) {
 
 	// case 4
 	sibling.Color = (*temp).Parent.Color
-	(*temp).Parent.Color = _colorBlack
-	sibling.Left.Color = _colorBlack
+	(*temp).Parent.Color = colorBlack
+	sibling.Left.Color = colorBlack
 	rbt.rotateRight((*temp).Parent)
 	(*temp) = *root
 	// ldlog.Default().Info("==== debug", zap.Reflect("tree", rbt.toMap()))

@@ -4,7 +4,7 @@
 
 package ldrbtree
 
-func (rbt *RBTree) insertNode(node *rbtreeNode) {
+func (rbt *RBTree[T]) insertNode(node *rbtreeNode[T]) {
 	sentinel := rbt.sentinel
 
 	p := &rbt.root
@@ -25,12 +25,12 @@ func (rbt *RBTree) insertNode(node *rbtreeNode) {
 
 	*p = node
 	node.Parent = last
-	node.Color = _colorRed
+	node.Color = colorRed
 
 	// ldlog.Default().Info("==== debug", zap.Reflect("tree", rbt.toMap()))
 }
 
-func (rbt *RBTree) insertOrSearchNode(node *rbtreeNode) *rbtreeNode {
+func (rbt *RBTree[T]) insertOrSearchNode(node *rbtreeNode[T]) *rbtreeNode[T] {
 	sentinel := rbt.sentinel
 
 	p := &rbt.root
@@ -53,16 +53,16 @@ func (rbt *RBTree) insertOrSearchNode(node *rbtreeNode) *rbtreeNode {
 
 	*p = node
 	node.Parent = last
-	node.Color = _colorRed
+	node.Color = colorRed
 
 	// ldlog.Default().Info("==== debug", zap.Reflect("tree", rbt.toMap()))
 	return node
 }
 
-func (rbt *RBTree) insertFixup(node *rbtreeNode) {
+func (rbt *RBTree[T]) insertFixup(node *rbtreeNode[T]) {
 	root := &rbt.root
 
-	for node != *root && node.Parent.Color == _colorRed {
+	for node != *root && node.Parent.Color == colorRed {
 		if node.Parent == node.Parent.Parent.Left {
 			rbt.insertFixupLeftParent(&node)
 		} else {
@@ -70,12 +70,12 @@ func (rbt *RBTree) insertFixup(node *rbtreeNode) {
 		}
 	}
 
-	(*root).Color = _colorBlack
+	(*root).Color = colorBlack
 }
 
-func (rbt *RBTree) insertFixupLeftParent(node **rbtreeNode) {
+func (rbt *RBTree[T]) insertFixupLeftParent(node **rbtreeNode[T]) {
 	uncle := (*node).Parent.Parent.Right
-	if uncle.Color == _colorRed {
+	if uncle.Color == colorRed {
 		// case 1: uncle is red
 		// (color flips)
 		//       G            g
@@ -83,9 +83,9 @@ func (rbt *RBTree) insertFixupLeftParent(node **rbtreeNode) {
 		//     p   u  -->   P   U
 		//    /            /
 		//   n            n
-		(*node).Parent.Color = _colorBlack
-		uncle.Color = _colorBlack
-		(*node).Parent.Parent.Color = _colorRed
+		(*node).Parent.Color = colorBlack
+		uncle.Color = colorBlack
+		(*node).Parent.Parent.Color = colorRed
 		(*node) = (*node).Parent.Parent
 		// ldlog.Default().Info("==== debug", zap.Reflect("tree", rbt.toMap()))
 		return
@@ -111,19 +111,19 @@ func (rbt *RBTree) insertFixupLeftParent(node **rbtreeNode) {
 	//     p   U  -->  n   g
 	//    /                 \
 	//   n                   U
-	(*node).Parent.Color = _colorBlack
-	(*node).Parent.Parent.Color = _colorRed
+	(*node).Parent.Color = colorBlack
+	(*node).Parent.Parent.Color = colorRed
 	rbt.rotateRight((*node).Parent.Parent)
 	// ldlog.Default().Info("==== debug", zap.Reflect("tree", rbt.toMap()))
 }
 
-func (rbt *RBTree) insertFixupRightParent(node **rbtreeNode) {
+func (rbt *RBTree[T]) insertFixupRightParent(node **rbtreeNode[T]) {
 	uncle := (*node).Parent.Parent.Left
-	if uncle.Color == _colorRed {
+	if uncle.Color == colorRed {
 		// case 1
-		(*node).Parent.Color = _colorBlack
-		uncle.Color = _colorBlack
-		(*node).Parent.Parent.Color = _colorRed
+		(*node).Parent.Color = colorBlack
+		uncle.Color = colorBlack
+		(*node).Parent.Parent.Color = colorRed
 		(*node) = (*node).Parent.Parent
 		// ldlog.Default().Info("==== debug", zap.Reflect("tree", rbt.toMap()))
 		return
@@ -137,8 +137,8 @@ func (rbt *RBTree) insertFixupRightParent(node **rbtreeNode) {
 	}
 
 	// case 3
-	(*node).Parent.Color = _colorBlack
-	(*node).Parent.Parent.Color = _colorRed
+	(*node).Parent.Color = colorBlack
+	(*node).Parent.Parent.Color = colorRed
 	rbt.rotateLeft((*node).Parent.Parent)
 	// ldlog.Default().Info("==== debug", zap.Reflect("tree", rbt.toMap()))
 }
