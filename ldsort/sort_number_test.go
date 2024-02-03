@@ -594,6 +594,64 @@ func TestUniqUint64s(t *testing.T) {
 	})
 }
 
+func TestSortUintptrs(t *testing.T) {
+	convey.Convey(t.Name(), t, func() {
+		l := []uintptr{223, 562, 424, 642, 223, 123, 496, 623, 845, 375}
+
+		SortUintptrs(l)
+
+		convey.So(IsSortedUintptrs(l), convey.ShouldBeTrue)
+		convey.So(l, convey.ShouldResemble, []uintptr{
+			123, 223, 223, 375, 424, 496, 562, 623, 642, 845,
+		})
+
+		convey.So(SearchUintptrs(l, 0), convey.ShouldEqual, 0)
+		convey.So(SearchUintptrs(l, 123), convey.ShouldEqual, 0)
+		convey.So(SearchUintptrs(l, 223), convey.ShouldEqual, 1)
+		convey.So(SearchUintptrs(l, 300), convey.ShouldEqual, 3)
+		convey.So(SearchUintptrs(l, 10000), convey.ShouldEqual, 10)
+	})
+}
+
+func TestUniqUintptrs(t *testing.T) {
+	convey.Convey(t.Name(), t, func() {
+		convey.Convey("nil", func() {
+			l := UniqUintptrs(nil)
+			convey.So(l, convey.ShouldBeNil)
+		})
+
+		convey.Convey("[123]", func() {
+			l := []uintptr{123}
+
+			SortUintptrs(l)
+			convey.So(l, convey.ShouldResemble, []uintptr{123})
+
+			l = UniqUintptrs(l)
+			convey.So(l, convey.ShouldResemble, []uintptr{123})
+		})
+
+		convey.Convey("[223, 375, 424, 123, 642, 223, 123, 725, 223, 642, 725, 375]", func() {
+			l := []uintptr{223, 375, 424, 123, 642, 223, 123, 725, 223, 642, 725, 375}
+
+			SortUintptrs(l)
+			convey.So(l, convey.ShouldResemble, []uintptr{
+				123, 123, 223, 223, 223, 375, 375, 424, 642, 642, 725, 725,
+			})
+
+			l = UniqUintptrs(l)
+			convey.So(l, convey.ShouldResemble, []uintptr{
+				123, 223, 375, 424, 642, 725,
+			})
+
+			convey.So(IndexUintptrs(l, 0), convey.ShouldEqual, -1)
+			convey.So(IndexUintptrs(l, 100), convey.ShouldEqual, -1)
+			convey.So(IndexUintptrs(l, 123), convey.ShouldEqual, 0)
+			convey.So(IndexUintptrs(l, 100), convey.ShouldEqual, -1)
+			convey.So(IndexUintptrs(l, 223), convey.ShouldEqual, 1)
+		})
+	})
+}
+
 func TestSortFloat32s(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
 		l := []float32{223, 562, 424, 642, 223, 123, 496, 623, 845, 375}
