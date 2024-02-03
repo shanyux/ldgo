@@ -6,12 +6,12 @@ package ldrbtree
 
 import "fmt"
 
-type rbtreeIterator struct {
-	tree *RBTree
-	node *rbtreeNode
+type rbtreeIterator[T any] struct {
+	tree *RBTree[T]
+	node *rbtreeNode[T]
 }
 
-func (it rbtreeIterator) next(name string, iface rbtreeInterface) rbtreeIterator {
+func (it rbtreeIterator[T]) next(name string, iface rbtreeInterface[T]) rbtreeIterator[T] {
 	if it.tree == nil {
 		panic(fmt.Sprintf("the %s not bind any red-black tree, can not move next", name))
 	}
@@ -22,13 +22,13 @@ func (it rbtreeIterator) next(name string, iface rbtreeInterface) rbtreeIterator
 	}
 
 	node := it.node.next(iface)
-	return rbtreeIterator{
+	return rbtreeIterator[T]{
 		tree: it.tree,
 		node: node,
 	}
 }
 
-func (it rbtreeIterator) prev(name string, iface rbtreeInterface) rbtreeIterator {
+func (it rbtreeIterator[T]) prev(name string, iface rbtreeInterface[T]) rbtreeIterator[T] {
 	if it.tree == nil {
 		panic(fmt.Sprintf("the %s does not bind any red-black tree, can not move prev", name))
 	}
@@ -36,7 +36,7 @@ func (it rbtreeIterator) prev(name string, iface rbtreeInterface) rbtreeIterator
 	sentinel := it.tree.sentinel
 	root := it.tree.root
 
-	var node *rbtreeNode
+	var node *rbtreeNode[T]
 	if it.node == sentinel {
 		node = root.max(iface)
 	} else {
@@ -47,44 +47,44 @@ func (it rbtreeIterator) prev(name string, iface rbtreeInterface) rbtreeIterator
 		panic(fmt.Sprintf("the %s is already at the begin of the red-black tree, can not move prev", name))
 	}
 
-	return rbtreeIterator{
+	return rbtreeIterator[T]{
 		tree: it.tree,
 		node: node,
 	}
 }
 
-type RBTreeIterator rbtreeIterator
+type RBTreeIterator[T any] rbtreeIterator[T]
 
-func (i RBTreeIterator) Data() interface{} {
+func (i RBTreeIterator[T]) Data() interface{} {
 	return i.node.Data
 }
 
-func (i RBTreeIterator) base() rbtreeIterator {
-	return rbtreeIterator(i)
+func (i RBTreeIterator[T]) base() rbtreeIterator[T] {
+	return rbtreeIterator[T](i)
 }
 
-func (i RBTreeIterator) Next() RBTreeIterator {
-	return RBTreeIterator(i.base().next("rbtree iterator", forward(i.tree)))
+func (i RBTreeIterator[T]) Next() RBTreeIterator[T] {
+	return RBTreeIterator[T](i.base().next("rbtree iterator", forward(i.tree)))
 }
 
-func (i RBTreeIterator) Prev() RBTreeIterator {
-	return RBTreeIterator(i.base().prev("rbtree iterator", forward(i.tree)))
+func (i RBTreeIterator[T]) Prev() RBTreeIterator[T] {
+	return RBTreeIterator[T](i.base().prev("rbtree iterator", forward(i.tree)))
 }
 
-type RBTreeReverseIterator rbtreeIterator
+type RBTreeReverseIterator[T any] rbtreeIterator[T]
 
-func (i RBTreeReverseIterator) Data() interface{} {
+func (i RBTreeReverseIterator[T]) Data() interface{} {
 	return i.node.Data
 }
 
-func (i RBTreeReverseIterator) base() rbtreeIterator {
-	return rbtreeIterator(i)
+func (i RBTreeReverseIterator[T]) base() rbtreeIterator[T] {
+	return rbtreeIterator[T](i)
 }
 
-func (i RBTreeReverseIterator) Next() RBTreeReverseIterator {
-	return RBTreeReverseIterator(i.base().next("rbtree reverse iterator", reverse(i.tree)))
+func (i RBTreeReverseIterator[T]) Next() RBTreeReverseIterator[T] {
+	return RBTreeReverseIterator[T](i.base().next("rbtree reverse iterator", reverse(i.tree)))
 }
 
-func (i RBTreeReverseIterator) Prev() RBTreeReverseIterator {
-	return RBTreeReverseIterator(i.base().prev("rbtree reverse iterator", reverse(i.tree)))
+func (i RBTreeReverseIterator[T]) Prev() RBTreeReverseIterator[T] {
+	return RBTreeReverseIterator[T](i.base().prev("rbtree reverse iterator", reverse(i.tree)))
 }

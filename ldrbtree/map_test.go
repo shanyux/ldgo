@@ -64,7 +64,7 @@ func TestMap_Insert(t *testing.T) {
 		})
 
 		convey.Convey("insert or assign", func() {
-			m := &Map{}
+			m := &Map[int, int]{}
 			convey.So(m.Len(), convey.ShouldEqual, 0)
 
 			m.InsertOrAssign(100, 0)

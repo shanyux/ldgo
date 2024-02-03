@@ -4,37 +4,37 @@
 
 package ldrbtree
 
-func (rbt *RBTree) init() {
+func (rbt *RBTree[T]) init() {
 	if rbt.sentinel == nil {
-		rbt.sentinel = getRBTreeNode(nil)
+		rbt.sentinel = getRBTreeNode[T](nil)
 		rbt.root = rbt.sentinel
 	}
 	if rbt.Compare == nil {
-		rbt.Compare = DefaultCompare
+		rbt.Compare = DefaultCompare[T]
 	}
 }
 
-func (rbt *RBTree) beginIterator(iface rbtreeInterface) rbtreeIterator {
+func (rbt *RBTree[T]) beginIterator(iface rbtreeInterface[T]) rbtreeIterator[T] {
 	root := rbt.root
 
-	return rbtreeIterator{
+	return rbtreeIterator[T]{
 		tree: rbt,
 		node: root.min(iface),
 	}
 }
 
-func (rbt *RBTree) endIterator(iface rbtreeInterface) rbtreeIterator {
+func (rbt *RBTree[T]) endIterator(iface rbtreeInterface[T]) rbtreeIterator[T] {
 	sentinel := rbt.sentinel
 
-	return rbtreeIterator{
+	return rbtreeIterator[T]{
 		tree: rbt,
 		node: sentinel,
 	}
 }
 
-func (rbt *RBTree) toMap() map[string]interface{} {
+func (rbt *RBTree[T]) toDebugMap() map[string]interface{} {
 	return map[string]interface{}{
 		"count": rbt.count,
-		"root":  rbt.root.toMap(rbt.sentinel),
+		"root":  rbt.root.toDebugMap(rbt.sentinel),
 	}
 }

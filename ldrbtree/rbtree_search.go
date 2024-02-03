@@ -5,7 +5,7 @@
 package ldrbtree
 
 // rbtreeLowerBound returns the first node >= d
-func rbtreeLowerBound(d interface{}, iface rbtreeInterface) *rbtreeNode {
+func rbtreeLowerBound[T any](d T, iface rbtreeInterface[T]) *rbtreeNode[T] {
 	sentinel := iface.Sentinel()
 	node := iface.Root()
 
@@ -31,7 +31,7 @@ func rbtreeLowerBound(d interface{}, iface rbtreeInterface) *rbtreeNode {
 }
 
 // rbtreeUpperBound returns the first node > d
-func rbtreeUpperBound(d interface{}, iface rbtreeInterface) *rbtreeNode {
+func rbtreeUpperBound[T any](d T, iface rbtreeInterface[T]) *rbtreeNode[T] {
 	sentinel := iface.Sentinel()
 	node := iface.Root()
 
@@ -55,15 +55,15 @@ func rbtreeUpperBound(d interface{}, iface rbtreeInterface) *rbtreeNode {
 	return res
 }
 
-func rbtreeBeginIterator(iface rbtreeInterface) rbtreeIterator {
-	return rbtreeIterator{
+func rbtreeBeginIterator[T any](iface rbtreeInterface[T]) rbtreeIterator[T] {
+	return rbtreeIterator[T]{
 		tree: iface.Tree(),
 		node: iface.Root().min(iface),
 	}
 }
 
-func rbtreeEndIterator(iface rbtreeInterface) rbtreeIterator {
-	return rbtreeIterator{
+func rbtreeEndIterator[T any](iface rbtreeInterface[T]) rbtreeIterator[T] {
+	return rbtreeIterator[T]{
 		tree: iface.Tree(),
 		node: iface.Sentinel(),
 	}

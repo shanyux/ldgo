@@ -15,7 +15,7 @@ import (
 func TestRBTree_Insert(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
 		convey.Convey("insert", func() {
-			rbtree := &RBTree{}
+			rbtree := &RBTree[int]{}
 			for _, n := range _numsUnordered {
 				rbtree.Insert(n)
 				convey.So(rbtree.root.checkParent(rbtree.sentinel), convey.ShouldBeTrue)
@@ -67,9 +67,9 @@ func TestRBTree_Insert(t *testing.T) {
 		})
 
 		convey.Convey("insert or assign", func() {
-			rbtree := &RBTree{
-				Compare: func(a, b interface{}) int {
-					aa, bb := a.([2]int), b.([2]int)
+			rbtree := &RBTree[[2]int]{
+				Compare: func(a, b [2]int) int {
+					aa, bb := a, b
 					return ldcmp.CompareInt(aa[0], bb[0])
 				},
 			}
@@ -238,7 +238,7 @@ func TestRBTree_DuplicateDataReverse(t *testing.T) {
 	})
 }
 
-func (n *rbtreeNode) checkParent(sentinel *rbtreeNode) bool {
+func (n *rbtreeNode[T]) checkParent(sentinel *rbtreeNode[T]) bool {
 	if n == sentinel {
 		return true
 	}
@@ -270,20 +270,20 @@ func (n *rbtreeNode) checkParent(sentinel *rbtreeNode) bool {
 	return true
 }
 
-func (n *rbtreeNode) checkColor(sentinel *rbtreeNode) bool {
+func (n *rbtreeNode[T]) checkColor(sentinel *rbtreeNode[T]) bool {
 	blacks := n.getBlackCount(sentinel)
 	return n.walkColor(sentinel, blacks, 0)
 }
 
-func (n *rbtreeNode) walkColor(sentinel *rbtreeNode, wantBlacks, currentBlacks int) bool {
-	if n.Color == _colorRed {
-		if n.Left == nil || n.Right == nil || n.Left.Color != _colorBlack || n.Right.Color != _colorBlack {
+func (n *rbtreeNode[T]) walkColor(sentinel *rbtreeNode[T], wantBlacks, currentBlacks int) bool {
+	if n.Color == colorRed {
+		if n.Left == nil || n.Right == nil || n.Left.Color != colorBlack || n.Right.Color != colorBlack {
 			// ldlog.Default().Info("the children of red node is not black", zap.Reflect("node", n.toMap(sentinel)))
 			return false
 		}
 	}
 
-	if n.Color == _colorBlack {
+	if n.Color == colorBlack {
 		currentBlacks++
 	}
 
@@ -301,10 +301,10 @@ func (n *rbtreeNode) walkColor(sentinel *rbtreeNode, wantBlacks, currentBlacks i
 	return true
 }
 
-func (n *rbtreeNode) getBlackCount(sentinel *rbtreeNode) int {
+func (n *rbtreeNode[T]) getBlackCount(sentinel *rbtreeNode[T]) int {
 	blacks := 0
 	for node := n; node != nil; node = node.Left {
-		if node.Color == _colorBlack {
+		if node.Color == colorBlack {
 			blacks++
 		}
 	}

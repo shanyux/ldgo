@@ -4,56 +4,64 @@
 
 package ldrbtree
 
-type mapIterator = rbtreeIterator
+type mapIterator[K any, V any] rbtreeIterator[Pair[K, V]]
 
-type MapIterator mapIterator
-
-func (i MapIterator) base() mapIterator {
-	return mapIterator(i)
+func (it mapIterator[K, V]) next(name string, iface rbtreeInterface[Pair[K, V]]) mapIterator[K, V] {
+	return (mapIterator[K, V])((*rbtreeIterator[Pair[K, V]])(&it).next(name, iface))
 }
 
-func (i MapIterator) Key() interface{} {
-	return i.node.Data.(Pair).Key
+func (it mapIterator[K, V]) prev(name string, iface rbtreeInterface[Pair[K, V]]) mapIterator[K, V] {
+	return (mapIterator[K, V])((*rbtreeIterator[Pair[K, V]])(&it).prev(name, iface))
 }
 
-func (i MapIterator) Value(new ...interface{}) (old interface{}) {
-	oldData := i.node.Data.(Pair)
+type MapIterator[K any, V any] mapIterator[K, V]
+
+func (i MapIterator[K, V]) base() mapIterator[K, V] {
+	return mapIterator[K, V](i)
+}
+
+func (i MapIterator[K, V]) Key() K {
+	return i.node.Data.Key
+}
+
+func (i MapIterator[K, V]) Value(new ...V) (old V) {
+	oldData := i.node.Data
 	if len(new) > 0 {
-		i.node.Data = Pair{Key: oldData.Key, Value: new[0]}
+		i.node.Data = Pair[K, V]{Key: oldData.Key, Value: new[0]}
 	}
 	return oldData.Value
 }
 
-func (i MapIterator) Next() MapIterator {
-	return MapIterator(i.base().next("map iterator", forward(i.tree)))
+func (i MapIterator[K, V]) Next() MapIterator[K, V] {
+	return MapIterator[K, V](i.base().next("map iterator", forward(i.tree)))
 }
 
-func (i MapIterator) Prev() MapIterator {
-	return MapIterator(i.base().prev("map iterator", forward(i.tree)))
+func (i MapIterator[K, V]) Prev() MapIterator[K, V] {
+	return MapIterator[K, V](i.base().prev("map iterator", forward(i.tree)))
 }
 
-type MapReverseIterator mapIterator
+type MapReverseIterator[K any, V any] mapIterator[K, V]
 
-func (i MapReverseIterator) base() mapIterator {
-	return mapIterator(i)
+func (i MapReverseIterator[K, V]) base() mapIterator[K, V] {
+	return mapIterator[K, V](i)
 }
 
-func (i MapReverseIterator) Key() interface{} {
-	return i.node.Data.(Pair).Key
+func (i MapReverseIterator[K, V]) Key() K {
+	return i.node.Data.Key
 }
 
-func (i MapReverseIterator) Value(new ...interface{}) (old interface{}) {
-	oldData := i.node.Data.(Pair)
+func (i MapReverseIterator[K, V]) Value(new ...V) (old V) {
+	oldData := i.node.Data
 	if len(new) > 0 {
-		i.node.Data = Pair{Key: oldData.Key, Value: new[0]}
+		i.node.Data = Pair[K, V]{Key: oldData.Key, Value: new[0]}
 	}
 	return oldData.Value
 }
 
-func (i MapReverseIterator) Next() MapReverseIterator {
-	return MapReverseIterator(i.base().next("map reverse iterator", reverse(i.tree)))
+func (i MapReverseIterator[K, V]) Next() MapReverseIterator[K, V] {
+	return MapReverseIterator[K, V](i.base().next("map reverse iterator", reverse(i.tree)))
 }
 
-func (i MapReverseIterator) Prev() MapReverseIterator {
-	return MapReverseIterator(i.base().prev("map reverse iterator", reverse(i.tree)))
+func (i MapReverseIterator[K, V]) Prev() MapReverseIterator[K, V] {
+	return MapReverseIterator[K, V](i.base().prev("map reverse iterator", reverse(i.tree)))
 }

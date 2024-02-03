@@ -4,51 +4,47 @@
 
 package ldrbtree
 
-import (
-	"sync"
-)
-
 type color int
 
 const (
-	_colorBlack color = iota
-	_colorRed
+	colorBlack color = iota
+	colorRed
 )
 
-var (
-	_rbTreeNodeLeaf = &rbtreeNode{}
-	_rbTreeNodePool = sync.Pool{New: func() interface{} { return &rbtreeNode{} }}
-)
+// var (
+// 	_rbTreeNodePool = sync.Pool{New: func() interface{} { return &rbtreeNode{} }}
+// )
 
-func initRBTreeNode(n *rbtreeNode, sentinel *rbtreeNode) {
-	*n = rbtreeNode{
+func initRBTreeNode[T any](n *rbtreeNode[T], sentinel *rbtreeNode[T]) {
+	*n = rbtreeNode[T]{
 		Parent: sentinel,
 		Right:  sentinel,
 		Left:   sentinel,
-		Color:  _colorBlack,
+		Color:  colorBlack,
 	}
 }
 
-func getRBTreeNode(sentinel *rbtreeNode) *rbtreeNode {
-	n := _rbTreeNodePool.Get().(*rbtreeNode)
-	initRBTreeNode(n, sentinel)
+func getRBTreeNode[T any](sentinel *rbtreeNode[T]) *rbtreeNode[T] {
+	// n := _rbTreeNodePool.Get().(*rbtreeNode[T])
+	n := &rbtreeNode[T]{}
+	initRBTreeNode[T](n, sentinel)
 	return n
 }
 
-func putRBTreeNode(p *rbtreeNode) {
-	initRBTreeNode(p, nil)
-	_rbTreeNodePool.Put(p)
+func putRBTreeNode[T any](p *rbtreeNode[T]) {
+	initRBTreeNode[T](p, nil)
+	// _rbTreeNodePool.Put(p)
 }
 
-type rbtreeNode struct {
-	Parent *rbtreeNode `json:"-"`
-	Left   *rbtreeNode `json:"left"`
-	Right  *rbtreeNode `json:"right"`
-	Color  color       `json:"color"`
-	Data   interface{} `json:"data"`
+type rbtreeNode[T any] struct {
+	Parent *rbtreeNode[T] `json:"-"`
+	Left   *rbtreeNode[T] `json:"left"`
+	Right  *rbtreeNode[T] `json:"right"`
+	Color  color          `json:"color"`
+	Data   T              `json:"data"`
 }
 
-func (n *rbtreeNode) min(iface rbtreeInterface) *rbtreeNode {
+func (n *rbtreeNode[T]) min(iface rbtreeInterface[T]) *rbtreeNode[T] {
 	sentinel := iface.Sentinel()
 
 	if n == sentinel {
@@ -60,11 +56,11 @@ func (n *rbtreeNode) min(iface rbtreeInterface) *rbtreeNode {
 	return n
 }
 
-func (n *rbtreeNode) max(iface rbtreeInterface) *rbtreeNode {
+func (n *rbtreeNode[T]) max(iface rbtreeInterface[T]) *rbtreeNode[T] {
 	return n.min(iface.Reverse())
 }
 
-func (n *rbtreeNode) next(iface rbtreeInterface) *rbtreeNode {
+func (n *rbtreeNode[T]) next(iface rbtreeInterface[T]) *rbtreeNode[T] {
 	sentinel := iface.Sentinel()
 	node := n
 
@@ -88,22 +84,22 @@ func (n *rbtreeNode) next(iface rbtreeInterface) *rbtreeNode {
 	return sentinel
 }
 
-func (n *rbtreeNode) prev(iface rbtreeInterface) *rbtreeNode {
+func (n *rbtreeNode[T]) prev(iface rbtreeInterface[T]) *rbtreeNode[T] {
 	return n.next(iface.Reverse())
 }
 
-func (n *rbtreeNode) toMap(sentinel *rbtreeNode) map[string]interface{} {
+func (n *rbtreeNode[T]) toDebugMap(sentinel *rbtreeNode[T]) map[string]interface{} {
 	if n == sentinel {
 		return nil
 	}
 	color := "black"
-	if n.Color == _colorRed {
+	if n.Color == colorRed {
 		color = "red"
 	}
 	return map[string]interface{}{
 		"parent": n.Parent.Data,
-		"left":   n.Left.toMap(sentinel),
-		"right":  n.Right.toMap(sentinel),
+		"left":   n.Left.toDebugMap(sentinel),
+		"right":  n.Right.toDebugMap(sentinel),
 		"color":  color,
 		"data":   n.Data,
 	}
