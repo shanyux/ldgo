@@ -1,0 +1,32 @@
+/*
+ * Copyright (C) distroy
+ */
+
+package ldsync
+
+import "sync"
+
+type Pool[T any] struct {
+	d sync.Pool
+
+	// New optionally specifies a function to generate
+	// a value when Get would otherwise return nil.
+	// It may not be changed concurrently with calls to Get.
+	New func() T
+}
+
+func (p *Pool[T]) Get() T {
+	i := p.d.Get()
+	if i != nil {
+		return i.(T)
+	}
+	if p.New != nil {
+		return p.New()
+	}
+	var v T
+	return v
+}
+
+func (p *Pool[T]) Put(v T) {
+	p.d.Put(v)
+}
