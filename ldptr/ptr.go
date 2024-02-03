@@ -13,7 +13,7 @@ func Get[T any](p *T, def ...T) T {
 	if len(def) > 0 {
 		return def[0]
 	}
-	v, _ := ((interface{})(nil)).(T)
+	var v T
 	return v
 }
 
