@@ -14,8 +14,8 @@ import (
 )
 
 type Flags struct {
-	Count int `flag:"default:10"`
-	Size  int `flag:"default:16"`
+	Count int `ldflag:"default:10"`
+	Size  int `ldflag:"default:16"`
 }
 
 func main() {

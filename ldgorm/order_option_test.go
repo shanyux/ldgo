@@ -13,10 +13,10 @@ import (
 )
 
 type testOrderStruct struct {
-	ProjectId FieldOrderer `gormorder:"column:project_id"`
-	ChannelId FieldOrderer `gormorder:"column:channel_id"`
-	VersionId FieldOrderer `gormorder:"column:version_id"`
-	Type      FieldOrderer `gormorder:"column:type"`
+	ProjectId FieldOrderer `ldgormorder:"column:project_id"`
+	ChannelId FieldOrderer `ldgormorder:"column:channel_id"`
+	VersionId FieldOrderer `ldgormorder:"column:version_id"`
+	Type      FieldOrderer `ldgormorder:"column:type"`
 }
 
 func testGetOrderFromSql(scope *gorm.Scope) string {

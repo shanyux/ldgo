@@ -14,10 +14,10 @@ import (
 
 func Test_Reader(t *testing.T) {
 	type Object struct {
-		ID      int64  `sheet:"name:id;notempty"`
-		ShopId  uint64 `sheet:"name:shopid;ignorecase"`
-		Name    string `sheet:"name:name;notempty"`
-		Prefix  string `sheet:"prefix:Prefix"`
+		ID      int64  `ldsheet:"name:id;notempty"`
+		ShopId  uint64 `ldsheet:"name:shopid;ignorecase"`
+		Name    string `ldsheet:"name:name;notempty"`
+		Prefix  string `ldsheet:"prefix:Prefix"`
 		HttpUrl *string
 		Int     int
 		Uint    *uint

@@ -15,7 +15,7 @@ import (
 	"github.com/distroy/ldgo/v2/ldtagmap"
 )
 
-const _ORDER_TAG = "gormorder"
+const _ORDER_TAG = "ldgormorder"
 
 var (
 	_ORDER_FIELD_TYPE = reflect.TypeOf((*FieldOrderer)(nil)).Elem()

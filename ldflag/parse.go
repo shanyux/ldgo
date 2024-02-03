@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	tagName = "flag"
+	tagName = "ldflag"
 )
 
 var (
