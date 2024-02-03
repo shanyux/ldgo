@@ -12,10 +12,10 @@ func NewBoolLocker(b bool) sync.Locker {
 	if b {
 		return &sync.Mutex{}
 	}
-	return nullLocker{}
+	return NullLocker{}
 }
 
-type nullLocker struct{}
+type NullLocker struct{}
 
-func (_ nullLocker) Lock()   {}
-func (_ nullLocker) Unlock() {}
+func (_ NullLocker) Lock()   {}
+func (_ NullLocker) Unlock() {}

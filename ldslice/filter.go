@@ -15,24 +15,24 @@ func filterSlice[T any](slice []T, filter func(v T) bool) int {
 	j := len(slice)
 
 	for i < j {
-		var vi, vj T
+		var vi, vj *T
 
 		for ; i < j; i++ {
-			vi = slice[i]
-			if !filter(vi) {
+			vi = &slice[i]
+			if !filter(*vi) {
 				break
 			}
 		}
 
 		for ; i < j; j-- {
-			vj = slice[j-1]
-			if filter(vj) {
+			vj = &slice[j-1]
+			if filter(*vj) {
 				break
 			}
 		}
 
 		if i < j-1 {
-			vi, vj = vj, vi
+			*vi, *vj = *vj, *vi
 			i++
 		}
 	}
