@@ -21,7 +21,7 @@ func internalIndex(n int, compare func(i int) int) int {
 }
 
 // Search uses binary search to find and return the smallest index in [0, n)
-// at which f(i) == true, or return n if there is no f(i) == true
+// at which f(v) == true, or return n if there is no f(v) == true
 func Search[T any](a []T, f func(v T) bool) int {
 	return internalSearch(len(a), func(i int) bool {
 		return f(a[i])
@@ -29,7 +29,7 @@ func Search[T any](a []T, f func(v T) bool) int {
 }
 
 // Index uses binary search to find and return the smallest index in [0, n)
-// at which compare(i) == 0, or return -1 if there is no compare(i) == 0
+// at which compare(v) == 0, or return -1 if there is no compare(v) == 0
 func Index[T any](a []T, compare func(v T) int) int {
 	return internalIndex(len(a), func(i int) int {
 		return compare(a[i])
