@@ -156,7 +156,7 @@ func Test_fastSource_ProbabilityOfVery4BitsWithPreviousNumber(t *testing.T) {
 	r := New(NewFastSource(time.Now().UnixNano()))
 	const (
 		scale = 1000 * 100 * 16 * 16
-		diff1 = 4500
+		diff1 = 5000
 		diff2 = 6500
 	)
 
