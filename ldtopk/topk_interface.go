@@ -4,60 +4,32 @@
 
 package ldtopk
 
-type TopkInterface interface {
-	Len() int
-	Less(i, j interface{}) bool
-	Swap(i, j int)
-
-	Push(x interface{})
-	Get(i int) interface{}
-	Set(i int, x interface{})
+type Topkable interface {
+	string |
+		int | int8 | int16 | int32 | int64 |
+		uint | uint8 | uint16 | uint32 | uint64 | uintptr |
+		float32 | float64
 }
 
-func TopkAdd(b TopkInterface, k int, x interface{}) bool {
-	if pos := b.Len(); pos < k {
-		topkAppend(b, x)
-		return true
-	}
-
-	if !b.Less(x, b.Get(0)) {
-		return false
-	}
-
-	b.Set(0, x)
-
-	for pos := 0; ; {
-		lChild := (pos * 2) + 1
-		rChild := (pos * 2) + 2
-		if lChild >= k {
-			break
-		}
-
-		child := lChild
-		if rChild < k && b.Less(b.Get(lChild), b.Get(rChild)) {
-			child = rChild
-		}
-
-		if !b.Less(b.Get(pos), b.Get(child)) {
-			break
-		}
-
-		b.Swap(pos, child)
-		pos = child
-	}
-
-	return true
+func less[T Topkable](a, b T) bool {
+	return a < b
 }
 
-func topkAppend(b TopkInterface, x interface{}) {
-	pos := b.Len()
-	b.Push(x)
-
-	for parent := 0; pos > 0; pos = parent {
-		parent = (pos - 1) / 2
-		if !b.Less(b.Get(parent), b.Get(pos)) {
-			break
-		}
-		b.Swap(parent, pos)
+func TopkAdd[T Topkable](b []T, k int, x T) ([]T, bool) {
+	if k <= 0 {
+		return b, false
 	}
+
+	if pos := len(b); pos < k {
+		topkAppendTail(&b, less[T], x)
+		return b, true
+	}
+
+	if !less[T](x, b[0]) {
+		return b, false
+	}
+
+	b[0] = x
+	topkFixupHead[T](&b, less[T])
+	return b, true
 }
