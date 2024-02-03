@@ -11,6 +11,14 @@ import (
 	"github.com/smartystreets/goconvey/convey"
 )
 
+func TestGet(t *testing.T) {
+	convey.Convey(t.Name(), t, func() {
+		convey.So(Get[time.Duration](nil), convey.ShouldEqual, time.Duration(0))
+		convey.So(Get[time.Duration](nil, 1), convey.ShouldEqual, time.Duration(1))
+		convey.So(Get[time.Duration](NewDuration(100), time.Duration(0)), convey.ShouldEqual, time.Duration(100))
+	})
+}
+
 func TestGetBool(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
 		convey.So(GetBool(nil), convey.ShouldEqual, false)

@@ -6,6 +6,17 @@ package ldptr
 
 import "time"
 
+func NewByPtr[T any](d *T, def ...T) *T {
+	if d == nil {
+		if len(def) > 0 {
+			return &def[0]
+		}
+		return nil
+	}
+	cp := *d
+	return &cp
+}
+
 func NewBoolByPtr(d *bool, def ...bool) *bool {
 	if d == nil {
 		if len(def) > 0 {

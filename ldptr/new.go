@@ -6,6 +6,8 @@ package ldptr
 
 import "time"
 
+func New[T any](d T) *T { return &d }
+
 func NewBool(d bool) *bool { return &d }
 
 func NewByte(d byte) *byte { return &d }

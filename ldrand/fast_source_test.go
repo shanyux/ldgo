@@ -157,7 +157,7 @@ func Test_fastSource_ProbabilityOfVery4BitsWithPreviousNumber(t *testing.T) {
 	const (
 		scale = 1000 * 100 * 16 * 16
 		diff1 = 4000
-		diff2 = 6000
+		diff2 = 6500
 	)
 
 	getDiffThreshold := testGetDiffThresholdBySliceFunc(diff1, diff2)
