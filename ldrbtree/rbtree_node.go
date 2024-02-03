@@ -12,7 +12,7 @@ const (
 )
 
 // var (
-// 	_rbTreeNodePool = sync.Pool{New: func() interface{} { return &rbtreeNode{} }}
+// 	rbtreePoolMap = &sync.Map{}
 // )
 
 func initRBTreeNode[T any](n *rbtreeNode[T], sentinel *rbtreeNode[T]) {
@@ -24,8 +24,24 @@ func initRBTreeNode[T any](n *rbtreeNode[T], sentinel *rbtreeNode[T]) {
 	}
 }
 
+// func getPool[T any]() *sync.Pool {
+// 	var key T
+// 	m := rbtreePoolMap
+// 	i, ok := m.Load(key)
+// 	if ok {
+// 		return i.(*sync.Pool)
+// 	}
+//
+// 	p := &sync.Pool{New: func() any { return &rbtreeNode[T]{} }}
+// 	i, loaded := m.LoadOrStore(key, p)
+// 	if loaded {
+// 		p = i.(*sync.Pool)
+// 	}
+// 	return p
+// }
+
 func getRBTreeNode[T any](sentinel *rbtreeNode[T]) *rbtreeNode[T] {
-	// n := _rbTreeNodePool.Get().(*rbtreeNode[T])
+	// n := getPool[T]().Get().(*rbtreeNode[T])
 	n := &rbtreeNode[T]{}
 	initRBTreeNode[T](n, sentinel)
 	return n
@@ -33,7 +49,7 @@ func getRBTreeNode[T any](sentinel *rbtreeNode[T]) *rbtreeNode[T] {
 
 func putRBTreeNode[T any](p *rbtreeNode[T]) {
 	initRBTreeNode[T](p, nil)
-	// _rbTreeNodePool.Put(p)
+	// getPool[T]().Put(p)
 }
 
 type rbtreeNode[T any] struct {
