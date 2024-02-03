@@ -4,24 +4,46 @@
 
 package ldtopk
 
-import "github.com/distroy/ldgo/v2/ldcmp"
+import (
+	"sync"
 
-type LessFunc = func(a, b interface{}) bool
+	"github.com/distroy/ldgo/v2/ldcmp"
+)
 
-func DefaultLess(a, b interface{}) bool {
+type LessFunc[T any] func(a, b T) bool
+
+func defaultLess[T any](a, b T) bool {
 	return ldcmp.CompareInterface(a, b) < 0
 }
 
-// TopK will keep at most size elements for which less returns true
-type TopK struct {
-	Size int           // K
-	Less LessFunc      // less func
-	data []interface{} //
+func New[T any](k int, less func(a, b T) bool) *Topk[T] {
+	p := &Topk[T]{
+		Size: k,
+		Less: less,
+	}
+	return p
 }
 
-func (p *TopK) Data() []interface{} { return p.data }
+// Topk will keep at most size elements for which less returns true
+type Topk[T any] struct {
+	Size   int         // K
+	Less   LessFunc[T] // less func
+	Locker sync.Locker // locker
+	data   []T         //
+}
 
-func (p *TopK) Add(d interface{}) bool {
+func (p *Topk[T]) Data() []T { return p.data }
+
+func (p *Topk[T]) Add(d T) bool {
+	locker := p.Locker
+	if locker == nil {
+		p.Locker = nullLocker{}
+		locker = nullLocker{}
+	}
+
+	locker.Lock()
+	defer locker.Unlock()
+
 	k := p.Size
 	if k <= 0 {
 		return false
@@ -29,7 +51,7 @@ func (p *TopK) Add(d interface{}) bool {
 
 	p.init()
 	if pos := len(p.data); pos < k {
-		headAppendTail(&p.data, p.Less, d)
+		topkAppendTail(&p.data, p.Less, d)
 		return true
 	}
 
@@ -38,20 +60,20 @@ func (p *TopK) Add(d interface{}) bool {
 	}
 	p.data[0] = d
 
-	heapFixupHead(&p.data, p.Less)
+	topkFixupHead(&p.data, p.Less)
 	return true
 }
 
-func (p *TopK) init() {
+func (p *Topk[T]) init() {
 	if p.Less == nil {
-		p.Less = DefaultLess
+		p.Less = defaultLess[T]
 	}
 	if p.data == nil && p.Size > 0 {
-		p.data = make([]interface{}, 0, p.Size)
+		p.data = make([]T, 0, p.Size)
 	}
 }
 
-func headAppendTail(heap *[]interface{}, less LessFunc, d interface{}) {
+func topkAppendTail[T any](heap *[]T, less LessFunc[T], d T) {
 	pos := len(*heap)
 
 	*heap = append(*heap, d)
@@ -64,7 +86,7 @@ func headAppendTail(heap *[]interface{}, less LessFunc, d interface{}) {
 	}
 }
 
-func heapFixupHead(heap *[]interface{}, less LessFunc) {
+func topkFixupHead[T any](heap *[]T, less LessFunc[T]) {
 	size := len(*heap)
 	for pos := 0; ; {
 		lChild := (pos * 2) + 1
@@ -86,3 +108,8 @@ func heapFixupHead(heap *[]interface{}, less LessFunc) {
 		pos = child
 	}
 }
+
+type nullLocker struct{}
+
+func (_ nullLocker) Lock()   {}
+func (_ nullLocker) Unlock() {}
