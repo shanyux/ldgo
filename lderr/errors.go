@@ -4,7 +4,10 @@
 
 package lderr
 
-import "net/http"
+import (
+	"context"
+	"net/http"
+)
 
 // error definitions: [-1, -999]
 var (
@@ -13,8 +16,8 @@ var (
 	ErrServicePanic     = New(http.StatusServiceUnavailable, -2, "service panic")
 	ErrInvalidParameter = New(http.StatusOK, -3, "invalid parameter")
 
-	ErrCtxCanceled          = New(http.StatusOK, -11, "context canceled")
-	ErrCtxDeadlineExceeded  = New(http.StatusOK, -12, "context deadline exceeded")
+	ErrCtxCanceled          = newByError(http.StatusOK, -11, context.Canceled)
+	ErrCtxDeadlineExceeded  = newByError(http.StatusOK, -12, context.DeadlineExceeded)
 	ErrCtxDeadlineNotEnough = New(http.StatusOK, -13, "context deadline not enough")
 
 	ErrReflectError        = New(http.StatusOK, -21, "reflect error")
