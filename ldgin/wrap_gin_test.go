@@ -41,9 +41,12 @@ func (r *testGinRouter) PUT(string, ...gin.HandlerFunc) gin.IRoutes     { return
 func (r *testGinRouter) OPTIONS(string, ...gin.HandlerFunc) gin.IRoutes { return r }
 func (r *testGinRouter) HEAD(string, ...gin.HandlerFunc) gin.IRoutes    { return r }
 
-func (r *testGinRouter) StaticFile(string, string) gin.IRoutes        { return r }
-func (r *testGinRouter) Static(string, string) gin.IRoutes            { return r }
-func (r *testGinRouter) StaticFS(string, http.FileSystem) gin.IRoutes { return r }
+func (r *testGinRouter) Match([]string, string, ...gin.HandlerFunc) gin.IRoutes { return r }
+
+func (r *testGinRouter) StaticFile(string, string) gin.IRoutes                    { return r }
+func (r *testGinRouter) Static(string, string) gin.IRoutes                        { return r }
+func (r *testGinRouter) StaticFS(string, http.FileSystem) gin.IRoutes             { return r }
+func (r *testGinRouter) StaticFileFS(string, string, http.FileSystem) gin.IRoutes { return r }
 
 func TestWrapGin(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
