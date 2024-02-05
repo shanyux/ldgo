@@ -47,5 +47,20 @@ func (w Router) PATCH(p string, h Handler, ms ...Midware)  { w.Handle(http.Metho
 func (w Router) POST(p string, h Handler, ms ...Midware)   { w.Handle(http.MethodPost, p, h, ms...) }
 func (w Router) PUT(p string, h Handler, ms ...Midware)    { w.Handle(http.MethodPut, p, h, ms...) }
 func (w Router) OPTIONS(p string, h Handler, ms ...Midware) {
-	w.Handle(http.MethodConnect, p, h, ms...)
+	w.Handle(http.MethodOptions, p, h, ms...)
+}
+
+func (w Router) Match(methods []string, path string, h Handler, ms ...Midware) {
+	for _, method := range methods {
+		w.Handle(method, path, h, ms)
+	}
+}
+
+func (w Router) Any(p string, h Handler, ms ...Midware) {
+	anyMethods := []string{
+		http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch,
+		http.MethodHead, http.MethodOptions, http.MethodDelete, http.MethodConnect,
+		http.MethodTrace,
+	}
+	w.Match(anyMethods, p, h, ms...)
 }
