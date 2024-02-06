@@ -5,14 +5,12 @@
 package ldgorm
 
 import (
+	"log"
 	"strings"
 	"testing"
 
-	"github.com/distroy/ldgo/v2/ldhook"
-	"github.com/distroy/ldgo/v2/ldlog"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/smartystreets/goconvey/convey"
+	"gorm.io/gorm"
 )
 
 type testFilter struct {
@@ -43,46 +41,29 @@ func (_ *testTable) TableName() string { return "test_table" }
 
 func testGetGorm() *GormDb {
 	db := MustNewTestGormDb()
-	// convey.So(err, convey.ShouldBeNil)
-	db.SetLogger(ldlog.Discard().Wrapper())
+	// db = db.WithLogger(ldlog.Discard().Wrapper())
 	db.CreateTable(&testTable{})
 	return db
 }
 
-func testGetWhereFromSql(scope *gorm.Scope) string {
+func testGetWhereFromSql(sql string) string {
 	const key = " WHERE "
-	sql := scope.SQL
 	idx := strings.Index(sql, key)
 	if idx < 0 {
 		return ""
 	}
-	return sql[idx+len(key):]
+	res := sql[idx+len(key):]
+	return res
 }
 
 func TestWhereOption(t *testing.T) {
-	convey.Convey(t.Name(), t, func() {
-		patches := ldhook.NewPatches()
-		defer patches.Reset()
-
-		gormDb := testGetGorm()
-		defer gormDb.Close()
-
-		patches.Apply(ldhook.FuncHook{
-			Target: (*whereReflect).quote,
-			Double: func(w *whereReflect, db *GormDb, name string) string {
-				return strings.Join([]string{"`", name, "`"}, "")
-			},
-		})
-
-		var res whereResult
-		gormDb.Callback().Query().After("gorm:query").Register("ldgorm:after_query", func(scope *gorm.Scope) {
-			res.Query = testGetWhereFromSql(scope)
-			res.Args = scope.SQLVars
-		})
+	log.SetFlags(log.Flags() | log.Lshortfile)
+	convey.Convey(t.Name(), t, func(c convey.C) {
+		db := testGetGorm()
+		defer db.Close()
 
 		var rows []*testTable
-
-		convey.Convey("(project_id = 100 && channel_id > 100) || (project_id = 123 && channel_id < 234)", func() {
+		c.Convey("(project_id = 100 && channel_id > 100) || (project_id = 123 && channel_id < 234)", func(c convey.C) {
 			where := Where(&testFilter{
 				ProjectId: Equal(10),
 				ChannelId: Gt(100),
@@ -91,14 +72,19 @@ func TestWhereOption(t *testing.T) {
 				ChannelId: Lt(234),
 			})
 
-			where.buildGorm(gormDb).Find(&rows)
-			convey.So(res, convey.ShouldResemble, whereResult{
-				Query: "((`project_id` = ? AND `channel_id` > ?) OR (`project_id` = ? AND `channel_id` < ?))",
-				Args:  []interface{}{10, 100, 123, 234},
+			sql := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
+				db := New(tx)
+				log.Printf("=== db:%p", db)
+				db = where.buildGorm(db)
+				db = db.Find(&rows)
+				return db.Get()
 			})
+			res := testGetWhereFromSql(sql)
+			c.So(res, convey.ShouldEqual,
+				"(`project_id` = 10 AND `channel_id` > 100) OR (`project_id` = 123 AND `channel_id` < 234)")
 		})
 
-		convey.Convey("(project_id = 10 && channel_id >= 0) && ((channel_id < 100 && version_id > 220) || channel_id > 200 && version_id < 110)", func() {
+		c.Convey("(project_id = 10 && channel_id >= 0) && ((channel_id < 100 && version_id > 220) || channel_id > 200 && version_id < 110)", func(c convey.C) {
 			where1 := Where(&testFilter{
 				ProjectId: Equal(10),
 				ChannelId: Between(0, nil),
@@ -112,14 +98,18 @@ func TestWhereOption(t *testing.T) {
 			})
 			where := where1.And(where2)
 
-			ApplyOptions(gormDb, where).Find(&rows)
-			convey.So(res, convey.ShouldResemble, whereResult{
-				Query: "((`project_id` = ? AND `channel_id` >= ?) AND ((`channel_id` < ? AND `version_id` > ?) OR (`channel_id` > ? AND `version_id` < ?)))",
-				Args:  []interface{}{10, 0, 100, 220, 200, 110},
+			sql := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
+				db := New(tx)
+				db = where.buildGorm(db)
+				db = db.Find(&rows)
+				return db.Get()
 			})
+			res := testGetWhereFromSql(sql)
+			c.So(res, convey.ShouldEqual,
+				"(`project_id` = 10 AND `channel_id` >= 0) AND ((`channel_id` < 100 AND `version_id` > 220) OR (`channel_id` > 200 AND `version_id` < 110))")
 		})
 
-		convey.Convey("(((channel_id < 100 AND version_id > 220) OR (channel_id > 200 AND version_id < 110)) AND (project_id = 10 AND channel_id >= 0))", func() {
+		c.Convey("(((channel_id < 100 AND version_id > 220) OR (channel_id > 200 AND version_id < 110)) AND (project_id = 10 AND channel_id >= 0))", func(c convey.C) {
 			where1 := Where(&testFilter{
 				ChannelId: Lt(100),
 				VersionId: Gt(220),
@@ -133,23 +123,31 @@ func TestWhereOption(t *testing.T) {
 			})
 			where := Where(where1).And(where2)
 
-			ApplyOptions(gormDb, where).Find(&rows)
-			convey.So(res, convey.ShouldResemble, whereResult{
-				Query: "(((`channel_id` < ? AND `version_id` > ?) OR (`channel_id` > ? AND `version_id` < ?)) AND (`project_id` = ? AND `channel_id` >= ?))",
-				Args:  []interface{}{100, 220, 200, 110, 10, 0},
+			sql := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
+				db := New(tx)
+				db = where.buildGorm(db)
+				db = db.Find(&rows)
+				return db.Get()
 			})
+			res := testGetWhereFromSql(sql)
+			c.So(res, convey.ShouldEqual,
+				"((`channel_id` < 100 AND `version_id` > 220) OR (`channel_id` > 200 AND `version_id` < 110)) AND (`project_id` = 10 AND `channel_id` >= 0)")
 		})
 
-		convey.Convey("right(channel_id, 1) = 1 && channel_id = 10 && b(channel_id)", func() {
+		c.Convey("right(channel_id, 1) = % && channel_id = 10 && b(channel_id)", func(c convey.C) {
 			where := Where(&testFilter{
 				ChannelId: Expr(`right({{column}}, ?) = ?`, 1, "%").And(Equal(10)).And(Expr(`b({{column}})`)),
 			})
 
-			where.buildGorm(gormDb).Find(&rows)
-			convey.So(res, convey.ShouldResemble, whereResult{
-				Query: "(right(`channel_id`, ?) = ? AND `channel_id` = ? AND b(`channel_id`))",
-				Args:  []interface{}{1, "%", 10},
+			sql := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
+				db := New(tx)
+				db = where.buildGorm(db)
+				db = db.Find(&rows)
+				return db.Get()
 			})
+			res := testGetWhereFromSql(sql)
+			c.So(res, convey.ShouldEqual,
+				"right(`channel_id`, 1) = \"%\" AND `channel_id` = 10 AND b(`channel_id`)")
 		})
 	})
 }

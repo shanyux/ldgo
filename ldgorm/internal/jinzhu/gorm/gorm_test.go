@@ -12,12 +12,12 @@ import (
 	"github.com/distroy/ldgo/v2/ldhook"
 	"github.com/distroy/ldgo/v2/ldlog"
 	"github.com/distroy/ldgo/v2/ldrand"
-	"github.com/jinzhu/gorm"
 	"github.com/smartystreets/goconvey/convey"
+	"gorm.io/gorm"
 )
 
 func testNewGorm(db *gorm.DB) *GormDb {
-	return (&GormDb{}).Set(db)
+	return New(db)
 }
 
 func TestGormDb_Transaction(t *testing.T) {

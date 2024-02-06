@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 
 	"github.com/distroy/ldgo/v2/ldhook"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 var (

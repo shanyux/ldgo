@@ -8,25 +8,21 @@ import (
 	"fmt"
 
 	gorm2 "github.com/distroy/ldgo/v2/ldgorm/internal/jinzhu/gorm"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"gorm.io/gorm"
 )
 
 type GormDb = gorm2.GormDb
 
+func New(db *gorm.DB) *GormDb {
+	return gorm2.New(db)
+}
+
 func NewGormDb(db *gorm.DB) *GormDb {
-	g := &GormDb{}
-	g = g.Set(db)
-	return g
+	return gorm2.New(db)
 }
 
 func NewTestGormDb() (*GormDb, error) {
-	db, err := gorm.Open("sqlite3", ":memory:")
-	if err != nil {
-		return nil, err
-	}
-
-	return NewGormDb(db), nil
+	return gorm2.NewTestDb()
 }
 
 func MustNewTestGormDb() *GormDb {

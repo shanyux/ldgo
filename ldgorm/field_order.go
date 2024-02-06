@@ -9,7 +9,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type FieldOrderer interface {
@@ -113,5 +114,8 @@ func (that fieldOrder) buildGormWithField(db *GormDb, field string) *GormDb {
 	if that.IsDesc {
 		fmt.Fprintf(buf, " DESC")
 	}
-	return db.Order(gorm.Expr(buf.String(), args...))
+	// return db.Order(gorm.Expr(buf.String(), args...))
+	return db.Clauses(clause.OrderBy{
+		Expression: gorm.Expr(buf.String(), args...),
+	})
 }

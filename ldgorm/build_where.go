@@ -6,6 +6,7 @@ package ldgorm
 
 import (
 	"fmt"
+	"log"
 	"math"
 	"reflect"
 	"sort"
@@ -53,10 +54,20 @@ func (that *whereReflect) getTableName(val reflect.Value) string {
 }
 
 func (that *whereReflect) quote(db *GormDb, name string) string {
-	if db == nil || db.Get() == nil || db.Get().Dialect() == nil {
+	if db == nil || db.Get() == nil || db.Get().Dialector == nil {
+		log.Printf("=== db:%p", db)
+		if db != nil {
+			log.Printf("=== db.Get():%p", db.Get())
+			if db.Get() != nil {
+				log.Printf("=== db.Get().Dialector:%p", db.Get().Dialector)
+			}
+		}
 		return name
 	}
-	return db.Get().Dialect().Quote(name)
+	buf := &strings.Builder{}
+	buf.Grow(len(name) * 2)
+	db.Get().Dialector.QuoteTo(buf, name)
+	return buf.String()
 }
 
 func (that *whereReflect) buildWhere(db *GormDb, val reflect.Value) whereResult {

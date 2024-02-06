@@ -6,6 +6,7 @@ package ldgorm
 
 import (
 	"encoding/json"
+	"log"
 	"reflect"
 	"strings"
 
@@ -18,7 +19,7 @@ type WhereOption interface {
 	And(where interface{}) WhereOption
 	Or(where interface{}) WhereOption
 
-	buildWhere() whereResult
+	buildWhere(db *GormDb) whereResult
 }
 
 func Where(where interface{}) WhereOption {
@@ -58,17 +59,18 @@ type whereOption struct {
 }
 
 func (w *whereOption) String() string {
-	res := w.buildWhere()
+	res := w.buildWhere(nil)
 	bytes, _ := json.Marshal(res)
 	return ldconv.BytesToStrUnsafe(bytes)
 }
 
 func (w *whereOption) buildGorm(db *GormDb) *GormDb {
+	log.Printf("=== db:%p", db)
 	return w.where.buildGorm(db, w.value)
 }
 
-func (w *whereOption) buildWhere() whereResult {
-	return w.where.buildWhere(nil, w.value)
+func (w *whereOption) buildWhere(db *GormDb) whereResult {
+	return w.where.buildWhere(db, w.value)
 }
 
 func (w *whereOption) toTree() *whereOptionTree {
@@ -97,13 +99,13 @@ type whereOptionTree struct {
 }
 
 func (w *whereOptionTree) String() string {
-	res := w.buildWhere()
+	res := w.buildWhere(nil)
 	bytes, _ := json.Marshal(res)
 	return ldconv.BytesToStrUnsafe(bytes)
 }
 
-func (w *whereOptionTree) buildWhere() whereResult {
-	res := w.Wheres[0].Where.buildWhere()
+func (w *whereOptionTree) buildWhere(db *GormDb) whereResult {
+	res := w.Wheres[0].Where.buildWhere(db)
 	if len(w.Wheres) == 1 {
 		return res
 	}
@@ -111,7 +113,7 @@ func (w *whereOptionTree) buildWhere() whereResult {
 	res.Query = "(" + res.Query
 
 	for _, v := range w.Wheres[1:] {
-		tmp := v.Where.buildWhere()
+		tmp := v.Where.buildWhere(db)
 		symbol := " AND "
 		if v.Or {
 			symbol = " OR "
@@ -126,7 +128,8 @@ func (w *whereOptionTree) buildWhere() whereResult {
 }
 
 func (w *whereOptionTree) buildGorm(db *GormDb) *GormDb {
-	res := w.buildWhere()
+	log.Printf("=== db:%p", db)
+	res := w.buildWhere(db)
 	if strings.HasPrefix(res.Query, "(") && strings.HasSuffix(res.Query, ")") {
 		res.Query = res.Query[1 : len(res.Query)-1]
 	}
