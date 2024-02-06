@@ -9,7 +9,7 @@ require (
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/golang/protobuf v1.5.2
 	github.com/jinzhu/gorm v1.9.16
-	github.com/shopspring/decimal v1.2.0
+	github.com/shopspring/decimal v1.3.1
 	github.com/smartystreets/goconvey v1.6.4
 	go.uber.org/zap v1.26.0
 	golang.org/x/time v0.4.0
