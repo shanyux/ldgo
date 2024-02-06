@@ -231,6 +231,9 @@ func TestToFloat32(t *testing.T) {
 
 		{name: `string - ++1234.56`, args: "++1234.56", want: 1234.56, wantErr: false},
 		{name: `string - ""`, args: "", want: 0, wantErr: true},
+
+		{name: `string - -123.234`, args: "-123.234", want: -123.234, wantErr: false},
+		{name: `decimal.Decimal - -123.234`, args: mustNewDecimalFromStr("-123.234"), want: -123.234, wantErr: false},
 	}
 	convey.Convey(t.Name(), t, func() {
 		for _, tt := range tests {
