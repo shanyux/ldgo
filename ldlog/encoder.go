@@ -19,9 +19,15 @@ import (
 
 // For JSON-escaping; see jsonEncoder.safeAddString below.
 const (
-	_hex         = "0123456789abcdef"
-	keyRequestID = "request_id"
+	_hex = "0123456789abcdef"
 )
+
+var (
+	sequenceKey = "request_id"
+)
+
+func SetSequenceKey(key string) { sequenceKey = key }
+func GetSequenceKey() string    { return sequenceKey }
 
 type loggerEncoderPool struct {
 	_pool sync.Pool
@@ -37,7 +43,7 @@ func (pool *loggerEncoderPool) put(enc *loggerEncoder) {
 	}
 	enc.EncoderConfig = nil
 	enc.buf = nil
-	enc.requestID = ""
+	enc.sequence = ""
 	enc.spaced = false
 	enc.openNamespaces = 0
 	enc.reflectBuf = nil
@@ -65,7 +71,7 @@ type loggerEncoder struct {
 	reflectBuf *buffer.Buffer
 	reflectEnc *json.Encoder
 
-	requestID string
+	sequence string
 }
 
 // NewLoggerEncoder
@@ -151,8 +157,8 @@ func (enc *loggerEncoder) OpenNamespace(key string) {
 
 func (enc *loggerEncoder) AddString(key, val string) {
 	switch key {
-	case keyRequestID:
-		enc.requestID = val
+	case sequenceKey:
+		enc.sequence = val
 	default:
 		enc.addKey(key)
 		enc.AppendString(val)
@@ -290,7 +296,7 @@ func (enc *loggerEncoder) Clone() zapcore.Encoder {
 
 func (enc *loggerEncoder) clone() *loggerEncoder {
 	clone := encoderPool.get()
-	clone.requestID = enc.requestID
+	clone.sequence = enc.sequence
 	clone.EncoderConfig = enc.EncoderConfig
 	clone.spaced = enc.spaced
 	clone.openNamespaces = enc.openNamespaces
@@ -528,8 +534,8 @@ func addBuffer(enc, final *loggerEncoder) {
 // func add
 func addRequestID(enc *loggerEncoder) {
 	var requestID = "-"
-	if enc.requestID != "" {
-		requestID = enc.requestID
+	if enc.sequence != "" {
+		requestID = enc.sequence
 	}
 	enc.addLogSegmentSeparator()
 	enc.buf.AppendString(requestID)

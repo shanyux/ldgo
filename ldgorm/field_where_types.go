@@ -6,7 +6,6 @@ package ldgorm
 
 import (
 	"fmt"
-	"log"
 	"reflect"
 	"strings"
 )
@@ -176,7 +175,7 @@ type fieldWhereExpr struct {
 
 func (that fieldWhereExpr) buildWhere(field string) whereResult {
 	expr := strings.ReplaceAll(that.Expr, "{{column}}", field)
-	log.Printf("expr:%s", expr)
+	// log.Printf("expr:%s", expr)
 
 	return whereResult{
 		Query: expr,
