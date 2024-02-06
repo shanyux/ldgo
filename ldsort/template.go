@@ -5,11 +5,10 @@
 package ldsort
 
 type sortable interface {
-	string |
-		float32 | float64 |
-		int | int8 | int16 | int32 | int64 |
-		uint | uint8 | uint16 | uint32 | uint64 |
-		uintptr
+	~string |
+		~int | ~int8 | ~int16 | ~int32 | ~int64 |
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
+		~float32 | ~float64
 }
 
 func compare[T sortable](a, b T) int {
