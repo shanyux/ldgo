@@ -2,7 +2,7 @@
  * Copyright (C) distroy
  */
 
-package gorm
+package internal
 
 import (
 	"fmt"

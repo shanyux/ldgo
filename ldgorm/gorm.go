@@ -7,29 +7,29 @@ package ldgorm
 import (
 	"fmt"
 
-	gorm2 "github.com/distroy/ldgo/v2/ldgorm/internal/jinzhu/gorm"
+	"github.com/distroy/ldgo/v2/ldgorm/internal"
 	"gorm.io/gorm"
 )
 
 type (
 	OriginGormDb = gorm.DB
-	GormDb       = gorm2.GormDb
+	GormDb       = internal.GormDb
 )
 
 func New(db *gorm.DB) *GormDb {
-	return gorm2.New(db)
+	return internal.New(db)
 }
 
-func NewGormDb(db *gorm.DB) *GormDb {
-	return gorm2.New(db)
+func NewDb(db *gorm.DB) *GormDb {
+	return New(db)
 }
 
-func NewTestGormDb() (*GormDb, error) {
-	return gorm2.NewTestDb()
+func NewTestDb() (*GormDb, error) {
+	return internal.NewTestGormDb()
 }
 
-func MustNewTestGormDb() *GormDb {
-	db, err := NewTestGormDb()
+func MustNewTestDb() *GormDb {
+	db, err := NewTestDb()
 	if err != nil {
 		panic(fmt.Sprintf("new test gorm fail. err:%v", err))
 	}

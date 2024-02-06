@@ -38,7 +38,7 @@ type testTable struct {
 func (_ *testTable) TableName() string { return "test_table" }
 
 func testGetGorm() *GormDb {
-	db := MustNewTestGormDb()
+	db := MustNewTestDb()
 	// db = db.WithLogger(ldlog.Discard().Wrapper())
 	db.CreateTable(&testTable{})
 	return db

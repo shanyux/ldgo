@@ -2,7 +2,7 @@
  * Copyright (C) distroy
  */
 
-package gorm
+package internal
 
 import (
 	"fmt"
@@ -23,7 +23,7 @@ func TestGormDb_Transaction(t *testing.T) {
 
 		data := mockTransaction(patches)
 
-		db := testGetGorm()
+		db := testNewGorm()
 		defer db.Close()
 
 		convey.Convey("transaction 1 rollback", func() {
@@ -468,7 +468,7 @@ func TestGormDb_WithQueryHint(t *testing.T) {
 	hint := ldrand.String(8)
 	prefix := fmt.Sprintf("/* %s */", hint)
 
-	db := testGetGorm()
+	db := testNewGorm()
 	defer db.Close()
 	db = db.WithQueryHint(hint)
 
@@ -501,7 +501,7 @@ func TestGormDb_WithQueryHint(t *testing.T) {
 func TestGormDb_WithLogger(t *testing.T) {
 	convey.Convey(t.Name(), t, func(c convey.C) {
 		c.Convey("without slaver", func(c convey.C) {
-			db := testGetGorm()
+			db := testNewGorm()
 			defer db.Close()
 
 			buf := &strings.Builder{}
@@ -516,17 +516,17 @@ func TestGormDb_WithLogger(t *testing.T) {
 				VersionId: 1004,
 			})
 
-			t.Logf("%s", buf.String())
+			t.Logf("\n%s", buf.String())
 			c.So(buf.String(), convey.ShouldNotEqual, ``)
 		})
 
 		c.Convey("with slaver", func(c convey.C) {
 			c.Convey("rand", func(c convey.C) {
-				db := testGetGorm()
+				db := testNewGorm()
 				defer db.Close()
 
-				db = db.AddSlaver(testGetGorm().Get())
-				db = db.AddSlaver(testGetGorm().Get())
+				db = db.AddSlaver(testNewGorm().Get())
+				db = db.AddSlaver(testNewGorm().Get())
 
 				db = db.UseSlaver()
 
@@ -540,16 +540,16 @@ func TestGormDb_WithLogger(t *testing.T) {
 					VersionId: 1004,
 				})
 
-				t.Logf("%s", buf.String())
+				t.Logf("\n%s", buf.String())
 				c.So(buf.String(), convey.ShouldNotEqual, ``)
 			})
 
 			c.Convey("index", func(c convey.C) {
-				db := testGetGorm()
+				db := testNewGorm()
 				defer db.Close()
 
-				db = db.AddSlaver(testGetGorm().Get())
-				db = db.AddSlaver(testGetGorm().Get())
+				db = db.AddSlaver(testNewGorm().Get())
+				db = db.AddSlaver(testNewGorm().Get())
 
 				db = db.UseSlaver(1)
 
@@ -563,7 +563,7 @@ func TestGormDb_WithLogger(t *testing.T) {
 					VersionId: 1004,
 				})
 
-				t.Logf("%s", buf.String())
+				t.Logf("\n%s", buf.String())
 				c.So(buf.String(), convey.ShouldNotEqual, ``)
 			})
 		})

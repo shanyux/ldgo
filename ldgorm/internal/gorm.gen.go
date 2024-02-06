@@ -2,7 +2,12 @@
  * Copyright (C) distroy
  */
 
-package gorm
+package internal
+
+/*
+ * Filename: gorm.gen.go
+ * The file name suffix ".gen.go" is used to prevent gorm from printing logs and to redirect the path to this file.
+ */
 
 import (
 	"hash/crc32"
@@ -34,7 +39,7 @@ func New(db *gorm.DB) *GormDb {
 	return g
 }
 
-func NewTestDb() (*GormDb, error) {
+func NewTestGormDb() (*GormDb, error) {
 	// db, err := gorm.Open("sqlite3", ":memory:")
 	const InMemoryDSN = "file:testdatabase?mode=memory&cache=shared"
 	db, err := gorm.Open(sqlite.Open(InMemoryDSN))
