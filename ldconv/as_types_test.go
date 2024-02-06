@@ -59,7 +59,8 @@ func TestAsFloat32(t *testing.T) {
 		convey.So(AsFloat32(int(-1)), convey.ShouldEqual, -1)
 		convey.So(AsFloat32(uint(1)), convey.ShouldEqual, 1)
 
-		convey.So(AsFloat32(mustNewDecimalFromStr("-123.234")), convey.ShouldEqual, -123.234)
+		convey.So(AsFloat32("-123.234"), convey.ShouldEqual, float32(-123.234))
+		convey.So(AsFloat32(mustNewDecimalFromStr("-123.234")), convey.ShouldEqual, float32(-123.234))
 	})
 }
 
