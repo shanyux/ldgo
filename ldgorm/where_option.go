@@ -6,7 +6,6 @@ package ldgorm
 
 import (
 	"encoding/json"
-	"log"
 	"reflect"
 	"strings"
 
@@ -65,7 +64,7 @@ func (w *whereOption) String() string {
 }
 
 func (w *whereOption) buildGorm(db *GormDb) *GormDb {
-	log.Printf("=== db:%p", db)
+	// log.Printf("=== db:%p", db)
 	return w.where.buildGorm(db, w.value)
 }
 
@@ -128,7 +127,7 @@ func (w *whereOptionTree) buildWhere(db *GormDb) whereResult {
 }
 
 func (w *whereOptionTree) buildGorm(db *GormDb) *GormDb {
-	log.Printf("=== db:%p", db)
+	// log.Printf("=== db:%p", db)
 	res := w.buildWhere(db)
 	if strings.HasPrefix(res.Query, "(") && strings.HasSuffix(res.Query, ")") {
 		res.Query = res.Query[1 : len(res.Query)-1]

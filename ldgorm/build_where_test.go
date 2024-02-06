@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/smartystreets/goconvey/convey"
-	"gorm.io/gorm"
 )
 
 func TestBuildWhere(t *testing.T) {
@@ -25,11 +24,11 @@ func TestBuildWhere(t *testing.T) {
 		c.Convey("channel_id == 20", func(c convey.C) {
 			cond.ChannelId = Equal(20)
 
-			sql := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
-				db := New(tx)
+			sql := db.ToSQL(func(tx *GormDb) *GormDb {
+				db := tx
 				db = BuildWhere(db, cond)
 				db = db.Find(&rows)
-				return db.Get()
+				return db
 			})
 			res := testGetWhereFromSql(sql)
 			c.So(res, convey.ShouldEqual, "`channel_id` = 20")
@@ -39,11 +38,11 @@ func TestBuildWhere(t *testing.T) {
 			cond.ProjectId = Equal(10)
 			cond.ChannelId = Equal(20)
 
-			sql := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
-				db := New(tx)
+			sql := db.ToSQL(func(tx *GormDb) *GormDb {
+				db := tx
 				db = BuildWhere(db, cond)
 				db = db.Find(&rows)
-				return db.Get()
+				return db
 			})
 			res := testGetWhereFromSql(sql)
 			c.So(res, convey.ShouldEqual, "`project_id` = 10 AND `channel_id` = 20")
@@ -54,11 +53,11 @@ func TestBuildWhere(t *testing.T) {
 			cond.ChannelId = Equal(20)
 			cond.VersionId = Gt(30)
 
-			sql := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
-				db := New(tx)
+			sql := db.ToSQL(func(tx *GormDb) *GormDb {
+				db := tx
 				db = BuildWhere(db, cond)
 				db = db.Find(&rows)
-				return db.Get()
+				return db
 			})
 			res := testGetWhereFromSql(sql)
 			c.So(res, convey.ShouldEqual, "`project_id` = 10 AND `channel_id` = 20 AND `version_id` > 30")
@@ -69,11 +68,11 @@ func TestBuildWhere(t *testing.T) {
 			cond.VersionId = Gt(30)
 			cond.Type = In([]int{1, 2, 3})
 
-			sql := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
-				db := New(tx)
+			sql := db.ToSQL(func(tx *GormDb) *GormDb {
+				db := tx
 				db = BuildWhere(db, cond)
 				db = db.Find(&rows)
-				return db.Get()
+				return db
 			})
 			res := testGetWhereFromSql(sql)
 			c.So(res, convey.ShouldEqual, "`channel_id` = 20 AND `version_id` > 30 AND `type` IN (1,2,3)")
@@ -83,11 +82,11 @@ func TestBuildWhere(t *testing.T) {
 			cond.ChannelId = Equal(20)
 			cond.VersionId = Gt(30).Or(Lt(100))
 
-			sql := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
-				db := New(tx)
+			sql := db.ToSQL(func(tx *GormDb) *GormDb {
+				db := tx
 				db = BuildWhere(db, cond)
 				db = db.Find(&rows)
-				return db.Get()
+				return db
 			})
 			res := testGetWhereFromSql(sql)
 			c.So(res, convey.ShouldEqual, "`channel_id` = 20 AND (`version_id` > 30 OR `version_id` < 100)")
@@ -100,11 +99,11 @@ func TestBuildWhere(t *testing.T) {
 				cond.ChannelId = Equal(20)
 				cond.VersionId = Gt(30).Or(Lt(100))
 
-				sql := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
-					db := New(tx)
+				sql := db.ToSQL(func(tx *GormDb) *GormDb {
+					db := tx
 					db = BuildWhere(db, cond)
 					db = db.Find(&rows)
-					return db.Get()
+					return db
 				})
 				res := testGetWhereFromSql(sql)
 				c.So(res, convey.ShouldEqual,
@@ -115,11 +114,11 @@ func TestBuildWhere(t *testing.T) {
 				cond.ChannelId = Equal(20)
 				cond.VersionId = Gt(30).Or(Lt(100))
 
-				sql := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
-					db := New(tx)
+				sql := db.ToSQL(func(tx *GormDb) *GormDb {
+					db := tx
 					db = BuildWhere(db, cond)
 					db = db.Find(&rows)
-					return db.Get()
+					return db
 				})
 				res := testGetWhereFromSql(sql)
 				c.So(res, convey.ShouldEqual,

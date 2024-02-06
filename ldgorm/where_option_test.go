@@ -5,12 +5,10 @@
 package ldgorm
 
 import (
-	"log"
 	"strings"
 	"testing"
 
 	"github.com/smartystreets/goconvey/convey"
-	"gorm.io/gorm"
 )
 
 type testFilter struct {
@@ -57,7 +55,6 @@ func testGetWhereFromSql(sql string) string {
 }
 
 func TestWhereOption(t *testing.T) {
-	log.SetFlags(log.Flags() | log.Lshortfile)
 	convey.Convey(t.Name(), t, func(c convey.C) {
 		db := testGetGorm()
 		defer db.Close()
@@ -72,12 +69,11 @@ func TestWhereOption(t *testing.T) {
 				ChannelId: Lt(234),
 			})
 
-			sql := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
-				db := New(tx)
-				log.Printf("=== db:%p", db)
+			sql := db.ToSQL(func(tx *GormDb) *GormDb {
+				db := tx
 				db = where.buildGorm(db)
 				db = db.Find(&rows)
-				return db.Get()
+				return db
 			})
 			res := testGetWhereFromSql(sql)
 			c.So(res, convey.ShouldEqual,
@@ -98,11 +94,11 @@ func TestWhereOption(t *testing.T) {
 			})
 			where := where1.And(where2)
 
-			sql := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
-				db := New(tx)
+			sql := db.ToSQL(func(tx *GormDb) *GormDb {
+				db := tx
 				db = where.buildGorm(db)
 				db = db.Find(&rows)
-				return db.Get()
+				return db
 			})
 			res := testGetWhereFromSql(sql)
 			c.So(res, convey.ShouldEqual,
@@ -123,11 +119,11 @@ func TestWhereOption(t *testing.T) {
 			})
 			where := Where(where1).And(where2)
 
-			sql := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
-				db := New(tx)
+			sql := db.ToSQL(func(tx *GormDb) *GormDb {
+				db := tx
 				db = where.buildGorm(db)
 				db = db.Find(&rows)
-				return db.Get()
+				return db
 			})
 			res := testGetWhereFromSql(sql)
 			c.So(res, convey.ShouldEqual,
@@ -139,11 +135,11 @@ func TestWhereOption(t *testing.T) {
 				ChannelId: Expr(`right({{column}}, ?) = ?`, 1, "%").And(Equal(10)).And(Expr(`b({{column}})`)),
 			})
 
-			sql := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
-				db := New(tx)
+			sql := db.ToSQL(func(tx *GormDb) *GormDb {
+				db := tx
 				db = where.buildGorm(db)
 				db = db.Find(&rows)
-				return db.Get()
+				return db
 			})
 			res := testGetWhereFromSql(sql)
 			c.So(res, convey.ShouldEqual,

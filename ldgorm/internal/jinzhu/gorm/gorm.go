@@ -5,16 +5,17 @@
 package gorm
 
 import (
-	"fmt"
 	"hash/crc32"
 	"strings"
 
 	"github.com/distroy/ldgo/v2/ldconv"
+	"github.com/distroy/ldgo/v2/ldctx"
 	"github.com/distroy/ldgo/v2/ldrand"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/logger"
+	"gorm.io/hints"
 )
 
 type gormDb = gorm.DB
@@ -55,6 +56,7 @@ type GormDb struct {
 
 	// these should set after user new gorm db
 	log logger.Interface
+	ctx ldctx.Context
 }
 
 func (w *GormDb) panicTxLevelLessZero() {
@@ -194,11 +196,8 @@ func (w *GormDb) UseSlaver(key ...interface{}) *GormDb {
 func (w *GormDb) initAfterUseNewGormDb() {
 	db := w.gormDb
 
-	if w.log != nil {
-		db.Session(&gorm.Session{
-			Logger: w.log,
-		})
-	}
+	db = w.withLogger(db, w.log)
+	db = w.withContext(w.ctx, db)
 
 	w.gormDb = db
 }
@@ -243,20 +242,47 @@ func (w *GormDb) getHashByKey(keys []interface{}) uint {
 	return ldrand.Uint()
 }
 
+// WithContext can be called before or after UseMaster/UseSlaver
+func (w *GormDb) WithContext(ctx ldctx.Context) *GormDb {
+	w = w.clone()
+
+	w.ctx = ctx
+	w.log = nil
+
+	w.gormDb = w.withContext(ctx, w.gormDb)
+	return w
+}
+
+func (_ *GormDb) withContext(ctx ldctx.Context, db *gorm.DB) *gorm.DB {
+	if ctx == nil {
+		return db
+	}
+
+	writer := ldctx.GetLogger(ctx).Wrapper()
+	return db.Session(&gorm.Session{
+		Logger:  logger.New(writer, getLoggerConfig()),
+		Context: ctx,
+	})
+}
+
 // WithLogger can be called before or after UseMaster/UseSlaver
 func (w *GormDb) WithLogger(l Logger) *GormDb {
 	w = w.clone()
-	// // LogMode 方法不会返回新的 gorm.DB 实例，需要使用 Debug 方法
-	// // w.gormDb = w.gormDb.LogMode(true)
-	// w.gormDb = w.gormDb.Debug()
-	// w.gormDb.SetLogger(l)
-	w.log = logger.New(l, logger.Config{
-		Colorful:                  false,
-		IgnoreRecordNotFoundError: false,
-		ParameterizedQueries:      false,
-		LogLevel:                  logger.Info,
-	})
+
+	log := logger.New(l, getLoggerConfig())
+	w.log = log
+
+	w.gormDb = w.withLogger(w.gormDb, log)
 	return w
+}
+
+func (_ *GormDb) withLogger(db *gorm.DB, log logger.Interface) *gorm.DB {
+	if log == nil {
+		return db
+	}
+	return db.Session(&gorm.Session{
+		Logger: log,
+	})
 }
 
 func (w *GormDb) Model(value interface{}) *GormDb {
@@ -523,11 +549,29 @@ func (w *GormDb) Scan(out interface{}) *GormDb {
 //
 // WithQueryHint must be called after UseSlaver
 func (w *GormDb) WithQueryHint(hint string) *GormDb {
-	replacer := queryHintReplacer
-	hint = replacer.Replace(hint)
-	hint = fmt.Sprintf("/* %s */ ", hint)
-
 	w = w.clone()
-	w.gormDb = w.gormDb.Set("gorm:query_hint", hint)
+	exprs := []clause.Expression{
+		hints.CommentBefore("SELECT", hint),
+		// hints.CommentBefore("UPDATE", hint),
+		// hints.CommentBefore("INSERT", hint),
+	}
+	w.gormDb = w.gormDb.Clauses(exprs...)
 	return w
+}
+
+func (w *GormDb) ToSQL(fn func(tx *GormDb) *GormDb) string {
+	return w.gormDb.ToSQL(func(tx *gorm.DB) *gorm.DB {
+		db := New(tx)
+		db = fn(db)
+		return db.Get()
+	})
+}
+
+func getLoggerConfig() logger.Config {
+	return logger.Config{
+		Colorful:                  false,
+		IgnoreRecordNotFoundError: false,
+		ParameterizedQueries:      false,
+		LogLevel:                  logger.Info,
+	}
 }

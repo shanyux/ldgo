@@ -15,6 +15,7 @@ require (
 	google.golang.org/protobuf v1.30.0
 	gorm.io/driver/sqlite v1.5.4
 	gorm.io/gorm v1.25.6
+	gorm.io/hints v1.1.2
 )
 
 require (

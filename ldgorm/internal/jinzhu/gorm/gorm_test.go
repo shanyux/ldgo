@@ -16,10 +16,6 @@ import (
 	"gorm.io/gorm"
 )
 
-func testNewGorm(db *gorm.DB) *GormDb {
-	return New(db)
-}
-
 func TestGormDb_Transaction(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
 		patches := ldhook.NewPatches()
@@ -27,7 +23,8 @@ func TestGormDb_Transaction(t *testing.T) {
 
 		data := mockTransaction(patches)
 
-		db := testNewGorm(&gorm.DB{})
+		db := testGetGorm()
+		defer db.Close()
 
 		convey.Convey("transaction 1 rollback", func() {
 			err := db.Transaction(func(tx *GormDb) error {
@@ -397,15 +394,15 @@ func TestGormDb_Begin_RollbackUnlessCommitted(t *testing.T) {
 			convey.So(tx1Rollback.txLvl, convey.ShouldEqual, 0)
 
 			convey.So(data, convey.ShouldResemble, &transactionMockData{
-				Begin:                   1,
-				RollbackUnlessCommitted: 1,
+				Begin:    1,
+				Rollback: 1,
 			})
 
 			convey.Convey("double rollback", func() {
 				convey.So(func() { tx1Rollback.Rollback() }, convey.ShouldPanic)
 				convey.So(data, convey.ShouldResemble, &transactionMockData{
-					Begin:                   1,
-					RollbackUnlessCommitted: 1,
+					Begin:    1,
+					Rollback: 1,
 				})
 			})
 
@@ -417,8 +414,8 @@ func TestGormDb_Begin_RollbackUnlessCommitted(t *testing.T) {
 				convey.So(tx1RollbackUnlessCommitted.txLvl, convey.ShouldEqual, 0)
 
 				convey.So(data, convey.ShouldResemble, &transactionMockData{
-					Begin:                   1,
-					RollbackUnlessCommitted: 1,
+					Begin:    1,
+					Rollback: 1,
 				})
 			})
 		})
@@ -463,7 +460,7 @@ func TestGormDb_WithQueryHint(t *testing.T) {
 			name: "update",
 			want: false,
 			args: []func(db *GormDb) *GormDb{
-				func(db *GormDb) *GormDb { return db.Update(&testTable{ProjectId: 1}) },
+				func(db *GormDb) *GormDb { return db.Updates(&testTable{ProjectId: 1}) },
 			},
 		},
 	}
@@ -482,24 +479,20 @@ func TestGormDb_WithQueryHint(t *testing.T) {
 		VersionId: 4,
 	})
 
-	var sql string
-	db.Callback().Query().After("gorm:query").Register("ldgorm:after_query", func(scope *gorm.Scope) {
-		sql = scope.SQL
-	})
-	db.Callback().Create().After("gorm:create").Register("ldgorm:after_create", func(scope *gorm.Scope) {
-		sql = scope.SQL
-	})
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sql = ""
-
-			for _, fn := range tt.args {
-				db = fn(db)
-			}
+			sql := db.ToSQL(func(tx *GormDb) *GormDb {
+				db := tx
+				for _, fn := range tt.args {
+					db = fn(db)
+				}
+				return db
+			})
 
 			if got := strings.HasPrefix(sql, prefix); got != tt.want {
-				t.Errorf("GormDb.WithQueryHint() = %v, want %v, sql = %s", got, tt.want, sql)
+				t.Errorf("[FAIL] GormDb.WithQueryHint() = %v, want %v, sql = %s", got, tt.want, sql)
+			} else {
+				t.Logf("[PASS] GormDb.WithQueryHint() = %v, want %v, sql = %s", got, tt.want, sql)
 			}
 		})
 	}

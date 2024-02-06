@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/smartystreets/goconvey/convey"
-	"gorm.io/gorm"
 )
 
 type testOrderStruct struct {
@@ -41,11 +40,11 @@ func TestOrder(t *testing.T) {
 				VersionId: FieldOrder(2).Desc(),
 			})
 
-			sql := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
-				db := New(tx)
+			sql := db.ToSQL(func(tx *GormDb) *GormDb {
+				db := tx
 				db = ApplyOptions(db, order)
 				db = db.Find(&rows)
-				return db.Get()
+				return db
 			})
 			res := testGetOrderFromSql(sql)
 			c.So(res, convey.ShouldEqual, "`channel_id`,`version_id` DESC")
@@ -57,11 +56,11 @@ func TestOrder(t *testing.T) {
 				Type:      FieldOrder(2),
 			})
 
-			sql := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
-				db := New(tx)
+			sql := db.ToSQL(func(tx *GormDb) *GormDb {
+				db := tx
 				db = ApplyOptions(db, order)
 				db = db.Find(&rows)
-				return db.Get()
+				return db
 			})
 			res := testGetOrderFromSql(sql)
 			c.So(res, convey.ShouldEqual, "`channel_id` DESC,`type`")
@@ -72,11 +71,11 @@ func TestOrder(t *testing.T) {
 				Type: FieldOrder(1).Field([]int{2, 4, 3}),
 			})
 
-			sql := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
-				db := New(tx)
+			sql := db.ToSQL(func(tx *GormDb) *GormDb {
+				db := tx
 				db = ApplyOptions(db, order)
 				db = db.Find(&rows)
-				return db.Get()
+				return db
 			})
 			res := testGetOrderFromSql(sql)
 			c.So(res, convey.ShouldEqual, "FIELD(`type`, 2, 4, 3)")
@@ -87,11 +86,11 @@ func TestOrder(t *testing.T) {
 				Type: FieldOrder(1).Field([]int{2, 4, 3}).Desc(),
 			})
 
-			sql := db.ToSQL(func(tx *gorm.DB) *gorm.DB {
-				db := New(tx)
+			sql := db.ToSQL(func(tx *GormDb) *GormDb {
+				db := tx
 				db = ApplyOptions(db, order)
 				db = db.Find(&rows)
-				return db.Get()
+				return db
 			})
 			res := testGetOrderFromSql(sql)
 			c.So(res, convey.ShouldEqual, "FIELD(`type`, 2, 4, 3) DESC")

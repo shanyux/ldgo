@@ -11,7 +11,10 @@ import (
 	"gorm.io/gorm"
 )
 
-type GormDb = gorm2.GormDb
+type (
+	OriginGormDb = gorm.DB
+	GormDb       = gorm2.GormDb
+)
 
 func New(db *gorm.DB) *GormDb {
 	return gorm2.New(db)
