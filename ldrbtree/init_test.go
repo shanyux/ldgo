@@ -33,41 +33,41 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func testNewRBTree() *RBTree {
-	rbtree := &RBTree{}
+func testNewRBTree() *RBTree[int] {
+	rbtree := &RBTree[int]{}
 	for _, n := range _numsUnordered {
 		rbtree.Insert(n)
 	}
 	return rbtree
 }
 
-func testRBTreeDeleteAll(rbtree *RBTree, d interface{}) {
+func testRBTreeDeleteAll(rbtree *RBTree[int], d int) {
 	for it := rbtree.Search(d); it != rbtree.End(); it = rbtree.Search(d) {
 		rbtree.Delete(it)
 	}
 }
 
-func testRBTreeRDeleteAll(rbtree *RBTree, d interface{}) {
+func testRBTreeRDeleteAll(rbtree *RBTree[int], d int) {
 	for it := rbtree.RSearch(d); it != rbtree.REnd(); it = rbtree.RSearch(d) {
 		rbtree.RDelete(it)
 	}
 }
 
-func testNewMap() *Map {
-	m := &Map{}
+func testNewMap() *Map[int, int] {
+	m := &Map[int, int]{}
 	for _, n := range _numsUnordered {
 		m.Insert(n, n)
 	}
 	return m
 }
 
-func testMapDeleteAll(m *Map, d interface{}) {
+func testMapDeleteAll(m *Map[int, int], d int) {
 	for it := m.Search(d); it != m.End(); it = m.Search(d) {
 		m.Delete(it)
 	}
 }
 
-func testMapRDeleteAll(m *Map, d interface{}) {
+func testMapRDeleteAll(m *Map[int, int], d int) {
 	for it := m.RSearch(d); it != m.REnd(); it = m.RSearch(d) {
 		m.RDelete(it)
 	}

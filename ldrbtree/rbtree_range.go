@@ -4,36 +4,36 @@
 
 package ldrbtree
 
-type RBTreeRange struct {
-	Begin RBTreeIterator // [begin, end)
-	End   RBTreeIterator // [begin, end)
+type RBTreeRange[T any] struct {
+	Begin RBTreeIterator[T] // [begin, end)
+	End   RBTreeIterator[T] // [begin, end)
 }
 
-func (p *RBTreeRange) HasNext() bool {
+func (p *RBTreeRange[T]) HasNext() bool {
 	return p.Begin.tree != nil && p.Begin != p.End
 }
 
-func (p *RBTreeRange) Next() {
+func (p *RBTreeRange[T]) Next() {
 	p.Begin = p.Begin.Next()
 }
 
-func (p *RBTreeRange) Data() interface{} {
+func (p *RBTreeRange[T]) Data() interface{} {
 	return p.Begin.Data()
 }
 
-type RBTreeReverseRange struct {
-	Begin RBTreeReverseIterator
-	End   RBTreeReverseIterator
+type RBTreeReverseRange[T any] struct {
+	Begin RBTreeReverseIterator[T]
+	End   RBTreeReverseIterator[T]
 }
 
-func (p *RBTreeReverseRange) HasNext() bool {
+func (p *RBTreeReverseRange[T]) HasNext() bool {
 	return p.Begin.tree != nil && p.Begin != p.End
 }
 
-func (p *RBTreeReverseRange) Next() {
+func (p *RBTreeReverseRange[T]) Next() {
 	p.Begin = p.Begin.Next()
 }
 
-func (p *RBTreeReverseRange) Data() interface{} {
+func (p *RBTreeReverseRange[T]) Data() interface{} {
 	return p.Begin.Data()
 }

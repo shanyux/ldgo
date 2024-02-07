@@ -30,10 +30,12 @@ func TestTime(t *testing.T) {
 		p.Store(now)
 		c.So(p.Load().Format(format), convey.ShouldEqual, "2022-02-10T15:59:26+0800")
 
-		p.Add(60 * time.Second)
+		// p.MustAdd(60 * time.Second)
+		p.MustChange(func(old time.Time) (new time.Time) { return old.Add(60 * time.Second) })
 		c.So(p.Load().Format(format), convey.ShouldEqual, "2022-02-10T16:00:26+0800")
 
-		p.AddDate(-1, 1, 3)
+		// p.MustAddDate(-1, 1, 3)
+		p.MustChange(func(old time.Time) (new time.Time) { return old.AddDate(-1, 1, 3) })
 		c.So(p.Load().Format(format), convey.ShouldEqual, "2021-03-13T16:00:26+0800")
 
 		c.So(p.Swap(now).Format(format), convey.ShouldEqual, "2021-03-13T16:00:26+0800")

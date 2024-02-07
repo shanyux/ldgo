@@ -16,7 +16,7 @@ import (
 	"github.com/distroy/ldgo/v2/ldtagmap"
 )
 
-const _WHERE_TAG = "gormwhere"
+const _WHERE_TAG = "ldgormwhere"
 
 var (
 	_WHERE_FIELD_TYPE = reflect.TypeOf((*FieldWherer)(nil)).Elem()
@@ -53,10 +53,17 @@ func (that *whereReflect) getTableName(val reflect.Value) string {
 }
 
 func (that *whereReflect) quote(db *GormDb, name string) string {
-	if db == nil || db.Get() == nil || db.Get().Dialect() == nil {
+	if db == nil || db.Get() == nil || db.Get().Dialector == nil {
+		if db != nil {
+			if db.Get() != nil {
+			}
+		}
 		return name
 	}
-	return db.Get().Dialect().Quote(name)
+	buf := &strings.Builder{}
+	buf.Grow(len(name) * 2)
+	db.Get().Dialector.QuoteTo(buf, name)
+	return buf.String()
 }
 
 func (that *whereReflect) buildWhere(db *GormDb, val reflect.Value) whereResult {

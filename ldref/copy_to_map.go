@@ -61,7 +61,7 @@ func copyReflectToMapFromStruct(c *copyContext, target, source reflect.Value) bo
 	target.Set(reflect.MakeMap(target.Type()))
 	// }
 
-	sInfo := getCopyTypeInfo(source.Type())
+	sInfo := getCopyTypeInfo(source.Type(), c.SourceTag)
 	for _, sFieldInfo := range sInfo.Fields {
 		sField := source.Field(sFieldInfo.Index)
 		if isStructFieldNilPtr(sField) {

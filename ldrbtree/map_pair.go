@@ -4,14 +4,14 @@
 
 package ldrbtree
 
-type Pair struct {
-	Key   interface{}
-	Value interface{}
+type Pair[K any, V any] struct {
+	Key   K
+	Value V
 }
 
-func wrapPairCompare(m *Map) func(a, b interface{}) int {
-	return func(a, b interface{}) int {
-		aa, bb := a.(Pair), b.(Pair)
-		return m.KeyCompare(aa.Key, bb.Key)
+func wrapPairCompare[K any, V any](m *Map[K, V]) func(a, b Pair[K, V]) int {
+	compare := m.KeyCompare
+	return func(a, b Pair[K, V]) int {
+		return compare(a.Key, b.Key)
 	}
 }

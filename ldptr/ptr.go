@@ -6,6 +6,17 @@ package ldptr
 
 import "time"
 
+func Get[T any](p *T, def ...T) T {
+	if p != nil {
+		return *p
+	}
+	if len(def) > 0 {
+		return def[0]
+	}
+	var v T
+	return v
+}
+
 func GetBool(p *bool, def ...bool) bool {
 	if p != nil {
 		return *p

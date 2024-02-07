@@ -14,9 +14,9 @@ import (
 type any = interface{}
 
 type MergeConfig struct {
-	Clone     bool
-	ArrayElem bool // if merge array element
-	SliceElem bool // if merge slice element
+	Clone      bool // is clone if target is nil
+	MergeArray bool // is merge array. `false` mean only assign target at whole array is zero value
+	MergeSlice bool // is merge slice. `false` mean only assign target at slice is nil
 }
 
 func Merge(target, source any, cfg ...*MergeConfig) lderr.Error {
@@ -195,24 +195,22 @@ func mergeReflectMap(c *mergeContext, target, source reflect.Value) {
 }
 
 func mergeReflectSlice(c *mergeContext, target, source reflect.Value) {
+	if source.IsNil() {
+		return
+	}
+
 	if target.IsNil() {
 		source = cloneForMerge(c, source)
 		target.Set(source)
 		return
 	}
 
-	if !c.SliceElem {
+	if !c.MergeSlice {
 		return
 	}
 
 	tLen := target.Len()
 	sLen := source.Len()
-
-	if tLen == 0 {
-		source = cloneForMerge(c, source)
-		target.Set(source)
-		return
-	}
 
 	resizeSliceReflect(target, sLen)
 
@@ -231,7 +229,7 @@ func mergeReflectSlice(c *mergeContext, target, source reflect.Value) {
 }
 
 func mergeReflectArray(c *mergeContext, target, source reflect.Value) {
-	if !c.ArrayElem {
+	if !c.MergeArray {
 		if IsValZero(target) {
 			source = cloneForMerge(c, source)
 			target.Set(source)

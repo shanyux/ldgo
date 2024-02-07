@@ -4,44 +4,44 @@
 
 package ldrbtree
 
-type MapRange struct {
-	Begin MapIterator // [begin, end)
-	End   MapIterator // [begin, end)
+type MapRange[K any, V any] struct {
+	Begin MapIterator[K, V] // [begin, end)
+	End   MapIterator[K, V] // [begin, end)
 }
 
-func (p *MapRange) HasNext() bool {
+func (p *MapRange[K, V]) HasNext() bool {
 	return p.Begin.tree != nil && p.Begin != p.End
 }
 
-func (p *MapRange) Next() {
+func (p *MapRange[K, V]) Next() {
 	p.Begin = p.Begin.Next()
 }
 
-func (p *MapRange) Key() interface{} {
-	return MapIterator(p.Begin).Key()
+func (p *MapRange[K, V]) Key() K {
+	return p.Begin.Key()
 }
 
-func (p *MapRange) Value(new ...interface{}) (old interface{}) {
-	return MapIterator(p.Begin).Value(new...)
+func (p *MapRange[K, V]) Value(new ...V) (old V) {
+	return p.Begin.Value(new...)
 }
 
-type MapReverseRange struct {
-	Begin MapReverseIterator
-	End   MapReverseIterator
+type MapReverseRange[K any, V any] struct {
+	Begin MapReverseIterator[K, V]
+	End   MapReverseIterator[K, V]
 }
 
-func (p *MapReverseRange) HasNext() bool {
+func (p *MapReverseRange[K, V]) HasNext() bool {
 	return p.Begin.tree != nil && p.Begin != p.End
 }
 
-func (p *MapReverseRange) Next() {
+func (p *MapReverseRange[K, V]) Next() {
 	p.Begin = p.Begin.Next()
 }
 
-func (p *MapReverseRange) Key() interface{} {
-	return MapReverseIterator(p.Begin).Key()
+func (p *MapReverseRange[K, V]) Key() K {
+	return p.Begin.Key()
 }
 
-func (p *MapReverseRange) Value(new ...interface{}) (old interface{}) {
-	return MapReverseIterator(p.Begin).Value(new...)
+func (p *MapReverseRange[K, V]) Value(new ...V) (old V) {
+	return p.Begin.Value(new...)
 }

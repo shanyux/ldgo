@@ -22,8 +22,7 @@ func TestUniq(t *testing.T) {
 			123, 123, 223, 223, 223, 375, 375, 424, 642, 642, 725, 725,
 		})
 
-		l := Uniq(s, c)
-		s = s[:l]
+		s = Uniq[int64](s, c)
 		convey.So(s, convey.ShouldResemble, []int64{
 			123, 223, 375, 424, 642, 725,
 		})

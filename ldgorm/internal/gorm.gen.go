@@ -2,28 +2,53 @@
  * Copyright (C) distroy
  */
 
-package gorm
+package internal
+
+/*
+ * Filename: gorm.gen.go
+ * The file name suffix ".gen.go" is used to prevent gorm from printing logs and to redirect the path to this file.
+ */
 
 import (
-	"fmt"
 	"hash/crc32"
 	"strings"
 
 	"github.com/distroy/ldgo/v2/ldconv"
+	"github.com/distroy/ldgo/v2/ldctx"
 	"github.com/distroy/ldgo/v2/ldrand"
-	"github.com/jinzhu/gorm"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+	"gorm.io/gorm/logger"
+	"gorm.io/hints"
 )
 
 type gormDb = gorm.DB
 
 type Logger interface {
-	Print(v ...interface{})
+	Printf(fmt string, v ...interface{})
 }
 
 var (
-	// queryHintReplacer = strings.NewReplacer("/*", " ", "*/", " ")
 	queryHintReplacer = strings.NewReplacer("/*", " ", "*/", " ")
 )
+
+func New(db *gorm.DB) *GormDb {
+	g := &GormDb{}
+	g = g.Set(db)
+	return g
+}
+
+func NewTestGormDb() (*GormDb, error) {
+	// db, err := gorm.Open("sqlite3", ":memory:")
+	const InMemoryDSN = "file:testdatabase?mode=memory&cache=shared"
+	db, err := gorm.Open(sqlite.Open(InMemoryDSN))
+	if err != nil {
+		return nil, err
+	}
+
+	return New(db), nil
+}
 
 type GormDb struct {
 	*gormDb // it is currently used db, it is the master by default
@@ -35,7 +60,8 @@ type GormDb struct {
 	inTx  bool
 
 	// these should set after user new gorm db
-	log Logger
+	log logger.Interface
+	ctx ldctx.Context
 }
 
 func (w *GormDb) panicTxLevelLessZero() {
@@ -54,7 +80,9 @@ func (w *GormDb) clone() *GormDb {
 // New clone a new db connection without search conditions
 func (w *GormDb) New() *GormDb {
 	w = w.clone()
-	w.gormDb = w.gormDb.New()
+	w.gormDb = w.gormDb.Session(&gorm.Session{
+		Logger: w.gormDb.Logger,
+	})
 	return w
 }
 
@@ -66,17 +94,25 @@ func (w *GormDb) Close() error {
 	var err error
 
 	db := w.master
-	if e := db.Close(); e != nil {
+	if e := w.close(db); e != nil {
 		err = e
 	}
 
 	for _, db := range w.slavers {
-		if e := db.Close(); err == nil && e != nil {
+		if e := w.close(db); err == nil && e != nil {
 			err = e
 		}
 	}
 
 	return err
+}
+
+func (w *GormDb) close(db *gorm.DB) error {
+	x, err := db.DB()
+	if err != nil {
+		return err
+	}
+	return x.Close()
 }
 
 // Set will set the db currently used.
@@ -165,10 +201,8 @@ func (w *GormDb) UseSlaver(key ...interface{}) *GormDb {
 func (w *GormDb) initAfterUseNewGormDb() {
 	db := w.gormDb
 
-	if w.log != nil {
-		db = db.Debug()
-		db.SetLogger(w.log)
-	}
+	db = w.withLogger(db, w.log)
+	db = w.withContext(w.ctx, db)
 
 	w.gormDb = db
 }
@@ -213,15 +247,47 @@ func (w *GormDb) getHashByKey(keys []interface{}) uint {
 	return ldrand.Uint()
 }
 
+// WithContext can be called before or after UseMaster/UseSlaver
+func (w *GormDb) WithContext(ctx ldctx.Context) *GormDb {
+	w = w.clone()
+
+	w.ctx = ctx
+	w.log = nil
+
+	w.gormDb = w.withContext(ctx, w.gormDb)
+	return w
+}
+
+func (_ *GormDb) withContext(ctx ldctx.Context, db *gorm.DB) *gorm.DB {
+	if ctx == nil {
+		return db
+	}
+
+	writer := ldctx.GetLogger(ctx).Wrapper()
+	return db.Session(&gorm.Session{
+		Logger:  logger.New(writer, getLoggerConfig()),
+		Context: ctx,
+	})
+}
+
 // WithLogger can be called before or after UseMaster/UseSlaver
 func (w *GormDb) WithLogger(l Logger) *GormDb {
 	w = w.clone()
-	// LogMode 方法不会返回新的 gorm.DB 实例，需要使用 Debug 方法
-	// w.gormDb = w.gormDb.LogMode(true)
-	w.gormDb = w.gormDb.Debug()
-	w.gormDb.SetLogger(l)
-	w.log = l
+
+	log := logger.New(l, getLoggerConfig())
+	w.log = log
+
+	w.gormDb = w.withLogger(w.gormDb, log)
 	return w
+}
+
+func (_ *GormDb) withLogger(db *gorm.DB, log logger.Interface) *gorm.DB {
+	if log == nil {
+		return db
+	}
+	return db.Session(&gorm.Session{
+		Logger: log,
+	})
 }
 
 func (w *GormDb) Model(value interface{}) *GormDb {
@@ -329,7 +395,9 @@ func (w *GormDb) RollbackUnlessCommitted() *GormDb {
 	}
 
 	if w.txLvl == 0 {
-		w.gormDb = w.gormDb.RollbackUnlessCommitted()
+		err := w.gormDb.Error
+		w.gormDb = w.gormDb.Rollback()
+		w.gormDb.Error = err
 	}
 
 	w.inTx = false
@@ -360,25 +428,14 @@ func (w *GormDb) Joins(query string, args ...interface{}) *GormDb {
 	return w
 }
 
-func (w *GormDb) HasTable(value interface{}) bool {
-	return w.gormDb.HasTable(value)
+func (w *GormDb) CreateTable(models ...interface{}) error {
+	w = w.clone()
+	return w.gormDb.AutoMigrate(models...)
 }
 
-func (w *GormDb) CreateTable(models ...interface{}) *GormDb {
+func (w *GormDb) Clauses(conds ...clause.Expression) *GormDb {
 	w = w.clone()
-	w.gormDb = w.gormDb.CreateTable(models...)
-	return w
-}
-
-func (w *GormDb) DropTable(models ...interface{}) *GormDb {
-	w = w.clone()
-	w.gormDb = w.gormDb.DropTable(models...)
-	return w
-}
-
-func (w *GormDb) DropTableIfExists(models ...interface{}) *GormDb {
-	w = w.clone()
-	w.gormDb = w.gormDb.DropTableIfExists(models...)
+	w.gormDb = w.gormDb.Clauses(conds...)
 	return w
 }
 
@@ -391,21 +448,19 @@ func (w *GormDb) Where(query interface{}, args ...interface{}) *GormDb {
 // Order specify order when retrieve records from database, set reorder to `true` to overwrite defined conditions
 //
 //	db.Order("name DESC")
-//	db.Order("name DESC", true) // reorder
-//	db.Order(gorm.Expr("name = ? DESC", "first")) // sql expression
-func (w *GormDb) Order(value interface{}, reorder ...bool) *GormDb {
+func (w *GormDb) Order(value interface{}) *GormDb {
 	w = w.clone()
-	w.gormDb = w.gormDb.Order(value, reorder...)
+	w.gormDb = w.gormDb.Order(value)
 	return w
 }
 
-func (w *GormDb) Limit(limit interface{}) *GormDb {
+func (w *GormDb) Limit(limit int) *GormDb {
 	w = w.clone()
 	w.gormDb = w.gormDb.Limit(limit)
 	return w
 }
 
-func (w *GormDb) Offset(offset interface{}) *GormDb {
+func (w *GormDb) Offset(offset int) *GormDb {
 	w = w.clone()
 	w.gormDb = w.gormDb.Offset(offset)
 	return w
@@ -423,15 +478,15 @@ func (w *GormDb) Create(value interface{}) *GormDb {
 	return w
 }
 
-func (w *GormDb) Update(attrs ...interface{}) *GormDb {
+func (w *GormDb) Update(column string, value interface{}) *GormDb {
 	w = w.clone()
-	w.gormDb = w.gormDb.Update(attrs...)
+	w.gormDb = w.gormDb.Update(column, value)
 	return w
 }
 
-func (w *GormDb) Updates(values interface{}, ignoreProtectedAttrs ...bool) *GormDb {
+func (w *GormDb) Updates(values interface{}) *GormDb {
 	w = w.clone()
-	w.gormDb = w.gormDb.Updates(values, ignoreProtectedAttrs...)
+	w.gormDb = w.gormDb.Updates(values)
 	return w
 }
 
@@ -471,7 +526,7 @@ func (w *GormDb) Last(out interface{}, where ...interface{}) *GormDb {
 	return w
 }
 
-func (w *GormDb) Count(out interface{}) *GormDb {
+func (w *GormDb) Count(out *int64) *GormDb {
 	w = w.clone()
 	w.gormDb = w.gormDb.Count(out)
 	return w
@@ -499,11 +554,29 @@ func (w *GormDb) Scan(out interface{}) *GormDb {
 //
 // WithQueryHint must be called after UseSlaver
 func (w *GormDb) WithQueryHint(hint string) *GormDb {
-	replacer := queryHintReplacer
-	hint = replacer.Replace(hint)
-	hint = fmt.Sprintf("/* %s */ ", hint)
-
 	w = w.clone()
-	w.gormDb = w.gormDb.Set("gorm:query_hint", hint)
+	exprs := []clause.Expression{
+		hints.CommentBefore("SELECT", hint),
+		// hints.CommentBefore("UPDATE", hint),
+		// hints.CommentBefore("INSERT", hint),
+	}
+	w.gormDb = w.gormDb.Clauses(exprs...)
 	return w
+}
+
+func (w *GormDb) ToSQL(fn func(tx *GormDb) *GormDb) string {
+	return w.gormDb.ToSQL(func(tx *gorm.DB) *gorm.DB {
+		db := New(tx)
+		db = fn(db)
+		return db.Get()
+	})
+}
+
+func getLoggerConfig() logger.Config {
+	return logger.Config{
+		Colorful:                  false,
+		IgnoreRecordNotFoundError: false,
+		ParameterizedQueries:      false,
+		LogLevel:                  logger.Info,
+	}
 }

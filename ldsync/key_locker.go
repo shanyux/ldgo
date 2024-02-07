@@ -6,7 +6,9 @@ package ldsync
 
 import "sync"
 
-var _KeyLockerDataPool = &sync.Pool{New: func() interface{} { return &keyLockerData{} }}
+var keyLockerDataPool = &Pool[*keyLockerData]{
+	New: func() *keyLockerData { return &keyLockerData{} },
+}
 
 type KeyLocker interface {
 	Lock(key interface{})
@@ -32,7 +34,7 @@ type keyLocker struct {
 
 func (kl *keyLocker) Lock(key interface{}) {
 	kl.locker.Lock()
-	d := kl.add(key)
+	d := kl.getAndAdd(key)
 	kl.locker.Unlock()
 
 	d.locker.Lock()
@@ -40,7 +42,7 @@ func (kl *keyLocker) Lock(key interface{}) {
 
 func (kl *keyLocker) Unlock(key interface{}) {
 	kl.locker.Lock()
-	d := kl.sub(key)
+	d := kl.getAndSub(key)
 	kl.locker.Unlock()
 
 	if d == nil {
@@ -75,13 +77,13 @@ func (kl *keyLocker) get(key interface{}) *keyLockerData {
 }
 
 func (kl *keyLocker) new(key interface{}) *keyLockerData {
-	d := _KeyLockerDataPool.Get().(*keyLockerData)
+	d := keyLockerDataPool.Get()
 	d.count = 0
 	kl.keys[key] = d
 	return d
 }
 
-func (kl *keyLocker) add(key interface{}) *keyLockerData {
+func (kl *keyLocker) getAndAdd(key interface{}) *keyLockerData {
 	d := kl.get(key)
 	if d == nil {
 		d = kl.new(key)
@@ -91,7 +93,7 @@ func (kl *keyLocker) add(key interface{}) *keyLockerData {
 	return d
 }
 
-func (kl *keyLocker) sub(key interface{}) *keyLockerData {
+func (kl *keyLocker) getAndSub(key interface{}) *keyLockerData {
 	d := kl.get(key)
 	if d == nil {
 		return nil
@@ -100,7 +102,7 @@ func (kl *keyLocker) sub(key interface{}) *keyLockerData {
 	d.count--
 	if d.count <= 0 {
 		delete(kl.keys, key)
-		_KeyLockerDataPool.Put(d)
+		keyLockerDataPool.Put(d)
 	}
 
 	return d

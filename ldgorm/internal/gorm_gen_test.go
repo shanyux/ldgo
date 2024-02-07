@@ -2,7 +2,7 @@
  * Copyright (C) distroy
  */
 
-package gorm
+package internal
 
 import (
 	"fmt"
@@ -12,13 +12,9 @@ import (
 	"github.com/distroy/ldgo/v2/ldhook"
 	"github.com/distroy/ldgo/v2/ldlog"
 	"github.com/distroy/ldgo/v2/ldrand"
-	"github.com/jinzhu/gorm"
 	"github.com/smartystreets/goconvey/convey"
+	"gorm.io/gorm"
 )
-
-func testNewGorm(db *gorm.DB) *GormDb {
-	return (&GormDb{}).Set(db)
-}
 
 func TestGormDb_Transaction(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {
@@ -27,7 +23,8 @@ func TestGormDb_Transaction(t *testing.T) {
 
 		data := mockTransaction(patches)
 
-		db := testNewGorm(&gorm.DB{})
+		db := testNewGorm()
+		defer db.Close()
 
 		convey.Convey("transaction 1 rollback", func() {
 			err := db.Transaction(func(tx *GormDb) error {
@@ -397,15 +394,15 @@ func TestGormDb_Begin_RollbackUnlessCommitted(t *testing.T) {
 			convey.So(tx1Rollback.txLvl, convey.ShouldEqual, 0)
 
 			convey.So(data, convey.ShouldResemble, &transactionMockData{
-				Begin:                   1,
-				RollbackUnlessCommitted: 1,
+				Begin:    1,
+				Rollback: 1,
 			})
 
 			convey.Convey("double rollback", func() {
 				convey.So(func() { tx1Rollback.Rollback() }, convey.ShouldPanic)
 				convey.So(data, convey.ShouldResemble, &transactionMockData{
-					Begin:                   1,
-					RollbackUnlessCommitted: 1,
+					Begin:    1,
+					Rollback: 1,
 				})
 			})
 
@@ -417,8 +414,8 @@ func TestGormDb_Begin_RollbackUnlessCommitted(t *testing.T) {
 				convey.So(tx1RollbackUnlessCommitted.txLvl, convey.ShouldEqual, 0)
 
 				convey.So(data, convey.ShouldResemble, &transactionMockData{
-					Begin:                   1,
-					RollbackUnlessCommitted: 1,
+					Begin:    1,
+					Rollback: 1,
 				})
 			})
 		})
@@ -463,7 +460,7 @@ func TestGormDb_WithQueryHint(t *testing.T) {
 			name: "update",
 			want: false,
 			args: []func(db *GormDb) *GormDb{
-				func(db *GormDb) *GormDb { return db.Update(&testTable{ProjectId: 1}) },
+				func(db *GormDb) *GormDb { return db.Updates(&testTable{ProjectId: 1}) },
 			},
 		},
 	}
@@ -471,7 +468,7 @@ func TestGormDb_WithQueryHint(t *testing.T) {
 	hint := ldrand.String(8)
 	prefix := fmt.Sprintf("/* %s */", hint)
 
-	db := testGetGorm()
+	db := testNewGorm()
 	defer db.Close()
 	db = db.WithQueryHint(hint)
 
@@ -482,24 +479,20 @@ func TestGormDb_WithQueryHint(t *testing.T) {
 		VersionId: 4,
 	})
 
-	var sql string
-	db.Callback().Query().After("gorm:query").Register("ldgorm:after_query", func(scope *gorm.Scope) {
-		sql = scope.SQL
-	})
-	db.Callback().Create().After("gorm:create").Register("ldgorm:after_create", func(scope *gorm.Scope) {
-		sql = scope.SQL
-	})
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sql = ""
-
-			for _, fn := range tt.args {
-				db = fn(db)
-			}
+			sql := db.ToSQL(func(tx *GormDb) *GormDb {
+				db := tx
+				for _, fn := range tt.args {
+					db = fn(db)
+				}
+				return db
+			})
 
 			if got := strings.HasPrefix(sql, prefix); got != tt.want {
-				t.Errorf("GormDb.WithQueryHint() = %v, want %v, sql = %s", got, tt.want, sql)
+				t.Errorf("[FAIL] GormDb.WithQueryHint() = %v, want %v, sql = %s", got, tt.want, sql)
+			} else {
+				t.Logf("[PASS] GormDb.WithQueryHint() = %v, want %v, sql = %s", got, tt.want, sql)
 			}
 		})
 	}
@@ -508,7 +501,7 @@ func TestGormDb_WithQueryHint(t *testing.T) {
 func TestGormDb_WithLogger(t *testing.T) {
 	convey.Convey(t.Name(), t, func(c convey.C) {
 		c.Convey("without slaver", func(c convey.C) {
-			db := testGetGorm()
+			db := testNewGorm()
 			defer db.Close()
 
 			buf := &strings.Builder{}
@@ -523,17 +516,17 @@ func TestGormDb_WithLogger(t *testing.T) {
 				VersionId: 1004,
 			})
 
-			t.Logf("%s", buf.String())
+			t.Logf("\n%s", buf.String())
 			c.So(buf.String(), convey.ShouldNotEqual, ``)
 		})
 
 		c.Convey("with slaver", func(c convey.C) {
 			c.Convey("rand", func(c convey.C) {
-				db := testGetGorm()
+				db := testNewGorm()
 				defer db.Close()
 
-				db = db.AddSlaver(testGetGorm().Get())
-				db = db.AddSlaver(testGetGorm().Get())
+				db = db.AddSlaver(testNewGorm().Get())
+				db = db.AddSlaver(testNewGorm().Get())
 
 				db = db.UseSlaver()
 
@@ -547,16 +540,16 @@ func TestGormDb_WithLogger(t *testing.T) {
 					VersionId: 1004,
 				})
 
-				t.Logf("%s", buf.String())
+				t.Logf("\n%s", buf.String())
 				c.So(buf.String(), convey.ShouldNotEqual, ``)
 			})
 
 			c.Convey("index", func(c convey.C) {
-				db := testGetGorm()
+				db := testNewGorm()
 				defer db.Close()
 
-				db = db.AddSlaver(testGetGorm().Get())
-				db = db.AddSlaver(testGetGorm().Get())
+				db = db.AddSlaver(testNewGorm().Get())
+				db = db.AddSlaver(testNewGorm().Get())
 
 				db = db.UseSlaver(1)
 
@@ -570,7 +563,7 @@ func TestGormDb_WithLogger(t *testing.T) {
 					VersionId: 1004,
 				})
 
-				t.Logf("%s", buf.String())
+				t.Logf("\n%s", buf.String())
 				c.So(buf.String(), convey.ShouldNotEqual, ``)
 			})
 		})

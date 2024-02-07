@@ -2,14 +2,14 @@
  * Copyright (C) distroy
  */
 
-package gorm
+package internal
 
 import (
 	"fmt"
 	"sync/atomic"
 
 	"github.com/distroy/ldgo/v2/ldhook"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 var (
@@ -17,10 +17,10 @@ var (
 )
 
 type transactionMockData struct {
-	Begin                   int32
-	Commit                  int32
-	Rollback                int32
-	RollbackUnlessCommitted int32
+	Begin    int32
+	Commit   int32
+	Rollback int32
+	// RollbackUnlessCommitted int32
 }
 
 func mockTransaction(patches ldhook.Patches) *transactionMockData {
@@ -57,17 +57,6 @@ func mockTransaction(patches ldhook.Patches) *transactionMockData {
 				Inputs: ldhook.Values{
 					ldhook.BindInput(0, func(db *gorm.DB) {
 						atomic.AddInt32(&data.Rollback, 1)
-					}),
-				},
-			},
-		},
-		ldhook.FuncHook{
-			Target: (*gorm.DB).RollbackUnlessCommitted,
-			Double: ldhook.ResultCell{
-				Outputs: ldhook.Values{db},
-				Inputs: ldhook.Values{
-					ldhook.BindInput(0, func(db *gorm.DB) {
-						atomic.AddInt32(&data.RollbackUnlessCommitted, 1)
 					}),
 				},
 			},
