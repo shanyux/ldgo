@@ -25,8 +25,7 @@ func newRedis(ctx ldctx.Context) *ldredis.Redis {
 	rds := ldredis.NewByConfig(&ldredis.Config{
 		Addr: "proxy.codis-toc.test.shopeemobile.com:9000",
 	})
-
-	return rds.WithContext(ctx)
+	return rds
 }
 
 func pipeline(ctx ldctx.Context) {
@@ -41,13 +40,13 @@ func pipeline(ctx ldctx.Context) {
 		"test:pipeline:2",
 	}
 
-	rds.MSet(keys[0], "111", keys[1], "aaa", keys[2], "xxx")
+	rds.MSet(ctx, keys[0], "111", keys[1], "aaa", keys[2], "xxx")
 
 	p := rds.Pipeline()
-	p.Get(keys[0])
-	p.Get(keys[1])
-	p.Get(keys[2])
-	cmds, err := p.Exec()
+	p.Get(ctx, keys[0])
+	p.Get(ctx, keys[1])
+	p.Get(ctx, keys[2])
+	cmds, err := p.Exec(ctx)
 	ctx.LogI("pipeline return", zap.Error(err))
 	for _, v := range cmds {
 		cmd, _ := v.(*ldredis.StringCmd)
@@ -60,11 +59,11 @@ func slice(ctx ldctx.Context) {
 	key := "test:hash:hmget"
 	defer rds.Close()
 
-	rds.HSet(key, "1", 1)
-	rds.HSet(key, "2", "abc")
-	rds.HSet(key, "3", 128.1)
+	rds.HSet(ctx, key, "1", 1)
+	rds.HSet(ctx, key, "2", "abc")
+	rds.HSet(ctx, key, "3", 128.1)
 
-	cmd := rds.HMGet(key, "1", "2", "3", "4")
+	cmd := rds.HMGet(ctx, key, "1", "2", "3", "4")
 	ctx.LogI("", zap.Stringer("type", reflect.TypeOf(cmd.Val())), zap.Reflect("value", cmd.Val()))
 	for i, v := range cmd.Val() {
 		ctx.LogIf("idx:%d, type:%T, value:%v", i, v, v)
@@ -83,7 +82,7 @@ func codecStruct(ctx ldctx.Context) {
 	defer rds.Close()
 	key := "test:codec:struct"
 
-	sCmd := rds.WithCodec(ldredis.JsonCodec()).Set(key, &codecStruct{
+	sCmd := rds.WithCodec(ldredis.JsonCodec()).Set(ctx, key, &codecStruct{
 		Str1: "aaa",
 		Str2: "bbb",
 		Int1: 111,
@@ -91,10 +90,10 @@ func codecStruct(ctx ldctx.Context) {
 	}, time.Minute)
 	ctx.LogI("cmd", zap.Reflect("cmd", sCmd.Args()))
 
-	gCmd0 := rds.WithCodec(ldredis.JsonCodec(&codecStruct{})).Get(key)
+	gCmd0 := rds.WithCodec(ldredis.JsonCodec(&codecStruct{})).Get(ctx, key)
 	ctx.LogIf("type:%T, value:%v", gCmd0.Val(), gCmd0.Val())
 
-	gCmd1 := rds.WithCodec(ldredis.JsonCodec()).Get(key)
+	gCmd1 := rds.WithCodec(ldredis.JsonCodec()).Get(ctx, key)
 	ctx.LogIf("type:%T, value:%v", gCmd1.Val(), gCmd1.Val())
 }
 
@@ -104,7 +103,7 @@ func codecBaseType(ctx ldctx.Context) {
 
 	key := "test:codec:basetype"
 	cli := rds.WithCodec(ldredis.JsonCodec())
-	cli.HMSet(key, map[string]interface{}{
+	cli.HMSet(ctx, key, map[string]interface{}{
 		"i1": 1234,
 		"s1": "abc",
 		"s2": "134",
@@ -114,7 +113,7 @@ func codecBaseType(ctx ldctx.Context) {
 		},
 	})
 
-	cmd := cli.HGetAll(key)
+	cmd := cli.HGetAll(ctx, key)
 	ctx.LogI("", zap.Reflect("cmd", cmd.Args()), zap.Stringer("type", reflect.TypeOf(cmd.Val())), zap.Reflect("val", cmd.Val()))
 }
 
