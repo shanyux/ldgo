@@ -5,9 +5,10 @@
 package ldredis
 
 import (
+	"context"
 	"time"
 
-	"github.com/go-redis/redis"
+	redis "github.com/redis/go-redis/v9"
 )
 
 type client = Redis
@@ -31,257 +32,239 @@ func (c *CodecRedis) clone(cli ...*Redis) *CodecRedis {
 	return c
 }
 
-func (c *CodecRedis) WithContext(ctx Context) *CodecRedis { return c.clone(c.client.WithContext(ctx)) }
-func (c *CodecRedis) WithRetry(retry int) *CodecRedis     { return c.clone(c.client.WithRetry(retry)) }
-func (c *CodecRedis) WithReport(r Reporter) *CodecRedis   { return c.clone(c.client.WithReport(r)) }
-func (c *CodecRedis) WithCaller(enable bool) *CodecRedis  { return c.clone(c.client.WithCaller(enable)) }
+func (c *CodecRedis) WithRetry(retry int) *CodecRedis    { return c.clone(c.client.WithRetry(retry)) }
+func (c *CodecRedis) WithReport(r Reporter) *CodecRedis  { return c.clone(c.client.WithReport(r)) }
+func (c *CodecRedis) WithCaller(enable bool) *CodecRedis { return c.clone(c.client.WithCaller(enable)) }
 
 // ***** redis string begin *****
 
-func (c *CodecRedis) MGet(keys ...string) *CodecSliceCmd {
-	return newCodecSliceCmd(c, c.client.MGet(keys...))
+func (c *CodecRedis) MGet(cc context.Context, keys ...string) *CodecSliceCmd {
+	return newCodecSliceCmd(cc, c, c.client.MGet(cc, keys...))
 }
-func (c *CodecRedis) MSet(pairs ...interface{}) *StatusCmd {
-	return c.client.MSet(c.marshalPairs(pairs)...)
+func (c *CodecRedis) MSet(cc context.Context, pairs ...interface{}) *StatusCmd {
+	return c.client.MSet(cc, c.marshalPairs(pairs)...)
 }
-func (c *CodecRedis) MSetNX(pairs ...interface{}) *BoolCmd {
-	return c.client.MSetNX(c.marshalPairs(pairs)...)
+func (c *CodecRedis) MSetNX(cc context.Context, pairs ...interface{}) *BoolCmd {
+	return c.client.MSetNX(cc, c.marshalPairs(pairs)...)
 }
 
-func (c *CodecRedis) Get(key string) *CodecCmd {
-	return newCodecCmd(c, c.client.Get(key))
+func (c *CodecRedis) Get(cc context.Context, key string) *CodecCmd {
+	return newCodecCmd(cc, c, c.client.Get(cc, key))
 }
-func (c *CodecRedis) GetSet(key string, value interface{}) *CodecCmd {
-	return newCodecCmd(c, c.client.GetSet(key, c.mustMarshal(value)))
+func (c *CodecRedis) GetSet(cc context.Context, key string, value interface{}) *CodecCmd {
+	return newCodecCmd(cc, c, c.client.GetSet(cc, key, c.mustMarshal(value)))
 }
-func (c *CodecRedis) Set(key string, value interface{}, expiration time.Duration) *StatusCmd {
-	return c.client.Set(key, c.mustMarshal(value), expiration)
+func (c *CodecRedis) Set(cc context.Context, key string, value interface{}, expiration time.Duration) *StatusCmd {
+	return c.client.Set(cc, key, c.mustMarshal(value), expiration)
 }
-func (c *CodecRedis) SetNX(key string, value interface{}, expiration time.Duration) *BoolCmd {
-	return c.client.SetNX(key, c.mustMarshal(value), expiration)
+func (c *CodecRedis) SetNX(cc context.Context, key string, value interface{}, expiration time.Duration) *BoolCmd {
+	return c.client.SetNX(cc, key, c.mustMarshal(value), expiration)
 }
-func (c *CodecRedis) SetXX(key string, value interface{}, expiration time.Duration) *BoolCmd {
-	return c.client.SetXX(key, c.mustMarshal(value), expiration)
+func (c *CodecRedis) SetXX(cc context.Context, key string, value interface{}, expiration time.Duration) *BoolCmd {
+	return c.client.SetXX(cc, key, c.mustMarshal(value), expiration)
 }
 
 // ***** redis string end *****
 
 // ***** redis hash begin *****
 
-func (c *CodecRedis) HGet(key, field string) *CodecCmd {
-	return newCodecCmd(c, c.client.HGet(key, field))
+func (c *CodecRedis) HGet(cc context.Context, key, field string) *CodecCmd {
+	return newCodecCmd(cc, c, c.client.HGet(cc, key, field))
 }
-func (c *CodecRedis) HGetAll(key string) *StringCodecMapCmd {
-	return newStringCodecMapCmd(c, c.client.HGetAll(key))
+func (c *CodecRedis) HGetAll(cc context.Context, key string) *MapStringCodecCmd {
+	return newMapStringCodecCmd(cc, c, c.client.HGetAll(cc, key))
 }
-func (c *CodecRedis) HMGet(key string, fields ...string) *CodecSliceCmd {
-	return newCodecSliceCmd(c, c.client.HMGet(key, fields...))
+func (c *CodecRedis) HMGet(cc context.Context, key string, fields ...string) *CodecSliceCmd {
+	return newCodecSliceCmd(cc, c, c.client.HMGet(cc, key, fields...))
 }
-func (c *CodecRedis) HMSet(key string, fields map[string]interface{}) *StatusCmd {
-	return c.client.HMSet(key, c.marshalStringInterfaceMap(fields))
+func (c *CodecRedis) HMSet(cc context.Context, key string, fields map[string]interface{}) *BoolCmd {
+	return c.client.HMSet(cc, key, c.marshalStringInterfaceMap(fields))
 }
-func (c *CodecRedis) HSet(key, field string, value interface{}) *BoolCmd {
-	return c.client.HSet(key, field, c.mustMarshal(value))
+func (c *CodecRedis) HSet(cc context.Context, key, field string, value interface{}) *IntCmd {
+	return c.client.HSet(cc, key, field, c.mustMarshal(value))
 }
-func (c *CodecRedis) HSetNX(key, field string, value interface{}) *BoolCmd {
-	return c.client.HSetNX(key, field, c.mustMarshal(value))
+func (c *CodecRedis) HSetNX(cc context.Context, key, field string, value interface{}) *BoolCmd {
+	return c.client.HSetNX(cc, key, field, c.mustMarshal(value))
 }
-func (c *CodecRedis) HVals(key string) *CodecsCmd {
-	return newCodecsCmd(c, c.client.HVals(key))
+func (c *CodecRedis) HVals(cc context.Context, key string) *CodecsCmd {
+	return newCodecsCmd(cc, c, c.client.HVals(cc, key))
 }
 
 // ***** redis hash end *****
 
 // ***** redis list begin *****
 
-func (c *CodecRedis) BLPop(timeout time.Duration, keys ...string) *CodecsCmd {
-	return newCodecsCmd(c, c.client.BLPop(timeout, keys...))
+func (c *CodecRedis) BLPop(cc context.Context, timeout time.Duration, keys ...string) *CodecsCmd {
+	return newCodecsCmd(cc, c, c.client.BLPop(cc, timeout, keys...))
 }
-func (c *CodecRedis) BRPop(timeout time.Duration, keys ...string) *CodecsCmd {
-	return newCodecsCmd(c, c.client.BRPop(timeout, keys...))
+func (c *CodecRedis) BRPop(cc context.Context, timeout time.Duration, keys ...string) *CodecsCmd {
+	return newCodecsCmd(cc, c, c.client.BRPop(cc, timeout, keys...))
 }
-func (c *CodecRedis) BRPopLPush(source, destination string, timeout time.Duration) *CodecCmd {
-	return newCodecCmd(c, c.client.BRPopLPush(source, destination, timeout))
+func (c *CodecRedis) BRPopLPush(cc context.Context, source, destination string, timeout time.Duration) *CodecCmd {
+	return newCodecCmd(cc, c, c.client.BRPopLPush(cc, source, destination, timeout))
 }
-func (c *CodecRedis) LIndex(key string, index int64) *CodecCmd {
-	return newCodecCmd(c, c.client.LIndex(key, index))
+func (c *CodecRedis) LIndex(cc context.Context, key string, index int64) *CodecCmd {
+	return newCodecCmd(cc, c, c.client.LIndex(cc, key, index))
 }
-func (c *CodecRedis) LInsert(key, op string, pivot, value interface{}) *IntCmd {
-	return c.client.LInsert(key, op, c.mustMarshal(pivot), c.mustMarshal(value))
+func (c *CodecRedis) LInsert(cc context.Context, key, op string, pivot, value interface{}) *IntCmd {
+	return c.client.LInsert(cc, key, op, c.mustMarshal(pivot), c.mustMarshal(value))
 }
-func (c *CodecRedis) LInsertBefore(key string, pivot, value interface{}) *IntCmd {
-	return c.client.LInsertBefore(key, c.mustMarshal(pivot), c.mustMarshal(value))
+func (c *CodecRedis) LInsertBefore(cc context.Context, key string, pivot, value interface{}) *IntCmd {
+	return c.client.LInsertBefore(cc, key, c.mustMarshal(pivot), c.mustMarshal(value))
 }
-func (c *CodecRedis) LInsertAfter(key string, pivot, value interface{}) *IntCmd {
-	return c.client.LInsertAfter(key, c.mustMarshal(pivot), c.mustMarshal(value))
+func (c *CodecRedis) LInsertAfter(cc context.Context, key string, pivot, value interface{}) *IntCmd {
+	return c.client.LInsertAfter(cc, key, c.mustMarshal(pivot), c.mustMarshal(value))
 }
-func (c *CodecRedis) LPop(key string) *CodecCmd {
-	return newCodecCmd(c, c.client.LPop(key))
+func (c *CodecRedis) LPop(cc context.Context, key string) *CodecCmd {
+	return newCodecCmd(cc, c, c.client.LPop(cc, key))
 }
-func (c *CodecRedis) LPush(key string, values ...interface{}) *IntCmd {
-	return c.client.LPush(key, c.marshalSlice(values)...)
+func (c *CodecRedis) LPush(cc context.Context, key string, values ...interface{}) *IntCmd {
+	return c.client.LPush(cc, key, c.marshalSlice(values)...)
 }
-func (c *CodecRedis) LPushX(key string, value interface{}) *IntCmd {
-	return c.client.LPushX(key, c.mustMarshal(value))
+func (c *CodecRedis) LPushX(cc context.Context, key string, value interface{}) *IntCmd {
+	return c.client.LPushX(cc, key, c.mustMarshal(value))
 }
-func (c *CodecRedis) LRange(key string, start, stop int64) *CodecsCmd {
-	return newCodecsCmd(c, c.client.LRange(key, start, stop))
+func (c *CodecRedis) LRange(cc context.Context, key string, start, stop int64) *CodecsCmd {
+	return newCodecsCmd(cc, c, c.client.LRange(cc, key, start, stop))
 }
-func (c *CodecRedis) LRem(key string, count int64, value interface{}) *IntCmd {
-	return c.client.LRem(key, count, c.mustMarshal(value))
+func (c *CodecRedis) LRem(cc context.Context, key string, count int64, value interface{}) *IntCmd {
+	return c.client.LRem(cc, key, count, c.mustMarshal(value))
 }
-func (c *CodecRedis) LSet(key string, index int64, value interface{}) *StatusCmd {
-	return c.client.LSet(key, index, c.mustMarshal(value))
+func (c *CodecRedis) LSet(cc context.Context, key string, index int64, value interface{}) *StatusCmd {
+	return c.client.LSet(cc, key, index, c.mustMarshal(value))
 }
-func (c *CodecRedis) RPop(key string) *CodecCmd {
-	return newCodecCmd(c, c.client.RPop(key))
+func (c *CodecRedis) RPop(cc context.Context, key string) *CodecCmd {
+	return newCodecCmd(cc, c, c.client.RPop(cc, key))
 }
-func (c *CodecRedis) RPopLPush(source, destination string) *CodecCmd {
-	return newCodecCmd(c, c.client.RPopLPush(source, destination))
+func (c *CodecRedis) RPopLPush(cc context.Context, source, destination string) *CodecCmd {
+	return newCodecCmd(cc, c, c.client.RPopLPush(cc, source, destination))
 }
-func (c *CodecRedis) RPush(key string, values ...interface{}) *IntCmd {
-	return c.client.RPush(key, c.marshalSlice(values)...)
+func (c *CodecRedis) RPush(cc context.Context, key string, values ...interface{}) *IntCmd {
+	return c.client.RPush(cc, key, c.marshalSlice(values)...)
 }
-func (c *CodecRedis) RPushX(key string, value interface{}) *IntCmd {
-	return c.client.RPushX(key, c.mustMarshal(value))
+func (c *CodecRedis) RPushX(cc context.Context, key string, value interface{}) *IntCmd {
+	return c.client.RPushX(cc, key, c.mustMarshal(value))
 }
 
 // ***** redis list begin *****
 
 // ***** redis set begin *****
 
-func (c *CodecRedis) SAdd(key string, members ...interface{}) *IntCmd {
-	return c.client.SAdd(key, c.marshalSlice(members)...)
+func (c *CodecRedis) SAdd(cc context.Context, key string, members ...interface{}) *IntCmd {
+	return c.client.SAdd(cc, key, c.marshalSlice(members)...)
 }
-func (c *CodecRedis) SDiff(keys ...string) *CodecsCmd {
-	return newCodecsCmd(c, c.client.SDiff(keys...))
-}
-
-func (c *CodecRedis) SInter(keys ...string) *CodecsCmd {
-	return newCodecsCmd(c, c.client.SInter(keys...))
+func (c *CodecRedis) SDiff(cc context.Context, keys ...string) *CodecsCmd {
+	return newCodecsCmd(cc, c, c.client.SDiff(cc, keys...))
 }
 
-func (c *CodecRedis) SIsMember(key string, member interface{}) *BoolCmd {
-	return c.client.SIsMember(key, c.mustMarshal(member))
-}
-func (c *CodecRedis) SMembers(key string) *CodecsCmd {
-	return newCodecsCmd(c, c.client.SMembers(key))
-}
-func (c *CodecRedis) SMembersMap(key string) *CodecSetCmd {
-	return newCodecSetCmd(c, c.client.SMembersMap(key))
-}
-func (c *CodecRedis) SMove(src, dest string, member interface{}) *BoolCmd {
-	return c.client.SMove(src, dest, c.mustMarshal(member))
-}
-func (c *CodecRedis) SPop(key string) *CodecCmd {
-	return newCodecCmd(c, c.client.SPop(key))
-}
-func (c *CodecRedis) SPopN(key string, count int64) *CodecsCmd {
-	return newCodecsCmd(c, c.client.SPopN(key, count))
-}
-func (c *CodecRedis) SRandMember(key string) *CodecCmd {
-	return newCodecCmd(c, c.client.SRandMember(key))
-}
-func (c *CodecRedis) SRandMemberN(key string, count int64) *CodecsCmd {
-	return newCodecsCmd(c, c.client.SRandMemberN(key, count))
-}
-func (c *CodecRedis) SRem(key string, members ...interface{}) *IntCmd {
-	return c.client.SRem(key, c.marshalSlice(members)...)
-}
-func (c *CodecRedis) SUnion(keys ...string) *CodecsCmd {
-	return newCodecsCmd(c, c.client.SUnion(keys...))
+func (c *CodecRedis) SInter(cc context.Context, keys ...string) *CodecsCmd {
+	return newCodecsCmd(cc, c, c.client.SInter(cc, keys...))
 }
 
-// func (c *CodecRedis)SUnionStore(destination string, keys ...string) *IntCmd // same as Cmdable
+func (c *CodecRedis) SIsMember(cc context.Context, key string, member interface{}) *BoolCmd {
+	return c.client.SIsMember(cc, key, c.mustMarshal(member))
+}
+func (c *CodecRedis) SMembers(cc context.Context, key string) *CodecsCmd {
+	return newCodecsCmd(cc, c, c.client.SMembers(cc, key))
+}
+func (c *CodecRedis) SMembersMap(cc context.Context, key string) *CodecSetCmd {
+	return newCodecSetCmd(cc, c, c.client.SMembersMap(cc, key))
+}
+func (c *CodecRedis) SMove(cc context.Context, src, dest string, member interface{}) *BoolCmd {
+	return c.client.SMove(cc, src, dest, c.mustMarshal(member))
+}
+func (c *CodecRedis) SPop(cc context.Context, key string) *CodecCmd {
+	return newCodecCmd(cc, c, c.client.SPop(cc, key))
+}
+func (c *CodecRedis) SPopN(cc context.Context, key string, count int64) *CodecsCmd {
+	return newCodecsCmd(cc, c, c.client.SPopN(cc, key, count))
+}
+func (c *CodecRedis) SRandMember(cc context.Context, key string) *CodecCmd {
+	return newCodecCmd(cc, c, c.client.SRandMember(cc, key))
+}
+func (c *CodecRedis) SRandMemberN(cc context.Context, key string, count int64) *CodecsCmd {
+	return newCodecsCmd(cc, c, c.client.SRandMemberN(cc, key, count))
+}
+func (c *CodecRedis) SRem(cc context.Context, key string, members ...interface{}) *IntCmd {
+	return c.client.SRem(cc, key, c.marshalSlice(members)...)
+}
+func (c *CodecRedis) SUnion(cc context.Context, keys ...string) *CodecsCmd {
+	return newCodecsCmd(cc, c, c.client.SUnion(cc, keys...))
+}
+
+// func (c *CodecRedis)SUnionStore(cc context.Context, destination string, keys ...string) *IntCmd // same as Cmdable
 
 // ***** redis set end *****
 
 // ***** redis zset begin *****
 
-func (c *CodecRedis) ZAdd(key string, members ...ZMember) *IntCmd {
-	return c.client.ZAdd(key, c.marshalZMembers(members)...)
+func (c *CodecRedis) ZAdd(cc context.Context, key string, members ...ZMember) *IntCmd {
+	return c.client.ZAdd(cc, key, c.marshalZMembers(members)...)
 }
-func (c *CodecRedis) ZAddNX(key string, members ...ZMember) *IntCmd {
-	return c.client.ZAddNX(key, c.marshalZMembers(members)...)
+func (c *CodecRedis) ZAddNX(cc context.Context, key string, members ...ZMember) *IntCmd {
+	return c.client.ZAddNX(cc, key, c.marshalZMembers(members)...)
 }
-func (c *CodecRedis) ZAddXX(key string, members ...ZMember) *IntCmd {
-	return c.client.ZAddXX(key, c.marshalZMembers(members)...)
+func (c *CodecRedis) ZAddXX(cc context.Context, key string, members ...ZMember) *IntCmd {
+	return c.client.ZAddXX(cc, key, c.marshalZMembers(members)...)
 }
-func (c *CodecRedis) ZAddCh(key string, members ...ZMember) *IntCmd {
-	return c.client.ZAddCh(key, c.marshalZMembers(members)...)
+func (c *CodecRedis) ZPopMax(cc context.Context, key string, count ...int64) *ZCodecSliceCmd {
+	return newZCodecSliceCmd(cc, c, c.client.ZPopMax(cc, key, count...))
 }
-func (c *CodecRedis) ZAddNXCh(key string, members ...ZMember) *IntCmd {
-	return c.client.ZAddNXCh(key, c.marshalZMembers(members)...)
-}
-func (c *CodecRedis) ZAddXXCh(key string, members ...ZMember) *IntCmd {
-	return c.client.ZAddXXCh(key, c.marshalZMembers(members)...)
-}
-func (c *CodecRedis) ZIncr(key string, member ZMember) *FloatCmd {
-	return c.client.ZIncr(key, c.marshalZMember(member))
-}
-func (c *CodecRedis) ZIncrNX(key string, member ZMember) *FloatCmd {
-	return c.client.ZIncrNX(key, c.marshalZMember(member))
-}
-func (c *CodecRedis) ZIncrXX(key string, member ZMember) *FloatCmd {
-	return c.client.ZIncrXX(key, c.marshalZMember(member))
-}
-func (c *CodecRedis) ZPopMax(key string, count ...int64) *ZCodecSliceCmd {
-	return newZCodecSliceCmd(c, c.client.ZPopMax(key, count...))
-}
-func (c *CodecRedis) ZIncrBy(key string, increment float64, member interface{}) *FloatCmd {
-	cmd := redis.NewFloatCmd("zincrby", key, increment, c.mustMarshal(member))
-	c.client.Process(cmd)
+func (c *CodecRedis) ZIncrBy(cc context.Context, key string, increment float64, member interface{}) *FloatCmd {
+	// return c.client.ZIncrBy(cc, key, increment, c.mustMarshal(member))
+	cmd := redis.NewFloatCmd(cc, "zincrby", key, increment, c.mustMarshal(member))
+	c.client.Process(cc, cmd)
 	return cmd
 }
-func (c *CodecRedis) ZPopMin(key string, count ...int64) *ZCodecSliceCmd {
-	return newZCodecSliceCmd(c, c.client.ZPopMin(key, count...))
+func (c *CodecRedis) ZPopMin(cc context.Context, key string, count ...int64) *ZCodecSliceCmd {
+	return newZCodecSliceCmd(cc, c, c.client.ZPopMin(cc, key, count...))
 }
-func (c *CodecRedis) ZRange(key string, start, stop int64) *CodecsCmd {
-	return newCodecsCmd(c, c.client.ZRange(key, start, stop))
+func (c *CodecRedis) ZRange(cc context.Context, key string, start, stop int64) *CodecsCmd {
+	return newCodecsCmd(cc, c, c.client.ZRange(cc, key, start, stop))
 }
-func (c *CodecRedis) ZRangeWithScores(key string, start, stop int64) *ZCodecSliceCmd {
-	return newZCodecSliceCmd(c, c.client.ZRangeWithScores(key, start, stop))
+func (c *CodecRedis) ZRangeWithScores(cc context.Context, key string, start, stop int64) *ZCodecSliceCmd {
+	return newZCodecSliceCmd(cc, c, c.client.ZRangeWithScores(cc, key, start, stop))
 }
-func (c *CodecRedis) ZRangeByScore(key string, opt ZRangeBy) *CodecsCmd {
-	return newCodecsCmd(c, c.client.ZRangeByScore(key, opt))
+func (c *CodecRedis) ZRangeByScore(cc context.Context, key string, opt *ZRangeBy) *CodecsCmd {
+	return newCodecsCmd(cc, c, c.client.ZRangeByScore(cc, key, opt))
 }
-func (c *CodecRedis) ZRangeByLex(key string, opt ZRangeBy) *CodecsCmd {
-	return newCodecsCmd(c, c.client.ZRangeByLex(key, opt))
+func (c *CodecRedis) ZRangeByLex(cc context.Context, key string, opt *ZRangeBy) *CodecsCmd {
+	return newCodecsCmd(cc, c, c.client.ZRangeByLex(cc, key, opt))
 }
-func (c *CodecRedis) ZRangeByScoreWithScores(key string, opt ZRangeBy) *ZCodecSliceCmd {
-	return newZCodecSliceCmd(c, c.client.ZRangeByScoreWithScores(key, opt))
+func (c *CodecRedis) ZRangeByScoreWithScores(cc context.Context, key string, opt *ZRangeBy) *ZCodecSliceCmd {
+	return newZCodecSliceCmd(cc, c, c.client.ZRangeByScoreWithScores(cc, key, opt))
 }
-func (c *CodecRedis) ZRank(key, member interface{}) *IntCmd {
-	cmd := redis.NewIntCmd("zrank", key, c.mustMarshal(member))
-	c.client.Process(cmd)
+func (c *CodecRedis) ZRank(cc context.Context, key, member interface{}) *IntCmd {
+	cmd := redis.NewIntCmd(cc, "zrank", key, c.mustMarshal(member))
+	c.client.Process(cc, cmd)
 	return cmd
 }
-func (c *CodecRedis) ZRem(key string, members ...interface{}) *IntCmd {
-	return c.client.ZRem(key, c.marshalSlice(members)...)
+func (c *CodecRedis) ZRem(cc context.Context, key string, members ...interface{}) *IntCmd {
+	return c.client.ZRem(cc, key, c.marshalSlice(members)...)
 }
-func (c *CodecRedis) ZRevRange(key string, start, stop int64) *CodecsCmd {
-	return newCodecsCmd(c, c.client.ZRevRange(key, start, stop))
+func (c *CodecRedis) ZRevRange(cc context.Context, key string, start, stop int64) *CodecsCmd {
+	return newCodecsCmd(cc, c, c.client.ZRevRange(cc, key, start, stop))
 }
-func (c *CodecRedis) ZRevRangeWithScores(key string, start, stop int64) *ZCodecSliceCmd {
-	return newZCodecSliceCmd(c, c.client.ZRevRangeWithScores(key, start, stop))
+func (c *CodecRedis) ZRevRangeWithScores(cc context.Context, key string, start, stop int64) *ZCodecSliceCmd {
+	return newZCodecSliceCmd(cc, c, c.client.ZRevRangeWithScores(cc, key, start, stop))
 }
-func (c *CodecRedis) ZRevRangeByScore(key string, opt ZRangeBy) *CodecsCmd {
-	return newCodecsCmd(c, c.client.ZRevRangeByScore(key, opt))
+func (c *CodecRedis) ZRevRangeByScore(cc context.Context, key string, opt *ZRangeBy) *CodecsCmd {
+	return newCodecsCmd(cc, c, c.client.ZRevRangeByScore(cc, key, opt))
 }
-func (c *CodecRedis) ZRevRangeByLex(key string, opt ZRangeBy) *CodecsCmd {
-	return newCodecsCmd(c, c.client.ZRevRangeByLex(key, opt))
+func (c *CodecRedis) ZRevRangeByLex(cc context.Context, key string, opt *ZRangeBy) *CodecsCmd {
+	return newCodecsCmd(cc, c, c.client.ZRevRangeByLex(cc, key, opt))
 }
-func (c *CodecRedis) ZRevRangeByScoreWithScores(key string, opt ZRangeBy) *ZCodecSliceCmd {
-	return newZCodecSliceCmd(c, c.client.ZRevRangeByScoreWithScores(key, opt))
+func (c *CodecRedis) ZRevRangeByScoreWithScores(cc context.Context, key string, opt *ZRangeBy) *ZCodecSliceCmd {
+	return newZCodecSliceCmd(cc, c, c.client.ZRevRangeByScoreWithScores(cc, key, opt))
 }
-func (c *CodecRedis) ZRevRank(key, member interface{}) *IntCmd {
-	cmd := redis.NewIntCmd("zrevrank", key, c.mustMarshal(member))
-	c.client.Process(cmd)
+func (c *CodecRedis) ZRevRank(cc context.Context, key, member interface{}) *IntCmd {
+	cmd := redis.NewIntCmd(cc, "zrevrank", key, c.mustMarshal(member))
+	c.client.Process(cc, cmd)
 	return cmd
 }
-func (c *CodecRedis) ZScore(key, member interface{}) *FloatCmd {
-	cmd := redis.NewFloatCmd("zscore", key, c.mustMarshal(member))
-	c.client.Process(cmd)
+func (c *CodecRedis) ZScore(cc context.Context, key, member interface{}) *FloatCmd {
+	cmd := redis.NewFloatCmd(cc, "zscore", key, c.mustMarshal(member))
+	c.client.Process(cc, cmd)
 	return cmd
 }
 

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/distroy/ldgo/v2/ldconv"
+	"github.com/distroy/ldgo/v2/ldctx"
 	"github.com/distroy/ldgo/v2/ldptr"
 	"github.com/distroy/ldgo/v2/proto/ldtestproto"
 	"github.com/golang/protobuf/proto"
@@ -46,6 +47,8 @@ func TestProtoV1Codec(t *testing.T) {
 		rds := testMemoryRedis()
 		defer rds.Close()
 
+		ctx := ldctx.Discard()
+
 		key := "test-proto-v1-codec"
 		expiration := time.Duration(0)
 		val := &ldtestproto.TestProto{
@@ -54,16 +57,16 @@ func TestProtoV1Codec(t *testing.T) {
 			F64: ldptr.NewFloat64(100.234),
 		}
 
-		set := rds.WithCodec(ProtoV1Codec()).Set(key, val, expiration)
+		set := rds.WithCodec(ProtoV1Codec()).Set(ctx, key, val, expiration)
 		convey.So(set.Err(), convey.ShouldBeNil)
 
 		convey.Convey("get-str", func() {
-			get := rds.Get(key)
+			get := rds.Get(ctx, key)
 			convey.So(get.Err(), convey.ShouldBeNil)
 			convey.So(get.Val(), convey.ShouldResemble, testMustProtoV1Marsha(val))
 		})
 		convey.Convey("get-obj", func() {
-			get := rds.WithCodec(ProtoV1Codec(&ldtestproto.TestProto{})).Get(key)
+			get := rds.WithCodec(ProtoV1Codec(&ldtestproto.TestProto{})).Get(ctx, key)
 			convey.So(get.Err(), convey.ShouldBeNil)
 			convey.So(get.Val(), convey.ShouldResemble, &ldtestproto.TestProto{
 				Str: ldptr.NewString("abc"),
@@ -79,6 +82,8 @@ func TestProtoV2Codec(t *testing.T) {
 		rds := testMemoryRedis()
 		defer rds.Close()
 
+		ctx := ldctx.Discard()
+
 		key := "test-proto-v2-codec"
 		expiration := time.Duration(0)
 		val := proto.MessageV2(&ldtestproto.TestProto{
@@ -87,16 +92,16 @@ func TestProtoV2Codec(t *testing.T) {
 			F64: ldptr.NewFloat64(100.234),
 		})
 
-		set := rds.WithCodec(ProtoV2Codec()).Set(key, val, expiration)
+		set := rds.WithCodec(ProtoV2Codec()).Set(ctx, key, val, expiration)
 		convey.So(set.Err(), convey.ShouldBeNil)
 
 		convey.Convey("get-str", func() {
-			get := rds.Get(key)
+			get := rds.Get(ctx, key)
 			convey.So(get.Err(), convey.ShouldBeNil)
 			convey.So(get.Val(), convey.ShouldResemble, testMustProtoV2Marsha(val))
 		})
 		convey.Convey("get-obj", func() {
-			get := rds.WithCodec(ProtoV2Codec(proto.MessageV2(&ldtestproto.TestProto{}))).Get(key)
+			get := rds.WithCodec(ProtoV2Codec(proto.MessageV2(&ldtestproto.TestProto{}))).Get(ctx, key)
 			convey.So(get.Err(), convey.ShouldBeNil)
 
 			message := get.Val().(protov2.Message)

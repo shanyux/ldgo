@@ -5,8 +5,13 @@
 package ldredis
 
 import (
+	"context"
+	"encoding"
+
 	"github.com/distroy/ldgo/v2/ldconv"
 )
+
+var _ encoding.BinaryMarshaler = (*errorMarshaler)(nil)
 
 type errorMarshaler struct {
 	err error
@@ -16,9 +21,9 @@ func (c errorMarshaler) MarshalBinary() ([]byte, error) {
 	return nil, c.err
 }
 
-func newCodecCmd(cli *CodecRedis, cmd *StringCmd) *CodecCmd {
+func newCodecCmd(cc context.Context, cli *CodecRedis, cmd *StringCmd) *CodecCmd {
 	c := &CodecCmd{}
-	c.parse(cli, cmd)
+	c.parse(cc, cli, cmd)
 	return c
 }
 
@@ -32,14 +37,14 @@ type CodecCmd struct {
 func (c *CodecCmd) Err() error                   { return c.err }
 func (c *CodecCmd) Val() interface{}             { return c.val }
 func (c *CodecCmd) Result() (interface{}, error) { return c.Val(), c.Err() }
-func (c *CodecCmd) parse(cli *CodecRedis, cmd *StringCmd) {
+func (c *CodecCmd) parse(cc context.Context, cli *CodecRedis, cmd *StringCmd) {
 	c.StringCmd = cmd
 	c.err = cmd.Err()
 	if c.err != nil {
 		return
 	}
 
-	v, err := cli.unmarshal(ldconv.StrToBytesUnsafe(cmd.Val()))
+	v, err := cli.unmarshal(cc, ldconv.StrToBytesUnsafe(cmd.Val()))
 	if err != nil {
 		c.err = err
 		return
@@ -48,24 +53,24 @@ func (c *CodecCmd) parse(cli *CodecRedis, cmd *StringCmd) {
 	c.val = v
 }
 
-func newStringCodecMapCmd(cli *CodecRedis, cmd *StringStringMapCmd) *StringCodecMapCmd {
-	c := &StringCodecMapCmd{}
-	c.parse(cli, cmd)
+func newMapStringCodecCmd(cc context.Context, cli *CodecRedis, cmd *MapStringStringCmd) *MapStringCodecCmd {
+	c := &MapStringCodecCmd{}
+	c.parse(cc, cli, cmd)
 	return c
 }
 
-type StringCodecMapCmd struct {
-	*StringStringMapCmd
+type MapStringCodecCmd struct {
+	*MapStringStringCmd
 
 	err error
 	val map[string]interface{}
 }
 
-func (c *StringCodecMapCmd) Err() error                              { return c.err }
-func (c *StringCodecMapCmd) Val() map[string]interface{}             { return c.val }
-func (c *StringCodecMapCmd) Result() (map[string]interface{}, error) { return c.Val(), c.Err() }
-func (c *StringCodecMapCmd) parse(cli *CodecRedis, cmd *StringStringMapCmd) {
-	c.StringStringMapCmd = cmd
+func (c *MapStringCodecCmd) Err() error                              { return c.err }
+func (c *MapStringCodecCmd) Val() map[string]interface{}             { return c.val }
+func (c *MapStringCodecCmd) Result() (map[string]interface{}, error) { return c.Val(), c.Err() }
+func (c *MapStringCodecCmd) parse(cc context.Context, cli *CodecRedis, cmd *MapStringStringCmd) {
+	c.MapStringStringCmd = cmd
 	c.err = cmd.Err()
 	if c.err != nil {
 		return
@@ -73,7 +78,7 @@ func (c *StringCodecMapCmd) parse(cli *CodecRedis, cmd *StringStringMapCmd) {
 
 	m := make(map[string]interface{}, len(cmd.Val()))
 	for k, val := range cmd.Val() {
-		v, err := cli.unmarshal(ldconv.StrToBytesUnsafe(val))
+		v, err := cli.unmarshal(cc, ldconv.StrToBytesUnsafe(val))
 		if err != nil {
 			c.err = err
 			return
@@ -83,9 +88,9 @@ func (c *StringCodecMapCmd) parse(cli *CodecRedis, cmd *StringStringMapCmd) {
 	c.val = m
 }
 
-func newCodecsCmd(cli *CodecRedis, cmd *StringsCmd) *CodecsCmd {
+func newCodecsCmd(cc context.Context, cli *CodecRedis, cmd *StringsCmd) *CodecsCmd {
 	c := &CodecsCmd{}
-	c.parse(cli, cmd)
+	c.parse(cc, cli, cmd)
 	return c
 }
 
@@ -99,7 +104,7 @@ type CodecsCmd struct {
 func (c *CodecsCmd) Err() error                     { return c.err }
 func (c *CodecsCmd) Val() []interface{}             { return c.val }
 func (c *CodecsCmd) Result() ([]interface{}, error) { return c.Val(), c.Err() }
-func (c *CodecsCmd) parse(cli *CodecRedis, cmd *StringsCmd) {
+func (c *CodecsCmd) parse(cc context.Context, cli *CodecRedis, cmd *StringsCmd) {
 	c.StringsCmd = cmd
 	c.err = cmd.Err()
 	if c.err != nil {
@@ -108,7 +113,7 @@ func (c *CodecsCmd) parse(cli *CodecRedis, cmd *StringsCmd) {
 
 	s := make([]interface{}, 0, len(cmd.Val()))
 	for _, val := range cmd.Val() {
-		v, err := cli.unmarshal(ldconv.StrToBytesUnsafe(val))
+		v, err := cli.unmarshal(cc, ldconv.StrToBytesUnsafe(val))
 		if err != nil {
 			c.err = err
 			return
@@ -118,9 +123,9 @@ func (c *CodecsCmd) parse(cli *CodecRedis, cmd *StringsCmd) {
 	c.val = s
 }
 
-func newCodecSetCmd(cli *CodecRedis, cmd *StringSetCmd) *CodecSetCmd {
+func newCodecSetCmd(cc context.Context, cli *CodecRedis, cmd *StringSetCmd) *CodecSetCmd {
 	c := &CodecSetCmd{}
-	c.parse(cli, cmd)
+	c.parse(cc, cli, cmd)
 	return c
 }
 
@@ -134,7 +139,7 @@ type CodecSetCmd struct {
 func (c *CodecSetCmd) Err() error                                { return c.err }
 func (c *CodecSetCmd) Val() map[interface{}]struct{}             { return c.val }
 func (c *CodecSetCmd) Result() (map[interface{}]struct{}, error) { return c.Val(), c.Err() }
-func (c *CodecSetCmd) parse(cli *CodecRedis, cmd *StringSetCmd) {
+func (c *CodecSetCmd) parse(cc context.Context, cli *CodecRedis, cmd *StringSetCmd) {
 	c.StringSetCmd = cmd
 	c.err = cmd.Err()
 	if c.err != nil {
@@ -143,7 +148,7 @@ func (c *CodecSetCmd) parse(cli *CodecRedis, cmd *StringSetCmd) {
 
 	s := make(map[interface{}]struct{}, len(cmd.Val()))
 	for val := range cmd.Val() {
-		v, err := cli.unmarshal(ldconv.StrToBytesUnsafe(val))
+		v, err := cli.unmarshal(cc, ldconv.StrToBytesUnsafe(val))
 		if err != nil {
 			c.err = err
 			return
@@ -153,9 +158,9 @@ func (c *CodecSetCmd) parse(cli *CodecRedis, cmd *StringSetCmd) {
 	c.val = s
 }
 
-func newCodecSliceCmd(cli *CodecRedis, cmd *SliceCmd) *CodecSliceCmd {
+func newCodecSliceCmd(cc context.Context, cli *CodecRedis, cmd *SliceCmd) *CodecSliceCmd {
 	c := &CodecSliceCmd{}
-	c.parse(cli, cmd)
+	c.parse(cc, cli, cmd)
 	return c
 }
 
@@ -169,7 +174,7 @@ type CodecSliceCmd struct {
 func (c *CodecSliceCmd) Err() error                     { return c.err }
 func (c *CodecSliceCmd) Val() []interface{}             { return c.val }
 func (c *CodecSliceCmd) Result() ([]interface{}, error) { return c.Val(), c.Err() }
-func (c *CodecSliceCmd) parse(cli *CodecRedis, cmd *SliceCmd) {
+func (c *CodecSliceCmd) parse(cc context.Context, cli *CodecRedis, cmd *SliceCmd) {
 	c.SliceCmd = cmd
 	c.err = cmd.Err()
 	if c.err != nil {
@@ -178,7 +183,7 @@ func (c *CodecSliceCmd) parse(cli *CodecRedis, cmd *SliceCmd) {
 
 	s := make([]interface{}, 0, len(cmd.Val()))
 	for _, val := range cmd.Val() {
-		v, err := cli.unmarshalInterface(val)
+		v, err := cli.unmarshalInterface(cc, val)
 		if err != nil {
 			c.err = err
 			return
@@ -188,9 +193,9 @@ func (c *CodecSliceCmd) parse(cli *CodecRedis, cmd *SliceCmd) {
 	c.val = s
 }
 
-func newZCodecSliceCmd(cli *CodecRedis, cmd *ZSliceCmd) *ZCodecSliceCmd {
+func newZCodecSliceCmd(cc context.Context, cli *CodecRedis, cmd *ZSliceCmd) *ZCodecSliceCmd {
 	c := &ZCodecSliceCmd{}
-	c.parse(cli, cmd)
+	c.parse(cc, cli, cmd)
 	return c
 }
 
@@ -204,7 +209,7 @@ type ZCodecSliceCmd struct {
 func (c *ZCodecSliceCmd) Err() error                 { return c.err }
 func (c *ZCodecSliceCmd) Val() []ZMember             { return c.val }
 func (c *ZCodecSliceCmd) Result() ([]ZMember, error) { return c.Val(), c.Err() }
-func (c *ZCodecSliceCmd) parse(cli *CodecRedis, cmd *ZSliceCmd) {
+func (c *ZCodecSliceCmd) parse(cc context.Context, cli *CodecRedis, cmd *ZSliceCmd) {
 	c.ZSliceCmd = cmd
 	c.err = cmd.Err()
 	if c.err != nil {
@@ -213,7 +218,7 @@ func (c *ZCodecSliceCmd) parse(cli *CodecRedis, cmd *ZSliceCmd) {
 
 	members := make([]ZMember, 0, len(cmd.Val()))
 	for _, v := range cmd.Val() {
-		val, err := cli.unmarshalInterface(v.Member)
+		val, err := cli.unmarshalInterface(cc, v.Member)
 		if err != nil {
 			return
 		}

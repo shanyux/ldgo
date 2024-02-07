@@ -8,7 +8,7 @@ import (
 	"crypto/tls"
 	"time"
 
-	"github.com/go-redis/redis"
+	redis "github.com/redis/go-redis/v9"
 )
 
 type Config struct {
@@ -27,17 +27,15 @@ type Config struct {
 	WriteTimeout time.Duration
 
 	// PoolSize applies per cluster node and not for the whole cluster.
-	PoolSize           int
-	MinIdleConns       int
-	MaxConnAge         time.Duration
-	PoolTimeout        time.Duration
-	IdleTimeout        time.Duration
-	IdleCheckFrequency time.Duration
+	PoolSize     int
+	MinIdleConns int
+	PoolTimeout  time.Duration
 
 	TLSConfig *tls.Config
 }
 
 func (cfg *Config) toClient() *redis.Options {
+	// TODO: more configs
 	return &redis.Options{
 		Addr:     cfg.Addr,
 		Password: cfg.Password,
@@ -51,18 +49,18 @@ func (cfg *Config) toClient() *redis.Options {
 		ReadTimeout:  cfg.ReadTimeout,
 		WriteTimeout: cfg.WriteTimeout,
 
-		PoolSize:           cfg.PoolSize,
-		MinIdleConns:       cfg.MinIdleConns,
-		MaxConnAge:         cfg.MaxConnAge,
-		PoolTimeout:        cfg.PoolTimeout,
-		IdleTimeout:        cfg.IdleTimeout,
-		IdleCheckFrequency: cfg.IdleCheckFrequency,
+		PoolSize:     cfg.PoolSize,
+		MinIdleConns: cfg.MinIdleConns,
+		PoolTimeout:  cfg.PoolTimeout,
 
 		TLSConfig: cfg.TLSConfig,
+
+		ContextTimeoutEnabled: true,
 	}
 }
 
 func (cfg *Config) toCluster() *redis.ClusterOptions {
+	// TODO: more configs
 	return &redis.ClusterOptions{
 		Addrs:    cfg.Addrs,
 		Password: cfg.Password,
@@ -75,13 +73,12 @@ func (cfg *Config) toCluster() *redis.ClusterOptions {
 		ReadTimeout:  cfg.ReadTimeout,
 		WriteTimeout: cfg.WriteTimeout,
 
-		PoolSize:           cfg.PoolSize,
-		MinIdleConns:       cfg.MinIdleConns,
-		MaxConnAge:         cfg.MaxConnAge,
-		PoolTimeout:        cfg.PoolTimeout,
-		IdleTimeout:        cfg.IdleTimeout,
-		IdleCheckFrequency: cfg.IdleCheckFrequency,
+		PoolSize:     cfg.PoolSize,
+		MinIdleConns: cfg.MinIdleConns,
+		PoolTimeout:  cfg.PoolTimeout,
 
 		TLSConfig: cfg.TLSConfig,
+
+		ContextTimeoutEnabled: true,
 	}
 }
