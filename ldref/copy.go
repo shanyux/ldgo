@@ -11,7 +11,9 @@ import (
 )
 
 type CopyConfig struct {
-	Clone bool
+	Clone     bool   // is clone if same type
+	TargetTag string // default: json
+	SourceTag string // default: json
 }
 
 func Copy(target, source interface{}, cfg ...*CopyConfig) lderr.Error {
@@ -28,11 +30,15 @@ func Copy(target, source interface{}, cfg ...*CopyConfig) lderr.Error {
 	return copyWithCheckTarget(c, target, source)
 }
 
-func DeepCopy(target, source interface{}) lderr.Error {
-	cfg := &CopyConfig{
+func DeepCopy(target, source interface{}, cfg ...*CopyConfig) lderr.Error {
+	c := &CopyConfig{
 		Clone: true,
 	}
-	return Copy(target, source, cfg)
+	if len(cfg) > 0 && cfg[0] != nil {
+		c = cfg[0]
+		c.Clone = true
+	}
+	return Copy(target, source, c)
 }
 
 type copyContext struct {
