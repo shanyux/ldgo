@@ -19,6 +19,10 @@ func Test_New(t *testing.T) {
 					Target: redis.NewClusterClient,
 					Double: ldhook.Values{&redis.ClusterClient{}},
 				},
+				ldhook.FuncHook{
+					Target: (*redis.ClusterClient).AddHook,
+					Double: ldhook.Values{},
+				},
 			})
 			cfg := &Config{
 				Cluster:  true,
@@ -33,6 +37,10 @@ func Test_New(t *testing.T) {
 				ldhook.FuncHook{
 					Target: redis.NewClient,
 					Double: ldhook.Values{&redis.Client{}},
+				},
+				ldhook.FuncHook{
+					Target: (*redis.Client).AddHook,
+					Double: ldhook.Values{},
 				},
 			})
 			cfg := &Config{

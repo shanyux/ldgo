@@ -25,28 +25,6 @@ const (
 	goRedisSrcPath = "/github.com/redis/go-redis"
 )
 
-func newHook(rds *Redis) redis.Hook {
-	return hook{
-		Redis: rds,
-	}
-}
-
-type hook struct {
-	Redis *Redis
-}
-
-func (h hook) DialHook(next redis.DialHook) redis.DialHook { return nil }
-func (h hook) ProcessHook(next redis.ProcessHook) redis.ProcessHook {
-	return func(c context.Context, cmd redis.Cmder) error {
-		return h.Process(c, cmd, next)
-	}
-}
-func (h hook) ProcessPipelineHook(next redis.ProcessPipelineHook) redis.ProcessPipelineHook {
-	return func(c context.Context, cmds []redis.Cmder) error {
-		return h.ProcessPipeline(c, cmds, next)
-	}
-}
-
 func isCallerFilePath(file string) bool {
 	if strings.Contains(file, goRedisSrcPath) {
 		return false
@@ -85,6 +63,28 @@ func getCmdField(cmd Cmder) zap.Field {
 	return zap.Reflect("cmd", cmd.Args())
 }
 
+func newHook(rds *Redis) redis.Hook {
+	return hook{
+		Redis: rds,
+	}
+}
+
+type hook struct {
+	Redis *Redis
+}
+
+func (h hook) DialHook(next redis.DialHook) redis.DialHook { return nil }
+func (h hook) ProcessHook(next redis.ProcessHook) redis.ProcessHook {
+	return func(c context.Context, cmd redis.Cmder) error {
+		return h.Process(c, cmd, next)
+	}
+}
+func (h hook) ProcessPipelineHook(next redis.ProcessPipelineHook) redis.ProcessPipelineHook {
+	return func(c context.Context, cmds []redis.Cmder) error {
+		return h.ProcessPipeline(c, cmds, next)
+	}
+}
+
 func (h hook) Process(c context.Context, cmd Cmder, next redis.ProcessHook) error {
 	if isInProcess(c) {
 		return next(c, cmd)
@@ -95,23 +95,23 @@ func (h hook) Process(c context.Context, cmd Cmder, next redis.ProcessHook) erro
 		retry         = h.Redis.retry
 		retryInterval = h.Redis.retryInterval
 		reporter      = h.Redis.reporter
-		log           = ldctx.GetLogger(ctx)
+		logger        = ldctx.GetLogger(ctx)
 		caller        = h.Redis.caller
 	)
 
 	for i := 0; ; {
 		begin := time.Now()
-		next(ctx, cmd)
+		err := next(ctx, cmd)
+		cmd.SetErr(err)
 		reporter.Report(cmd, time.Since(begin))
 
-		err := cmd.Err()
 		if isErrNil(err) {
-			log.Debug("redis cmd succ", zap.Int("retry", i), getCmdField(cmd), getCaller(caller))
+			logger.Debug("redis cmd succ", zap.Int("retry", i), getCmdField(cmd), getCaller(caller))
 			return err
 		}
 
 		if i++; i >= retry {
-			log.Error("redis cmd fail", zap.Int("retry", i), getCmdField(cmd), zap.Error(err), getCaller(caller))
+			logger.Error("redis cmd fail", zap.Int("retry", i), getCmdField(cmd), zap.Error(err), getCaller(caller))
 			return err
 		}
 
@@ -128,10 +128,10 @@ func (h hook) ProcessPipeline(c context.Context, cmds []Cmder, next redis.Proces
 		retry         = h.Redis.retry
 		retryInterval = h.Redis.retryInterval
 		reporter      = h.Redis.reporter
-		log           = ldctx.GetLogger(ctx)
+		logger        = ldctx.GetLogger(ctx)
 		caller        = getCaller(h.Redis.caller)
 	)
-	log = log.With(zap.String("pipeline", hex.EncodeToString(ldrand.Bytes(8))))
+	logger = logger.With(zap.String("pipeline", hex.EncodeToString(ldrand.Bytes(8))))
 
 	for i := 0; ; {
 		begin := time.Now()
@@ -140,14 +140,14 @@ func (h hook) ProcessPipeline(c context.Context, cmds []Cmder, next redis.Proces
 
 		err := h.checkPipelineError(cmds)
 		if isErrNil(err) {
-			h.printPipelineSuccLog(cmds, i, log, caller)
-			log.Debug("redis pipeline cmd succ", zap.Int("retry", i), caller)
+			h.printPipelineSuccLog(cmds, i, logger, caller)
+			logger.Debug("redis pipeline cmd succ", zap.Int("retry", i), caller)
 			return err
 		}
 
 		if i++; i >= retry {
-			h.printPipelineFailLog(cmds, i, log, caller)
-			log.Error("redis pipeline fail", zap.Int("retry", i), zap.Error(err), caller)
+			h.printPipelineFailLog(cmds, i, logger, caller)
+			logger.Error("redis pipeline fail", zap.Int("retry", i), zap.Error(err), caller)
 			return err
 		}
 
@@ -164,19 +164,19 @@ func (h hook) checkPipelineError(cmds []Cmder) error {
 	return nil
 }
 
-func (h hook) printPipelineSuccLog(cmds []Cmder, retry int, log *ldlog.Logger, caller zap.Field) {
+func (h hook) printPipelineSuccLog(cmds []Cmder, retry int, logger *ldlog.Logger, caller zap.Field) {
 	for _, cmd := range cmds {
-		log.Debug("redis pipeline cmd succ", zap.Int("retry", retry), getCmdField(cmd), caller)
+		logger.Debug("redis pipeline cmd succ", zap.Int("retry", retry), getCmdField(cmd), caller)
 	}
 }
 
-func (h hook) printPipelineFailLog(cmds []Cmder, retry int, log *ldlog.Logger, caller zap.Field) {
+func (h hook) printPipelineFailLog(cmds []Cmder, retry int, logger *ldlog.Logger, caller zap.Field) {
 	for _, cmd := range cmds {
 		if err := cmd.Err(); !isErrNil(err) {
-			log.Error("redis pipeline cmd fail", zap.Int("retry", retry), getCmdField(cmd),
+			logger.Error("redis pipeline cmd fail", zap.Int("retry", retry), getCmdField(cmd),
 				zap.Error(err), caller)
 			break
 		}
-		log.Debug("redis pipeline cmd succ", zap.Int("retry", retry), getCmdField(cmd), caller)
+		logger.Debug("redis pipeline cmd succ", zap.Int("retry", retry), getCmdField(cmd), caller)
 	}
 }

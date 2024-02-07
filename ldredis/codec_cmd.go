@@ -6,9 +6,12 @@ package ldredis
 
 import (
 	"context"
+	"encoding"
 
 	"github.com/distroy/ldgo/v2/ldconv"
 )
+
+var _ encoding.BinaryMarshaler = (*errorMarshaler)(nil)
 
 type errorMarshaler struct {
 	err error
@@ -75,7 +78,7 @@ func (c *StringCodecMapCmd) parse(cc context.Context, cli *CodecRedis, cmd *Stri
 
 	m := make(map[string]interface{}, len(cmd.Val()))
 	for k, val := range cmd.Val() {
-		v, err := cli.unmarshal(cc, cc, ldconv.StrToBytesUnsafe(val))
+		v, err := cli.unmarshal(cc, ldconv.StrToBytesUnsafe(val))
 		if err != nil {
 			c.err = err
 			return

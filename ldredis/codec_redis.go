@@ -77,10 +77,10 @@ func (c *CodecRedis) HGetAll(cc context.Context, key string) *StringCodecMapCmd 
 func (c *CodecRedis) HMGet(cc context.Context, key string, fields ...string) *CodecSliceCmd {
 	return newCodecSliceCmd(cc, c, c.client.HMGet(cc, key, fields...))
 }
-func (c *CodecRedis) HMSet(cc context.Context, key string, fields map[string]interface{}) *StatusCmd {
+func (c *CodecRedis) HMSet(cc context.Context, key string, fields map[string]interface{}) *BoolCmd {
 	return c.client.HMSet(cc, key, c.marshalStringInterfaceMap(fields))
 }
-func (c *CodecRedis) HSet(cc context.Context, key, field string, value interface{}) *BoolCmd {
+func (c *CodecRedis) HSet(cc context.Context, key, field string, value interface{}) *IntCmd {
 	return c.client.HSet(cc, key, field, c.mustMarshal(value))
 }
 func (c *CodecRedis) HSetNX(cc context.Context, key, field string, value interface{}) *BoolCmd {
@@ -207,29 +207,12 @@ func (c *CodecRedis) ZAddNX(cc context.Context, key string, members ...ZMember) 
 func (c *CodecRedis) ZAddXX(cc context.Context, key string, members ...ZMember) *IntCmd {
 	return c.client.ZAddXX(cc, key, c.marshalZMembers(members)...)
 }
-func (c *CodecRedis) ZAddCh(cc context.Context, key string, members ...ZMember) *IntCmd {
-	return c.client.ZAddCh(cc, key, c.marshalZMembers(members)...)
-}
-func (c *CodecRedis) ZAddNXCh(cc context.Context, key string, members ...ZMember) *IntCmd {
-	return c.client.ZAddNXCh(cc, key, c.marshalZMembers(members)...)
-}
-func (c *CodecRedis) ZAddXXCh(cc context.Context, key string, members ...ZMember) *IntCmd {
-	return c.client.ZAddXXCh(cc, key, c.marshalZMembers(members)...)
-}
-func (c *CodecRedis) ZIncr(cc context.Context, key string, member ZMember) *FloatCmd {
-	return c.client.ZIncr(cc, key, c.marshalZMember(member))
-}
-func (c *CodecRedis) ZIncrNX(cc context.Context, key string, member ZMember) *FloatCmd {
-	return c.client.ZIncrNX(cc, key, c.marshalZMember(member))
-}
-func (c *CodecRedis) ZIncrXX(cc context.Context, key string, member ZMember) *FloatCmd {
-	return c.client.ZIncrXX(cc, key, c.marshalZMember(member))
-}
 func (c *CodecRedis) ZPopMax(cc context.Context, key string, count ...int64) *ZCodecSliceCmd {
 	return newZCodecSliceCmd(cc, c, c.client.ZPopMax(cc, key, count...))
 }
 func (c *CodecRedis) ZIncrBy(cc context.Context, key string, increment float64, member interface{}) *FloatCmd {
-	cmd := redis.NewFloatCmd(cc, cc, "zincrby", key, increment, c.mustMarshal(member))
+	// return c.client.ZIncrBy(cc, key, increment, c.mustMarshal(member))
+	cmd := redis.NewFloatCmd(cc, "zincrby", key, increment, c.mustMarshal(member))
 	c.client.Process(cc, cmd)
 	return cmd
 }
@@ -265,13 +248,13 @@ func (c *CodecRedis) ZRevRange(cc context.Context, key string, start, stop int64
 func (c *CodecRedis) ZRevRangeWithScores(cc context.Context, key string, start, stop int64) *ZCodecSliceCmd {
 	return newZCodecSliceCmd(cc, c, c.client.ZRevRangeWithScores(cc, key, start, stop))
 }
-func (c *CodecRedis) ZRevRangeByScore(cc context.Context, key string, opt ZRangeBy) *CodecsCmd {
+func (c *CodecRedis) ZRevRangeByScore(cc context.Context, key string, opt *ZRangeBy) *CodecsCmd {
 	return newCodecsCmd(cc, c, c.client.ZRevRangeByScore(cc, key, opt))
 }
-func (c *CodecRedis) ZRevRangeByLex(cc context.Context, key string, opt ZRangeBy) *CodecsCmd {
+func (c *CodecRedis) ZRevRangeByLex(cc context.Context, key string, opt *ZRangeBy) *CodecsCmd {
 	return newCodecsCmd(cc, c, c.client.ZRevRangeByLex(cc, key, opt))
 }
-func (c *CodecRedis) ZRevRangeByScoreWithScores(cc context.Context, key string, opt ZRangeBy) *ZCodecSliceCmd {
+func (c *CodecRedis) ZRevRangeByScoreWithScores(cc context.Context, key string, opt *ZRangeBy) *ZCodecSliceCmd {
 	return newZCodecSliceCmd(cc, c, c.client.ZRevRangeByScoreWithScores(cc, key, opt))
 }
 func (c *CodecRedis) ZRevRank(cc context.Context, key, member interface{}) *IntCmd {

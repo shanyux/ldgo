@@ -10,7 +10,6 @@ import (
 
 	"github.com/distroy/ldgo/v2/ldasync"
 	"github.com/distroy/ldgo/v2/ldctx"
-	"github.com/distroy/ldgo/v2/ldlog"
 	"github.com/smartystreets/goconvey/convey"
 )
 
@@ -27,14 +26,13 @@ func TestMutex_Lock(t *testing.T) {
 		timeout := 1 * time.Second
 
 		ctx := ldctx.WithTimeout(ldctx.Discard(), timeout)
-		rds = rds.WithContext(ctx)
 
 		m0 := NewMutex(rds)
 		m1 := NewMutex(rds)
 
-		convey.So(m0.Lock(lockKey), convey.ShouldBeNil)
-		convey.So(m1.Lock(lockKey), convey.ShouldNotBeNil)
-		convey.So(m0.Unlock(), convey.ShouldBeNil)
+		convey.So(m0.Lock(ctx, lockKey), convey.ShouldBeNil)
+		convey.So(m1.Lock(ctx, lockKey), convey.ShouldNotBeNil)
+		convey.So(m0.Unlock(ctx), convey.ShouldBeNil)
 	})
 }
 
@@ -48,24 +46,24 @@ func TestMutex_Unlock(t *testing.T) {
 		ctx := ldctx.WithTimeout(ldctx.Discard(), timeout)
 
 		convey.Convey("unlock after context not timeout", func() {
-			m := NewMutex(rds).WithContext(ctx)
+			m := NewMutex(rds)
 
-			convey.So(m.Lock(lockKey), convey.ShouldBeNil)
+			convey.So(m.Lock(ctx, lockKey), convey.ShouldBeNil)
 
 			// time.Sleep(timeout - 1*time.Second)
 
-			convey.So(m.Unlock(), convey.ShouldBeNil)
+			convey.So(m.Unlock(ctx), convey.ShouldBeNil)
 		})
 
 		convey.Convey("unlock after context timeout", func() {
-			m := NewMutex(rds).WithContext(ctx)
+			m := NewMutex(rds)
 
-			convey.So(m.Lock(lockKey), convey.ShouldBeNil)
+			convey.So(m.Lock(ctx, lockKey), convey.ShouldBeNil)
 
 			<-m.Events()
 			// time.Sleep(timeout + 1*time.Second)
 
-			convey.So(m.Unlock(), convey.ShouldBeNil)
+			convey.So(m.Unlock(ctx), convey.ShouldBeNil)
 		})
 	})
 }
@@ -75,9 +73,7 @@ func TestMutex_WithLockForce(t *testing.T) {
 		r := testMemoryRedis()
 		defer r.Close()
 
-		ctx := ldctx.Default()
-		ctx = ldctx.WithLogger(ctx, ldlog.Discard())
-		r = r.WithContext(ctx)
+		ctx := ldctx.Discard()
 
 		lockKey := "test-key"
 		interval := 100 * time.Millisecond
@@ -94,20 +90,20 @@ func TestMutex_WithLockForce(t *testing.T) {
 
 			gos := &ldasync.GoPool{}
 
-			c.So(m0.Lock(lockKey), convey.ShouldBeNil)
+			c.So(m0.Lock(ctx, lockKey), convey.ShouldBeNil)
 			gos.Go(func() {
 				time.Sleep(timeout0)
-				c.So(m0.Unlock(), convey.ShouldBeNil)
+				c.So(m0.Unlock(ctx), convey.ShouldBeNil)
 
 				t0 = time.Now()
 			})
 
 			gos.Go(func() {
-				c.So(m1.Lock(lockKey), convey.ShouldBeNil)
+				c.So(m1.Lock(ctx, lockKey), convey.ShouldBeNil)
 				t1 = time.Now()
 
 				// time.Sleep(timeout)
-				c.So(m1.Unlock(), convey.ShouldBeNil)
+				c.So(m1.Unlock(ctx), convey.ShouldBeNil)
 			})
 
 			gos.Wait()
@@ -124,18 +120,18 @@ func TestMutex_WithLockForce(t *testing.T) {
 
 				gos := &ldasync.GoPool{}
 
-				c.So(m0.Lock(lockKey), convey.ShouldBeNil)
+				c.So(m0.Lock(ctx, lockKey), convey.ShouldBeNil)
 				gos.Go(func() {
 
 					time.Sleep(timeout0)
-					c.So(m0.Unlock(), convey.ShouldBeNil)
+					c.So(m0.Unlock(ctx), convey.ShouldBeNil)
 
 					t0 = time.Now()
 				})
 
 				gos.Go(func() {
 					m := m1
-					c.So(m.Lock(lockKey), convey.ShouldNotBeNil)
+					c.So(m.Lock(ctx, lockKey), convey.ShouldNotBeNil)
 					t1 = time.Now()
 
 					// c.So(m.Unlock(), convey.ShouldNotBeNil)
@@ -153,18 +149,18 @@ func TestMutex_WithLockForce(t *testing.T) {
 
 				gos := &ldasync.GoPool{}
 
-				c.So(m0.Lock(lockKey), convey.ShouldBeNil)
+				c.So(m0.Lock(ctx, lockKey), convey.ShouldBeNil)
 				gos.Go(func() {
 
 					time.Sleep(timeout0)
-					c.So(m0.Unlock(), convey.ShouldBeNil)
+					c.So(m0.Unlock(ctx), convey.ShouldBeNil)
 
 					t0 = time.Now()
 				})
 
 				gos.Go(func() {
 					m := m1
-					c.So(m.Lock(lockKey), convey.ShouldNotBeNil)
+					c.So(m.Lock(ctx, lockKey), convey.ShouldNotBeNil)
 					t1 = time.Now()
 
 					// c.So(m.Unlock(), convey.ShouldNotBeNil)
