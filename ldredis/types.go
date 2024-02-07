@@ -33,7 +33,7 @@ type (
 	SliceCmd    = redis.SliceCmd
 
 	StringsCmd         = redis.StringSliceCmd
-	StringStringMapCmd = redis.MapStringStringCmd
+	MapStringStringCmd = redis.MapStringStringCmd
 	StringSetCmd       = redis.StringStructMapCmd
 
 	ZMember     = redis.Z
@@ -99,7 +99,7 @@ type CodecCmdable interface {
 	HDel(c context.Context, key string, fields ...string) *IntCmd                // same as Cmdable
 	HExists(c context.Context, key, field string) *BoolCmd                       // same as Cmdable
 	HGet(c context.Context, key, field string) *CodecCmd                         //
-	HGetAll(c context.Context, key string) *StringCodecMapCmd                    //
+	HGetAll(c context.Context, key string) *MapStringCodecCmd                    //
 	HIncrBy(c context.Context, key, field string, incr int64) *IntCmd            // same as Cmdable
 	HIncrByFloat(c context.Context, key, field string, incr float64) *FloatCmd   // same as Cmdable
 	HKeys(c context.Context, key string) *StringsCmd                             // same as Cmdable

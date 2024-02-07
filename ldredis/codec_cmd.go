@@ -53,24 +53,24 @@ func (c *CodecCmd) parse(cc context.Context, cli *CodecRedis, cmd *StringCmd) {
 	c.val = v
 }
 
-func newStringCodecMapCmd(cc context.Context, cli *CodecRedis, cmd *StringStringMapCmd) *StringCodecMapCmd {
-	c := &StringCodecMapCmd{}
+func newMapStringCodecCmd(cc context.Context, cli *CodecRedis, cmd *MapStringStringCmd) *MapStringCodecCmd {
+	c := &MapStringCodecCmd{}
 	c.parse(cc, cli, cmd)
 	return c
 }
 
-type StringCodecMapCmd struct {
-	*StringStringMapCmd
+type MapStringCodecCmd struct {
+	*MapStringStringCmd
 
 	err error
 	val map[string]interface{}
 }
 
-func (c *StringCodecMapCmd) Err() error                              { return c.err }
-func (c *StringCodecMapCmd) Val() map[string]interface{}             { return c.val }
-func (c *StringCodecMapCmd) Result() (map[string]interface{}, error) { return c.Val(), c.Err() }
-func (c *StringCodecMapCmd) parse(cc context.Context, cli *CodecRedis, cmd *StringStringMapCmd) {
-	c.StringStringMapCmd = cmd
+func (c *MapStringCodecCmd) Err() error                              { return c.err }
+func (c *MapStringCodecCmd) Val() map[string]interface{}             { return c.val }
+func (c *MapStringCodecCmd) Result() (map[string]interface{}, error) { return c.Val(), c.Err() }
+func (c *MapStringCodecCmd) parse(cc context.Context, cli *CodecRedis, cmd *MapStringStringCmd) {
+	c.MapStringStringCmd = cmd
 	c.err = cmd.Err()
 	if c.err != nil {
 		return

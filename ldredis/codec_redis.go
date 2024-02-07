@@ -71,8 +71,8 @@ func (c *CodecRedis) SetXX(cc context.Context, key string, value interface{}, ex
 func (c *CodecRedis) HGet(cc context.Context, key, field string) *CodecCmd {
 	return newCodecCmd(cc, c, c.client.HGet(cc, key, field))
 }
-func (c *CodecRedis) HGetAll(cc context.Context, key string) *StringCodecMapCmd {
-	return newStringCodecMapCmd(cc, c, c.client.HGetAll(cc, key))
+func (c *CodecRedis) HGetAll(cc context.Context, key string) *MapStringCodecCmd {
+	return newMapStringCodecCmd(cc, c, c.client.HGetAll(cc, key))
 }
 func (c *CodecRedis) HMGet(cc context.Context, key string, fields ...string) *CodecSliceCmd {
 	return newCodecSliceCmd(cc, c, c.client.HMGet(cc, key, fields...))
