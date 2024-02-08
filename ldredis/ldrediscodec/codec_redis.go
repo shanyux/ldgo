@@ -2,16 +2,22 @@
  * Copyright (C) distroy
  */
 
-package ldredis
+package ldrediscodec
 
 import (
 	"context"
 	"time"
 
+	"github.com/distroy/ldgo/v2/ldredis"
 	redis "github.com/redis/go-redis/v9"
 )
 
-type client = Redis
+func New(rds *ldredis.Redis, codec Codec) *CodecRedis {
+	return &CodecRedis{
+		client: rds,
+		codec:  codec,
+	}
+}
 
 var _ CodecCmdable = (*CodecRedis)(nil)
 
@@ -21,9 +27,9 @@ type CodecRedis struct {
 	codec Codec
 }
 
-func (c *CodecRedis) Client() *Redis { return c.client }
+func (c *CodecRedis) Client() *ldredis.Redis { return c.client }
 
-func (c *CodecRedis) clone(cli ...*Redis) *CodecRedis {
+func (c *CodecRedis) clone(cli ...*ldredis.Redis) *CodecRedis {
 	cp := *c
 	c = &cp
 	if len(cli) > 0 && cli[0] != nil {

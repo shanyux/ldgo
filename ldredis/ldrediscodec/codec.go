@@ -2,14 +2,17 @@
  * Copyright (C) distroy
  */
 
-package ldredis
+package ldrediscodec
 
 import (
 	"context"
 	"reflect"
+	"unsafe"
 
 	"github.com/distroy/ldgo/v2/ldconv"
 	"github.com/distroy/ldgo/v2/lderr"
+	"github.com/distroy/ldgo/v2/ldredis"
+	"github.com/distroy/ldgo/v2/ldredis/internal"
 	"go.uber.org/zap"
 )
 
@@ -99,9 +102,9 @@ func (c *CodecRedis) unmarshal(cc context.Context, bytes []byte) (interface{}, e
 	}
 	v, err := c.codec.Unmarshal(bytes)
 	if err != nil {
-		ctx := newContext(cc)
+		ctx := internal.NewContext(cc)
 		ctx.LogE("redis codec unmarshal fail", zap.Error(err),
-			getCaller(c.caller))
+			getCallerField(c.client))
 		return nil, lderr.ErrCacheUnmarshal
 	}
 	return v, nil
@@ -119,12 +122,22 @@ func (c *CodecRedis) unmarshalInterface(cc context.Context, i interface{}) (inte
 	case string:
 		bytes = ldconv.StrToBytesUnsafe(tmp)
 	default:
-		ctx := newContext(cc)
+		ctx := internal.NewContext(cc)
 		ctx.LogE("redis codec cannot unmarshal the type",
-			zap.Stringer("type", reflect.TypeOf(i)), getCaller(c.caller))
+			zap.Stringer("type", reflect.TypeOf(i)), getCallerField(c.client))
 		return nil, lderr.ErrCacheUnmarshal
 	}
 	return c.unmarshal(cc, bytes)
 }
 
 // ***** redis unmarshal end *****
+
+func getCallerField(rds *ldredis.Redis) zap.Field {
+	return internal.GetCallerField(getOptions(rds).Caller)
+}
+
+//go:linkname getOptions github.com/distroy/ldgo/v2/ldredis.getOptions
+func getOptions(*ldredis.Redis) *internal.Options
+
+//go:linkname getOptionsPointer github.com/distroy/ldgo/v2/ldredis.getOptionsPointer
+func getOptionsPointer(c *ldredis.Redis) unsafe.Pointer
