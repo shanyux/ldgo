@@ -7,28 +7,40 @@ package ldrediscodec
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"reflect"
 )
 
-func JsonCodec(i ...interface{}) Codec {
-	if len(i) == 0 || i[0] == nil {
-		return &jsonCodec{}
+type codecBase[T any] struct{}
+
+func (c codecBase[T]) fillIfPointer(v *T) (ptrOfT interface{}) {
+	p := reflect.ValueOf(v).Elem()
+	if p.Kind() != reflect.Ptr {
+		return v
 	}
 
-	return jsonCodec{
-		typ: reflect.TypeOf(i[0]),
-	}
+	tmp := reflect.New(p.Type().Elem())
+	p.Set(tmp)
+	return p.Interface()
 }
 
-type jsonCodec struct {
-	typ reflect.Type
+type JsonCodec[T any] struct {
+	codecBase[T]
 }
 
-func (c jsonCodec) Marshal(v interface{}) ([]byte, error) {
-	b, err := json.Marshal(v)
+func (c JsonCodec[T]) Marshal(v T) ([]byte, error) {
+	buf := bytes.NewBuffer(nil)
+	enc := json.NewEncoder(buf)
+	enc.SetEscapeHTML(false)
+
+	err := enc.Encode(v)
 	if err != nil {
 		return nil, err
+	}
+
+	b := buf.Bytes()
+	// trim tail line end
+	if i := len(b) - 1; i >= 0 && b[i] == '\n' {
+		b = b[:i]
 	}
 	if bytes.Compare(b, []byte("null")) == 0 {
 		return nil, nil
@@ -36,43 +48,8 @@ func (c jsonCodec) Marshal(v interface{}) ([]byte, error) {
 	return b, nil
 }
 
-func (c jsonCodec) Unmarshal(b []byte) (interface{}, error) {
-	if c.typ == nil {
-		var v interface{}
-		if err := json.Unmarshal(b, &v); err != nil {
-			return nil, err
-		}
-		return v, nil
-	}
-
-	var p reflect.Value
-	var v reflect.Value
-
-	switch c.typ.Kind() {
-	default:
-		return nil, fmt.Errorf("the type is not supported. %s", c.typ.String())
-
-	case reflect.Ptr:
-		p = reflect.New(c.typ.Elem())
-		v = p
-
-	case reflect.Slice, reflect.Array, reflect.Map, reflect.Struct:
-		p = reflect.New(c.typ)
-		v = p.Elem()
-
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
-		reflect.Uintptr, reflect.UnsafePointer,
-		reflect.Float32, reflect.Float64,
-		reflect.Bool, reflect.String:
-
-		p = reflect.New(c.typ)
-		v = p.Elem()
-	}
-
-	if err := json.Unmarshal(b, p.Interface()); err != nil {
-		return nil, err
-	}
-
-	return v.Interface(), nil
+func (c JsonCodec[T]) Unmarshal(b []byte) (T, error) {
+	var v T
+	p := c.fillIfPointer(&v)
+	return v, json.Unmarshal(b, p)
 }

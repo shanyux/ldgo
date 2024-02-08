@@ -36,7 +36,7 @@ type (
 	FloatCmd    = redis.FloatCmd
 	SliceCmd    = redis.SliceCmd
 
-	StringsCmd         = redis.StringSliceCmd
+	StringSliceCmd     = redis.StringSliceCmd
 	MapStringStringCmd = redis.MapStringStringCmd
 	StringSetCmd       = redis.StringStructMapCmd
 

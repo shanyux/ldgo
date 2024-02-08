@@ -57,7 +57,7 @@ func TestProtoV1Codec(t *testing.T) {
 			F64: ldptr.NewFloat64(100.234),
 		}
 
-		set := New(rds, ProtoV1Codec()).Set(ctx, key, val, expiration)
+		set := New[proto.Message](rds, ProtoV1Codec[proto.Message]{}).Set(ctx, key, val, expiration)
 		convey.So(set.Err(), convey.ShouldBeNil)
 
 		convey.Convey("get-str", func() {
@@ -66,7 +66,7 @@ func TestProtoV1Codec(t *testing.T) {
 			convey.So(get.Val(), convey.ShouldResemble, testMustProtoV1Marsha(val))
 		})
 		convey.Convey("get-obj", func() {
-			get := New(rds, ProtoV1Codec(&ldtestproto.TestProto{})).Get(ctx, key)
+			get := New[*ldtestproto.TestProto](rds, ProtoV1Codec[*ldtestproto.TestProto]{}).Get(ctx, key)
 			convey.So(get.Err(), convey.ShouldBeNil)
 			convey.So(get.Val(), convey.ShouldResemble, &ldtestproto.TestProto{
 				Str: ldptr.NewString("abc"),
@@ -92,7 +92,7 @@ func TestProtoV2Codec(t *testing.T) {
 			F64: ldptr.NewFloat64(100.234),
 		})
 
-		set := New(rds, ProtoV2Codec()).Set(ctx, key, val, expiration)
+		set := New[protov2.Message](rds, ProtoV2Codec[protov2.Message]{}).Set(ctx, key, val, expiration)
 		convey.So(set.Err(), convey.ShouldBeNil)
 
 		convey.Convey("get-str", func() {
@@ -101,10 +101,10 @@ func TestProtoV2Codec(t *testing.T) {
 			convey.So(get.Val(), convey.ShouldResemble, testMustProtoV2Marsha(val))
 		})
 		convey.Convey("get-obj", func() {
-			get := New(rds, ProtoV2Codec(proto.MessageV2(&ldtestproto.TestProto{}))).Get(ctx, key)
+			get := New[*ldtestproto.TestProto](rds, ProtoV2Codec[*ldtestproto.TestProto]{}).Get(ctx, key)
 			convey.So(get.Err(), convey.ShouldBeNil)
 
-			message := get.Val().(protov2.Message)
+			message := proto.MessageV2(get.Val())
 			convey.So(testGetProtoV2Values(message), convey.ShouldResemble, map[string]interface{}{
 				"str": "abc",
 				"i64": int64(234),
