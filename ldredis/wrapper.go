@@ -5,8 +5,14 @@
 package ldredis
 
 import (
+	"unsafe"
+
+	"github.com/distroy/ldgo/v2/ldredis/internal"
 	redis "github.com/redis/go-redis/v9"
 )
+
+func getOptions(c *Redis) *internal.Options     { return &c.opts }
+func getOptionsPointer(c *Redis) unsafe.Pointer { return unsafe.Pointer(&c.opts) }
 
 type cmdable interface {
 	Cmdable

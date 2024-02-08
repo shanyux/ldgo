@@ -2,7 +2,7 @@
  * Copyright (C) distroy
  */
 
-package ldredis
+package internal
 
 import (
 	"context"
@@ -16,12 +16,12 @@ const (
 	ctxKeyInProcess ctxKey = iota
 )
 
-func isInProcess(c context.Context) bool {
+func InProcess(c context.Context) bool {
 	b, _ := c.Value(ctxKeyInProcess).(bool)
 	return b
 }
 
-func newContext(c context.Context) ldctx.Context {
+func NewContext(c context.Context) ldctx.Context {
 	ctx := ldctx.New(c)
 	ctx = ldctx.WithValue(ctx, ctxKeyInProcess, true)
 	return ctx

@@ -188,7 +188,7 @@ func (m *Mutex) Lock(ctx ldctx.Context, key string) lderr.Error {
 	mc := m.ctx.Load()
 	if mc != nil && mc.lockTime.Load() != 0 {
 		ctx.LogE("redis mutex has been locked", zap.String("key", key), zap.String("old", mc.key),
-			getCaller(m.redis.caller))
+			getCallerField(m.redis))
 		return lderr.ErrCacheMutexLocked
 	}
 	if mc != nil {
@@ -220,7 +220,7 @@ func (m *Mutex) Lock(ctx ldctx.Context, key string) lderr.Error {
 
 	go m.goroutine(mc, now)
 
-	ctx.LogD("redis mutex lock succ", getCaller(m.redis.caller))
+	ctx.LogD("redis mutex lock succ", getCallerField(m.redis))
 	return nil
 }
 
@@ -260,12 +260,12 @@ func (m *Mutex) internalLock(ctx ldctx.Context, key, token string) lderr.Error {
 
 	cmd := cli.SetNX(ctx, key, token, m.getExpiration())
 	if err := cmd.Err(); err != nil {
-		ctx.LogE("redis mutex setnx fail", zap.Error(err), getCaller(m.redis.caller))
+		ctx.LogE("redis mutex setnx fail", zap.Error(err), getCallerField(m.redis))
 		return lderr.Wrap(err, lderr.ErrCacheRead)
 	}
 
 	if ok := cmd.Val(); !ok {
-		ctx.LogW("redis mutex has been locked by another goroutine/process", getCaller(m.redis.caller))
+		ctx.LogW("redis mutex has been locked by another goroutine/process", getCallerField(m.redis))
 		return lderr.ErrCacheMutexLocked
 	}
 
@@ -289,13 +289,13 @@ func (m *Mutex) Unlock(ctx ldctx.Context) lderr.Error {
 func (m *Mutex) unlock(ctx ldctx.Context) lderr.Error {
 	mc := m.ctx.Load()
 	if mc == nil {
-		ctx.LogW("redis mutex has not been locked", getCaller(m.redis.caller))
+		ctx.LogW("redis mutex has not been locked", getCallerField(m.redis))
 		return nil
 	}
 
 	lockTime := mc.lockTime.Load()
 	if lockTime == 0 {
-		ctx.LogW("redis mutex has not been locked", getCaller(m.redis.caller))
+		ctx.LogW("redis mutex has not been locked", getCallerField(m.redis))
 		return nil
 	}
 
@@ -307,12 +307,12 @@ func (m *Mutex) unlock(ctx ldctx.Context) lderr.Error {
 	ctx = ldctx.WithLogger(ctx, nil, zap.String("key", key), zap.String("token", val))
 
 	if ok := mc.lockTime.CompareAndSwap(lockTime, 0); !ok {
-		ctx.LogW("redis mutex has been unlocked by another goroutine", getCaller(m.redis.caller))
+		ctx.LogW("redis mutex has been unlocked by another goroutine", getCallerField(m.redis))
 		return nil
 	}
 	m.ctx.CompareAndSwap(mc, nil)
 
-	ctx.LogD("redis mutex will be unlocked", getCaller(m.redis.caller))
+	ctx.LogD("redis mutex will be unlocked", getCallerField(m.redis))
 
 	ldctx.TryCancel(mc.ctx)
 	if err := m.checkToken(ctx, mc); err != nil {
@@ -321,7 +321,7 @@ func (m *Mutex) unlock(ctx ldctx.Context) lderr.Error {
 
 	cmd := cli.Del(ctx, key)
 	if err := cmd.Err(); err != nil {
-		ctx.LogW("redis mutex del fail", zap.Error(err), getCaller(m.redis.caller))
+		ctx.LogW("redis mutex del fail", zap.Error(err), getCallerField(m.redis))
 		return lderr.Wrap(err, lderr.ErrCacheWrite)
 	}
 

@@ -7,56 +7,18 @@ package ldredis
 import (
 	"context"
 	"encoding/hex"
-	"fmt"
-	"runtime"
-	"strings"
 	"time"
 
 	"github.com/distroy/ldgo/v2/ldctx"
 	"github.com/distroy/ldgo/v2/ldlog"
 	"github.com/distroy/ldgo/v2/ldrand"
+	"github.com/distroy/ldgo/v2/ldredis/internal"
 	redis "github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
-const (
-	ldRedisSrcPath = "/ldredis"
-	exampleSrcPath = "/ldredis/example"
-	goRedisSrcPath = "/github.com/redis/go-redis"
-)
-
-func isCallerFilePath(file string) bool {
-	if strings.Contains(file, goRedisSrcPath) {
-		return false
-	}
-	if !strings.Contains(file, ldRedisSrcPath) {
-		return true
-	}
-	if strings.HasSuffix(file, "_test.go") {
-		return true
-	}
-	if strings.Contains(file, exampleSrcPath) {
-		return true
-	}
-	return false
-}
-
-func getCaller(caller bool) zap.Field {
-	if !caller {
-		return zap.Skip()
-	}
-	for i := 2; i < 15; i++ {
-		_, file, line, ok := runtime.Caller(i)
-		if !ok {
-			break
-		}
-		if !isCallerFilePath(file) {
-			continue
-		}
-		return zap.String("caller", fmt.Sprintf("%s:%d", file, line))
-	}
-
-	return zap.String("caller", "overflow")
+func getCallerField(rds *Redis) zap.Field {
+	return internal.GetCallerField(rds.opts.Caller)
 }
 
 func getCmdField(cmd Cmder) zap.Field {
@@ -86,17 +48,17 @@ func (h hook) ProcessPipelineHook(next redis.ProcessPipelineHook) redis.ProcessP
 }
 
 func (h hook) Process(c context.Context, cmd Cmder, next redis.ProcessHook) error {
-	if isInProcess(c) {
+	if internal.InProcess(c) {
 		return next(c, cmd)
 	}
 
 	var (
-		ctx           = newContext(c)
-		retry         = h.Redis.retry
-		retryInterval = h.Redis.retryInterval
-		reporter      = h.Redis.reporter
+		ctx           = internal.NewContext(c)
+		retry         = h.Redis.opts.Retry
+		retryInterval = h.Redis.opts.RetryInterval
+		reporter      = h.Redis.opts.Reporter
 		logger        = ldctx.GetLogger(ctx)
-		caller        = h.Redis.caller
+		caller        = getCallerField(h.Redis)
 	)
 
 	for i := 0; ; {
@@ -106,12 +68,12 @@ func (h hook) Process(c context.Context, cmd Cmder, next redis.ProcessHook) erro
 		reporter.Report(cmd, time.Since(begin))
 
 		if isErrNil(err) {
-			logger.Debug("redis cmd succ", zap.Int("retry", i), getCmdField(cmd), getCaller(caller))
+			logger.Debug("redis cmd succ", zap.Int("retry", i), getCmdField(cmd), caller)
 			return err
 		}
 
 		if i++; i >= retry {
-			logger.Error("redis cmd fail", zap.Int("retry", i), getCmdField(cmd), zap.Error(err), getCaller(caller))
+			logger.Error("redis cmd fail", zap.Int("retry", i), getCmdField(cmd), zap.Error(err), caller)
 			return err
 		}
 
@@ -120,16 +82,16 @@ func (h hook) Process(c context.Context, cmd Cmder, next redis.ProcessHook) erro
 }
 
 func (h hook) ProcessPipeline(c context.Context, cmds []Cmder, next redis.ProcessPipelineHook) error {
-	if isInProcess(c) {
+	if internal.InProcess(c) {
 		return next(c, cmds)
 	}
 	var (
-		ctx           = newContext(c)
-		retry         = h.Redis.retry
-		retryInterval = h.Redis.retryInterval
-		reporter      = h.Redis.reporter
+		ctx           = internal.NewContext(c)
+		retry         = h.Redis.opts.Retry
+		retryInterval = h.Redis.opts.RetryInterval
+		reporter      = h.Redis.opts.Reporter
 		logger        = ldctx.GetLogger(ctx)
-		caller        = getCaller(h.Redis.caller)
+		caller        = getCallerField(h.Redis)
 	)
 	logger = logger.With(zap.String("pipeline", hex.EncodeToString(ldrand.Bytes(8))))
 

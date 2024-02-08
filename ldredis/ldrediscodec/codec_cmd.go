@@ -2,7 +2,7 @@
  * Copyright (C) distroy
  */
 
-package ldredis
+package ldrediscodec
 
 import (
 	"context"

@@ -2,7 +2,7 @@
  * Copyright (C) distroy
  */
 
-package ldredis
+package ldrediscodec
 
 import (
 	"testing"
@@ -57,7 +57,7 @@ func TestProtoV1Codec(t *testing.T) {
 			F64: ldptr.NewFloat64(100.234),
 		}
 
-		set := rds.WithCodec(ProtoV1Codec()).Set(ctx, key, val, expiration)
+		set := New(rds, ProtoV1Codec()).Set(ctx, key, val, expiration)
 		convey.So(set.Err(), convey.ShouldBeNil)
 
 		convey.Convey("get-str", func() {
@@ -66,7 +66,7 @@ func TestProtoV1Codec(t *testing.T) {
 			convey.So(get.Val(), convey.ShouldResemble, testMustProtoV1Marsha(val))
 		})
 		convey.Convey("get-obj", func() {
-			get := rds.WithCodec(ProtoV1Codec(&ldtestproto.TestProto{})).Get(ctx, key)
+			get := New(rds, ProtoV1Codec(&ldtestproto.TestProto{})).Get(ctx, key)
 			convey.So(get.Err(), convey.ShouldBeNil)
 			convey.So(get.Val(), convey.ShouldResemble, &ldtestproto.TestProto{
 				Str: ldptr.NewString("abc"),
@@ -92,7 +92,7 @@ func TestProtoV2Codec(t *testing.T) {
 			F64: ldptr.NewFloat64(100.234),
 		})
 
-		set := rds.WithCodec(ProtoV2Codec()).Set(ctx, key, val, expiration)
+		set := New(rds, ProtoV2Codec()).Set(ctx, key, val, expiration)
 		convey.So(set.Err(), convey.ShouldBeNil)
 
 		convey.Convey("get-str", func() {
@@ -101,7 +101,7 @@ func TestProtoV2Codec(t *testing.T) {
 			convey.So(get.Val(), convey.ShouldResemble, testMustProtoV2Marsha(val))
 		})
 		convey.Convey("get-obj", func() {
-			get := rds.WithCodec(ProtoV2Codec(proto.MessageV2(&ldtestproto.TestProto{}))).Get(ctx, key)
+			get := New(rds, ProtoV2Codec(proto.MessageV2(&ldtestproto.TestProto{}))).Get(ctx, key)
 			convey.So(get.Err(), convey.ShouldBeNil)
 
 			message := get.Val().(protov2.Message)

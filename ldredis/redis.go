@@ -7,6 +7,7 @@ package ldredis
 import (
 	"time"
 
+	"github.com/distroy/ldgo/v2/ldredis/internal"
 	redis "github.com/redis/go-redis/v9"
 )
 
@@ -53,10 +54,11 @@ func NewByConfig(cfg *Config) *Redis {
 
 func newRedis(cli cmdable) *Redis {
 	c := &Redis{
-		cmdable:  cli,
-		origin:   cli,
-		reporter: discardReporter{},
-		caller:   true,
+		cmdable: cli,
+		opts: internal.Options{
+			Reporter: internal.DiscardReporter{},
+			Caller:   true,
+		},
 	}
 
 	c.cmdable.AddHook(newHook(c))
@@ -67,17 +69,10 @@ func newRedis(cli cmdable) *Redis {
 type Redis struct {
 	cmdable
 
-	origin             cmdable
-	oldProcess         func(cmd Cmder) error
-	oldProcessPipeline func(cmds []Cmder) error
-
-	reporter      Reporter
-	retry         int
-	retryInterval time.Duration
-	caller        bool
+	opts internal.Options
 }
 
-func (c *Redis) Client() Cmdable { return c.origin }
+func (c *Redis) Client() Cmdable { return c.cmdable }
 
 func (c *Redis) clone() *Redis {
 	cp := *c
@@ -86,28 +81,21 @@ func (c *Redis) clone() *Redis {
 	return c
 }
 
-func (c *Redis) WithCodec(codec Codec) *CodecRedis {
-	return &CodecRedis{
-		client: c,
-		codec:  codec,
-	}
-}
-
 // WithRetry should be called like these:
 //
 //	WithRetry(3)
 //	WithRetry(3, {interval})
 func (c *Redis) WithRetry(retry int, interval ...time.Duration) *Redis {
 	c = c.clone()
-	c.retry = retry
+	c.opts.Retry = retry
 
-	c.retryInterval = redisRetryIntervalDef
+	c.opts.RetryInterval = redisRetryIntervalDef
 	if len(interval) > 0 {
 		d := interval[0]
 		if d < redisRetryIntervalMin {
 			d = redisRetryIntervalMin
 		}
-		c.retryInterval = d
+		c.opts.RetryInterval = d
 	}
 
 	return c
@@ -115,16 +103,16 @@ func (c *Redis) WithRetry(retry int, interval ...time.Duration) *Redis {
 
 func (c *Redis) WithReport(reporter Reporter) *Redis {
 	if reporter == nil {
-		reporter = discardReporter{}
+		reporter = internal.DiscardReporter{}
 	}
 
 	c = c.clone()
-	c.reporter = reporter
+	c.opts.Reporter = reporter
 	return c
 }
 
 func (c *Redis) WithCaller(enable bool) *Redis {
 	c = c.clone()
-	c.caller = enable
+	c.opts.Caller = enable
 	return c
 }
