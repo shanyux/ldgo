@@ -14,7 +14,7 @@ import (
 )
 
 func TestJsonCodec(t *testing.T) {
-	convey.Convey(t.Name(), t, func() {
+	convey.Convey(t.Name(), t, func(c convey.C) {
 		rds := testMemoryRedis()
 		defer rds.Close()
 
@@ -23,34 +23,34 @@ func TestJsonCodec(t *testing.T) {
 		key := "test-json-codec"
 		expiration := time.Duration(0)
 
-		convey.Convey("int64", func() {
+		c.Convey("int64", func(c convey.C) {
 			val := int64(100)
 
 			set := New[any](rds, JsonCodec[any]{}).Set(ctx, key, val, expiration)
-			convey.So(set.Err(), convey.ShouldBeNil)
+			c.So(set.Err(), convey.ShouldBeNil)
 
-			convey.Convey("get-str", func() {
+			c.Convey("get-str", func(c convey.C) {
 				get := rds.Get(ctx, key)
-				convey.So(get.Err(), convey.ShouldBeNil)
-				convey.So(get.Val(), convey.ShouldResemble, "100")
+				c.So(get.Err(), convey.ShouldBeNil)
+				c.So(get.Val(), convey.ShouldResemble, "100")
 			})
-			convey.Convey("get-i64", func() {
+			c.Convey("get-i64", func(c convey.C) {
 				get := New[int64](rds, JsonCodec[int64]{}).Get(ctx, key)
-				convey.So(get.Err(), convey.ShouldBeNil)
-				convey.So(get.Val(), convey.ShouldResemble, int64(100))
+				c.So(get.Err(), convey.ShouldBeNil)
+				c.So(get.Val(), convey.ShouldResemble, int64(100))
 			})
-			convey.Convey("get-pi64", func() {
+			c.Convey("get-pi64", func(c convey.C) {
 				get := New[*int64](rds, JsonCodec[*int64]{}).Get(ctx, key)
-				convey.So(get.Err(), convey.ShouldBeNil)
-				convey.So(get.Val(), convey.ShouldResemble, ldptr.NewInt64(100))
+				c.So(get.Err(), convey.ShouldBeNil)
+				c.So(get.Val(), convey.ShouldResemble, ldptr.NewInt64(100))
 			})
-			convey.Convey("get-nil", func() {
+			c.Convey("get-nil", func(c convey.C) {
 				get := New[any](rds, JsonCodec[any]{}).Get(ctx, key)
-				convey.So(get.Err(), convey.ShouldBeNil)
-				convey.So(get.Val(), convey.ShouldResemble, float64(100))
+				c.So(get.Err(), convey.ShouldBeNil)
+				c.So(get.Val(), convey.ShouldResemble, float64(100))
 			})
 		})
-		convey.Convey("object", func() {
+		c.Convey("object", func(c convey.C) {
 			type Object struct {
 				S    string  `json:"s"`
 				PS   *string `json:"ps"`
@@ -66,37 +66,37 @@ func TestJsonCodec(t *testing.T) {
 			}
 
 			set := New[any](rds, JsonCodec[any]{}).Set(ctx, key, val, expiration)
-			convey.So(set.Err(), convey.ShouldBeNil)
+			c.So(set.Err(), convey.ShouldBeNil)
 
-			convey.Convey("get-str", func() {
+			c.Convey("get-str", func(c convey.C) {
 				get := rds.Get(ctx, key)
-				convey.So(get.Err(), convey.ShouldBeNil)
-				convey.So(get.Val(), convey.ShouldResemble, `{"s":"abc","ps":"xyz","i64":123,"pi64":234}`)
+				c.So(get.Err(), convey.ShouldBeNil)
+				c.So(get.Val(), convey.ShouldResemble, `{"s":"abc","ps":"xyz","i64":123,"pi64":234}`)
 			})
-			convey.Convey("get-obj", func() {
+			c.Convey("get-obj", func(c convey.C) {
 				get := New[Object](rds, JsonCodec[Object]{}).Get(ctx, key)
-				convey.So(get.Err(), convey.ShouldBeNil)
-				convey.So(get.Val(), convey.ShouldResemble, Object{
+				c.So(get.Err(), convey.ShouldBeNil)
+				c.So(get.Val(), convey.ShouldResemble, Object{
 					S:    "abc",
 					PS:   ldptr.NewString("xyz"),
 					I64:  123,
 					PI64: ldptr.NewInt64(234),
 				})
 			})
-			convey.Convey("get-ptr", func() {
+			c.Convey("get-ptr", func(c convey.C) {
 				get := New[*Object](rds, JsonCodec[*Object]{}).Get(ctx, key)
-				convey.So(get.Err(), convey.ShouldBeNil)
-				convey.So(get.Val(), convey.ShouldResemble, &Object{
+				c.So(get.Err(), convey.ShouldBeNil)
+				c.So(get.Val(), convey.ShouldResemble, &Object{
 					S:    "abc",
 					PS:   ldptr.NewString("xyz"),
 					I64:  123,
 					PI64: ldptr.NewInt64(234),
 				})
 			})
-			convey.Convey("get-nil", func() {
+			c.Convey("get-nil", func(c convey.C) {
 				get := New[any](rds, JsonCodec[any]{}).Get(ctx, key)
-				convey.So(get.Err(), convey.ShouldBeNil)
-				convey.So(get.Val(), convey.ShouldResemble, map[string]interface{}{
+				c.So(get.Err(), convey.ShouldBeNil)
+				c.So(get.Val(), convey.ShouldResemble, map[string]interface{}{
 					"s":    "abc",
 					"ps":   "xyz",
 					"i64":  float64(123),
