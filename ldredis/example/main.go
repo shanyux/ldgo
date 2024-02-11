@@ -13,6 +13,7 @@ import (
 	"github.com/distroy/ldgo/v2/ldctx"
 	"github.com/distroy/ldgo/v2/ldlog"
 	"github.com/distroy/ldgo/v2/ldredis"
+	"github.com/distroy/ldgo/v2/ldredis/ldrediscodec"
 	"go.uber.org/zap"
 )
 
@@ -82,7 +83,7 @@ func codecStruct(ctx ldctx.Context) {
 	defer rds.Close()
 	key := "test:codec:struct"
 
-	sCmd := rds.WithCodec(ldredis.JsonCodec()).Set(ctx, key, &codecStruct{
+	sCmd := ldrediscodec.New[any](rds, ldrediscodec.JsonCodec[any]{}).Set(ctx, key, &codecStruct{
 		Str1: "aaa",
 		Str2: "bbb",
 		Int1: 111,
@@ -90,10 +91,10 @@ func codecStruct(ctx ldctx.Context) {
 	}, time.Minute)
 	ctx.LogI("cmd", zap.Reflect("cmd", sCmd.Args()))
 
-	gCmd0 := rds.WithCodec(ldredis.JsonCodec(&codecStruct{})).Get(ctx, key)
+	gCmd0 := ldrediscodec.New[*codecStruct](rds, ldrediscodec.JsonCodec[*codecStruct]{}).Get(ctx, key)
 	ctx.LogIf("type:%T, value:%v", gCmd0.Val(), gCmd0.Val())
 
-	gCmd1 := rds.WithCodec(ldredis.JsonCodec()).Get(ctx, key)
+	gCmd1 := ldrediscodec.New[any](rds, ldrediscodec.JsonCodec[any]{}).Get(ctx, key)
 	ctx.LogIf("type:%T, value:%v", gCmd1.Val(), gCmd1.Val())
 }
 
@@ -102,7 +103,7 @@ func codecBaseType(ctx ldctx.Context) {
 	defer rds.Close()
 
 	key := "test:codec:basetype"
-	cli := rds.WithCodec(ldredis.JsonCodec())
+	cli := ldrediscodec.New[any](rds, ldrediscodec.JsonCodec[any]{})
 	cli.HMSet(ctx, key, map[string]interface{}{
 		"i1": 1234,
 		"s1": "abc",
