@@ -10,9 +10,18 @@ import (
 
 	"github.com/distroy/ldgo/v2/ldconv"
 	"github.com/distroy/ldgo/v2/ldredis"
+	"github.com/distroy/ldgo/v2/ldredis/internal"
 )
 
-var _ encoding.BinaryMarshaler = (*errorMarshaler)(nil)
+var (
+	_ encoding.BinaryMarshaler = (*errorMarshaler)(nil)
+
+	_ internal.CmderWithParse = (*AnyCmd[any])(nil)
+	_ internal.CmderWithParse = (*MapStringAnyCmd[any])(nil)
+	_ internal.CmderWithParse = (*AnySliceCmd[any])(nil)
+	_ internal.CmderWithParse = (*SliceCmd[any])(nil)
+	_ internal.CmderWithParse = (*ZMemberSliceCmd[any])(nil)
+)
 
 type errorMarshaler struct {
 	Err error
@@ -22,7 +31,7 @@ func (c errorMarshaler) MarshalBinary() ([]byte, error) {
 	return nil, c.Err
 }
 
-func newAnyCmd[T comparable](cc context.Context, cli *Redis[T], cmd *StringCmd) *AnyCmd[T] {
+func newAnyCmd[T comparable](cc context.Context, cli *Redis[T], cmd *ldredis.StringCmd) *AnyCmd[T] {
 	c := &AnyCmd[T]{
 		base:      cli.base,
 		StringCmd: cmd,
@@ -33,7 +42,7 @@ func newAnyCmd[T comparable](cc context.Context, cli *Redis[T], cmd *StringCmd) 
 
 type AnyCmd[T comparable] struct {
 	base[T]
-	*StringCmd
+	*ldredis.StringCmd
 
 	val T
 }
@@ -56,7 +65,7 @@ func (c *AnyCmd[T]) Parse(cc context.Context) error {
 	return nil
 }
 
-func newMapStringAnyCmd[T comparable](cc context.Context, cli *Redis[T], cmd *MapStringStringCmd) *MapStringAnyCmd[T] {
+func newMapStringAnyCmd[T comparable](cc context.Context, cli *Redis[T], cmd *ldredis.MapStringStringCmd) *MapStringAnyCmd[T] {
 	c := &MapStringAnyCmd[T]{
 		base:               cli.base,
 		MapStringStringCmd: cmd,
@@ -67,7 +76,7 @@ func newMapStringAnyCmd[T comparable](cc context.Context, cli *Redis[T], cmd *Ma
 
 type MapStringAnyCmd[T comparable] struct {
 	base[T]
-	*MapStringStringCmd
+	*ldredis.MapStringStringCmd
 
 	val map[string]T
 }
@@ -93,7 +102,7 @@ func (c *MapStringAnyCmd[T]) Parse(cc context.Context) error {
 	return nil
 }
 
-func newAnySliceCmd[T comparable](cc context.Context, cli *Redis[T], cmd *StringSliceCmd) *AnySliceCmd[T] {
+func newAnySliceCmd[T comparable](cc context.Context, cli *Redis[T], cmd *ldredis.StringSliceCmd) *AnySliceCmd[T] {
 	c := &AnySliceCmd[T]{
 		base:           cli.base,
 		StringSliceCmd: cmd,
@@ -104,7 +113,7 @@ func newAnySliceCmd[T comparable](cc context.Context, cli *Redis[T], cmd *String
 
 type AnySliceCmd[T comparable] struct {
 	base[T]
-	*StringSliceCmd
+	*ldredis.StringSliceCmd
 
 	val []T
 }
@@ -130,7 +139,7 @@ func (c *AnySliceCmd[T]) Parse(cc context.Context) error {
 	return nil
 }
 
-func newAnySetCmd[T comparable](cc context.Context, cli *Redis[T], cmd *StringSetCmd) *AnySetCmd[T] {
+func newAnySetCmd[T comparable](cc context.Context, cli *Redis[T], cmd *ldredis.StringSetCmd) *AnySetCmd[T] {
 	c := &AnySetCmd[T]{
 		base:         cli.base,
 		StringSetCmd: cmd,
@@ -141,7 +150,7 @@ func newAnySetCmd[T comparable](cc context.Context, cli *Redis[T], cmd *StringSe
 
 type AnySetCmd[T comparable] struct {
 	base[T]
-	*StringSetCmd
+	*ldredis.StringSetCmd
 
 	val map[T]struct{}
 }
@@ -204,7 +213,7 @@ func (c *SliceCmd[T]) Parse(cc context.Context) error {
 	return nil
 }
 
-func newZMemberSliceCmd[T comparable](cc context.Context, cli *Redis[T], cmd *ZSliceCmd) *ZMemberSliceCmd[T] {
+func newZMemberSliceCmd[T comparable](cc context.Context, cli *Redis[T], cmd *ldredis.ZSliceCmd) *ZMemberSliceCmd[T] {
 	c := &ZMemberSliceCmd[T]{
 		base:      cli.base,
 		ZSliceCmd: cmd,
@@ -215,7 +224,7 @@ func newZMemberSliceCmd[T comparable](cc context.Context, cli *Redis[T], cmd *ZS
 
 type ZMemberSliceCmd[T any] struct {
 	base[T]
-	*ZSliceCmd
+	*ldredis.ZSliceCmd
 
 	val []ZMember[T]
 }

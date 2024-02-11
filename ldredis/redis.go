@@ -5,6 +5,7 @@
 package ldredis
 
 import (
+	"context"
 	"time"
 
 	"github.com/distroy/ldgo/v2/ldredis/internal"
@@ -115,4 +116,17 @@ func (c *Redis) WithCaller(enable bool) *Redis {
 	c = c.clone()
 	c.opts.Caller = enable
 	return c
+}
+
+func (c *Redis) Process(ctx context.Context, cmd Cmder) error {
+	if err := c.cmdable.Process(ctx, cmd); err != nil {
+		return err
+	}
+
+	v, _ := cmd.(internal.CmderWithParse)
+	if v != nil {
+		return v.Parse(ctx)
+	}
+
+	return nil
 }
