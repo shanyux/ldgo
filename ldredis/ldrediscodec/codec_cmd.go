@@ -9,222 +9,247 @@ import (
 	"encoding"
 
 	"github.com/distroy/ldgo/v2/ldconv"
+	"github.com/distroy/ldgo/v2/ldredis"
+	"github.com/distroy/ldgo/v2/ldredis/internal"
 )
 
-var _ encoding.BinaryMarshaler = (*errorMarshaler)(nil)
+var (
+	_ encoding.BinaryMarshaler = (*errorMarshaler)(nil)
+
+	_ internal.CmderWithParse = (*AnyCmd[any])(nil)
+	_ internal.CmderWithParse = (*MapStringAnyCmd[any])(nil)
+	_ internal.CmderWithParse = (*AnySliceCmd[any])(nil)
+	_ internal.CmderWithParse = (*SliceCmd[any])(nil)
+	_ internal.CmderWithParse = (*ZMemberSliceCmd[any])(nil)
+)
 
 type errorMarshaler struct {
-	err error
+	Err error
 }
 
 func (c errorMarshaler) MarshalBinary() ([]byte, error) {
-	return nil, c.err
+	return nil, c.Err
 }
 
-func newCodecCmd(cc context.Context, cli *CodecRedis, cmd *StringCmd) *CodecCmd {
-	c := &CodecCmd{}
-	c.parse(cc, cli, cmd)
+func newAnyCmd[T comparable](cc context.Context, cli *Redis[T], cmd *ldredis.StringCmd) *AnyCmd[T] {
+	c := &AnyCmd[T]{
+		base:      cli.base,
+		StringCmd: cmd,
+	}
+	c.Parse(cc)
 	return c
 }
 
-type CodecCmd struct {
-	*StringCmd
+type AnyCmd[T comparable] struct {
+	base[T]
+	*ldredis.StringCmd
 
-	err error
-	val interface{}
+	val T
 }
 
-func (c *CodecCmd) Err() error                   { return c.err }
-func (c *CodecCmd) Val() interface{}             { return c.val }
-func (c *CodecCmd) Result() (interface{}, error) { return c.Val(), c.Err() }
-func (c *CodecCmd) parse(cc context.Context, cli *CodecRedis, cmd *StringCmd) {
-	c.StringCmd = cmd
-	c.err = cmd.Err()
-	if c.err != nil {
-		return
+func (c *AnyCmd[T]) Val() T             { return c.val }
+func (c *AnyCmd[T]) Result() (T, error) { return c.Val(), c.Err() }
+func (c *AnyCmd[T]) Parse(cc context.Context) error {
+	cmd := c.StringCmd
+	if err := cmd.Err(); err != nil {
+		return err
 	}
 
-	v, err := cli.unmarshal(cc, ldconv.StrToBytesUnsafe(cmd.Val()))
+	v, err := c.unmarshal(cc, ldconv.StrToBytesUnsafe(cmd.Val()))
 	if err != nil {
-		c.err = err
-		return
+		c.SetErr(err)
+		return err
 	}
 
 	c.val = v
+	return nil
 }
 
-func newMapStringCodecCmd(cc context.Context, cli *CodecRedis, cmd *MapStringStringCmd) *MapStringCodecCmd {
-	c := &MapStringCodecCmd{}
-	c.parse(cc, cli, cmd)
+func newMapStringAnyCmd[T comparable](cc context.Context, cli *Redis[T], cmd *ldredis.MapStringStringCmd) *MapStringAnyCmd[T] {
+	c := &MapStringAnyCmd[T]{
+		base:               cli.base,
+		MapStringStringCmd: cmd,
+	}
+	c.Parse(cc)
 	return c
 }
 
-type MapStringCodecCmd struct {
-	*MapStringStringCmd
+type MapStringAnyCmd[T comparable] struct {
+	base[T]
+	*ldredis.MapStringStringCmd
 
-	err error
-	val map[string]interface{}
+	val map[string]T
 }
 
-func (c *MapStringCodecCmd) Err() error                              { return c.err }
-func (c *MapStringCodecCmd) Val() map[string]interface{}             { return c.val }
-func (c *MapStringCodecCmd) Result() (map[string]interface{}, error) { return c.Val(), c.Err() }
-func (c *MapStringCodecCmd) parse(cc context.Context, cli *CodecRedis, cmd *MapStringStringCmd) {
-	c.MapStringStringCmd = cmd
-	c.err = cmd.Err()
-	if c.err != nil {
-		return
+func (c *MapStringAnyCmd[T]) Val() map[string]T             { return c.val }
+func (c *MapStringAnyCmd[T]) Result() (map[string]T, error) { return c.Val(), c.Err() }
+func (c *MapStringAnyCmd[T]) Parse(cc context.Context) error {
+	cmd := c.MapStringStringCmd
+	if err := cmd.Err(); err != nil {
+		return err
 	}
 
-	m := make(map[string]interface{}, len(cmd.Val()))
+	m := make(map[string]T, len(cmd.Val()))
 	for k, val := range cmd.Val() {
-		v, err := cli.unmarshal(cc, ldconv.StrToBytesUnsafe(val))
+		v, err := c.unmarshal(cc, ldconv.StrToBytesUnsafe(val))
 		if err != nil {
-			c.err = err
-			return
+			c.SetErr(err)
+			return err
 		}
 		m[k] = v
 	}
 	c.val = m
+	return nil
 }
 
-func newCodecsCmd(cc context.Context, cli *CodecRedis, cmd *StringsCmd) *CodecsCmd {
-	c := &CodecsCmd{}
-	c.parse(cc, cli, cmd)
+func newAnySliceCmd[T comparable](cc context.Context, cli *Redis[T], cmd *ldredis.StringSliceCmd) *AnySliceCmd[T] {
+	c := &AnySliceCmd[T]{
+		base:           cli.base,
+		StringSliceCmd: cmd,
+	}
+	c.Parse(cc)
 	return c
 }
 
-type CodecsCmd struct {
-	*StringsCmd
+type AnySliceCmd[T comparable] struct {
+	base[T]
+	*ldredis.StringSliceCmd
 
-	err error
-	val []interface{}
+	val []T
 }
 
-func (c *CodecsCmd) Err() error                     { return c.err }
-func (c *CodecsCmd) Val() []interface{}             { return c.val }
-func (c *CodecsCmd) Result() ([]interface{}, error) { return c.Val(), c.Err() }
-func (c *CodecsCmd) parse(cc context.Context, cli *CodecRedis, cmd *StringsCmd) {
-	c.StringsCmd = cmd
-	c.err = cmd.Err()
-	if c.err != nil {
-		return
+func (c *AnySliceCmd[T]) Val() []T             { return c.val }
+func (c *AnySliceCmd[T]) Result() ([]T, error) { return c.Val(), c.Err() }
+func (c *AnySliceCmd[T]) Parse(cc context.Context) error {
+	cmd := c.StringSliceCmd
+	if err := cmd.Err(); err != nil {
+		return err
 	}
 
-	s := make([]interface{}, 0, len(cmd.Val()))
+	s := make([]T, 0, len(cmd.Val()))
 	for _, val := range cmd.Val() {
-		v, err := cli.unmarshal(cc, ldconv.StrToBytesUnsafe(val))
+		v, err := c.unmarshal(cc, ldconv.StrToBytesUnsafe(val))
 		if err != nil {
-			c.err = err
-			return
+			c.SetErr(err)
+			return err
 		}
 		s = append(s, v)
 	}
 	c.val = s
+	return nil
 }
 
-func newCodecSetCmd(cc context.Context, cli *CodecRedis, cmd *StringSetCmd) *CodecSetCmd {
-	c := &CodecSetCmd{}
-	c.parse(cc, cli, cmd)
+func newAnySetCmd[T comparable](cc context.Context, cli *Redis[T], cmd *ldredis.StringSetCmd) *AnySetCmd[T] {
+	c := &AnySetCmd[T]{
+		base:         cli.base,
+		StringSetCmd: cmd,
+	}
+	c.Parse(cc)
 	return c
 }
 
-type CodecSetCmd struct {
-	*StringSetCmd
+type AnySetCmd[T comparable] struct {
+	base[T]
+	*ldredis.StringSetCmd
 
-	err error
-	val map[interface{}]struct{}
+	val map[T]struct{}
 }
 
-func (c *CodecSetCmd) Err() error                                { return c.err }
-func (c *CodecSetCmd) Val() map[interface{}]struct{}             { return c.val }
-func (c *CodecSetCmd) Result() (map[interface{}]struct{}, error) { return c.Val(), c.Err() }
-func (c *CodecSetCmd) parse(cc context.Context, cli *CodecRedis, cmd *StringSetCmd) {
-	c.StringSetCmd = cmd
-	c.err = cmd.Err()
-	if c.err != nil {
-		return
+func (c *AnySetCmd[T]) Val() map[T]struct{}             { return c.val }
+func (c *AnySetCmd[T]) Result() (map[T]struct{}, error) { return c.Val(), c.Err() }
+func (c *AnySetCmd[T]) Parse(cc context.Context) error {
+	cmd := c.StringSetCmd
+	if err := cmd.Err(); err != nil {
+		return err
 	}
 
-	s := make(map[interface{}]struct{}, len(cmd.Val()))
+	s := make(map[T]struct{}, len(cmd.Val()))
 	for val := range cmd.Val() {
-		v, err := cli.unmarshal(cc, ldconv.StrToBytesUnsafe(val))
+		v, err := c.unmarshal(cc, ldconv.StrToBytesUnsafe(val))
 		if err != nil {
-			c.err = err
-			return
+			c.SetErr(err)
+			return err
 		}
 		s[v] = struct{}{}
 	}
 	c.val = s
+	return nil
 }
 
-func newCodecSliceCmd(cc context.Context, cli *CodecRedis, cmd *SliceCmd) *CodecSliceCmd {
-	c := &CodecSliceCmd{}
-	c.parse(cc, cli, cmd)
+func newSliceCmd[T comparable](cc context.Context, cli *Redis[T], cmd *ldredis.SliceCmd) *SliceCmd[T] {
+	c := &SliceCmd[T]{
+		base:     cli.base,
+		SliceCmd: cmd,
+	}
+	c.Parse(cc)
 	return c
 }
 
-type CodecSliceCmd struct {
-	*SliceCmd
+type SliceCmd[T any] struct {
+	base[T]
+	*ldredis.SliceCmd
 
-	err error
-	val []interface{}
+	val []T
 }
 
-func (c *CodecSliceCmd) Err() error                     { return c.err }
-func (c *CodecSliceCmd) Val() []interface{}             { return c.val }
-func (c *CodecSliceCmd) Result() ([]interface{}, error) { return c.Val(), c.Err() }
-func (c *CodecSliceCmd) parse(cc context.Context, cli *CodecRedis, cmd *SliceCmd) {
-	c.SliceCmd = cmd
-	c.err = cmd.Err()
-	if c.err != nil {
-		return
+func (c *SliceCmd[T]) Val() []T             { return c.val }
+func (c *SliceCmd[T]) Result() ([]T, error) { return c.Val(), c.Err() }
+func (c *SliceCmd[T]) Parse(cc context.Context) error {
+	cmd := c.SliceCmd
+	if err := cmd.Err(); err != nil {
+		return err
 	}
 
-	s := make([]interface{}, 0, len(cmd.Val()))
+	s := make([]T, 0, len(cmd.Val()))
 	for _, val := range cmd.Val() {
-		v, err := cli.unmarshalInterface(cc, val)
+		v, err := c.unmarshalInterface(cc, val)
 		if err != nil {
-			c.err = err
-			return
+			c.SetErr(err)
+			return err
 		}
 		s = append(s, v)
 	}
 	c.val = s
+	return nil
 }
 
-func newZCodecSliceCmd(cc context.Context, cli *CodecRedis, cmd *ZSliceCmd) *ZCodecSliceCmd {
-	c := &ZCodecSliceCmd{}
-	c.parse(cc, cli, cmd)
+func newZMemberSliceCmd[T comparable](cc context.Context, cli *Redis[T], cmd *ldredis.ZSliceCmd) *ZMemberSliceCmd[T] {
+	c := &ZMemberSliceCmd[T]{
+		base:      cli.base,
+		ZSliceCmd: cmd,
+	}
+	c.Parse(cc)
 	return c
 }
 
-type ZCodecSliceCmd struct {
-	*ZSliceCmd
+type ZMemberSliceCmd[T any] struct {
+	base[T]
+	*ldredis.ZSliceCmd
 
-	err error
-	val []ZMember
+	val []ZMember[T]
 }
 
-func (c *ZCodecSliceCmd) Err() error                 { return c.err }
-func (c *ZCodecSliceCmd) Val() []ZMember             { return c.val }
-func (c *ZCodecSliceCmd) Result() ([]ZMember, error) { return c.Val(), c.Err() }
-func (c *ZCodecSliceCmd) parse(cc context.Context, cli *CodecRedis, cmd *ZSliceCmd) {
-	c.ZSliceCmd = cmd
-	c.err = cmd.Err()
-	if c.err != nil {
-		return
+func (c *ZMemberSliceCmd[T]) Val() []ZMember[T]             { return c.val }
+func (c *ZMemberSliceCmd[T]) Result() ([]ZMember[T], error) { return c.Val(), c.Err() }
+func (c *ZMemberSliceCmd[T]) Parse(cc context.Context) error {
+	cmd := c.ZSliceCmd
+	if err := cmd.Err(); err != nil {
+		return err
 	}
 
-	members := make([]ZMember, 0, len(cmd.Val()))
+	members := make([]ZMember[T], 0, len(cmd.Val()))
 	for _, v := range cmd.Val() {
-		val, err := cli.unmarshalInterface(cc, v.Member)
+		val, err := c.unmarshalInterface(cc, v.Member)
 		if err != nil {
-			return
+			c.SetErr(err)
+			return err
 		}
-		v.Member = val
-		members = append(members, v)
+		members = append(members, ZMember[T]{
+			Score:  v.Score,
+			Member: val,
+		})
 	}
 
 	c.val = members
+	return nil
 }
