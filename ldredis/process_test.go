@@ -47,6 +47,7 @@ func Test_hook_process(t *testing.T) {
 			c.So(cmd.Val(), convey.ShouldEqual, "test-value")
 		})
 		c.Convey("parse succ", func(c convey.C) {
+			rds.cmdable.AddHook(newHook(rds))
 			cmd := &testStringCmd{
 				StringCmd: redis.NewStringCmd(ctx, "get", key),
 				// err:       lderr.ErrUnkown,
@@ -87,6 +88,7 @@ func Test_hook_processPipeline(t *testing.T) {
 			c.So(cmds[1].(*testStringCmd).Val(), convey.ShouldEqual, "test-value")
 		})
 		c.Convey("pipelined", func(c convey.C) {
+			rds.cmdable.AddHook(newHook(rds))
 			cmds, err := rds.Pipelined(ctx, func(p redis.Pipeliner) error {
 				p.Set(ctx, key, "test-value", 0)
 
