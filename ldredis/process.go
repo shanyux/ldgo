@@ -73,9 +73,9 @@ func (h hook) process(c context.Context, cmd Cmder, next redis.ProcessHook) erro
 		}
 
 		i++
-		logger.Error("redis cmd fail", zap.Int("retry", i), getCmdField(cmd),
-			zap.Error(err), caller)
 		if i >= retry {
+			logger.Error("redis cmd fail", zap.Int("retry", i), getCmdField(cmd),
+				zap.Error(err), caller)
 			return err
 		}
 
@@ -110,8 +110,8 @@ func (h hook) processPipeline(c context.Context, cmds []Cmder, next redis.Proces
 		}
 
 		i++
-		h.printPipelineFailLog(cmds, i, logger, caller)
 		if i >= retry {
+			h.printPipelineFailLog(cmds, i, logger, caller)
 			logger.Error("redis pipeline fail", zap.Int("retry", i), zap.Error(err), caller)
 			return err
 		}
