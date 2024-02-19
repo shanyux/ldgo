@@ -67,7 +67,7 @@ func (h hook) process(c context.Context, cmd Cmder, next redis.ProcessHook) erro
 		cmd.SetErr(err)
 		err = h.getCmdError(c, cmd)
 		reporter.Report(cmd, time.Since(begin))
-		if err == nil {
+		if isErrNil(err) {
 			logger.Debug("redis cmd succ", zap.Int("retry", i), getCmdField(cmd), caller)
 			return err
 		}
@@ -103,7 +103,7 @@ func (h hook) processPipeline(c context.Context, cmds []Cmder, next redis.Proces
 		reporter.ReportPipeline(cmds, time.Since(begin))
 
 		err := h.checkPipelineError(ctx, cmds)
-		if err == nil {
+		if isErrNil(err) {
 			h.printPipelineSuccLog(cmds, i, logger, caller)
 			logger.Debug("redis pipeline cmd succ", zap.Int("retry", i), caller)
 			return err
@@ -121,26 +121,28 @@ func (h hook) processPipeline(c context.Context, cmds []Cmder, next redis.Proces
 }
 
 func (h hook) getCmdError(c context.Context, cmd Cmder) error {
-	if err := cmd.Err(); !isErrNil(err) {
+	err := cmd.Err()
+	if !isErrNil(err) {
 		return err
 	}
 
 	v, _ := cmd.(internal.CmderWithParse)
 	if v == nil {
-		return nil
+		return err
 	}
 
-	if err := v.Parse(c); !isErrNil(err) {
+	err = v.Parse(c)
+	if !isErrNil(err) {
 		v.SetErr(err)
 		return err
 	}
-	return nil
+	return err
 }
 
 func (h hook) checkPipelineError(c context.Context, cmds []Cmder) error {
 	for _, cmd := range cmds {
 		err := h.getCmdError(c, cmd)
-		if err != nil {
+		if !isErrNil(err) {
 			return err
 		}
 	}
