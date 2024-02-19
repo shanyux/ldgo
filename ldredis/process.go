@@ -38,16 +38,16 @@ type hook struct {
 func (h hook) DialHook(next redis.DialHook) redis.DialHook { return nil }
 func (h hook) ProcessHook(next redis.ProcessHook) redis.ProcessHook {
 	return func(c context.Context, cmd redis.Cmder) error {
-		return h.Process(c, cmd, next)
+		return h.process(c, cmd, next)
 	}
 }
 func (h hook) ProcessPipelineHook(next redis.ProcessPipelineHook) redis.ProcessPipelineHook {
 	return func(c context.Context, cmds []redis.Cmder) error {
-		return h.ProcessPipeline(c, cmds, next)
+		return h.processPipeline(c, cmds, next)
 	}
 }
 
-func (h hook) Process(c context.Context, cmd Cmder, next redis.ProcessHook) error {
+func (h hook) process(c context.Context, cmd Cmder, next redis.ProcessHook) error {
 	if internal.InProcess(c) {
 		return next(c, cmd)
 	}
@@ -65,15 +65,17 @@ func (h hook) Process(c context.Context, cmd Cmder, next redis.ProcessHook) erro
 		begin := time.Now()
 		err := next(ctx, cmd)
 		cmd.SetErr(err)
+		err = h.getCmdError(c, cmd)
 		reporter.Report(cmd, time.Since(begin))
-
-		if isErrNil(err) {
+		if err == nil {
 			logger.Debug("redis cmd succ", zap.Int("retry", i), getCmdField(cmd), caller)
 			return err
 		}
 
-		if i++; i >= retry {
-			logger.Error("redis cmd fail", zap.Int("retry", i), getCmdField(cmd), zap.Error(err), caller)
+		i++
+		logger.Error("redis cmd fail", zap.Int("retry", i), getCmdField(cmd),
+			zap.Error(err), caller)
+		if i >= retry {
 			return err
 		}
 
@@ -81,7 +83,7 @@ func (h hook) Process(c context.Context, cmd Cmder, next redis.ProcessHook) erro
 	}
 }
 
-func (h hook) ProcessPipeline(c context.Context, cmds []Cmder, next redis.ProcessPipelineHook) error {
+func (h hook) processPipeline(c context.Context, cmds []Cmder, next redis.ProcessPipelineHook) error {
 	if internal.InProcess(c) {
 		return next(c, cmds)
 	}
@@ -100,15 +102,16 @@ func (h hook) ProcessPipeline(c context.Context, cmds []Cmder, next redis.Proces
 		next(ctx, cmds) // nolint
 		reporter.ReportPipeline(cmds, time.Since(begin))
 
-		err := h.checkPipelineError(cmds)
-		if isErrNil(err) {
+		err := h.checkPipelineError(ctx, cmds)
+		if err == nil {
 			h.printPipelineSuccLog(cmds, i, logger, caller)
 			logger.Debug("redis pipeline cmd succ", zap.Int("retry", i), caller)
 			return err
 		}
 
-		if i++; i >= retry {
-			h.printPipelineFailLog(cmds, i, logger, caller)
+		i++
+		h.printPipelineFailLog(cmds, i, logger, caller)
+		if i >= retry {
 			logger.Error("redis pipeline fail", zap.Int("retry", i), zap.Error(err), caller)
 			return err
 		}
@@ -117,9 +120,27 @@ func (h hook) ProcessPipeline(c context.Context, cmds []Cmder, next redis.Proces
 	}
 }
 
-func (h hook) checkPipelineError(cmds []Cmder) error {
+func (h hook) getCmdError(c context.Context, cmd Cmder) error {
+	if err := cmd.Err(); !isErrNil(err) {
+		return err
+	}
+
+	v, _ := cmd.(internal.CmderWithParse)
+	if v == nil {
+		return nil
+	}
+
+	if err := v.Parse(c); !isErrNil(err) {
+		v.SetErr(err)
+		return err
+	}
+	return nil
+}
+
+func (h hook) checkPipelineError(c context.Context, cmds []Cmder) error {
 	for _, cmd := range cmds {
-		if err := cmd.Err(); err != nil && err != Nil {
+		err := h.getCmdError(c, cmd)
+		if err != nil {
 			return err
 		}
 	}
