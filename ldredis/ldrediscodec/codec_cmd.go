@@ -11,14 +11,15 @@ import (
 	"github.com/distroy/ldgo/v2/ldconv"
 	"github.com/distroy/ldgo/v2/ldredis"
 	"github.com/distroy/ldgo/v2/ldredis/internal"
+	redis "github.com/redis/go-redis/v9"
 )
 
 var (
 	_ encoding.BinaryMarshaler = (*errorMarshaler)(nil)
 
-	_ internal.CmderWithParse = (*AnyCmd[any])(nil)
-	_ internal.CmderWithParse = (*MapStringAnyCmd[any])(nil)
-	_ internal.CmderWithParse = (*AnySliceCmd[any])(nil)
+	_ internal.CmderWithParse = (*TypeCmd[any])(nil)
+	_ internal.CmderWithParse = (*MapStringTypeCmd[any])(nil)
+	_ internal.CmderWithParse = (*TypeSliceCmd[any])(nil)
 	_ internal.CmderWithParse = (*SliceCmd[any])(nil)
 	_ internal.CmderWithParse = (*ZMemberSliceCmd[any])(nil)
 )
@@ -31,25 +32,33 @@ func (c errorMarshaler) MarshalBinary() ([]byte, error) {
 	return nil, c.Err
 }
 
-func newAnyCmd[T comparable](cc context.Context, cli *Redis[T], cmd *ldredis.StringCmd) *AnyCmd[T] {
-	c := &AnyCmd[T]{
-		base:      cli.base,
+func newTypeCmd[T any](cc context.Context, base base[T], cmd *ldredis.StringCmd) *TypeCmd[T] {
+	c := &TypeCmd[T]{
+		base:      base,
 		StringCmd: cmd,
 	}
 	c.Parse(cc)
 	return c
 }
 
-type AnyCmd[T comparable] struct {
+func NewTypeCmd[T any](cc context.Context, codec Codec[T], args ...interface{}) *TypeCmd[T] {
+	c := &TypeCmd[T]{
+		base:      base[T]{codec: codec},
+		StringCmd: redis.NewStringCmd(cc, args...),
+	}
+	return c
+}
+
+type TypeCmd[T any] struct {
 	base[T]
 	*ldredis.StringCmd
 
 	val T
 }
 
-func (c *AnyCmd[T]) Val() T             { return c.val }
-func (c *AnyCmd[T]) Result() (T, error) { return c.Val(), c.Err() }
-func (c *AnyCmd[T]) Parse(cc context.Context) error {
+func (c *TypeCmd[T]) Val() T             { return c.val }
+func (c *TypeCmd[T]) Result() (T, error) { return c.Val(), c.Err() }
+func (c *TypeCmd[T]) Parse(cc context.Context) error {
 	cmd := c.StringCmd
 	if err := cmd.Err(); err != nil {
 		return err
@@ -65,25 +74,33 @@ func (c *AnyCmd[T]) Parse(cc context.Context) error {
 	return nil
 }
 
-func newMapStringAnyCmd[T comparable](cc context.Context, cli *Redis[T], cmd *ldredis.MapStringStringCmd) *MapStringAnyCmd[T] {
-	c := &MapStringAnyCmd[T]{
-		base:               cli.base,
+func newMapStringTypeCmd[T any](cc context.Context, base base[T], cmd *ldredis.MapStringStringCmd) *MapStringTypeCmd[T] {
+	c := &MapStringTypeCmd[T]{
+		base:               base,
 		MapStringStringCmd: cmd,
 	}
 	c.Parse(cc)
 	return c
 }
 
-type MapStringAnyCmd[T comparable] struct {
+func NewMapStringTypeCmd[T any](cc context.Context, codec Codec[T], args ...interface{}) *MapStringTypeCmd[T] {
+	c := &MapStringTypeCmd[T]{
+		base:               base[T]{codec: codec},
+		MapStringStringCmd: redis.NewMapStringStringCmd(cc, args...),
+	}
+	return c
+}
+
+type MapStringTypeCmd[T any] struct {
 	base[T]
 	*ldredis.MapStringStringCmd
 
 	val map[string]T
 }
 
-func (c *MapStringAnyCmd[T]) Val() map[string]T             { return c.val }
-func (c *MapStringAnyCmd[T]) Result() (map[string]T, error) { return c.Val(), c.Err() }
-func (c *MapStringAnyCmd[T]) Parse(cc context.Context) error {
+func (c *MapStringTypeCmd[T]) Val() map[string]T             { return c.val }
+func (c *MapStringTypeCmd[T]) Result() (map[string]T, error) { return c.Val(), c.Err() }
+func (c *MapStringTypeCmd[T]) Parse(cc context.Context) error {
 	cmd := c.MapStringStringCmd
 	if err := cmd.Err(); err != nil {
 		return err
@@ -102,25 +119,33 @@ func (c *MapStringAnyCmd[T]) Parse(cc context.Context) error {
 	return nil
 }
 
-func newAnySliceCmd[T comparable](cc context.Context, cli *Redis[T], cmd *ldredis.StringSliceCmd) *AnySliceCmd[T] {
-	c := &AnySliceCmd[T]{
-		base:           cli.base,
+func newTypeSliceCmd[T any](cc context.Context, base base[T], cmd *ldredis.StringSliceCmd) *TypeSliceCmd[T] {
+	c := &TypeSliceCmd[T]{
+		base:           base,
 		StringSliceCmd: cmd,
 	}
 	c.Parse(cc)
 	return c
 }
 
-type AnySliceCmd[T comparable] struct {
+func NewTypeSliceCmd[T any](cc context.Context, codec Codec[T], args ...interface{}) *TypeSliceCmd[T] {
+	c := &TypeSliceCmd[T]{
+		base:           base[T]{codec: codec},
+		StringSliceCmd: redis.NewStringSliceCmd(cc, args...),
+	}
+	return c
+}
+
+type TypeSliceCmd[T any] struct {
 	base[T]
 	*ldredis.StringSliceCmd
 
 	val []T
 }
 
-func (c *AnySliceCmd[T]) Val() []T             { return c.val }
-func (c *AnySliceCmd[T]) Result() ([]T, error) { return c.Val(), c.Err() }
-func (c *AnySliceCmd[T]) Parse(cc context.Context) error {
+func (c *TypeSliceCmd[T]) Val() []T             { return c.val }
+func (c *TypeSliceCmd[T]) Result() ([]T, error) { return c.Val(), c.Err() }
+func (c *TypeSliceCmd[T]) Parse(cc context.Context) error {
 	cmd := c.StringSliceCmd
 	if err := cmd.Err(); err != nil {
 		return err
@@ -139,25 +164,33 @@ func (c *AnySliceCmd[T]) Parse(cc context.Context) error {
 	return nil
 }
 
-func newAnySetCmd[T comparable](cc context.Context, cli *Redis[T], cmd *ldredis.StringSetCmd) *AnySetCmd[T] {
-	c := &AnySetCmd[T]{
-		base:         cli.base,
+func newTypeSetCmd[T comparable](cc context.Context, base base[T], cmd *ldredis.StringSetCmd) *TypeSetCmd[T] {
+	c := &TypeSetCmd[T]{
+		base:         base,
 		StringSetCmd: cmd,
 	}
 	c.Parse(cc)
 	return c
 }
 
-type AnySetCmd[T comparable] struct {
+func NewTypeSetCmd[T comparable](cc context.Context, codec Codec[T], args ...interface{}) *TypeSetCmd[T] {
+	c := &TypeSetCmd[T]{
+		base:         base[T]{codec: codec},
+		StringSetCmd: redis.NewStringStructMapCmd(cc, args...),
+	}
+	return c
+}
+
+type TypeSetCmd[T comparable] struct {
 	base[T]
 	*ldredis.StringSetCmd
 
 	val map[T]struct{}
 }
 
-func (c *AnySetCmd[T]) Val() map[T]struct{}             { return c.val }
-func (c *AnySetCmd[T]) Result() (map[T]struct{}, error) { return c.Val(), c.Err() }
-func (c *AnySetCmd[T]) Parse(cc context.Context) error {
+func (c *TypeSetCmd[T]) Val() map[T]struct{}             { return c.val }
+func (c *TypeSetCmd[T]) Result() (map[T]struct{}, error) { return c.Val(), c.Err() }
+func (c *TypeSetCmd[T]) Parse(cc context.Context) error {
 	cmd := c.StringSetCmd
 	if err := cmd.Err(); err != nil {
 		return err
@@ -176,12 +209,20 @@ func (c *AnySetCmd[T]) Parse(cc context.Context) error {
 	return nil
 }
 
-func newSliceCmd[T comparable](cc context.Context, cli *Redis[T], cmd *ldredis.SliceCmd) *SliceCmd[T] {
+func newSliceCmd[T any](cc context.Context, base base[T], cmd *ldredis.SliceCmd) *SliceCmd[T] {
 	c := &SliceCmd[T]{
-		base:     cli.base,
+		base:     base,
 		SliceCmd: cmd,
 	}
 	c.Parse(cc)
+	return c
+}
+
+func NewSliceCmd[T any](cc context.Context, codec Codec[T], args ...interface{}) *SliceCmd[T] {
+	c := &SliceCmd[T]{
+		base:     base[T]{codec: codec},
+		SliceCmd: redis.NewSliceCmd(cc, args...),
+	}
 	return c
 }
 
@@ -213,12 +254,20 @@ func (c *SliceCmd[T]) Parse(cc context.Context) error {
 	return nil
 }
 
-func newZMemberSliceCmd[T comparable](cc context.Context, cli *Redis[T], cmd *ldredis.ZSliceCmd) *ZMemberSliceCmd[T] {
+func newZMemberSliceCmd[T any](cc context.Context, base base[T], cmd *ldredis.ZSliceCmd) *ZMemberSliceCmd[T] {
 	c := &ZMemberSliceCmd[T]{
-		base:      cli.base,
+		base:      base,
 		ZSliceCmd: cmd,
 	}
 	c.Parse(cc)
+	return c
+}
+
+func NewZMemberSliceCmd[T any](cc context.Context, codec Codec[T], args ...interface{}) *ZMemberSliceCmd[T] {
+	c := &ZMemberSliceCmd[T]{
+		base:      base[T]{codec: codec},
+		ZSliceCmd: redis.NewZSliceCmd(cc, args...),
+	}
 	return c
 }
 
