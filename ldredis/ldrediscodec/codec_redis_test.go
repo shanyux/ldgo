@@ -105,7 +105,7 @@ func TestCodecRedis_String(t *testing.T) {
 			key1 := key + "-1"
 			key2 := key + "-2"
 
-			s0 := New[any](rds, JsonCodec[any]{}).MSetNX(ctx, key0, "234", key1, "abc")
+			s0 := New[any](rds, JsonCodec[any]{}).MSetNXPairs(ctx, Pair[any]{key0, "234"}, Pair[any]{key1, "abc"})
 			c.So(s0.Err(), convey.ShouldBeNil)
 			c.So(s0.Val(), convey.ShouldBeTrue)
 
@@ -117,7 +117,7 @@ func TestCodecRedis_String(t *testing.T) {
 			c.So(g0.Err(), convey.ShouldBeNil)
 			c.So(g0.Val(), convey.ShouldResemble, []interface{}{`"234"`, `"abc"`, nil})
 
-			s1 := New[any](rds, JsonCodec[any]{}).MSetNX(ctx, key0, "100", key2, "xyz")
+			s1 := New[any](rds, JsonCodec[any]{}).MSetNXPairs(ctx, Pair[any]{key0, "100"}, Pair[any]{key2, "xyz"})
 			c.So(s1.Err(), convey.ShouldBeNil)
 			c.So(s1.Val(), convey.ShouldBeFalse)
 
@@ -125,7 +125,7 @@ func TestCodecRedis_String(t *testing.T) {
 			c.So(g1.Err(), convey.ShouldBeNil)
 			c.So(g1.Val(), convey.ShouldResemble, []interface{}{`"234"`, `"abc"`, nil})
 
-			s2 := New[any](rds, JsonCodec[any]{}).MSet(ctx, key0, "100", key2, "xyz")
+			s2 := New[any](rds, JsonCodec[any]{}).MSetPairs(ctx, Pair[any]{key0, "100"}, Pair[any]{key2, "xyz"})
 			c.So(s2.Err(), convey.ShouldBeNil)
 
 			g2 := rds.MGet(ctx, key0, key1, key2)
@@ -174,7 +174,7 @@ func TestCodecRedis_Hash(t *testing.T) {
 			field1 := field + "-1"
 			field2 := field + "-2"
 
-			s := New[any](rds, JsonCodec[any]{}).HMSet(ctx, key, map[string]interface{}{
+			s := New[any](rds, JsonCodec[any]{}).HMSetMap(ctx, key, map[string]any{
 				field0: "100",
 				field1: 100,
 			})

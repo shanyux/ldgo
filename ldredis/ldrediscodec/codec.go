@@ -57,7 +57,7 @@ func (c *base[T]) mustMarshal(value T) interface{} {
 	return res
 }
 
-func (c *base[T]) marshalPairs(pairs []interface{}) []interface{} {
+func (c *base[T]) _marshalPairs(pairs []interface{}) []interface{} {
 	for i, l := 1, len(pairs); i < l; i += 2 {
 		v, ok := pairs[i].(T)
 		if !ok {
@@ -73,6 +73,19 @@ func (c *base[T]) marshalPairs(pairs []interface{}) []interface{} {
 		}
 	}
 	return pairs
+}
+
+func (c *base[T]) marshalPairs(pairs []Pair[T]) []interface{} {
+	res := make([]interface{}, 0, len(pairs)*2)
+	for _, v := range pairs {
+		res = append(res, v.First)
+		val, err := c.marshal(v.Second)
+		res = append(res, val)
+		if err != nil {
+			break
+		}
+	}
+	return res
 }
 
 func (c *base[T]) marshalSlice(s []T) []interface{} {
