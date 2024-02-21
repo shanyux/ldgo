@@ -104,7 +104,7 @@ func codecBaseType(ctx ldctx.Context) {
 
 	key := "test:codec:basetype"
 	cli := ldrediscodec.New[any](rds, ldrediscodec.JsonCodec[any]{})
-	cli.HMSet(ctx, key, map[string]interface{}{
+	cli.HMSetMap(ctx, key, map[string]interface{}{
 		"i1": 1234,
 		"s1": "abc",
 		"s2": "134",
