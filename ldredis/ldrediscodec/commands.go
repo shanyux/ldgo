@@ -302,3 +302,106 @@ func (c *ZMemberSliceCmd[T]) Parse(cc context.Context) error {
 	c.val = members
 	return nil
 }
+
+func newZMemberWithKeyCmd[T any](cc context.Context, base base[T], cmd *ldredis.ZWithKeyCmd) *ZMemberWithKeyCmd[T] {
+	c := &ZMemberWithKeyCmd[T]{
+		base:        base,
+		ZWithKeyCmd: cmd,
+	}
+	c.Parse(cc)
+	return c
+}
+
+func NewZMemberWithKeyCmd[T any](cc context.Context, codec Codec[T], args ...interface{}) *ZMemberWithKeyCmd[T] {
+	c := &ZMemberWithKeyCmd[T]{
+		base:        base[T]{codec: codec},
+		ZWithKeyCmd: redis.NewZWithKeyCmd(cc, args...),
+	}
+	return c
+}
+
+type ZMemberWithKeyCmd[T any] struct {
+	base[T]
+	*ldredis.ZWithKeyCmd
+
+	val ZMemberWithKey[T]
+}
+
+func (c *ZMemberWithKeyCmd[T]) Val() ZMemberWithKey[T]             { return c.val }
+func (c *ZMemberWithKeyCmd[T]) Result() (ZMemberWithKey[T], error) { return c.Val(), c.Err() }
+func (c *ZMemberWithKeyCmd[T]) Parse(cc context.Context) error {
+	cmd := c.ZWithKeyCmd
+	if err := cmd.Err(); err != nil {
+		return err
+	}
+
+	v := cmd.Val()
+	val, err := c.unmarshalInterface(cc, v.Member)
+	if err != nil {
+		c.SetErr(err)
+		return err
+	}
+
+	c.val = ZMemberWithKey[T]{
+		ZMember: ZMember[T]{
+			Score:  v.Score,
+			Member: val,
+		},
+		Key: v.Key,
+	}
+
+	return nil
+}
+
+func newZMemberSliceWithKeyCmd[T any](cc context.Context, base base[T], cmd *ldredis.ZSliceWithKeyCmd) *ZMemberSliceWithKeyCmd[T] {
+	c := &ZMemberSliceWithKeyCmd[T]{
+		base:             base,
+		ZSliceWithKeyCmd: cmd,
+	}
+	c.Parse(cc)
+	return c
+}
+
+func NewZMemberSliceWithKeyCmd[T any](cc context.Context, codec Codec[T], args ...interface{}) *ZMemberSliceWithKeyCmd[T] {
+	c := &ZMemberSliceWithKeyCmd[T]{
+		base:             base[T]{codec: codec},
+		ZSliceWithKeyCmd: redis.NewZSliceWithKeyCmd(cc, args...),
+	}
+	return c
+}
+
+type ZMemberSliceWithKeyCmd[T any] struct {
+	base[T]
+	*ldredis.ZSliceWithKeyCmd
+
+	key string
+	val []ZMember[T]
+}
+
+func (c *ZMemberSliceWithKeyCmd[T]) Val() (string, []ZMember[T]) { return c.key, c.val }
+func (c *ZMemberSliceWithKeyCmd[T]) Result() (string, []ZMember[T], error) {
+	return c.key, c.val, c.Err()
+}
+func (c *ZMemberSliceWithKeyCmd[T]) Parse(cc context.Context) error {
+	cmd := c.ZSliceWithKeyCmd
+	if err := cmd.Err(); err != nil {
+		return err
+	}
+
+	key, v := cmd.Val()
+	members := make([]ZMember[T], 0, len(v))
+	for _, v := range v {
+		val, err := c.unmarshalInterface(cc, v.Member)
+		if err != nil {
+			c.SetErr(err)
+			return err
+		}
+		members = append(members, ZMember[T]{
+			Score:  v.Score,
+			Member: val,
+		})
+	}
+	c.key = key
+	c.val = members
+	return nil
+}
