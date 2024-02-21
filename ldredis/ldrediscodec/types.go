@@ -18,6 +18,20 @@ type ZMember[T any] struct {
 	Member T
 }
 
+type ZMemberWithKey[T any] struct {
+	ZMember[T]
+	Key string
+}
+
+type ZAddArgs[T any] struct {
+	NX      bool
+	XX      bool
+	LT      bool
+	GT      bool
+	Ch      bool
+	Members []ZMember[T]
+}
+
 type Pair[T any] struct {
 	First  string // key or field
 	Second T      // value

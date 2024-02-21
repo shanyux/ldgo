@@ -142,9 +142,21 @@ type HashCmdable interface {
 	HMSet(ctx context.Context, key string, values ...interface{}) *BoolCmd
 }
 
+type SortedSetCmdable interface {
+	redis.SortedSetCmdable
+
+	// BZMPop is the blocking variant of ZMPOP.
+	// When any of the sorted sets contains elements, this command behaves exactly like ZMPOP.
+	// When all sorted sets are empty, Redis will block the connection until another client adds members to one of the keys or until the timeout elapses.
+	// A timeout of zero can be used to block indefinitely.
+	// example: client.BZMPop(ctx, 0,"max", 1, "set")
+	BZMPop(ctx context.Context, timeout time.Duration, order string, count int64, keys ...string) *ZSliceWithKeyCmd
+}
+
 type Cmdable interface {
 	StringCmdable
 	HashCmdable
+	SortedSetCmdable
 
 	redis.Cmdable
 

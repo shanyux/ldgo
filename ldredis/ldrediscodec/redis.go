@@ -17,7 +17,10 @@ func New[T comparable](rds *ldredis.Redis, codec Codec[T]) *Redis[T] {
 	}
 }
 
-var _ Cmdable[int] = (*Redis[int])(nil)
+var (
+	_ Cmdable[int]    = (*Redis[int])(nil)
+	_ Cmdable[string] = (*Redis[string])(nil)
+)
 
 type Redis[T comparable] struct {
 	base[T]
