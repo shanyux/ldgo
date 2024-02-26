@@ -19,9 +19,9 @@ const (
 )
 
 var (
-	defaultContext Context = newCtx(context.Background())
-	consoleContext Context = newCtx(newLogCtx(context.Background(), ldlog.Console()))
-	discardContext Context = newCtx(newLogCtx(context.Background(), ldlog.Discard()))
+	defaultContext = newCtx(context.Background())
+	consoleContext = newCtx(newLogCtx(context.Background(), ldlog.Console()))
+	discardContext = newCtx(newLogCtx(context.Background(), ldlog.Discard()))
 )
 
 func defaultLogger() *ldlog.Logger { return ldlog.Default() }
@@ -30,8 +30,25 @@ type stringer interface {
 	String() string
 }
 
+type ctxWithParent interface {
+	Context
+
+	Parent() context.Context
+}
+
+var (
+	_ (ctxWithParent) = (*ctx)(nil)
+	_ (ctxWithParent) = defaultContext
+)
+
 func unwrap(c context.Context) context.Context {
+	if c == nil {
+		return context.Background()
+	}
+
 	switch cc := c.(type) {
+	case ctxWithParent:
+		return cc.Parent()
 	case ctx:
 		return cc.Context
 	case *ctx:
@@ -55,6 +72,8 @@ func (c ctx) zSugar() *zap.SugaredLogger { return c.logger().Sugar() }
 
 // func (c ctx) GetLogger() ldlog.Logger { return c.logger() }
 // func (c ctx) LogSync()                   { c.logger().Sync() }
+
+func (c ctx) Parent() context.Context { return c.Context }
 
 func (c ctx) LogD(msg string, fields ...zap.Field) { c.zCore().Debug(msg, fields...) }
 func (c ctx) LogI(msg string, fields ...zap.Field) { c.zCore().Info(msg, fields...) }
