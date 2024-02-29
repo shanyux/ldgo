@@ -4,18 +4,18 @@
 
 package ldtopk
 
-type Topkable interface {
-	string |
-		int | int8 | int16 | int32 | int64 |
-		uint | uint8 | uint16 | uint32 | uint64 | uintptr |
-		float32 | float64
+type sortable interface {
+	~string |
+		~int | ~int8 | ~int16 | ~int32 | ~int64 |
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
+		~float32 | ~float64
 }
 
-func less[T Topkable](a, b T) bool {
+func less[T sortable](a, b T) bool {
 	return a < b
 }
 
-func TopkAdd[T Topkable](b []T, k int, x T) ([]T, bool) {
+func TopkAdd[T sortable](b []T, k int, x T) ([]T, bool) {
 	if k <= 0 {
 		return b, false
 	}

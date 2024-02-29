@@ -23,8 +23,8 @@ func ApplyOptions(db *GormDb, opts ...Option) *GormDb {
 }
 
 type pagingOption struct {
-	Page     int64 // the first page is 1
-	Pagesize int64
+	Page     int // the first page is 1
+	Pagesize int
 }
 
 func (p pagingOption) String() string {
@@ -33,7 +33,7 @@ func (p pagingOption) String() string {
 
 func (p pagingOption) buildGorm(db *GormDb) *GormDb {
 	if p.Pagesize > 0 {
-		p.Page = ldmath.MaxInt64(1, p.Page)
+		p.Page = ldmath.MaxInt(1, p.Page)
 		offset := (p.Page - 1) * p.Pagesize
 		db = db.Offset(offset).Limit(p.Pagesize)
 	}
@@ -44,7 +44,7 @@ func (p pagingOption) buildGorm(db *GormDb) *GormDb {
 // Paging return the paging option
 // the first page is 1
 // if pagesize <= 0, it will query all rows
-func Paging(page int64, pagesize int64) Option {
+func Paging(page int, pagesize int) Option {
 	return pagingOption{
 		Page:     page,
 		Pagesize: pagesize,

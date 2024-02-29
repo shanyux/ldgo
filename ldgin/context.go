@@ -12,6 +12,7 @@ import (
 
 	"github.com/distroy/ldgo/v2/ldctx"
 	"github.com/distroy/ldgo/v2/lderr"
+	"github.com/distroy/ldgo/v2/ldlog"
 	"github.com/distroy/ldgo/v2/ldrand"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -24,7 +25,13 @@ type (
 var (
 	_ context.Context = (*Context)(nil)
 	_ ldctx.Context   = (*Context)(nil)
+
+	parseSequenceFunc func(g *gin.Context) string
 )
+
+func SetParseSequenceFunc(f func(g *gin.Context) string) {
+	parseSequenceFunc = f
+}
 
 func GetContext(g *gin.Context) *Context {
 	return newCtxIfNotExists(g)
@@ -70,6 +77,13 @@ func GetResponse(c context.Context) *CommResponse {
 }
 
 func newSequence(g *gin.Context) string {
+	if parseSequenceFunc != nil {
+		seq := parseSequenceFunc(g)
+		if seq != "" {
+			return seq
+		}
+	}
+
 	return hex.EncodeToString(ldrand.Bytes(16))
 }
 
@@ -99,7 +113,7 @@ func newContext(g *gin.Context) *Context {
 	now := time.Now()
 	seq := newSequence(g)
 
-	ctx := ldctx.NewContext(g, zap.String("sequence", seq))
+	ctx := ldctx.New(g, zap.String(ldlog.GetSequenceKey(), seq))
 
 	c := &Context{
 		ginCtx:    g,

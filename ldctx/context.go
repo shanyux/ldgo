@@ -39,27 +39,19 @@ type Context interface {
 	LogFf(fmt string, args ...interface{})
 }
 
-func NewContext(parent context.Context, fields ...zap.Field) Context {
-	return New(parent, fields...)
-}
-
 func New(parent context.Context, fields ...zap.Field) Context {
-	if parent == nil {
-		parent = context.Background()
-
-	} else if c, _ := parent.(Context); c != nil {
-		if len(fields) == 0 {
-			return c
-		}
-
-		parent = unwrap(parent)
-	}
-
 	if len(fields) > 0 {
 		l := GetLogger(parent).With(fields...)
-		parent = newLogCtx(parent, l)
+		parent = unwrap(parent)
+		return newCtx(newLogCtx(parent, l))
 	}
 
+	if parent == nil {
+		return Default()
+	}
+	if cc, _ := parent.(Context); cc != nil {
+		return cc
+	}
 	return newCtx(parent)
 }
 
@@ -92,11 +84,7 @@ func GetError(c StdContext) lderr.Error {
 
 func WithLogger(parent context.Context, log *ldlog.Logger, fields ...zap.Field) Context {
 	if log == nil {
-		if len(fields) == 0 {
-			return newCtx(unwrap(parent))
-		}
-
-		log = GetLogger(parent)
+		return New(parent, fields...)
 	}
 	log = log.With(fields...)
 	return newCtx(newLogCtx(unwrap(parent), log))
@@ -140,7 +128,7 @@ func WithTimeout(parent context.Context, timeout time.Duration) Context {
 func WithDeadline(parent context.Context, deadline time.Time) Context {
 	if cur, ok := parent.Deadline(); ok && cur.Before(deadline) {
 		// The current deadline is already sooner than the new one.
-		return NewContext(parent)
+		return New(parent)
 	}
 
 	child, cancel := context.WithDeadline(unwrap(parent), deadline)
