@@ -4,7 +4,9 @@
 
 package ldrbtree
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type rbtreeIterator[T any] struct {
 	tree *RBTree[T]
@@ -55,7 +57,7 @@ func (it rbtreeIterator[T]) prev(name string, iface rbtreeInterface[T]) rbtreeIt
 
 type RBTreeIterator[T any] rbtreeIterator[T]
 
-func (i RBTreeIterator[T]) Data() interface{} {
+func (i RBTreeIterator[T]) Data() T {
 	return i.node.Data
 }
 
@@ -73,7 +75,7 @@ func (i RBTreeIterator[T]) Prev() RBTreeIterator[T] {
 
 type RBTreeReverseIterator[T any] rbtreeIterator[T]
 
-func (i RBTreeReverseIterator[T]) Data() interface{} {
+func (i RBTreeReverseIterator[T]) Data() T {
 	return i.node.Data
 }
 
