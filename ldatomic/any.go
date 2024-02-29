@@ -37,10 +37,7 @@ func (p *Any[T]) unpack(i interface{}) T {
 	return x.Data
 }
 
-func zeroOfType[T any]() T {
-	var x T
-	return x
-}
+func zeroOfType[T any]() (x T) { return x }
 
 type anyData[T any] struct {
 	Data T
