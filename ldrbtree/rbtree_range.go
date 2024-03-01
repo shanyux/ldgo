@@ -4,6 +4,13 @@
 
 package ldrbtree
 
+import "github.com/distroy/ldgo/v2/lditer"
+
+var (
+	_ lditer.Range[int] = (*RBTreeRange[int])(nil)
+	_ lditer.Range[int] = (*RBTreeReverseRange[int])(nil)
+)
+
 type RBTreeRange[T any] struct {
 	Begin RBTreeIterator[T] // [begin, end)
 	End   RBTreeIterator[T] // [begin, end)

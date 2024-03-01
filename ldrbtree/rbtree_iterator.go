@@ -6,6 +6,13 @@ package ldrbtree
 
 import (
 	"fmt"
+
+	"github.com/distroy/ldgo/v2/lditer"
+)
+
+var (
+	_ lditer.Iterator[int] = lditer.MakeIter[int](RBTreeIterator[int]{})
+	_ lditer.Iterator[int] = lditer.MakeIter[int](RBTreeReverseIterator[int]{})
 )
 
 type rbtreeIterator[T any] struct {
