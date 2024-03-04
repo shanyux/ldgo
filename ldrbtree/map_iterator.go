@@ -4,13 +4,6 @@
 
 package ldrbtree
 
-import "github.com/distroy/ldgo/v2/lditer"
-
-var (
-	_ lditer.Iterator[MapNode[string, int]] = lditer.MakeIter[MapNode[string, int]](MapIterator[string, int]{})
-	_ lditer.Iterator[MapNode[string, int]] = lditer.MakeIter[MapNode[string, int]](MapReverseIterator[string, int]{})
-)
-
 type MapNode[K any, V any] rbtreeIterator[Pair[K, V]]
 
 func (n MapNode[K, V]) Key() K { return n.node.Data.Key }

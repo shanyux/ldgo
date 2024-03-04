@@ -4,13 +4,6 @@
 
 package ldrbtree
 
-import "github.com/distroy/ldgo/v2/lditer"
-
-var (
-	_ lditer.Range[MapNode[string, int]] = (*MapRange[string, int])(nil)
-	_ lditer.Range[MapNode[string, int]] = (*MapReverseRange[string, int])(nil)
-)
-
 type MapRange[K any, V any] struct {
 	Begin MapIterator[K, V] // [begin, end)
 	End   MapIterator[K, V] // [begin, end)

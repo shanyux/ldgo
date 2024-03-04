@@ -31,11 +31,9 @@ type Range[Data any] interface {
 }
 
 type iterable[Data any, Iter comparable] interface {
-	comparable
+	Iterable[Iter]
 
 	Data() Data
-	Prev() Iter
-	Next() Iter
 }
 
 func MakeIter[Data any, Iter iterable[Data, Iter]](iter Iter) Iterator[Data] {
