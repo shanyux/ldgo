@@ -11,7 +11,7 @@ import (
 )
 
 type testRangeIface[Data any] interface {
-	Data() Data
+	Get() Data
 	HasNext() bool
 	Next()
 }
@@ -19,7 +19,7 @@ type testRangeIface[Data any] interface {
 func testRangeToSlice[Data any](r testRangeIface[Data]) []Data {
 	l := make([]Data, 0, 16)
 	for ; r.HasNext(); r.Next() {
-		l = append(l, r.Data())
+		l = append(l, r.Get())
 	}
 	return l
 }

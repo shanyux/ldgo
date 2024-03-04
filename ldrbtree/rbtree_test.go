@@ -13,77 +13,91 @@ import (
 )
 
 func TestRBTree_Insert(t *testing.T) {
-	convey.Convey(t.Name(), t, func() {
-		convey.Convey("insert", func() {
+	convey.Convey(t.Name(), t, func(c convey.C) {
+		c.Convey("insert", func(c convey.C) {
 			rbtree := &RBTree[int]{}
 			for _, n := range _numsUnordered {
 				rbtree.Insert(n)
-				convey.So(rbtree.root.checkParent(rbtree.sentinel), convey.ShouldBeTrue)
-				convey.So(rbtree.root.checkColor(rbtree.sentinel), convey.ShouldBeTrue)
+				c.So(rbtree.root.checkParent(rbtree.sentinel), convey.ShouldBeTrue)
+				c.So(rbtree.root.checkColor(rbtree.sentinel), convey.ShouldBeTrue)
 			}
 
-			convey.Convey("len", func() {
-				convey.So(rbtree.Len(), convey.ShouldEqual, len(_nums))
+			c.Convey("len", func(c convey.C) {
+				c.So(rbtree.Len(), convey.ShouldEqual, len(_nums))
 			})
 
-			convey.Convey("check parent", func() {
-				convey.So(rbtree.root.checkParent(rbtree.sentinel), convey.ShouldBeTrue)
+			c.Convey("check parent", func(c convey.C) {
+				c.So(rbtree.root.checkParent(rbtree.sentinel), convey.ShouldBeTrue)
 			})
 
-			convey.Convey("check color", func() {
-				convey.So(rbtree.root.checkColor(rbtree.sentinel), convey.ShouldBeTrue)
+			c.Convey("check color", func(c convey.C) {
+				c.So(rbtree.root.checkColor(rbtree.sentinel), convey.ShouldBeTrue)
 			})
 
-			convey.Convey("clear", func() {
+			c.Convey("clear", func(c convey.C) {
 				rbtree.Clear()
-				convey.So(rbtree.Len(), convey.ShouldEqual, 0)
-				convey.So(rbtree.Begin(), convey.ShouldResemble, rbtree.End())
+				c.So(rbtree.Len(), convey.ShouldEqual, 0)
+				c.So(rbtree.Begin(), convey.ShouldResemble, rbtree.End())
 			})
 		})
 
-		convey.Convey("insert or search", func() {
+		c.Convey("insert or search", func(c convey.C) {
 			rbtree := testNewRBTree()
-			convey.So(rbtree.Len(), convey.ShouldEqual, len(_nums))
+			c.So(rbtree.Len(), convey.ShouldEqual, len(_nums))
 
-			convey.Convey("insert when exists", func() {
+			c.Convey("insert when exists", func(c convey.C) {
 				for _, n := range _numsUnordered {
 					it := rbtree.InsertOrSearch(n)
-					convey.So(it.Data(), convey.ShouldEqual, n)
-					convey.So(rbtree.Len(), convey.ShouldEqual, len(_nums))
+					c.So(it.Get(), convey.ShouldEqual, n)
+					c.So(rbtree.Len(), convey.ShouldEqual, len(_nums))
 				}
 				it := rbtree.Begin()
 				for _, n := range _nums {
-					convey.So(it.Data(), convey.ShouldEqual, n)
+					c.So(it.Get(), convey.ShouldEqual, n)
 					it = it.Next()
 				}
-				convey.So(it, convey.ShouldResemble, rbtree.End())
+				c.So(it, convey.ShouldResemble, rbtree.End())
 			})
 
-			convey.Convey("insert when not exists", func() {
+			c.Convey("insert when not exists", func(c convey.C) {
 				it := rbtree.InsertOrSearch(-100)
-				convey.So(it.Data(), convey.ShouldEqual, -100)
-				convey.So(rbtree.Len(), convey.ShouldEqual, len(_nums)+1)
+				c.So(it.Get(), convey.ShouldEqual, -100)
+				c.So(rbtree.Len(), convey.ShouldEqual, len(_nums)+1)
+			})
+
+			c.Convey("insert when empty", func(c convey.C) {
+				rbtree.Clear()
+				c.So(rbtree.Len(), convey.ShouldEqual, 0)
+
+				it := rbtree.InsertOrSearch(100)
+				c.So(it.Get(), convey.ShouldEqual, 100)
+				c.So(rbtree.Len(), convey.ShouldEqual, 1)
 			})
 		})
 
-		convey.Convey("insert or assign", func() {
+		c.Convey("insert or assign", func(c convey.C) {
 			rbtree := &RBTree[[2]int]{
 				Compare: func(a, b [2]int) int {
 					aa, bb := a, b
 					return ldcmp.CompareInt(aa[0], bb[0])
 				},
 			}
-			convey.So(rbtree.Len(), convey.ShouldEqual, 0)
+			c.So(rbtree.Len(), convey.ShouldEqual, 0)
 
 			rbtree.InsertOrAssign([2]int{100, 0})
-			convey.So(rbtree.Len(), convey.ShouldEqual, 1)
-			convey.So(rbtree.Begin().Data(), convey.ShouldResemble, [2]int{100, 0})
-			convey.So(rbtree.Begin().Next(), convey.ShouldResemble, rbtree.End())
+			c.So(rbtree.Len(), convey.ShouldEqual, 1)
+			c.So(rbtree.Begin().Get(), convey.ShouldResemble, [2]int{100, 0})
+			c.So(rbtree.Begin().Next(), convey.ShouldResemble, rbtree.End())
 
 			rbtree.InsertOrAssign([2]int{100, 2})
-			convey.So(rbtree.Len(), convey.ShouldEqual, 1)
-			convey.So(rbtree.Begin().Data(), convey.ShouldResemble, [2]int{100, 2})
-			convey.So(rbtree.Begin().Next(), convey.ShouldResemble, rbtree.End())
+			c.So(rbtree.Len(), convey.ShouldEqual, 1)
+			c.So(rbtree.Begin().Get(), convey.ShouldResemble, [2]int{100, 2})
+			c.So(rbtree.Begin().Next(), convey.ShouldResemble, rbtree.End())
+
+			rbtree.InsertOrAssign([2]int{200, 4})
+			c.So(rbtree.Len(), convey.ShouldEqual, 2)
+			c.So(rbtree.Begin().Get(), convey.ShouldResemble, [2]int{100, 2})
+			c.So(rbtree.RBegin().Get(), convey.ShouldResemble, [2]int{200, 4})
 		})
 	})
 }
@@ -91,9 +105,9 @@ func TestRBTree_Insert(t *testing.T) {
 func TestRBTree_DuplicateData(t *testing.T) {
 	fnDeleteAll := testRBTreeDeleteAll
 
-	convey.Convey(t.Name(), t, func() {
+	convey.Convey(t.Name(), t, func(c convey.C) {
 		const retry = 20
-		convey.Convey("search", func() {
+		c.Convey("search", func(c convey.C) {
 			for i := 0; i < retry; i++ {
 				rbtree := testNewRBTree()
 
@@ -106,13 +120,13 @@ func TestRBTree_DuplicateData(t *testing.T) {
 
 				it := rbtree.Search(d)
 
-				convey.So(it.Data(), convey.ShouldEqual, d)
-				convey.So(it.Next().Data(), convey.ShouldEqual, d)
-				convey.So(it.Next().Next().Data(), convey.ShouldEqual, d)
+				c.So(it.Get(), convey.ShouldEqual, d)
+				c.So(it.Next().Get(), convey.ShouldEqual, d)
+				c.So(it.Next().Next().Get(), convey.ShouldEqual, d)
 			}
 		})
 
-		convey.Convey("lower bound", func() {
+		c.Convey("lower bound", func(c convey.C) {
 			for i := 0; i < retry; i++ {
 				rbtree := testNewRBTree()
 
@@ -125,13 +139,13 @@ func TestRBTree_DuplicateData(t *testing.T) {
 
 				it := rbtree.LowerBound(d)
 
-				convey.So(it.Data(), convey.ShouldEqual, d)
-				convey.So(it.Next().Data(), convey.ShouldEqual, d)
-				convey.So(it.Next().Next().Data(), convey.ShouldEqual, d)
+				c.So(it.Get(), convey.ShouldEqual, d)
+				c.So(it.Next().Get(), convey.ShouldEqual, d)
+				c.So(it.Next().Next().Get(), convey.ShouldEqual, d)
 			}
 		})
 
-		convey.Convey("upper bound", func() {
+		c.Convey("upper bound", func(c convey.C) {
 			for i := 0; i < retry; i++ {
 				rbtree := testNewRBTree()
 
@@ -143,9 +157,9 @@ func TestRBTree_DuplicateData(t *testing.T) {
 
 				it := rbtree.UpperBound(d)
 
-				convey.So(it.Data(), convey.ShouldBeGreaterThan, d)
-				convey.So(it.Prev().Data(), convey.ShouldBeLessThanOrEqualTo, d)
-				// convey.So(it.Next().Next().Data(), convey.ShouldEqual, d)
+				c.So(it.Get(), convey.ShouldBeGreaterThan, d)
+				c.So(it.Prev().Get(), convey.ShouldBeLessThanOrEqualTo, d)
+				// convey.So(it.Next().Next().Get(), convey.ShouldEqual, d)
 			}
 		})
 	})
@@ -153,7 +167,7 @@ func TestRBTree_DuplicateData(t *testing.T) {
 
 func TestRBTree_Count(t *testing.T) {
 	const retry = 20
-	convey.Convey(t.Name(), t, func() {
+	convey.Convey(t.Name(), t, func(c convey.C) {
 		rbtree := testNewRBTree()
 		for i := 0; i < retry; i++ {
 			d := ldrand.Intn(_count)
@@ -163,16 +177,16 @@ func TestRBTree_Count(t *testing.T) {
 				count0++
 			}
 
-			convey.So(rbtree.Count(d), convey.ShouldEqual, count0)
+			c.So(rbtree.Count(d), convey.ShouldEqual, count0)
 
 			rbtree.Insert(d)
 			rbtree.Insert(d)
 			rbtree.Insert(d)
 
-			convey.So(rbtree.Count(d), convey.ShouldEqual, count0+3)
+			c.So(rbtree.Count(d), convey.ShouldEqual, count0+3)
 		}
 
-		convey.So(rbtree.Count(-100), convey.ShouldEqual, 0)
+		c.So(rbtree.Count(-100), convey.ShouldEqual, 0)
 	})
 }
 
@@ -180,8 +194,8 @@ func TestRBTree_DuplicateDataReverse(t *testing.T) {
 	fnDeleteAll := testRBTreeRDeleteAll
 	const retry = 20
 
-	convey.Convey(t.Name(), t, func() {
-		convey.Convey("search", func() {
+	convey.Convey(t.Name(), t, func(c convey.C) {
+		c.Convey("search", func(c convey.C) {
 			for i := 0; i < retry; i++ {
 				rbtree := testNewRBTree()
 
@@ -194,13 +208,13 @@ func TestRBTree_DuplicateDataReverse(t *testing.T) {
 
 				it := rbtree.RSearch(d)
 
-				convey.So(it.Data(), convey.ShouldEqual, d)
-				convey.So(it.Next().Data(), convey.ShouldEqual, d)
-				convey.So(it.Next().Next().Data(), convey.ShouldEqual, d)
+				c.So(it.Get(), convey.ShouldEqual, d)
+				c.So(it.Next().Get(), convey.ShouldEqual, d)
+				c.So(it.Next().Next().Get(), convey.ShouldEqual, d)
 			}
 		})
 
-		convey.Convey("lower bound", func() {
+		c.Convey("lower bound", func(c convey.C) {
 			for i := 0; i < retry; i++ {
 				rbtree := testNewRBTree()
 
@@ -213,13 +227,13 @@ func TestRBTree_DuplicateDataReverse(t *testing.T) {
 
 				it := rbtree.RLowerBound(d)
 
-				convey.So(it.Data(), convey.ShouldEqual, d)
-				convey.So(it.Next().Data(), convey.ShouldEqual, d)
-				convey.So(it.Next().Next().Data(), convey.ShouldEqual, d)
+				c.So(it.Get(), convey.ShouldEqual, d)
+				c.So(it.Next().Get(), convey.ShouldEqual, d)
+				c.So(it.Next().Next().Get(), convey.ShouldEqual, d)
 			}
 		})
 
-		convey.Convey("upper bound", func() {
+		c.Convey("upper bound", func(c convey.C) {
 			for i := 0; i < retry; i++ {
 				rbtree := testNewRBTree()
 
@@ -230,9 +244,9 @@ func TestRBTree_DuplicateDataReverse(t *testing.T) {
 
 				it := rbtree.RUpperBound(d)
 
-				convey.So(it.Data(), convey.ShouldBeLessThan, d)
-				convey.So(it.Prev().Data(), convey.ShouldBeGreaterThanOrEqualTo, d)
-				// convey.So(it.Next().Next().Data(), convey.ShouldEqual, d)
+				c.So(it.Get(), convey.ShouldBeLessThan, d)
+				c.So(it.Prev().Get(), convey.ShouldBeGreaterThanOrEqualTo, d)
+				// convey.So(it.Next().Next().Get(), convey.ShouldEqual, d)
 			}
 		})
 	})

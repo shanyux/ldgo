@@ -15,20 +15,20 @@ type iterator[T any] struct {
 
 type Iterator[T any] iterator[T]
 
-func (i Iterator[T]) Set(d T)           { unsafe.Slice(i.ptr, i.idx+1)[i.idx] = d }
-func (i Iterator[T]) Get() T            { return unsafe.Slice(i.ptr, i.idx+1)[i.idx] }
-func (i Iterator[T]) Prev() Iterator[T] { return Iterator[T]{ptr: i.ptr, idx: i.idx - 1} }
-func (i Iterator[T]) Next() Iterator[T] { return Iterator[T]{ptr: i.ptr, idx: i.idx + 1} }
+func (i Iterator[T]) Set(d T)                { unsafe.Slice(i.ptr, i.idx+1)[i.idx] = d }
+func (i Iterator[T]) Get() T                 { return unsafe.Slice(i.ptr, i.idx+1)[i.idx] }
+func (i Iterator[T]) Prev() Iterator[T]      { return i.Move(-1) }
+func (i Iterator[T]) Next() Iterator[T]      { return i.Move(+1) }
+func (i Iterator[T]) Move(n int) Iterator[T] { return Iterator[T]{ptr: i.ptr, idx: i.idx + n} }
 
 type ReverseIterator[T any] iterator[T]
 
-func (i ReverseIterator[T]) Set(d T) { unsafe.Slice(i.ptr, i.idx+1)[i.idx] = d }
-func (i ReverseIterator[T]) Get() T  { return unsafe.Slice(i.ptr, i.idx+1)[i.idx] }
-func (i ReverseIterator[T]) Prev() ReverseIterator[T] {
-	return ReverseIterator[T]{ptr: i.ptr, idx: i.idx + 1}
-}
-func (i ReverseIterator[T]) Next() ReverseIterator[T] {
-	return ReverseIterator[T]{ptr: i.ptr, idx: i.idx - 1}
+func (i ReverseIterator[T]) Set(d T)                  { unsafe.Slice(i.ptr, i.idx+1)[i.idx] = d }
+func (i ReverseIterator[T]) Get() T                   { return unsafe.Slice(i.ptr, i.idx+1)[i.idx] }
+func (i ReverseIterator[T]) Prev() ReverseIterator[T] { return i.Move(+1) }
+func (i ReverseIterator[T]) Next() ReverseIterator[T] { return i.Move(-1) }
+func (i ReverseIterator[T]) Move(n int) ReverseIterator[T] {
+	return ReverseIterator[T]{ptr: i.ptr, idx: i.idx + n}
 }
 
 func makeIterator[T any](s []T, idx int) iterator[T] {
