@@ -5,14 +5,15 @@
 package ldredis
 
 import (
+	"context"
 	"time"
 
-	"github.com/distroy/ldgo/v2/ldctx"
-	"github.com/go-redis/redis"
+	"github.com/distroy/ldgo/v2/ldredis/internal"
+	redis "github.com/redis/go-redis/v9"
 )
 
 type (
-	Context = ldctx.Context
+	Reporter = internal.Reporter
 )
 
 type (
@@ -27,6 +28,9 @@ type (
 	ScanCmd      = redis.ScanCmd
 	ScanIterator = redis.ScanIterator
 
+	SetArgs  = redis.SetArgs
+	LPosArgs = redis.LPosArgs
+
 	BoolCmd   = redis.BoolCmd
 	StatusCmd = redis.StatusCmd
 
@@ -34,18 +38,31 @@ type (
 	StringCmd   = redis.StringCmd
 	IntCmd      = redis.IntCmd
 	FloatCmd    = redis.FloatCmd
-	SliceCmd    = redis.SliceCmd
 
-	StringsCmd         = redis.StringSliceCmd
-	StringStringMapCmd = redis.StringStringMapCmd
+	SliceCmd           = redis.SliceCmd
+	IntSliceCmd        = redis.IntSliceCmd
+	BoolSliceCmd       = redis.BoolSliceCmd
+	FloatSliceCmd      = redis.FloatSliceCmd
+	StringSliceCmd     = redis.StringSliceCmd
+	MapStringStringCmd = redis.MapStringStringCmd
 	StringSetCmd       = redis.StringStructMapCmd
 
-	ZMember     = redis.Z
-	ZStore      = redis.ZStore
-	ZRangeBy    = redis.ZRangeBy
-	ZSliceCmd   = redis.ZSliceCmd
-	ZWithKey    = redis.ZWithKey
-	ZWithKeyCmd = redis.ZWithKeyCmd
+	KeyValue         = redis.KeyValue
+	KeyValuesCmd     = redis.KeyValuesCmd
+	KeyValueSliceCmd = redis.KeyValueSliceCmd
+
+	RankScore        = redis.RankScore
+	RankWithScoreCmd = redis.RankWithScoreCmd
+
+	ZMember          = redis.Z
+	ZAddArgs         = redis.ZAddArgs
+	ZStore           = redis.ZStore
+	ZRangeArgs       = redis.ZRangeArgs
+	ZRangeBy         = redis.ZRangeBy
+	ZSliceCmd        = redis.ZSliceCmd
+	ZWithKey         = redis.ZWithKey
+	ZWithKeyCmd      = redis.ZWithKeyCmd
+	ZSliceWithKeyCmd = redis.ZSliceWithKeyCmd
 
 	XAddArgs         = redis.XAddArgs
 	XReadArgs        = redis.XReadArgs
@@ -68,122 +85,85 @@ type (
 	GeoRadiusQuery = redis.GeoRadiusQuery
 )
 
-type Cmdable interface {
-	redis.Cmdable
+type StringCmdable interface {
+	redis.StringCmdable
 
-	Do(args ...interface{}) *Cmd
-	Process(cmd Cmder) error
-	Close() error
-	// Discard() error
-	// Exec() ([]Cmder, error)
-
-	Subscribe(channels ...string) *PubSub
-	PSubscribe(channels ...string) *PubSub
+	// MSet is like Set but accepts multiple values:
+	//   - MSet("key1", "value1", "key2", "value2")
+	//   - MSet([]string{"key1", "value1", "key2", "value2"})
+	//   - MSet(map[string]interface{}{"key1": "value1", "key2": "value2"})
+	//   - MSet(struct), For struct types, see HSet description.
+	MSet(ctx context.Context, values ...interface{}) *StatusCmd
+	// MSetNX is like SetNX but accepts multiple values:
+	//   - MSetNX("key1", "value1", "key2", "value2")
+	//   - MSetNX([]string{"key1", "value1", "key2", "value2"})
+	//   - MSetNX(map[string]interface{}{"key1": "value1", "key2": "value2"})
+	//   - MSetNX(struct), For struct types, see HSet description.
+	MSetNX(ctx context.Context, values ...interface{}) *BoolCmd
+	// Set Redis `SET key value [expiration]` command.
+	// Use expiration for `SETEx`-like behavior.
+	//
+	// Zero expiration means the key has no expiration time.
+	// KeepTTL is a Redis KEEPTTL option to keep existing TTL, it requires your redis-server version >= 6.0,
+	// otherwise you will receive an error: (error) ERR syntax error.
+	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *StatusCmd
 }
 
-type CodecCmdable interface {
-	Get(key string) *CodecCmd                                               //
-	GetBit(key string, offset int64) *IntCmd                                // same as Cmdable
-	GetRange(key string, start, end int64) *StringCmd                       // same as Cmdable
-	GetSet(key string, value interface{}) *CodecCmd                         //
-	Incr(key string) *IntCmd                                                // same as Cmdable
-	IncrBy(key string, value int64) *IntCmd                                 // same as Cmdable
-	IncrByFloat(key string, value float64) *FloatCmd                        // same as Cmdable
-	MGet(keys ...string) *CodecSliceCmd                                     //
-	MSet(pairs ...interface{}) *StatusCmd                                   //
-	MSetNX(pairs ...interface{}) *BoolCmd                                   //
-	Set(key string, value interface{}, expiration time.Duration) *StatusCmd //
-	SetBit(key string, offset int64, value int) *IntCmd                     // same as Cmdable
-	SetNX(key string, value interface{}, expiration time.Duration) *BoolCmd //
-	SetXX(key string, value interface{}, expiration time.Duration) *BoolCmd //
-	SetRange(key string, offset int64, value string) *IntCmd                // same as Cmdable
-	StrLen(key string) *IntCmd                                              // same as Cmdable
+type HashCmdable interface {
+	redis.HashCmdable
 
-	HDel(key string, fields ...string) *IntCmd                  // same as Cmdable
-	HExists(key, field string) *BoolCmd                         // same as Cmdable
-	HGet(key, field string) *CodecCmd                           //
-	HGetAll(key string) *StringCodecMapCmd                      //
-	HIncrBy(key, field string, incr int64) *IntCmd              // same as Cmdable
-	HIncrByFloat(key, field string, incr float64) *FloatCmd     // same as Cmdable
-	HKeys(key string) *StringsCmd                               // same as Cmdable
-	HLen(key string) *IntCmd                                    // same as Cmdable
-	HMGet(key string, fields ...string) *CodecSliceCmd          //
-	HMSet(key string, fields map[string]interface{}) *StatusCmd //
-	HSet(key, field string, value interface{}) *BoolCmd         //
-	HSetNX(key, field string, value interface{}) *BoolCmd       //
-	HVals(key string) *CodecsCmd                                //
+	// HSet accepts values in following formats:
+	//
+	//   - HSet("myhash", "key1", "value1", "key2", "value2")
+	//
+	//   - HSet("myhash", []string{"key1", "value1", "key2", "value2"})
+	//
+	//   - HSet("myhash", map[string]interface{}{"key1": "value1", "key2": "value2"})
+	//
+	//     Playing struct With "redis" tag.
+	//     type MyHash struct { Key1 string `redis:"key1"`; Key2 int `redis:"key2"` }
+	//
+	//   - HSet("myhash", MyHash{"value1", "value2"}) Warn: redis-server >= 4.0
+	//
+	//     For struct, can be a structure pointer type, we only parse the field whose tag is redis.
+	//     if you don't want the field to be read, you can use the `redis:"-"` flag to ignore it,
+	//     or you don't need to set the redis tag.
+	//     For the type of structure field, we only support simple data types:
+	//     string, int/uint(8,16,32,64), float(32,64), time.Time(to RFC3339Nano), time.Duration(to Nanoseconds ),
+	//     if you are other more complex or custom data types, please implement the encoding.BinaryMarshaler interface.
+	//
+	// Note that in older versions of Redis server(redis-server < 4.0), HSet only supports a single key-value pair.
+	// redis-docs: https://redis.io/commands/hset (Starting with Redis version 4.0.0: Accepts multiple field and value arguments.)
+	// If you are using a Struct type and the number of fields is greater than one,
+	// you will receive an error similar to "ERR wrong number of arguments", you can use HMSet as a substitute.
+	HSet(ctx context.Context, key string, values ...interface{}) *IntCmd
 
-	BLPop(timeout time.Duration, keys ...string) *CodecsCmd                 //
-	BRPop(timeout time.Duration, keys ...string) *CodecsCmd                 //
-	BRPopLPush(source, destination string, timeout time.Duration) *CodecCmd //
-	LIndex(key string, index int64) *CodecCmd                               //
-	LInsert(key, op string, pivot, value interface{}) *IntCmd               //
-	LInsertBefore(key string, pivot, value interface{}) *IntCmd             //
-	LInsertAfter(key string, pivot, value interface{}) *IntCmd              //
-	LLen(key string) *IntCmd                                                // same as Cmdable
-	LPop(key string) *CodecCmd                                              //
-	LPush(key string, values ...interface{}) *IntCmd                        //
-	LPushX(key string, value interface{}) *IntCmd                           //
-	LRange(key string, start, stop int64) *CodecsCmd                        //
-	LRem(key string, count int64, value interface{}) *IntCmd                //
-	LSet(key string, index int64, value interface{}) *StatusCmd             //
-	LTrim(key string, start, stop int64) *StatusCmd                         // same as Cmdable
-	RPop(key string) *CodecCmd                                              //
-	RPopLPush(source, destination string) *CodecCmd                         //
-	RPush(key string, values ...interface{}) *IntCmd                        //
-	RPushX(key string, value interface{}) *IntCmd                           //
+	// HMSet is a deprecated version of HSet left for compatibility with Redis 3.
+	HMSet(ctx context.Context, key string, values ...interface{}) *BoolCmd
+}
 
-	SAdd(key string, members ...interface{}) *IntCmd               //
-	SCard(key string) *IntCmd                                      // same as Cmdable
-	SDiff(keys ...string) *CodecsCmd                               //
-	SDiffStore(destination string, keys ...string) *IntCmd         // same as Cmdable
-	SInter(keys ...string) *CodecsCmd                              //
-	SInterStore(destination string, keys ...string) *IntCmd        // same as Cmdable
-	SIsMember(key string, member interface{}) *BoolCmd             //
-	SMembers(key string) *CodecsCmd                                //
-	SMembersMap(key string) *CodecSetCmd                           //
-	SMove(source, destination string, member interface{}) *BoolCmd //
-	SPop(key string) *CodecCmd                                     //
-	SPopN(key string, count int64) *CodecsCmd                      //
-	SRandMember(key string) *CodecCmd                              //
-	SRandMemberN(key string, count int64) *CodecsCmd               //
-	SRem(key string, members ...interface{}) *IntCmd               //
-	SUnion(keys ...string) *CodecsCmd                              //
-	SUnionStore(destination string, keys ...string) *IntCmd        // same as Cmdable
+type SortedSetCmdable interface {
+	redis.SortedSetCmdable
 
-	// XAdd(a *XAddArgs) *StringCmd
+	// BZMPop is the blocking variant of ZMPOP.
+	// When any of the sorted sets contains elements, this command behaves exactly like ZMPOP.
+	// When all sorted sets are empty, Redis will block the connection until another client adds members to one of the keys or until the timeout elapses.
+	// A timeout of zero can be used to block indefinitely.
+	// example: client.BZMPop(ctx, 0,"max", 1, "set")
+	BZMPop(ctx context.Context, timeout time.Duration, order string, count int64, keys ...string) *ZSliceWithKeyCmd
+}
 
-	ZAdd(key string, members ...ZMember) *IntCmd                          //
-	ZAddNX(key string, members ...ZMember) *IntCmd                        //
-	ZAddXX(key string, members ...ZMember) *IntCmd                        //
-	ZAddCh(key string, members ...ZMember) *IntCmd                        //
-	ZAddNXCh(key string, members ...ZMember) *IntCmd                      //
-	ZAddXXCh(key string, members ...ZMember) *IntCmd                      //
-	ZIncr(key string, member ZMember) *FloatCmd                           //
-	ZIncrNX(key string, member ZMember) *FloatCmd                         //
-	ZIncrXX(key string, member ZMember) *FloatCmd                         //
-	ZCard(key string) *IntCmd                                             // same as Cmdable
-	ZCount(key, min, max string) *IntCmd                                  // same as Cmdable
-	ZLexCount(key, min, max string) *IntCmd                               // same as Cmdable
-	ZIncrBy(key string, increment float64, member interface{}) *FloatCmd  //
-	ZInterStore(destination string, store ZStore, keys ...string) *IntCmd // same as Cmdable
-	ZPopMax(key string, count ...int64) *ZCodecSliceCmd                   //
-	ZPopMin(key string, count ...int64) *ZCodecSliceCmd                   //
-	ZRange(key string, start, stop int64) *CodecsCmd                      //
-	ZRangeWithScores(key string, start, stop int64) *ZCodecSliceCmd       //
-	ZRangeByScore(key string, opt ZRangeBy) *CodecsCmd                    //
-	ZRangeByLex(key string, opt ZRangeBy) *CodecsCmd                      //
-	ZRangeByScoreWithScores(key string, opt ZRangeBy) *ZCodecSliceCmd     //
-	ZRank(key, member interface{}) *IntCmd                                //
-	ZRem(key string, members ...interface{}) *IntCmd                      //
-	ZRemRangeByRank(key string, start, stop int64) *IntCmd                // same as Cmdable
-	ZRemRangeByScore(key, min, max string) *IntCmd                        // same as Cmdable
-	ZRemRangeByLex(key, min, max string) *IntCmd                          // same as Cmdable
-	ZRevRange(key string, start, stop int64) *CodecsCmd                   //
-	ZRevRangeWithScores(key string, start, stop int64) *ZCodecSliceCmd    //
-	ZRevRangeByScore(key string, opt ZRangeBy) *CodecsCmd                 //
-	ZRevRangeByLex(key string, opt ZRangeBy) *CodecsCmd                   //
-	ZRevRangeByScoreWithScores(key string, opt ZRangeBy) *ZCodecSliceCmd  //
-	ZRevRank(key, member interface{}) *IntCmd                             //
-	ZScore(key, member interface{}) *FloatCmd                             //
+type Cmdable interface {
+	StringCmdable
+	HashCmdable
+	SortedSetCmdable
+
+	redis.Cmdable
+
+	Do(ctx context.Context, args ...interface{}) *Cmd
+	Process(ctx context.Context, cmd Cmder) error
+	Close() error
+
+	Subscribe(ctx context.Context, channels ...string) *PubSub
+	PSubscribe(ctx context.Context, channels ...string) *PubSub
 }

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/distroy/ldgo/v2/ldhook"
-	"github.com/go-redis/redis"
+	redis "github.com/redis/go-redis/v9"
 	"github.com/smartystreets/goconvey/convey"
 )
 
@@ -18,6 +18,10 @@ func Test_New(t *testing.T) {
 				ldhook.FuncHook{
 					Target: redis.NewClusterClient,
 					Double: ldhook.Values{&redis.ClusterClient{}},
+				},
+				ldhook.FuncHook{
+					Target: (*redis.ClusterClient).AddHook,
+					Double: ldhook.Values{},
 				},
 			})
 			cfg := &Config{
@@ -33,6 +37,10 @@ func Test_New(t *testing.T) {
 				ldhook.FuncHook{
 					Target: redis.NewClient,
 					Double: ldhook.Values{&redis.Client{}},
+				},
+				ldhook.FuncHook{
+					Target: (*redis.Client).AddHook,
+					Double: ldhook.Values{},
 				},
 			})
 			cfg := &Config{

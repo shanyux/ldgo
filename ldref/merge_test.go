@@ -196,7 +196,7 @@ func TestMerge(t *testing.T) {
 						}
 					)
 
-					err := Merge(&target, &source, &MergeConfig{SliceElem: true})
+					err := Merge(&target, &source, &MergeConfig{MergeSlice: true})
 					convey.So(err, convey.ShouldBeNil)
 					convey.So(target, convey.ShouldResemble, map[string]any{
 						"a": []any{1, 3, 4, 7},
@@ -221,7 +221,7 @@ func TestMerge(t *testing.T) {
 						source = [4]any{0, 2, 0, 14}
 					)
 
-					err := Merge(&target, &source, &MergeConfig{ArrayElem: true})
+					err := Merge(&target, &source, &MergeConfig{MergeArray: true})
 					convey.So(err, convey.ShouldBeNil)
 					convey.So(target, convey.ShouldResemble, [4]any{0, 2, 5, 14})
 				})

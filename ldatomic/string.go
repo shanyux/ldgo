@@ -4,12 +4,10 @@
 
 package ldatomic
 
-var _zeroString string
-
 type Byte = Uint8
 
 type String struct {
-	d Interface
+	Any[string]
 }
 
 func NewString(d string) *String {
@@ -18,15 +16,4 @@ func NewString(d string) *String {
 	return p
 }
 
-func (p *String) Store(d string)               { p.d.Store(d) }
-func (p *String) Load() string                 { return p.toStr(p.d.Load()) }
-func (p *String) Swap(new string) (old string) { return p.toStr(p.d.Swap(new)) }
-func (p *String) String() string               { return p.Load() }
-
-func (p *String) toStr(i interface{}) string {
-	if i == nil {
-		return _zeroString
-	}
-	x, _ := i.(string)
-	return x
-}
+func (p *String) String() string { return p.Load() }
