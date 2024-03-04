@@ -28,9 +28,9 @@ func (it mapIterator[K, V]) prev(name string, iface rbtreeInterface[Pair[K, V]])
 type MapIterator[K any, V any] mapIterator[K, V]
 
 func (i MapIterator[K, V]) base() mapIterator[K, V] { return mapIterator[K, V](i) }
-func (i MapIterator[K, V]) Data() MapNode[K, V]     { return MapNode[K, V](i) }
-func (i MapIterator[K, V]) Key() K                  { return i.Data().Key() }
-func (i MapIterator[K, V]) Value(new ...V) (old V)  { return i.Data().Value(new...) }
+func (i MapIterator[K, V]) Get() MapNode[K, V]      { return MapNode[K, V](i) }
+func (i MapIterator[K, V]) Key() K                  { return i.Get().Key() }
+func (i MapIterator[K, V]) Value(new ...V) (old V)  { return i.Get().Value(new...) }
 
 func (i MapIterator[K, V]) Next() MapIterator[K, V] {
 	return MapIterator[K, V](i.base().next("map iterator", forward(i.tree)))
@@ -43,9 +43,9 @@ func (i MapIterator[K, V]) Prev() MapIterator[K, V] {
 type MapReverseIterator[K any, V any] mapIterator[K, V]
 
 func (i MapReverseIterator[K, V]) base() mapIterator[K, V] { return mapIterator[K, V](i) }
-func (i MapReverseIterator[K, V]) Data() MapNode[K, V]     { return MapNode[K, V](i) }
-func (i MapReverseIterator[K, V]) Key() K                  { return i.Data().Key() }
-func (i MapReverseIterator[K, V]) Value(new ...V) (old V)  { return i.Data().Value(new...) }
+func (i MapReverseIterator[K, V]) Get() MapNode[K, V]      { return MapNode[K, V](i) }
+func (i MapReverseIterator[K, V]) Key() K                  { return i.Get().Key() }
+func (i MapReverseIterator[K, V]) Value(new ...V) (old V)  { return i.Get().Value(new...) }
 
 func (i MapReverseIterator[K, V]) Next() MapReverseIterator[K, V] {
 	return MapReverseIterator[K, V](i.base().next("map reverse iterator", reverse(i.tree)))
