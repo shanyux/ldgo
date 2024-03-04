@@ -16,6 +16,14 @@ type CopyConfig struct {
 	SourceTag string // default: json
 }
 
+// Copy will copy the data from source to target by the tags
+//
+//	Copy(*int, uint)
+//	Copy(*int, *uint)
+//	Copy(*structA, structB)
+//	Copy(*structA, *structB)
+//	Copy(*structA, map)
+//	Copy(*map, structA)
 func Copy(target, source interface{}, cfg ...*CopyConfig) lderr.Error {
 	c := &copyContext{
 		context:    getContext(),
