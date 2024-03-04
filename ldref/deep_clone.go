@@ -6,16 +6,19 @@ package ldref
 
 import "reflect"
 
-func DeepClone(i interface{}) interface{} {
+func DeepClone[T any](d T) T {
+	var i interface{} = d
 	if x, ok := i.(reflect.Value); ok {
-		return deepClone(x)
+		var r interface{} = deepClone(x)
+		return r.(T)
 	}
 
 	x := deepClone(reflect.ValueOf(i))
 	if x.Kind() == reflect.Invalid {
-		return nil
+		var zero T
+		return zero
 	}
-	return x.Interface()
+	return x.Interface().(T)
 }
 
 func deepClone(x0 reflect.Value) reflect.Value {
