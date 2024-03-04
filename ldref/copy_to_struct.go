@@ -30,10 +30,23 @@ func copyReflectToStructFromStruct(c *copyContext, target, source reflect.Value)
 
 	sTyp := source.Type()
 	sInfo := getCopyTypeInfo(sTyp, c.SourceTag)
-	if !c.Clone && tTyp == sTyp {
+	if !c.Clone && tTyp == sTyp && c.TargetTag == c.SourceTag {
 		target.Set(source)
 		clearCopyStructIgnoreField(c, target, tInfo)
 		return true
+	}
+
+	if !source.CanAddr() {
+		if tTyp == sTyp && c.TargetTag == c.SourceTag {
+			target.Set(source)
+			source = target
+			clearCopyStructIgnoreField(c, target, tInfo)
+
+		} else {
+			tmp := reflect.New(sTyp).Elem()
+			tmp.Set(source)
+			source = tmp
+		}
 	}
 
 	for _, sFieldInfo := range sInfo.Fields {

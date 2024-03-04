@@ -4,7 +4,10 @@
 
 package ldref
 
-import "reflect"
+import (
+	"reflect"
+	"unsafe"
+)
 
 func DeepClone[T any](d T) T {
 	var i interface{} = d
@@ -18,6 +21,7 @@ func DeepClone[T any](d T) T {
 		var zero T
 		return zero
 	}
+
 	return x.Interface().(T)
 }
 
@@ -65,10 +69,22 @@ func deepClonePtr(x0 reflect.Value) reflect.Value {
 
 func deepCloneStruct(x0 reflect.Value) reflect.Value {
 	x1 := reflect.New(x0.Type()).Elem()
+	if !x0.CanAddr() {
+		x1.Set(x0)
+		x0 = x1
+	}
+
 	for i, n := 0, x0.NumField(); i < n; i++ {
 		f0 := x0.Field(i)
 		f1 := x1.Field(i)
-		f1.Set(deepClone(f0))
+		// f1.Set(deepClone(f0))
+
+		a0 := unsafe.Pointer(f0.UnsafeAddr())
+		o0 := reflect.NewAt(f0.Type(), a0).Elem()
+
+		a1 := unsafe.Pointer(f1.UnsafeAddr())
+		o1 := reflect.NewAt(f1.Type(), a1).Elem()
+		o1.Set(deepClone(o0))
 	}
 	return x1
 }
