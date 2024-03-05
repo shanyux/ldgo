@@ -15,8 +15,6 @@ const (
 	timeFormat = "2006-01-02T15:04:05-0700"
 )
 
-type any = interface{}
-
 func ToByte(v interface{}) (byte, error) { return ToUint8(v) }
 
 func ToBool(v interface{}) (bool, error) {

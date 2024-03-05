@@ -6,17 +6,20 @@ package ldref
 
 import "reflect"
 
-func Clone(i interface{}) interface{} {
+func Clone[T any](d T) T {
+	var i interface{} = d
 	if x, ok := i.(reflect.Value); ok {
-		return clone(x)
+		var r interface{} = clone(x)
+		return r.(T)
 	}
 
 	x := clone(reflect.ValueOf(i))
 	if x.Kind() == reflect.Invalid {
-		return nil
+		var zero T
+		return zero
 	}
 
-	return x.Interface()
+	return x.Interface().(T)
 }
 
 func clone(x0 reflect.Value) reflect.Value {

@@ -890,6 +890,30 @@ func TestCopy(t *testing.T) {
 				// c.So(&target, convey.ShouldResemble, &testCopyStruct{})
 			})
 
+			c.Convey("struct to *struct", func(c convey.C) {
+				var (
+					target testCopyStruct
+					source = testCopyStruct{
+						Id:        100,
+						Ignore:    true,
+						Name:      "abc",
+						Age:       23,
+						Female:    true,
+						unexpored: new(int),
+					}
+				)
+
+				err := Copy(&target, source)
+				c.So(err, convey.ShouldBeNil)
+				c.So(&target, convey.ShouldResemble, &testCopyStruct{
+					Id:        100,
+					Name:      "abc",
+					Age:       23,
+					Female:    true,
+					unexpored: new(int),
+				})
+			})
+
 			c.Convey("*struct to *struct", func(c convey.C) {
 				var (
 					target testCopyStruct
@@ -911,6 +935,46 @@ func TestCopy(t *testing.T) {
 					Age:       23,
 					Female:    true,
 					unexpored: new(int),
+				})
+			})
+
+			c.Convey("struct to *struct 2", func(c convey.C) {
+				var (
+					target testCopyStruct2
+					source = testCopyStruct{
+						Id:        100,
+						Ignore:    true,
+						Name:      "abc",
+						Age:       23,
+						Female:    true,
+						unexpored: new(int),
+					}
+				)
+
+				c.Convey("with tag name", func(c convey.C) {
+					err := Copy(&target, source, &CopyConfig{
+						TargetTag: "gorm",
+					})
+					c.So(err, convey.ShouldBeNil)
+					c.So(&target, convey.ShouldResemble, &testCopyStruct2{
+						Id:        100,
+						Name:      "abc",
+						Age:       23,
+						Female:    true,
+						unexpored: new(int),
+					})
+				})
+
+				c.Convey("without tag name", func(c convey.C) {
+					err := Copy(&target, source)
+					c.So(err, convey.ShouldBeNil)
+					c.So(&target, convey.ShouldNotResemble, &testCopyStruct2{
+						Id:        100,
+						Name:      "abc",
+						Age:       23,
+						Female:    true,
+						unexpored: new(int),
+					})
 				})
 			})
 
