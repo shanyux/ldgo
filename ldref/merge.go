@@ -18,13 +18,12 @@ type MergeConfig struct {
 }
 
 // Merge will merge the data from source to target
-//
-//	Merge(*int, int)
-//	Merge(*int, *int)
-//	Merge(*structA, structA)
-//	Merge(*structA, *structA)
-//	Merge(*map, map)
-//	Merge(*map, *map)
+//   - Merge(*int, int)
+//   - Merge(*int, *int)
+//   - Merge(*structA, structA)
+//   - Merge(*structA, *structA)
+//   - Merge(*map, map)
+//   - Merge(*map, *map)
 func Merge(target, source interface{}, cfg ...*MergeConfig) lderr.Error {
 	c := &mergeContext{
 		MergeConfig: &MergeConfig{},
