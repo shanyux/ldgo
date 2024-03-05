@@ -5,6 +5,7 @@
 package ldref
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/distroy/ldgo/v2/lderr"
@@ -19,6 +20,27 @@ type testCloneStruct struct {
 
 func TestClone(t *testing.T) {
 	convey.Convey(t.Name(), t, func(c convey.C) {
+		c.Convey("nil", func(c convey.C) {
+			c.Convey("interface{}", func(c convey.C) {
+				v0 := interface{}(nil)
+				v1 := Clone(v0)
+				c.So(v1, convey.ShouldBeNil)
+			})
+			c.Convey("error", func(c convey.C) {
+				v0 := error(nil)
+				v1 := Clone(v0)
+				c.So(v1, convey.ShouldBeNil)
+			})
+		})
+		c.Convey("reflect.Value(*int)", func(c convey.C) {
+			p0 := new(int)
+			*p0 = 12345
+			v0 := reflect.ValueOf(p0)
+			v1 := Clone(v0)
+			c.So(v1, convey.ShouldNotEqual, v0)
+			c.So(v1.Interface(), convey.ShouldResemble, v0.Interface())
+			c.So(v1.Interface(), convey.ShouldResemble, v0.Interface())
+		})
 		c.Convey("*int", func(c convey.C) {
 			v0 := new(int)
 			*v0 = 12345
@@ -65,7 +87,6 @@ func TestClone(t *testing.T) {
 			c.So(v1, convey.ShouldNotEqual, v0)
 			c.So(v1, convey.ShouldResemble, v0)
 		})
-
 		c.Convey("error", func(c convey.C) {
 			v0 := lderr.ErrUnkown
 			v1 := Clone(v0)
