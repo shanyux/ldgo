@@ -4,12 +4,25 @@
 
 package ldchan
 
-import "fmt"
+import (
+	"fmt"
+)
 
 var (
 	errMovePrev    = fmt.Errorf("the chan iterator can not move prev")
 	errEndMoveNext = fmt.Errorf("the chan iterator is already at the end, can not move next")
 )
+
+// Begin will read the first item in chan, can not be called multiple times
+func Begin[T comparable](ch <-chan T) Iterator[T] {
+	if ch == nil {
+		return End(ch)
+	}
+	it := Iterator[T]{ch: ch}
+	return it.Next()
+}
+
+func End[T comparable](ch <-chan T) Iterator[T] { return Iterator[T]{} }
 
 type Iterator[T comparable] struct {
 	ch   <-chan T
@@ -32,22 +45,37 @@ func (it Iterator[T]) Next() Iterator[T] {
 	}
 }
 
-type Range[T comparable] struct {
-	Begin Iterator[T]
-	End   Iterator[T]
-}
-
-func (r *Range[T]) Get() T        { return r.Begin.Get() }
-func (r *Range[T]) HasNext() bool { return r.Begin.ch != nil }
-func (r *Range[T]) Next()         { r.Begin = r.Begin.Next() }
-
-// Begin will read the first item in chan, can not be called multiple times
-func Begin[T comparable](ch <-chan T) Iterator[T] {
-	if ch == nil {
-		return End(ch)
+func MakeRange[T comparable](ch <-chan T) *Range[T] {
+	return &Range[T]{
+		ch: ch,
 	}
-	it := Iterator[T]{ch: ch}
-	return it.Next()
 }
 
-func End[T comparable](ch <-chan T) Iterator[T] { return Iterator[T]{} }
+type Range[T comparable] struct {
+	ch     <-chan T
+	begin  Iterator[T]
+	end    Iterator[T]
+	inited bool
+}
+
+func (r *Range[T]) init() {
+	if r.inited {
+		return
+	}
+	r.begin = Begin(r.ch)
+	r.end = End(r.ch)
+	r.inited = true
+}
+
+func (r *Range[T]) Get() T {
+	r.init()
+	return r.begin.Get()
+}
+func (r *Range[T]) HasNext() bool {
+	r.init()
+	return r.begin.ch != nil
+}
+func (r *Range[T]) Next() {
+	r.init()
+	r.begin = r.begin.Next()
+}

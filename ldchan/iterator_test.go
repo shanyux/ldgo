@@ -65,10 +65,7 @@ func TestRange(t *testing.T) {
 		l := []int{1, 100, 50, 200, 70, 80, 30, 40, 20, 90, 150}
 		ch := testSliceToChan(l)
 
-		r := testRangeToSlice[int](&Range[int]{
-			Begin: Begin(ch),
-			End:   End(ch),
-		})
+		r := testRangeToSlice[int](MakeRange(ch))
 		c.So(r, convey.ShouldResemble, []int{
 			1, 100, 50, 200, 70, 80, 30, 40, 20, 90, 150,
 		})
