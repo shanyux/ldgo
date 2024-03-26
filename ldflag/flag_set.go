@@ -321,7 +321,7 @@ func (s *FlagSet) parseStruct(lvl int, val reflect.Value) {
 
 	for i, l := 0, typ.NumField(); i < l; i++ {
 		field := typ.Field(i)
-		if field.Anonymous {
+		if field.Anonymous || field.Tag.Get(tagName) == "-" {
 			continue
 		}
 
@@ -353,9 +353,9 @@ func (s *FlagSet) parseFieldFlag(lvl int, val reflect.Value, field reflect.Struc
 	}
 
 	tags := ldtagmap.Parse(tag)
-	if tags.Has("-") {
-		return
-	}
+	// if tags.Has("-") {
+	// 	return
+	// }
 	// log.Printf(" === %s %#v", tag, tags)
 
 	f := &Flag{
