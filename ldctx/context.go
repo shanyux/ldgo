@@ -134,15 +134,10 @@ func TryCancel(c context.Context) bool {
 }
 
 func WithTimeout(parent context.Context, timeout time.Duration) Context {
-	return WithDeadline(unwrap(parent), time.Now().Add(timeout))
+	return WithDeadline(parent, time.Now().Add(timeout))
 }
 
 func WithDeadline(parent context.Context, deadline time.Time) Context {
-	if cur, ok := parent.Deadline(); ok && cur.Before(deadline) {
-		// The current deadline is already sooner than the new one.
-		return NewContext(parent)
-	}
-
 	child, cancel := context.WithDeadline(unwrap(parent), deadline)
 	return newCtx(newCancelCtx(child, cancel))
 }
