@@ -7,30 +7,29 @@ package ldgorm
 import (
 	"fmt"
 
-	gorm2 "github.com/distroy/ldgo/v2/ldgorm/internal/jinzhu/gorm"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"github.com/distroy/ldgo/v2/ldgorm/internal"
+	"gorm.io/gorm"
 )
 
-type GormDb = gorm2.GormDb
+type (
+	OriginGormDb = gorm.DB
+	GormDb       = internal.GormDb
+)
 
-func NewGormDb(db *gorm.DB) *GormDb {
-	g := &GormDb{}
-	g = g.Set(db)
-	return g
+func New(db *gorm.DB) *GormDb {
+	return internal.New(db)
 }
 
-func NewTestGormDb() (*GormDb, error) {
-	db, err := gorm.Open("sqlite3", ":memory:")
-	if err != nil {
-		return nil, err
-	}
-
-	return NewGormDb(db), nil
+func NewDb(db *gorm.DB) *GormDb {
+	return New(db)
 }
 
-func MustNewTestGormDb() *GormDb {
-	db, err := NewTestGormDb()
+func NewTestDb() (*GormDb, error) {
+	return internal.NewTestGormDb()
+}
+
+func MustNewTestDb() *GormDb {
+	db, err := NewTestDb()
 	if err != nil {
 		panic(fmt.Sprintf("new test gorm fail. err:%v", err))
 	}

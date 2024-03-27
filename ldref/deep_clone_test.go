@@ -5,38 +5,61 @@
 package ldref
 
 import (
+	"reflect"
 	"testing"
 
+	"github.com/distroy/ldgo/v2/lderr"
 	"github.com/smartystreets/goconvey/convey"
 )
 
 func TestDeepClone(t *testing.T) {
-	convey.Convey(t.Name(), t, func() {
-		convey.Convey("*int", func() {
+	convey.Convey(t.Name(), t, func(c convey.C) {
+		c.Convey("nil", func(c convey.C) {
+			c.Convey("interface{}", func(c convey.C) {
+				v0 := interface{}(nil)
+				v1 := DeepClone(v0)
+				c.So(v1, convey.ShouldBeNil)
+			})
+			c.Convey("error", func(c convey.C) {
+				v0 := error(nil)
+				v1 := DeepClone(v0)
+				c.So(v1, convey.ShouldBeNil)
+			})
+		})
+		c.Convey("reflect.Value(*int)", func(c convey.C) {
+			p0 := new(int)
+			*p0 = 12345
+			v0 := reflect.ValueOf(p0)
+			v1 := DeepClone(v0)
+			c.So(v1, convey.ShouldNotEqual, v0)
+			c.So(v1.Interface(), convey.ShouldResemble, v0.Interface())
+			c.So(v1.Interface(), convey.ShouldResemble, v0.Interface())
+		})
+		c.Convey("*int", func(c convey.C) {
 			v0 := new(int)
 			*v0 = 12345
-			v1 := Clone(v0)
-			convey.So(v1, convey.ShouldNotEqual, v0)
-			convey.So(v1, convey.ShouldResemble, v0)
+			v1 := DeepClone(v0)
+			c.So(v1, convey.ShouldNotEqual, v0)
+			c.So(v1, convey.ShouldResemble, v0)
 		})
-		convey.Convey("[]*int", func() {
+		c.Convey("[]*int", func(c convey.C) {
 			ptrToInt := func(n int) *int { return &n }
 			v0 := []*int{ptrToInt(1), ptrToInt(2), ptrToInt(3)}
 			v1 := DeepClone(v0)
-			convey.So(v1, convey.ShouldNotEqual, v0)
-			convey.So(v1, convey.ShouldResemble, v0)
-			d1, _ := v1.([]*int)
+			c.So(v1, convey.ShouldNotEqual, v0)
+			c.So(v1, convey.ShouldResemble, v0)
+			d1 := v1
 			for i := range v0 {
-				convey.So(d1[i], convey.ShouldNotEqual, v0[i])
+				c.So(d1[i], convey.ShouldNotEqual, v0[i])
 			}
 		})
-		convey.Convey("[3]int", func() {
+		c.Convey("[3]int", func(c convey.C) {
 			v0 := [3]int{1, 2, 3}
 			v1 := DeepClone(v0)
-			convey.So(v1, convey.ShouldEqual, v0)
-			convey.So(v1, convey.ShouldResemble, v0)
+			c.So(v1, convey.ShouldEqual, v0)
+			c.So(v1, convey.ShouldResemble, v0)
 		})
-		convey.Convey("map[string]*int", func() {
+		c.Convey("map[string]*int", func(c convey.C) {
 			ptrToInt := func(n int) *int { return &n }
 			v0 := map[string]*int{
 				"a": ptrToInt(1),
@@ -45,18 +68,18 @@ func TestDeepClone(t *testing.T) {
 				// "d": nil,
 			}
 			v1 := DeepClone(v0)
-			convey.So(v1, convey.ShouldNotEqual, v0)
-			convey.So(v1, convey.ShouldResemble, v0)
-			d1, _ := v1.(map[string]*int)
+			c.So(v1, convey.ShouldNotEqual, v0)
+			c.So(v1, convey.ShouldResemble, v0)
+			d1 := v1
 			for i := range v0 {
 				if d1[i] == nil {
 					continue
 				}
-				convey.So(d1[i], convey.ShouldNotEqual, v0[i])
-				convey.So(d1[i], convey.ShouldResemble, v0[i])
+				c.So(d1[i], convey.ShouldNotEqual, v0[i])
+				c.So(d1[i], convey.ShouldResemble, v0[i])
 			}
 		})
-		convey.Convey("struct", func() {
+		c.Convey("struct", func(c convey.C) {
 			v0 := testCloneStruct{
 				String: "abc",
 				Int:    123,
@@ -66,12 +89,12 @@ func TestDeepClone(t *testing.T) {
 				},
 			}
 			v1 := DeepClone(v0)
-			convey.So(v1, convey.ShouldNotEqual, v0)
-			convey.So(v1, convey.ShouldResemble, v0)
-			d1, _ := v1.(testCloneStruct)
-			convey.So(d1.Struct, convey.ShouldNotEqual, v0.Struct)
+			c.So(v1, convey.ShouldNotEqual, v0)
+			c.So(v1, convey.ShouldResemble, v0)
+			d1 := v1
+			c.So(d1.Struct, convey.ShouldNotEqual, v0.Struct)
 		})
-		convey.Convey("*struct", func() {
+		c.Convey("*struct", func(c convey.C) {
 			v0 := &testCloneStruct{
 				String: "abc",
 				Int:    123,
@@ -81,10 +104,17 @@ func TestDeepClone(t *testing.T) {
 				},
 			}
 			v1 := DeepClone(v0)
-			convey.So(v1, convey.ShouldNotEqual, v0)
-			convey.So(v1, convey.ShouldResemble, v0)
-			d1, _ := v1.(*testCloneStruct)
-			convey.So(d1.Struct, convey.ShouldNotEqual, v0.Struct)
+			c.So(v1, convey.ShouldNotEqual, v0)
+			c.So(v1, convey.ShouldResemble, v0)
+			d1 := v1
+			c.So(d1.Struct, convey.ShouldNotEqual, v0.Struct)
+		})
+
+		c.Convey("error", func(c convey.C) {
+			v0 := lderr.ErrUnkown
+			v1 := DeepClone(v0)
+			c.So(v1, convey.ShouldNotEqual, v0)
+			c.So(v1, convey.ShouldResemble, v0)
 		})
 	})
 }

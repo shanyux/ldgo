@@ -11,15 +11,20 @@ import (
 	"github.com/distroy/ldgo/v2/lderr"
 )
 
-type any = interface{}
-
 type MergeConfig struct {
-	Clone     bool
-	ArrayElem bool // if merge array element
-	SliceElem bool // if merge slice element
+	Clone      bool // is clone if target is nil
+	MergeArray bool // is merge array. `false` mean only assign target at whole array is zero value
+	MergeSlice bool // is merge slice. `false` mean only assign target at slice is nil
 }
 
-func Merge(target, source any, cfg ...*MergeConfig) lderr.Error {
+// Merge will merge the data from source to target
+//   - Merge(*int, int)
+//   - Merge(*int, *int)
+//   - Merge(*structA, structA)
+//   - Merge(*structA, *structA)
+//   - Merge(*map, map)
+//   - Merge(*map, *map)
+func Merge(target, source interface{}, cfg ...*MergeConfig) lderr.Error {
 	c := &mergeContext{
 		MergeConfig: &MergeConfig{},
 	}
@@ -34,7 +39,7 @@ type mergeContext struct {
 	*MergeConfig
 }
 
-func mergeWithContext(c *mergeContext, target, source any) lderr.Error {
+func mergeWithContext(c *mergeContext, target, source interface{}) lderr.Error {
 	tVal := valueOf(target)
 	sVal := valueOf(source)
 
@@ -195,24 +200,22 @@ func mergeReflectMap(c *mergeContext, target, source reflect.Value) {
 }
 
 func mergeReflectSlice(c *mergeContext, target, source reflect.Value) {
+	if source.IsNil() {
+		return
+	}
+
 	if target.IsNil() {
 		source = cloneForMerge(c, source)
 		target.Set(source)
 		return
 	}
 
-	if !c.SliceElem {
+	if !c.MergeSlice {
 		return
 	}
 
 	tLen := target.Len()
 	sLen := source.Len()
-
-	if tLen == 0 {
-		source = cloneForMerge(c, source)
-		target.Set(source)
-		return
-	}
 
 	resizeSliceReflect(target, sLen)
 
@@ -231,7 +234,7 @@ func mergeReflectSlice(c *mergeContext, target, source reflect.Value) {
 }
 
 func mergeReflectArray(c *mergeContext, target, source reflect.Value) {
-	if !c.ArrayElem {
+	if !c.MergeArray {
 		if IsValZero(target) {
 			source = cloneForMerge(c, source)
 			target.Set(source)

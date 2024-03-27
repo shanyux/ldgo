@@ -4,7 +4,9 @@
 
 package ldrbtree
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type rbtreeIterator[T any] struct {
 	tree *RBTree[T]
@@ -13,12 +15,12 @@ type rbtreeIterator[T any] struct {
 
 func (it rbtreeIterator[T]) next(name string, iface rbtreeInterface[T]) rbtreeIterator[T] {
 	if it.tree == nil {
-		panic(fmt.Sprintf("the %s not bind any red-black tree, can not move next", name))
+		panic(fmt.Errorf("the %s not bind any red-black tree, can not move next", name))
 	}
 
 	sentinel := it.tree.sentinel
 	if it.node == sentinel {
-		panic(fmt.Sprintf("the %s is already at the end of the red-black tree, can not move next", name))
+		panic(fmt.Errorf("the %s is already at the end of the red-black tree, can not move next", name))
 	}
 
 	node := it.node.next(iface)
@@ -30,7 +32,7 @@ func (it rbtreeIterator[T]) next(name string, iface rbtreeInterface[T]) rbtreeIt
 
 func (it rbtreeIterator[T]) prev(name string, iface rbtreeInterface[T]) rbtreeIterator[T] {
 	if it.tree == nil {
-		panic(fmt.Sprintf("the %s does not bind any red-black tree, can not move prev", name))
+		panic(fmt.Errorf("the %s does not bind any red-black tree, can not move prev", name))
 	}
 
 	sentinel := it.tree.sentinel
@@ -44,7 +46,7 @@ func (it rbtreeIterator[T]) prev(name string, iface rbtreeInterface[T]) rbtreeIt
 	}
 
 	if node == sentinel {
-		panic(fmt.Sprintf("the %s is already at the begin of the red-black tree, can not move prev", name))
+		panic(fmt.Errorf("the %s is already at the begin of the red-black tree, can not move prev", name))
 	}
 
 	return rbtreeIterator[T]{
@@ -55,7 +57,7 @@ func (it rbtreeIterator[T]) prev(name string, iface rbtreeInterface[T]) rbtreeIt
 
 type RBTreeIterator[T any] rbtreeIterator[T]
 
-func (i RBTreeIterator[T]) Data() interface{} {
+func (i RBTreeIterator[T]) Get() T {
 	return i.node.Data
 }
 
@@ -73,7 +75,7 @@ func (i RBTreeIterator[T]) Prev() RBTreeIterator[T] {
 
 type RBTreeReverseIterator[T any] rbtreeIterator[T]
 
-func (i RBTreeReverseIterator[T]) Data() interface{} {
+func (i RBTreeReverseIterator[T]) Get() T {
 	return i.node.Data
 }
 

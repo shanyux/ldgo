@@ -5,47 +5,25 @@
 package ldredis
 
 import (
-	"context"
+	"unsafe"
 
-	"github.com/go-redis/redis"
+	"github.com/distroy/ldgo/v2/ldredis/internal"
+	redis "github.com/redis/go-redis/v9"
 )
+
+func getOptions(c *Redis) *internal.Options     { return &c.opts }
+func getOptionsPointer(c *Redis) unsafe.Pointer { return unsafe.Pointer(&c.opts) }
 
 type cmdable interface {
 	Cmdable
 
-	withContext(ctx context.Context) cmdable
-	Context() context.Context
-
-	WrapProcess(fn func(oldProcess func(cmd Cmder) error) func(cmd Cmder) error)
-	WrapProcessPipeline(fn func(oldProcess func(cmds []Cmder) error) func(cmds []Cmder) error)
+	AddHook(hook redis.Hook)
 }
 
-type redisClientWrapper struct {
-	*redis.Client
+func newRedisClient(cfg *Config) cmdable {
+	return redis.NewClient(cfg.toClient())
 }
 
-func (r redisClientWrapper) withContext(ctx context.Context) cmdable {
-	r.Client = r.Client.WithContext(ctx)
-	return r
-}
-
-type redisClusterWrapper struct {
-	*redis.ClusterClient
-}
-
-func (r redisClusterWrapper) withContext(ctx context.Context) cmdable {
-	r.ClusterClient = r.ClusterClient.WithContext(ctx)
-	return r
-}
-
-func newRedisClient(cfg *Config) redisClientWrapper {
-	return redisClientWrapper{
-		Client: redis.NewClient(cfg.toClient()),
-	}
-}
-
-func newRedisCluster(cfg *Config) redisClusterWrapper {
-	return redisClusterWrapper{
-		ClusterClient: redis.NewClusterClient(cfg.toCluster()),
-	}
+func newRedisCluster(cfg *Config) cmdable {
+	return redis.NewClusterClient(cfg.toCluster())
 }

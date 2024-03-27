@@ -17,7 +17,7 @@ func TestRBTree_Iterator(t *testing.T) {
 		convey.Convey("next", func() {
 			it := rbtree.Begin()
 			for _, n := range _nums {
-				convey.So(it.Data(), convey.ShouldEqual, n)
+				convey.So(it.Get(), convey.ShouldEqual, n)
 				it = it.Next()
 			}
 			convey.So(it, convey.ShouldResemble, rbtree.End())
@@ -30,7 +30,7 @@ func TestRBTree_Iterator(t *testing.T) {
 				it = it.Prev()
 				i--
 				n := _nums[i]
-				convey.So(it.Data(), convey.ShouldEqual, n)
+				convey.So(it.Get(), convey.ShouldEqual, n)
 			}
 		})
 
@@ -48,7 +48,7 @@ func TestRBTree_Iterator(t *testing.T) {
 		convey.Convey("delete unordered", func() {
 			for _, n := range _numsUnordered {
 				it := rbtree.Search(n)
-				convey.So(it.Data(), convey.ShouldResemble, n)
+				convey.So(it.Get(), convey.ShouldResemble, n)
 
 				rbtree.Delete(it)
 				convey.So(rbtree.root.checkParent(rbtree.sentinel), convey.ShouldBeTrue)
@@ -73,7 +73,7 @@ func TestRBTree_ReverseIterator(t *testing.T) {
 			it := rbtree.RBegin()
 			for i := len(_nums) - 1; i >= 0; i-- {
 				n := _nums[i]
-				convey.So(it.Data(), convey.ShouldEqual, n)
+				convey.So(it.Get(), convey.ShouldEqual, n)
 				it = it.Next()
 			}
 			convey.So(it, convey.ShouldResemble, rbtree.REnd())
@@ -86,7 +86,7 @@ func TestRBTree_ReverseIterator(t *testing.T) {
 				it = it.Prev()
 				n := _nums[i]
 				i++
-				convey.So(it.Data(), convey.ShouldEqual, n)
+				convey.So(it.Get(), convey.ShouldEqual, n)
 			}
 		})
 
@@ -104,7 +104,7 @@ func TestRBTree_ReverseIterator(t *testing.T) {
 		convey.Convey("delete unordered", func() {
 			for _, n := range _numsUnordered {
 				it := rbtree.RSearch(n)
-				convey.So(it.Data(), convey.ShouldResemble, n)
+				convey.So(it.Get(), convey.ShouldResemble, n)
 
 				rbtree.RDelete(it)
 				convey.So(rbtree.root.checkParent(rbtree.sentinel), convey.ShouldBeTrue)
