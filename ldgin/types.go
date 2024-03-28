@@ -104,4 +104,7 @@ type routerAdapter interface {
 	BasePath() string
 
 	Handle(method, path string, handler Handler, midwares ...Midware) routerAdapter
+
+	// calculateAbsolutePath(relativePath string) string
+	calculateFullPath(relativePath string) string
 }
