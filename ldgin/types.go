@@ -13,11 +13,11 @@ import (
 type Error = lderr.Error
 
 type Parser interface {
-	Parse(Context) Error
+	Parse(*Context) Error
 }
 
 type Validator interface {
-	Validate(Context) Error
+	Validate(*Context) Error
 }
 
 type ParseValidator interface {
@@ -26,7 +26,7 @@ type ParseValidator interface {
 }
 
 type Renderer interface {
-	Render(Context)
+	Render(*Context)
 }
 
 type GinParser interface {
