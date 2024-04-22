@@ -3,7 +3,7 @@ module github.com/distroy/ldgo
 go 1.17
 
 require (
-	github.com/agiledragon/gomonkey/v2 v2.10.1
+	github.com/agiledragon/gomonkey/v2 v2.11.0
 	github.com/alicebob/miniredis/v2 v2.11.1
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-redis/redis v6.15.9+incompatible
