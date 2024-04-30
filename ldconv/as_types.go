@@ -123,6 +123,16 @@ func AsUint64(val interface{}, def ...uint64) uint64 {
 	}
 	return 0
 }
+func AsUintptr(val interface{}, def ...uintptr) uintptr {
+	v, err := ToUintptr(val)
+	if err == nil {
+		return v
+	}
+	if len(def) > 0 {
+		return def[0]
+	}
+	return 0
+}
 
 func AsFloat32(val interface{}, def ...float32) float32 {
 	v, err := ToFloat32(val)
