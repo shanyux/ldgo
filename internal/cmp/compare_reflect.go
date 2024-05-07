@@ -239,14 +239,11 @@ func compareReflectNumberLeftInt(aa int64, b reflect.Value) int {
 	switch b.Kind() {
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
 		bb := b.Uint()
-		if bb > math.MaxInt64 {
-			return -1
-		}
-		return CompareInt64(aa, int64(bb))
+		return compareIntAndUint(aa, bb)
 
 	case reflect.Float32, reflect.Float64:
 		bb := b.Float()
-		return CompareFloat64(float64(aa), bb)
+		return compareIntAndFloat(aa, bb)
 	}
 
 	bb := b.Int()
@@ -257,14 +254,11 @@ func compareReflectNumberLeftUint(aa uint64, b reflect.Value) int {
 	switch b.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		bb := b.Int()
-		if aa > math.MaxInt64 {
-			return 1
-		}
-		return CompareInt64(int64(aa), bb)
+		return -compareIntAndUint(bb, aa)
 
 	case reflect.Float32, reflect.Float64:
 		bb := b.Float()
-		return CompareFloat64(float64(aa), bb)
+		return compareUintAndFloat(aa, bb)
 	}
 
 	bb := b.Uint()
@@ -275,16 +269,64 @@ func compareReflectNumberLeftFloat(aa float64, b reflect.Value) int {
 	switch b.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		bb := b.Int()
-		if aa > math.MaxInt64 {
-			return 1
-		}
-		return CompareFloat64(aa, float64(bb))
+		return -compareIntAndFloat(bb, aa)
 
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
 		bb := b.Uint()
-		return CompareFloat64(aa, float64(bb))
+		return -compareUintAndFloat(bb, aa)
 	}
 
 	bb := b.Float()
 	return CompareFloat64(aa, bb)
+}
+
+func compareIntAndFloat(a int64, b float64) int {
+	if b > math.MaxInt64 {
+		return -1
+	} else if b < math.MinInt64 {
+		return 1
+	}
+
+	bb := int64(b)
+	r := CompareInt64(a, bb)
+	if r != 0 {
+		return r
+	}
+
+	d := b - float64(bb)
+	if d == 0 {
+		return r
+	} else if d > 0 {
+		return -1
+	}
+	return 1
+}
+
+func compareIntAndUint(a int64, b uint64) int {
+	if a < 0 {
+		return -1
+	}
+	return CompareUint64(uint64(a), b)
+}
+
+func compareUintAndFloat(a uint64, b float64) int {
+	if b > math.MaxUint64 {
+		return -1
+	} else if b < 0 {
+		return 1
+	}
+
+	bb := uint64(b)
+	r := CompareUint64(a, bb)
+	if r != 0 {
+		return r
+	}
+
+	d := b - float64(bb)
+	if d == 0 {
+		return r
+	} else if d > 0 {
+		return -1
+	}
+	return 1
 }
