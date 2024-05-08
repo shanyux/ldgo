@@ -293,6 +293,8 @@ func TestCompareFloat64(t *testing.T) {
 		c.So(CompareFloat64(123, 123), convey.ShouldEqual, 0)
 		c.So(CompareFloat64(0, 123), convey.ShouldEqual, -1)
 		c.So(CompareFloat64(123, 0), convey.ShouldEqual, 1)
+
+		c.So(CompareFloat64(4503599627370496.1, 4503599627370496), convey.ShouldEqual, 0) // exceeds the precision of float64
 	})
 }
 
