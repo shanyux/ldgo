@@ -3,14 +3,12 @@ name: go
 on:
   push:
     branches:
-      - master
+      - master**
       - release**
-      - v**
   pull_request:
     branches:
-      - master
+      - master**
       - release**
-      - v**
 
 env:
   GO111MODULE: on
