@@ -14,24 +14,6 @@ func (rbt *RBTree[T]) init() {
 	}
 }
 
-func (rbt *RBTree[T]) beginIterator(iface rbtreeInterface[T]) rbtreeIterator[T] {
-	root := rbt.root
-
-	return rbtreeIterator[T]{
-		tree: rbt,
-		node: root.min(iface),
-	}
-}
-
-func (rbt *RBTree[T]) endIterator(iface rbtreeInterface[T]) rbtreeIterator[T] {
-	sentinel := rbt.sentinel
-
-	return rbtreeIterator[T]{
-		tree: rbt,
-		node: sentinel,
-	}
-}
-
 func (rbt *RBTree[T]) toDebugMap() map[string]interface{} {
 	return map[string]interface{}{
 		"count": rbt.count,

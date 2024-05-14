@@ -202,7 +202,7 @@ func testChunked(c *ldgin.Context) (ldgin.ReaderRenderer, ldgin.Error) {
 func initRouter(c ldctx.Context, router gin.IRouter) {
 	r := ldgin.WrapGin(router)
 
-	r = r.WithAppPath("aaaaaa/")
+	// r = r.WithAppPath("aaaaaa/")
 	r = r.Group("/test", midware1)
 	r.GET("panic", testPanic)
 
@@ -216,6 +216,10 @@ func initRouter(c ldctx.Context, router gin.IRouter) {
 	r.GET("/midware_error", testSucc, midware3)
 	r.POST("/multipart", testMultipart)
 	r.GET("/chunked", testChunked)
+
+	r.Static(`static`, ".")
+	r.StaticFS(`static_fs`, ldgin.Dir(".", true))
+	r.StaticFile(`static_file`, "main.go")
 }
 
 func main() {
