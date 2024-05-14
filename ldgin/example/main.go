@@ -34,7 +34,7 @@ var (
 )
 
 func testOneError(c *ldgin.Context) ldgin.Error {
-	c.LogI("", zap.String("method", c.GetMethod()), zap.String("path", c.GetPath()),
+	ldctx.LogI(c, "", zap.String("method", c.GetMethod()), zap.String("path", c.GetPath()),
 		zap.String("handler", c.GetHandler()))
 	return ErrTestOneError
 }
@@ -53,7 +53,7 @@ type testBindReq struct {
 func testBind(ctx StdContext, req *testBindReq) (*testBindReq, ldgin.Error) {
 	g := ldgin.GetGin(ctx)
 	c := ldgin.GetContext(g)
-	c.LogI("", zap.String("method", c.GetMethod()), zap.String("path", c.GetPath()),
+	ldctx.LogI(c, "", zap.String("method", c.GetMethod()), zap.String("path", c.GetPath()),
 		zap.String("handler", c.GetHandler()))
 	return req, nil
 }
@@ -131,7 +131,7 @@ type testParseReq struct {
 
 func (req *testParseReq) Parse(c *ldgin.Context) ldgin.Error {
 	if err := c.ShouldBindQuery(req); err != nil {
-		c.LogE("ShouldBindQuery() fail", zap.Error(err))
+		ldctx.LogE(c, "ShouldBindQuery() fail", zap.Error(err))
 		return lderr.ErrParseRequest
 	}
 	return nil
@@ -146,7 +146,7 @@ func testSucc(c *ldgin.Context) ldgin.Error {
 }
 
 func testPanic(c *ldgin.Context) ldgin.Error {
-	c.LogI("", zap.String("method", c.GetMethod()), zap.String("path", c.GetPath()),
+	ldctx.LogI(c, "", zap.String("method", c.GetMethod()), zap.String("path", c.GetPath()),
 		zap.String("handler", c.GetHandler()))
 
 	var p *int

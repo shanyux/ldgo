@@ -15,6 +15,7 @@ import (
 )
 
 type (
+	Context    = context.Context
 	CancelFunc = context.CancelFunc
 )
 
