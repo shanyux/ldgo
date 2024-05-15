@@ -57,12 +57,11 @@ func New(status, code int, message string) Error {
 }
 
 func newByError(status, code int, err error) Error {
-	var e Error = commError{
+	return &commError{
 		error:  err,
 		status: status,
 		code:   code,
 	}
-	return e
 }
 
 func Wrap(err error, def ...Error) Error {
@@ -83,7 +82,7 @@ func Wrap(err error, def ...Error) Error {
 		d = def[0]
 	}
 
-	return commError{
+	return &commError{
 		error:   err,
 		status:  d.Status(),
 		code:    d.Code(),
@@ -108,11 +107,11 @@ type commError struct {
 	details []string
 }
 
-func (e commError) Status() int       { return e.status }
-func (e commError) Code() int         { return e.code }
-func (e commError) Details() []string { return e.details }
-func (e commError) Unwrap() error     { return e.error }
-func (e commError) Is(target error) bool {
+func (e *commError) Status() int       { return e.status }
+func (e *commError) Code() int         { return e.code }
+func (e *commError) Details() []string { return e.details }
+func (e *commError) Unwrap() error     { return e.error }
+func (e *commError) Is(target error) bool {
 	if err, _ := target.(Error); err != nil && e.Code() == err.Code() {
 		return true
 	}
@@ -130,11 +129,29 @@ func WithDetail(err error, details ...string) ErrorWithDetails {
 func WithDetails(err error, details []string) ErrorWithDetails {
 	t := GetDetails(err)
 
+	if len(details) == 0 {
+		return &commError{
+			error:   err,
+			status:  GetStatus(err),
+			code:    GetCode(err),
+			details: t,
+		}
+	}
+
+	if len(t) == 0 {
+		return &commError{
+			error:   err,
+			status:  GetStatus(err),
+			code:    GetCode(err),
+			details: details,
+		}
+	}
+
 	d := make([]string, 0, len(details)+len(t))
 	d = append(d, t...)
 	d = append(d, details...)
 
-	return commError{
+	return &commError{
 		error:   err,
 		status:  GetStatus(err),
 		code:    GetCode(err),
