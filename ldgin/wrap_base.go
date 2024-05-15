@@ -15,7 +15,7 @@ import (
 )
 
 type (
-	inConvType  = func(*Context) (reflect.Value, Error)
+	inConvType  = func(*Context) (reflect.Value, error)
 	outConvType = func(*Context, []reflect.Value)
 )
 
@@ -50,11 +50,11 @@ type wrapper struct {
 func (w *wrapper) setMethod(method string) { w.Method = method }
 func (w *wrapper) setPath(path string)     { w.Path = path }
 
-func (w *wrapper) hasError(err Error) bool {
-	return err != nil && err.Code() != 0
+func (w *wrapper) hasError(err error) bool {
+	return !lderr.IsSuccess(err)
 }
 
-// func (w *wrapper) returnError(c *Context, err Error) {
+// func (w *wrapper) returnError(c *Context, err error) {
 // 	c.AbortWithError(err)
 // }
 //
@@ -69,7 +69,7 @@ func (w *wrapper) getOutConv0() outConvType {
 func (w *wrapper) getOutConv1(outType reflect.Type) outConvType {
 	errType := outType
 	if !w.isType(errType, typeOfError) && !w.isType(errType, typeOfCommError) {
-		panicf("%s output parameter type should be `ldgin.Error` or `error`", w.Name)
+		panicf("%s output parameter type should be `error`", w.Name)
 	}
 
 	return func(c *Context, outs []reflect.Value) {
@@ -115,23 +115,23 @@ func (w *wrapper) getAllInConvs(t reflect.Type) []inConvType {
 func (w *wrapper) getInConv(t reflect.Type) inConvType {
 	switch {
 	case w.isType(typeOfContext, t):
-		return func(c *Context) (reflect.Value, Error) {
+		return func(c *Context) (reflect.Value, error) {
 			return reflect.ValueOf(c), nil
 		}
 
 	case w.isType(typeOfGinContext, t):
-		return func(c *Context) (reflect.Value, Error) {
+		return func(c *Context) (reflect.Value, error) {
 			return reflect.ValueOf(c.Gin()), nil
 		}
 	}
 
-	convs := make([]func(*Context, reflect.Value) Error, 0, 2)
+	convs := make([]func(*Context, reflect.Value) error, 0, 2)
 	convs = append(convs, w.getParserFunc(t))
 	if f := w.getValidatorFunc(t); f != nil {
 		convs = append(convs, f)
 	}
 
-	return func(c *Context) (reflect.Value, Error) {
+	return func(c *Context) (reflect.Value, error) {
 		v := reflect.New(t.Elem())
 
 		for _, f := range convs {
@@ -145,7 +145,7 @@ func (w *wrapper) getInConv(t reflect.Type) inConvType {
 	}
 }
 
-func (w *wrapper) getReqMethodByName(t reflect.Type, name string) func(*Context, reflect.Value) Error {
+func (w *wrapper) getReqMethodByName(t reflect.Type, name string) func(*Context, reflect.Value) error {
 	m, ok := t.MethodByName(name)
 	if !ok {
 		return nil
@@ -161,7 +161,7 @@ func (w *wrapper) getReqMethodByName(t reflect.Type, name string) func(*Context,
 
 	outType := mType.Out(0)
 	if !w.isType(outType, typeOfError) && !w.isType(outType, typeOfCommError) {
-		log.Printf("output parameter type of request method should be `ldgin.Error` or `error`. %s", m.Name)
+		log.Printf("output parameter type of request method should be `error`. %s", m.Name)
 		return nil
 	}
 
@@ -178,7 +178,7 @@ func (w *wrapper) getReqMethodByName(t reflect.Type, name string) func(*Context,
 		return nil
 
 	case w.isType(typeOfContext, inType):
-		return func(c *Context, v reflect.Value) Error {
+		return func(c *Context, v reflect.Value) error {
 			ins := [2]reflect.Value{v, reflect.ValueOf(c)}
 			outs := m.Func.Call(ins[:])
 			err := outs[0].Interface()
@@ -189,7 +189,7 @@ func (w *wrapper) getReqMethodByName(t reflect.Type, name string) func(*Context,
 		}
 
 	case w.isType(typeOfGinContext, inType):
-		return func(c *Context, v reflect.Value) Error {
+		return func(c *Context, v reflect.Value) error {
 			ins := [2]reflect.Value{v, reflect.ValueOf(c.Gin())}
 			outs := m.Func.Call(ins[:])
 			err := outs[0].Interface()
@@ -201,17 +201,17 @@ func (w *wrapper) getReqMethodByName(t reflect.Type, name string) func(*Context,
 	}
 }
 
-func (w *wrapper) getParserFunc(t reflect.Type) func(*Context, reflect.Value) Error {
+func (w *wrapper) getParserFunc(t reflect.Type) func(*Context, reflect.Value) error {
 	if f := w.getReqMethodByName(t, "Parse"); f != nil {
 		return f
 	}
 
-	return func(c *Context, v reflect.Value) Error {
+	return func(c *Context, v reflect.Value) error {
 		return shouldBind(c, v.Interface())
 	}
 }
 
-func (w *wrapper) getValidatorFunc(t reflect.Type) func(*Context, reflect.Value) Error {
+func (w *wrapper) getValidatorFunc(t reflect.Type) func(*Context, reflect.Value) error {
 	if f := w.getReqMethodByName(t, "Validate"); f != nil {
 		return f
 	}

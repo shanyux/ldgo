@@ -6,10 +6,7 @@ package lderr
 
 import (
 	"errors"
-	"sync"
 )
-
-var errMap = &sync.Map{}
 
 type Error interface {
 	error
@@ -45,25 +42,40 @@ func Is(err, target error) bool {
 	return errors.Is(err, target)
 }
 
+func IsSuccess(err error) bool {
+	if err == nil {
+		return true
+	}
+	if GetCode(err) == 0 {
+		return true
+	}
+	return false
+}
+
 func New(status, code int, message string) Error {
 	return newByError(status, code, strError(message))
 }
 
 func newByError(status, code int, err error) Error {
-	var e Error = &commError{
+	var e Error = commError{
 		error:  err,
 		status: status,
 		code:   code,
 	}
-
-	// errMap.Store(err.Code(), err)
-	errMap.LoadOrStore(e.Code(), err)
 	return e
 }
 
 func Wrap(err error, def ...Error) Error {
+	if err == nil {
+		return nil
+	}
+
 	if v, ok := err.(Error); ok {
 		return v
+	}
+
+	if e := getMatchError(err); e != nil {
+		return e
 	}
 
 	d := ErrUnkown
@@ -71,7 +83,7 @@ func Wrap(err error, def ...Error) Error {
 		d = def[0]
 	}
 
-	return &commError{
+	return commError{
 		error:  err,
 		status: d.Status(),
 		code:   d.Code(),
@@ -86,19 +98,6 @@ func Override(err Error, message string) Error {
 	}
 }
 
-func GetByCode(code int) Error {
-	v, _ := errMap.Load(code)
-	if v == nil {
-		return nil
-	}
-
-	err, ok := v.(Error)
-	if !ok {
-		return nil
-	}
-	return err
-}
-
 type commError struct {
 	error
 
@@ -106,10 +105,10 @@ type commError struct {
 	code   int
 }
 
-func (e *commError) Status() int   { return e.status }
-func (e *commError) Code() int     { return e.code }
-func (e *commError) Unwrap() error { return e.error }
-func (e *commError) Is(target error) bool {
+func (e commError) Status() int   { return e.status }
+func (e commError) Code() int     { return e.code }
+func (e commError) Unwrap() error { return e.error }
+func (e commError) Is(target error) bool {
 	if err, _ := target.(Error); err != nil && e.Code() == err.Code() {
 		return true
 	}
@@ -164,12 +163,12 @@ type detailsError struct {
 	details []string
 }
 
-func (e *detailsError) Error() string     { return e.err.Error() }
-func (e *detailsError) Status() int       { return e.err.Status() }
-func (e *detailsError) Code() int         { return e.err.Code() }
-func (e *detailsError) Details() []string { return e.details }
-func (e *detailsError) Unwrap() error     { return e.err }
-func (e *detailsError) Is(target error) bool {
+func (e detailsError) Error() string     { return e.err.Error() }
+func (e detailsError) Status() int       { return e.err.Status() }
+func (e detailsError) Code() int         { return e.err.Code() }
+func (e detailsError) Details() []string { return e.details }
+func (e detailsError) Unwrap() error     { return e.err }
+func (e detailsError) Is(target error) bool {
 	if err, _ := target.(Error); err != nil && e.Code() == err.Code() {
 		return true
 	}

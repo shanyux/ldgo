@@ -185,7 +185,7 @@ func (m *Mutex) getExpiration() time.Duration {
 func (m *Mutex) Key() string               { return m.mustGetContext().key }
 func (m *Mutex) Events() <-chan MutexEvent { return m.mustGetContext().events }
 
-func (m *Mutex) Lock(ctx ldctx.Context, key string) lderr.Error {
+func (m *Mutex) Lock(ctx ldctx.Context, key string) error {
 	mc := m.ctx.Load()
 	if mc != nil && mc.lockTime.Load() != 0 {
 		ldctx.LogE(ctx, "redis mutex has been locked", zap.String("key", key), zap.String("old", mc.key),
@@ -226,7 +226,7 @@ func (m *Mutex) Lock(ctx ldctx.Context, key string) lderr.Error {
 	return nil
 }
 
-func (m *Mutex) internalLockOrLockForce(ctx ldctx.Context, key, token string) lderr.Error {
+func (m *Mutex) internalLockOrLockForce(ctx ldctx.Context, key, token string) error {
 	err := m.internalLock(ctx, key, token)
 	if err == nil {
 		return nil
@@ -257,7 +257,7 @@ func (m *Mutex) internalLockOrLockForce(ctx ldctx.Context, key, token string) ld
 	return nil
 }
 
-func (m *Mutex) internalLock(ctx ldctx.Context, key, token string) lderr.Error {
+func (m *Mutex) internalLock(ctx ldctx.Context, key, token string) error {
 	cli := m.redis.Client()
 
 	cmd := cli.SetNX(ctx, key, token, m.getExpiration())
@@ -274,7 +274,7 @@ func (m *Mutex) internalLock(ctx ldctx.Context, key, token string) lderr.Error {
 	return nil
 }
 
-func (m *Mutex) Unlock(ctx ldctx.Context) lderr.Error {
+func (m *Mutex) Unlock(ctx ldctx.Context) error {
 	d := m.unlockDelay
 	if d <= 0 {
 		return m.unlock(ctx)
@@ -288,7 +288,7 @@ func (m *Mutex) Unlock(ctx ldctx.Context) lderr.Error {
 	return nil
 }
 
-func (m *Mutex) unlock(ctx ldctx.Context) lderr.Error {
+func (m *Mutex) unlock(ctx ldctx.Context) error {
 	mc := m.ctx.Load()
 	if mc == nil {
 		ldctx.LogW(ctx, "redis mutex has not been locked", getCallerField(m.redis))
@@ -379,7 +379,7 @@ func (m *Mutex) heartbeat(ctx ldctx.Context, mc *mutexContext, now time.Time) bo
 	return true
 }
 
-func (m *Mutex) checkToken(ctx ldctx.Context, mc *mutexContext) lderr.Error {
+func (m *Mutex) checkToken(ctx ldctx.Context, mc *mutexContext) error {
 	cli := m.redis.Client()
 	key := mc.key
 	val := mc.token

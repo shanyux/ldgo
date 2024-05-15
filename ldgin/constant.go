@@ -7,6 +7,7 @@ package ldgin
 import (
 	"reflect"
 
+	"github.com/distroy/ldgo/v2/lderr"
 	"github.com/gin-gonic/gin"
 )
 
@@ -38,7 +39,7 @@ var (
 	typeOfContext    = reflect.TypeOf((*Context)(nil))
 
 	typeOfCommError = reflect.TypeOf((*error)(nil)).Elem()
-	typeOfError     = reflect.TypeOf((*Error)(nil)).Elem()
+	typeOfError     = reflect.TypeOf((*lderr.Error)(nil)).Elem()
 
 	// typeOfParser         = reflect.TypeOf((*Parser)(nil)).Elem()
 	// typeOfValidator      = reflect.TypeOf((*Validator)(nil)).Elem()

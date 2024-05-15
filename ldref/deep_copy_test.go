@@ -23,7 +23,7 @@ func TestDeepCopy(t *testing.T) {
 			)
 
 			err := DeepCopy(target, source)
-			c.So(err, convey.ShouldEqual, lderr.ErrReflectTargetNotPtr)
+			c.So(err, convey.ShouldResemble, lderr.ErrReflectTargetNotPtr)
 			c.So(target, convey.ShouldEqual, 0)
 		})
 
@@ -35,7 +35,7 @@ func TestDeepCopy(t *testing.T) {
 				)
 
 				err := DeepCopy(target, source)
-				c.So(err, convey.ShouldEqual, lderr.ErrReflectTargetNotPtr)
+				c.So(err, convey.ShouldResemble, lderr.ErrReflectTargetNotPtr)
 				c.So(target.Interface(), convey.ShouldEqual, 0)
 			})
 
@@ -61,7 +61,7 @@ func TestDeepCopy(t *testing.T) {
 				err := DeepCopy(target, source)
 				// c.So(err, convey.ShouldBeNil)
 				// c.So(target.Interface(), convey.ShouldEqual, 100)
-				c.So(err, convey.ShouldEqual, lderr.ErrReflectTargetNilPtr)
+				c.So(err, convey.ShouldResemble, lderr.ErrReflectTargetNilPtr)
 				c.So(target.Interface(), convey.ShouldBeNil)
 			})
 

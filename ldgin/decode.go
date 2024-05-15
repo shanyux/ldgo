@@ -13,7 +13,7 @@ import (
 )
 
 // shouldBind will decode header/uri/json/query(form)
-func shouldBind(c *Context, req interface{}) Error {
+func shouldBind(c *Context, req interface{}) error {
 	reqVal := reflect.ValueOf(req)
 	if reqVal.Kind() != reflect.Ptr || reqVal.Elem().Kind() != reflect.Struct {
 		ldctx.LogE(c, "input request type must be pointer to struct", zap.Stringer("type", reqVal.Kind()))

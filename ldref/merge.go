@@ -24,7 +24,7 @@ type MergeConfig struct {
 //   - Merge(*structA, *structA)
 //   - Merge(*map, map)
 //   - Merge(*map, *map)
-func Merge(target, source interface{}, cfg ...*MergeConfig) lderr.Error {
+func Merge(target, source interface{}, cfg ...*MergeConfig) error {
 	c := &mergeContext{
 		MergeConfig: &MergeConfig{},
 	}
@@ -39,7 +39,7 @@ type mergeContext struct {
 	*MergeConfig
 }
 
-func mergeWithContext(c *mergeContext, target, source interface{}) lderr.Error {
+func mergeWithContext(c *mergeContext, target, source interface{}) error {
 	tVal := valueOf(target)
 	sVal := valueOf(source)
 

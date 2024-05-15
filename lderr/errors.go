@@ -9,6 +9,13 @@ import (
 	"net/http"
 )
 
+const (
+	errMessageSucess = "success"
+
+	errCodeUnkown   = -1
+	errStatusUnkonw = http.StatusOK
+)
+
 // error definitions: [-1, -999]
 var (
 	ErrSuccess          = New(http.StatusOK, 0, "success")
