@@ -10,6 +10,13 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+func GetLogger(log *zap.Logger, fields ...zap.Field) *Logger {
+	if len(fields) > 0 {
+		log = log.With(fields...)
+	}
+	return newLogger(newWrapper(log, log.Sugar()))
+}
+
 func NewLogger(opts ...Option) *Logger {
 	options := newOptions()
 	for _, opt := range opts {
