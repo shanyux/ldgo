@@ -64,7 +64,7 @@ func (l *Limiter) refresh(ctx ldctx.Context, now time.Time) lderr.Error {
 	if burst != l.lastBurst.Load() {
 		l.lastBurst.Store(burst)
 		l.limiter.SetBurstAt(now, int(burst))
-		ctx.LogI("[limiter] refresh the burst succ", zap.String("name", l.Name()),
+		ldctx.LogI(ctx, "[limiter] refresh the burst succ", zap.String("name", l.Name()),
 			zap.Int64("burst", burst))
 	}
 
@@ -104,7 +104,7 @@ func (l *Limiter) refresh(ctx ldctx.Context, now time.Time) lderr.Error {
 	l.lastInterval.Store(interval)
 	l.lastNodeCount.Store(nodeCount)
 
-	ctx.LogI("[limiter] refresh rate every succ", zap.String("name", l.Name()),
+	ldctx.LogI(ctx, "[limiter] refresh rate every succ", zap.String("name", l.Name()),
 		zap.Int64("limit", limit), zap.Stringer("interval", interval),
 		zap.Int64("serviceCount", nodeCount), zap.Stringer("every", every))
 	return nil
@@ -130,7 +130,7 @@ func (l *Limiter) WaitN(ctx ldctx.Context, n int) lderr.Error {
 	// }
 
 	if err := wait(ctx, l, n); err != nil {
-		ctx.LogE("[limiter] wait fail", zap.String("name", l.Name()), zap.Int("n", n), zap.Error(err))
+		ldctx.LogE(ctx, "[limiter] wait fail", zap.String("name", l.Name()), zap.Int("n", n), zap.Error(err))
 		return err
 	}
 	return nil
@@ -149,7 +149,7 @@ func (l *Limiter) ReserveN(ctx ldctx.Context, n int) (*Reservation, lderr.Error)
 	reservation := l.limiter.ReserveN(now, n)
 	if !reservation.OK() {
 		err := lderr.ErrCtxDeadlineNotEnough
-		ctx.LogE("[limiter] reserve fail", zap.String("name", l.Name()), zap.Int("n", n), zap.Error(err))
+		ldctx.LogE(ctx, "[limiter] reserve fail", zap.String("name", l.Name()), zap.Int("n", n), zap.Error(err))
 		return nil, err
 	}
 

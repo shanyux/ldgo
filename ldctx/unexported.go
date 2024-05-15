@@ -15,13 +15,12 @@ type ctxKeyType int
 
 const (
 	ctxKeyLogger ctxKeyType = iota
-	ctxKeyCancel
 )
 
 var (
-	defaultContext = newCtx(context.Background())
-	consoleContext = newCtx(newLogCtx(context.Background(), ldlog.Console()))
-	discardContext = newCtx(newLogCtx(context.Background(), ldlog.Discard()))
+	defaultContext = context.Background()
+	consoleContext = WithLogger(context.Background(), ldlog.Console())
+	discardContext = WithLogger(context.Background(), ldlog.Discard())
 )
 
 func defaultLogger() *ldlog.Logger { return ldlog.Default() }
@@ -30,103 +29,17 @@ type stringer interface {
 	String() string
 }
 
-type ctxWithParent interface {
-	Context
+func zCore(c context.Context) *zap.Logger         { return GetLogger(c).Core() }
+func zSugar(c context.Context) *zap.SugaredLogger { return GetLogger(c).Sugar() }
 
-	Parent() context.Context
-}
+func LogD(c context.Context, msg string, fields ...zap.Field) { zCore(c).Debug(msg, fields...) }
+func LogI(c context.Context, msg string, fields ...zap.Field) { zCore(c).Info(msg, fields...) }
+func LogW(c context.Context, msg string, fields ...zap.Field) { zCore(c).Warn(msg, fields...) }
+func LogE(c context.Context, msg string, fields ...zap.Field) { zCore(c).Error(msg, fields...) }
+func LogF(c context.Context, msg string, fields ...zap.Field) { zCore(c).Fatal(msg, fields...) }
 
-var (
-	_ (ctxWithParent) = (*ctx)(nil)
-	_ (ctxWithParent) = defaultContext
-)
-
-func unwrap(c context.Context) context.Context {
-	if c == nil {
-		return context.Background()
-	}
-
-	switch cc := c.(type) {
-	case ctxWithParent:
-		return cc.Parent()
-	case ctx:
-		return cc.Context
-	case *ctx:
-		return cc.Context
-	}
-
-	return c
-}
-
-type ctx struct {
-	context.Context
-}
-
-func newCtx(c context.Context) ctx { return ctx{Context: c} }
-
-func (c ctx) String() string { return ContextName(c.Context) }
-
-func (c ctx) logger() *ldlog.Logger      { return GetLogger(c.Context) }
-func (c ctx) zCore() *zap.Logger         { return c.logger().Core() }
-func (c ctx) zSugar() *zap.SugaredLogger { return c.logger().Sugar() }
-
-// func (c ctx) GetLogger() ldlog.Logger { return c.logger() }
-// func (c ctx) LogSync()                   { c.logger().Sync() }
-
-func (c ctx) Parent() context.Context { return c.Context }
-
-func (c ctx) LogD(msg string, fields ...zap.Field) { c.zCore().Debug(msg, fields...) }
-func (c ctx) LogI(msg string, fields ...zap.Field) { c.zCore().Info(msg, fields...) }
-func (c ctx) LogW(msg string, fields ...zap.Field) { c.zCore().Warn(msg, fields...) }
-func (c ctx) LogE(msg string, fields ...zap.Field) { c.zCore().Error(msg, fields...) }
-func (c ctx) LogF(msg string, fields ...zap.Field) { c.zCore().Fatal(msg, fields...) }
-
-func (c ctx) LogDf(fmt string, args ...interface{}) { c.zSugar().Debugf(fmt, args...) }
-func (c ctx) LogIf(fmt string, args ...interface{}) { c.zSugar().Infof(fmt, args...) }
-func (c ctx) LogWf(fmt string, args ...interface{}) { c.zSugar().Warnf(fmt, args...) }
-func (c ctx) LogEf(fmt string, args ...interface{}) { c.zSugar().Errorf(fmt, args...) }
-func (c ctx) LogFf(fmt string, args ...interface{}) { c.zSugar().Fatalf(fmt, args...) }
-
-type logCtx struct {
-	context.Context
-
-	logger *ldlog.Logger
-}
-
-func newLogCtx(parent context.Context, log *ldlog.Logger) logCtx {
-	return logCtx{
-		Context: parent,
-		logger:  log,
-	}
-}
-
-func (c logCtx) String() string { return ContextName(c.Context) + ".WithLogger" }
-
-func (c logCtx) Value(key interface{}) interface{} {
-	if key == ctxKeyLogger {
-		return c.logger
-	}
-	return c.Context.Value(key)
-}
-
-type cancelCtx struct {
-	context.Context
-
-	cancel CancelFunc
-}
-
-func newCancelCtx(parent context.Context, cancel CancelFunc) cancelCtx {
-	return cancelCtx{
-		Context: parent,
-		cancel:  cancel,
-	}
-}
-
-func (c cancelCtx) String() string { return ContextName(c.Context) }
-
-func (c cancelCtx) Value(key interface{}) interface{} {
-	if key == ctxKeyCancel {
-		return c.cancel
-	}
-	return c.Context.Value(key)
-}
+func LogDf(c context.Context, fmt string, args ...interface{}) { zSugar(c).Debugf(fmt, args...) }
+func LogIf(c context.Context, fmt string, args ...interface{}) { zSugar(c).Infof(fmt, args...) }
+func LogWf(c context.Context, fmt string, args ...interface{}) { zSugar(c).Warnf(fmt, args...) }
+func LogEf(c context.Context, fmt string, args ...interface{}) { zSugar(c).Errorf(fmt, args...) }
+func LogFf(c context.Context, fmt string, args ...interface{}) { zSugar(c).Fatalf(fmt, args...) }

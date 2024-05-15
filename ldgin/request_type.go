@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"sync"
 
+	"github.com/distroy/ldgo/v2/ldctx"
 	"github.com/distroy/ldgo/v2/lderr"
 	"github.com/distroy/ldgo/v2/ldref"
 	"github.com/gin-gonic/gin"
@@ -134,7 +135,7 @@ func wrapGinBindFunc(fn func(g *gin.Context, o interface{}) error) func(c *Conte
 	return func(c *Context, reqType *requestType, reqBind *requestBind, reqVal reflect.Value) Error {
 		reqNew := newRequest(reqType)
 		if err := fn(c.Gin(), reqNew.Interface()); err != nil {
-			c.LogE("ShouldBind() fail", zap.String("tag", reqBind.Tag), zap.Error(err))
+			ldctx.LogE(c, "ShouldBind() fail", zap.String("tag", reqBind.Tag), zap.Error(err))
 			delRequest(reqType, reqNew)
 			return lderr.ErrParseRequest
 		}
