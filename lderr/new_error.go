@@ -57,7 +57,7 @@ func New(status, code int, message string) Error {
 }
 
 func newByError(status, code int, err error) Error {
-	return &commError{
+	return commError{
 		error:  err,
 		status: status,
 		code:   code,
@@ -82,36 +82,54 @@ func Wrap(err error, def ...Error) Error {
 		d = def[0]
 	}
 
-	return &commError{
-		error:   err,
-		status:  d.Status(),
-		code:    d.Code(),
-		details: GetDetails(err),
+	details := GetDetails(err)
+	if len(details) == 0 {
+		return commError{
+			error:  err,
+			status: d.Status(),
+			code:   d.Code(),
+		}
+	}
+	return &detailsError{
+		error: commError{
+			error:  err,
+			status: GetStatus(err),
+			code:   GetCode(err),
+		},
+		details: details,
 	}
 }
 
 func Override(err error, message string) Error {
-	return &commError{
-		error:   strError(message),
-		status:  GetStatus(err),
-		code:    GetCode(err),
-		details: GetDetails(err),
+	details := GetDetails(err)
+	if len(details) == 0 {
+		return commError{
+			error:  strError(message),
+			status: GetStatus(err),
+			code:   GetCode(err),
+		}
+	}
+	return &detailsError{
+		error: commError{
+			error:  strError(message),
+			status: GetStatus(err),
+			code:   GetCode(err),
+		},
+		details: details,
 	}
 }
 
 type commError struct {
 	error
 
-	status  int
-	code    int
-	details []string
+	status int
+	code   int
 }
 
-func (e *commError) Status() int       { return e.status }
-func (e *commError) Code() int         { return e.code }
-func (e *commError) Details() []string { return e.details }
-func (e *commError) Unwrap() error     { return e.error }
-func (e *commError) Is(target error) bool {
+func (e commError) Status() int   { return e.status }
+func (e commError) Code() int     { return e.code }
+func (e commError) Unwrap() error { return e.error }
+func (e commError) Is(target error) bool {
 	if err, _ := target.(Error); err != nil && e.Code() == err.Code() {
 		return true
 	}
@@ -130,19 +148,15 @@ func WithDetails(err error, details []string) ErrorWithDetails {
 	t := GetDetails(err)
 
 	if len(details) == 0 {
-		return &commError{
+		return &detailsError{
 			error:   err,
-			status:  GetStatus(err),
-			code:    GetCode(err),
 			details: t,
 		}
 	}
 
 	if len(t) == 0 {
-		return &commError{
+		return &detailsError{
 			error:   err,
-			status:  GetStatus(err),
-			code:    GetCode(err),
 			details: details,
 		}
 	}
@@ -151,10 +165,25 @@ func WithDetails(err error, details []string) ErrorWithDetails {
 	d = append(d, t...)
 	d = append(d, details...)
 
-	return &commError{
+	return &detailsError{
 		error:   err,
-		status:  GetStatus(err),
-		code:    GetCode(err),
 		details: d,
 	}
+}
+
+type detailsError struct {
+	error
+
+	details []string
+}
+
+func (e detailsError) Status() int       { return GetStatus(e.error) }
+func (e detailsError) Code() int         { return GetCode(e.error) }
+func (e detailsError) Details() []string { return e.details }
+func (e detailsError) Unwrap() error     { return e.error }
+func (e detailsError) Is(target error) bool {
+	if err, _ := target.(Error); err != nil && e.Code() == err.Code() {
+		return true
+	}
+	return Is(e.error, target)
 }
