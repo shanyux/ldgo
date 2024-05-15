@@ -18,7 +18,7 @@ const (
 	contentTypeMultipart = "multipart/form-data"
 )
 
-func parseMultipart(c *Context, reqType *requestType, reqBind *requestBind, reqVal reflect.Value) Error {
+func parseMultipart(c *Context, reqType *requestType, reqBind *requestBind, reqVal reflect.Value) error {
 	g := c.Gin()
 
 	contentType := g.ContentType()

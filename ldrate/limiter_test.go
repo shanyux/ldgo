@@ -66,7 +66,7 @@ func TestLimiter_Wait(t *testing.T) {
 
 			err := l.Wait(ctx)
 
-			c.So(err, convey.ShouldEqual, lderr.ErrCtxCanceled)
+			c.So(err, convey.ShouldResemble, lderr.ErrCtxCanceled)
 		})
 
 		c.Convey("deedline not enough", func() {
@@ -74,7 +74,7 @@ func TestLimiter_Wait(t *testing.T) {
 
 			err := l.Wait(ctx)
 
-			c.So(err, convey.ShouldEqual, lderr.ErrCtxDeadlineNotEnough)
+			c.So(err, convey.ShouldResemble, lderr.ErrCtxDeadlineNotEnough)
 		})
 
 		c.Convey("no wait time", func() {

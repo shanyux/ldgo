@@ -35,7 +35,7 @@ type requestField struct {
 
 type requestBind struct {
 	Tag    string
-	Func   func(c *Context, reqType *requestType, reqBind *requestBind, reqVal reflect.Value) Error
+	Func   func(c *Context, reqType *requestType, reqBind *requestBind, reqVal reflect.Value) error
 	Fields []requestField
 }
 
@@ -131,8 +131,8 @@ func fillHttpRequestByFeilds(dst, src reflect.Value, fields []requestField) {
 	}
 }
 
-func wrapGinBindFunc(fn func(g *gin.Context, o interface{}) error) func(c *Context, reqType *requestType, reqBind *requestBind, reqVal reflect.Value) Error {
-	return func(c *Context, reqType *requestType, reqBind *requestBind, reqVal reflect.Value) Error {
+func wrapGinBindFunc(fn func(g *gin.Context, o interface{}) error) func(c *Context, reqType *requestType, reqBind *requestBind, reqVal reflect.Value) error {
+	return func(c *Context, reqType *requestType, reqBind *requestBind, reqVal reflect.Value) error {
 		reqNew := newRequest(reqType)
 		if err := fn(c.Gin(), reqNew.Interface()); err != nil {
 			ldctx.LogE(c, "ShouldBind() fail", zap.String("tag", reqBind.Tag), zap.Error(err))

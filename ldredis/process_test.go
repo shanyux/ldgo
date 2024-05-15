@@ -81,10 +81,10 @@ func Test_hook_processPipeline(t *testing.T) {
 			pipeline.Process(ctx, cmd)
 
 			cmds, err := pipeline.Exec(ctx)
-			c.So(err, convey.ShouldEqual, lderr.ErrUnkown)
+			c.So(err, convey.ShouldResemble, lderr.ErrUnkown)
 			c.So(cmds, convey.ShouldHaveLength, 2)
 			c.So(cmds[0].Err(), convey.ShouldBeNil)
-			c.So(cmds[1].Err(), convey.ShouldEqual, lderr.ErrUnkown)
+			c.So(cmds[1].Err(), convey.ShouldResemble, lderr.ErrUnkown)
 			c.So(cmds[1].(*testStringCmd).Val(), convey.ShouldEqual, "test-value")
 		})
 		c.Convey("pipelined", func(c convey.C) {

@@ -42,6 +42,16 @@ func Is(err, target error) bool {
 	return errors.Is(err, target)
 }
 
+func IsSuccess(err error) bool {
+	if err == nil {
+		return true
+	}
+	if GetCode(err) == 0 {
+		return true
+	}
+	return false
+}
+
 func New(status, code int, message string) Error {
 	return newByError(status, code, strError(message))
 }
@@ -62,6 +72,10 @@ func Wrap(err error, def ...Error) Error {
 
 	if v, ok := err.(Error); ok {
 		return v
+	}
+
+	if e := getMatchError(err); e != nil {
+		return e
 	}
 
 	d := ErrUnkown

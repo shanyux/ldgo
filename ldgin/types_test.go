@@ -25,7 +25,7 @@ type testResponse struct {
 
 type testGinParser testRequest
 
-func (p *testGinParser) Parse(g *gin.Context) Error {
+func (p *testGinParser) Parse(g *gin.Context) error {
 	return shouldBind(GetContext(g), p)
 }
 
@@ -33,17 +33,17 @@ type testGinParserFail struct{}
 
 type testGinValidator testRequest
 
-func (p *testGinValidator) Validate(g *gin.Context) Error {
+func (p *testGinValidator) Validate(g *gin.Context) lderr.Error {
 	return nil
 }
 
 type testGinValidatorFail struct{}
 
-func (p *testGinValidatorFail) Validate(g *gin.Context) Error {
+func (p *testGinValidatorFail) Validate(g *gin.Context) lderr.Error {
 	return lderr.ErrHttpReadBody
 }
 
-func (p *testGinParserFail) Parse(g *gin.Context) Error {
+func (p *testGinParserFail) Parse(g *gin.Context) lderr.Error {
 	return lderr.ErrHttpReadBody
 }
 
@@ -57,34 +57,34 @@ func (p *testGinRenderer) Render(g *gin.Context) {
 
 type testParser testRequest
 
-func (p *testParser) Parse(c *Context) Error {
+func (p *testParser) Parse(c *Context) error {
 	return shouldBind(c, p)
 }
 
 type testParserFail struct{}
 
-func (p *testParserFail) Parse(c *Context) Error {
+func (p *testParserFail) Parse(c *Context) lderr.Error {
 	return lderr.ErrHttpReadBody
 }
 
 type testValidator testRequest
 
-func (p *testValidator) Validate(c *Context) Error {
+func (p *testValidator) Validate(c *Context) lderr.Error {
 	return nil
 }
 
 type testValidatorFail struct{}
 
-func (p *testValidatorFail) Validate(c *Context) Error {
+func (p *testValidatorFail) Validate(c *Context) lderr.Error {
 	return lderr.ErrHttpReadBody
 }
 
 type testParseValidator testRequest
 
-func (p *testParseValidator) Parse(c *Context) Error {
+func (p *testParseValidator) Parse(c *Context) error {
 	return shouldBind(c, p)
 }
-func (p *testParseValidator) Validate(c *Context) Error {
+func (p *testParseValidator) Validate(c *Context) lderr.Error {
 	return nil
 }
 

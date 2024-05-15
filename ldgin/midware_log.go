@@ -59,9 +59,9 @@ func logMidwareFunc(g *gin.Context) {
 		rspDataField = zap.Reflect("rspData", rsp.Data)
 	}
 
-	if err := c.GetError(); err != nil && err.Code() != lderr.ErrSuccess.Code() {
-		bizCode = err.Code()
-		errMsg = err.Error()
+	if err := c.GetError(); !lderr.IsSuccess(err) {
+		bizCode = lderr.GetCode(err)
+		errMsg = lderr.GetMessage(err)
 	}
 
 	if bizCode == 0 && httpCode != http.StatusOK {

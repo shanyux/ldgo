@@ -5,6 +5,7 @@
 package ldrate
 
 import (
+	"context"
 	"time"
 
 	"github.com/distroy/ldgo/v2/ldctx"
@@ -18,18 +19,18 @@ var (
 )
 
 type ILimiter interface {
-	Wait(ctx ldctx.Context) lderr.Error
-	WaitN(ctx ldctx.Context, n int) lderr.Error
+	Wait(ctx context.Context) error
+	WaitN(ctx context.Context, n int) error
 
-	Reserve(ctx ldctx.Context) (*Reservation, lderr.Error)
-	ReserveN(ctx ldctx.Context, n int) (*Reservation, lderr.Error)
+	Reserve(ctx context.Context) (*Reservation, error)
+	ReserveN(ctx context.Context, n int) (*Reservation, error)
 }
 
 type reserver interface {
-	ReserveN(ctx ldctx.Context, n int) (*Reservation, lderr.Error)
+	ReserveN(ctx context.Context, n int) (*Reservation, error)
 }
 
-func wait(ctx ldctx.Context, l reserver, n int) lderr.Error {
+func wait(ctx context.Context, l reserver, n int) error {
 	select {
 	case <-ctx.Done():
 		// return lderr.ErrCtxCanceled

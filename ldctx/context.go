@@ -30,7 +30,7 @@ func ContextName(c context.Context) string {
 	return reflect.TypeOf(c).String()
 }
 
-func GetError(c context.Context) lderr.Error {
+func GetError(c context.Context) error {
 	e := c.Err()
 	switch e {
 	case nil:
@@ -43,11 +43,7 @@ func GetError(c context.Context) lderr.Error {
 		return lderr.ErrCtxDeadlineExceeded
 	}
 
-	if err, ok := e.(lderr.Error); ok {
-		return err
-	}
-
-	return lderr.Wrap(e)
+	return e
 }
 
 func WithLogger(parent context.Context, log *ldlog.Logger, fields ...zap.Field) context.Context {

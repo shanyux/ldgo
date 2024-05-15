@@ -5,8 +5,8 @@
 package ldrate
 
 import (
-	"github.com/distroy/ldgo/v2/ldctx"
-	"github.com/distroy/ldgo/v2/lderr"
+	"context"
+
 	"golang.org/x/time/rate"
 )
 
@@ -47,19 +47,19 @@ func (l *Limiters) AddLimiter(limiters ...ILimiter) *Limiters {
 	return l
 }
 
-func (l *Limiters) Wait(ctx ldctx.Context) lderr.Error {
+func (l *Limiters) Wait(ctx context.Context) error {
 	return l.WaitN(ctx, 1)
 }
 
-func (l *Limiters) WaitN(ctx ldctx.Context, n int) lderr.Error {
+func (l *Limiters) WaitN(ctx context.Context, n int) error {
 	return wait(ctx, l, n)
 }
 
-func (l *Limiters) Reserve(ctx ldctx.Context) (*Reservation, lderr.Error) {
+func (l *Limiters) Reserve(ctx context.Context) (*Reservation, error) {
 	return l.ReserveN(ctx, 1)
 }
 
-func (l *Limiters) ReserveN(ctx ldctx.Context, n int) (*Reservation, lderr.Error) {
+func (l *Limiters) ReserveN(ctx context.Context, n int) (*Reservation, error) {
 	limiters := l.limiters
 	r := &Reservation{
 		reservations: make([]*rate.Reservation, 0, len(limiters)),

@@ -10,13 +10,12 @@ import (
 )
 
 func GetCode(err error, def ...int) int {
-	switch err {
-	case nil:
+	if err == nil {
 		return 0
-	case context.Canceled:
-		return ErrCtxCanceled.Code()
-	case context.DeadlineExceeded:
-		return ErrCtxDeadlineExceeded.Code()
+	}
+
+	if e := getMatchError(err); e != nil {
+		return e.Code()
 	}
 
 	switch v := err.(type) {
@@ -32,13 +31,12 @@ func GetCode(err error, def ...int) int {
 }
 
 func GetStatus(err error, def ...int) int {
-	switch err {
-	case nil:
+	if err == nil {
 		return http.StatusOK
-	case context.Canceled:
-		return ErrCtxCanceled.Status()
-	case context.DeadlineExceeded:
-		return ErrCtxDeadlineExceeded.Status()
+	}
+
+	if e := getMatchError(err); e != nil {
+		return e.Status()
 	}
 
 	switch v := err.(type) {
@@ -66,8 +64,23 @@ func GetDetails(err error) []string {
 	switch v := err.(type) {
 	case interface{ Details() []string }:
 		return v.Details()
+
 	case interface{ Detail() string }:
 		return []string{v.Detail()}
+	}
+	return nil
+}
+
+func getMatchError(err error) Error {
+	switch err {
+	case nil:
+		return ErrSuccess
+
+	case context.Canceled:
+		return ErrCtxCanceled
+
+	case context.DeadlineExceeded:
+		return ErrCtxDeadlineExceeded
 	}
 	return nil
 }
