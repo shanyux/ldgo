@@ -101,11 +101,7 @@ func writeError(c *Context, err lderr.Error) {
 	fmt.Fprintf(writer, "code: %d%s", err.Code(), crlf)
 	fmt.Fprintf(writer, "message: %s%s", err.Error(), crlf)
 
-	var details []string
-	if e, _ := err.(lderr.ErrorWithDetails); e != nil {
-		details = e.Details()
-	}
-
+	details := lderr.GetDetails(err)
 	if len(details) == 0 {
 		return
 	}

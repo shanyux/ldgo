@@ -5,11 +5,10 @@
 package lderr
 
 import (
+	"context"
 	"errors"
-	"sync"
+	"net/http"
 )
-
-var errMap = &sync.Map{}
 
 type Error interface {
 	error
@@ -50,14 +49,11 @@ func New(status, code int, message string) Error {
 }
 
 func newByError(status, code int, err error) Error {
-	var e Error = &commError{
+	var e Error = commError{
 		error:  err,
 		status: status,
 		code:   code,
 	}
-
-	// errMap.Store(err.Code(), err)
-	errMap.LoadOrStore(e.Code(), err)
 	return e
 }
 
@@ -71,7 +67,7 @@ func Wrap(err error, def ...Error) Error {
 		d = def[0]
 	}
 
-	return &commError{
+	return commError{
 		error:  err,
 		status: d.Status(),
 		code:   d.Code(),
@@ -86,17 +82,64 @@ func Override(err Error, message string) Error {
 	}
 }
 
-func GetByCode(code int) Error {
-	v, _ := errMap.Load(code)
-	if v == nil {
-		return nil
+func GetCode(err error, def ...int) int {
+	switch err {
+	case nil:
+		return 0
+	case context.Canceled:
+		return ErrCtxCanceled.Code()
+	case context.DeadlineExceeded:
+		return ErrCtxDeadlineExceeded.Code()
 	}
 
-	err, ok := v.(Error)
-	if !ok {
+	switch v := err.(type) {
+	case interface{ Code() int }:
+		return v.Code()
+	}
+
+	if len(def) > 0 {
+		return def[0]
+	}
+
+	return errCodeUnkown
+}
+func GetStatus(err error, def ...int) int {
+	switch err {
+	case nil:
+		return http.StatusOK
+	case context.Canceled:
+		return ErrCtxCanceled.Status()
+	case context.DeadlineExceeded:
+		return ErrCtxDeadlineExceeded.Status()
+	}
+
+	switch v := err.(type) {
+	case interface{ Status() int }:
+		return v.Status()
+	}
+
+	if len(def) > 0 {
+		return def[0]
+	}
+	return errStatusUnkonw
+}
+func GetMessage(err error, def ...string) string {
+	if err == nil {
+		return errMessageSucess
+	}
+	return err.Error()
+}
+func GetDetails(err error) []string {
+	if err == nil {
 		return nil
 	}
-	return err
+	switch v := err.(type) {
+	case interface{ Details() []string }:
+		return v.Details()
+	case interface{ Detail() string }:
+		return []string{v.Detail()}
+	}
+	return nil
 }
 
 type commError struct {
@@ -106,10 +149,10 @@ type commError struct {
 	code   int
 }
 
-func (e *commError) Status() int   { return e.status }
-func (e *commError) Code() int     { return e.code }
-func (e *commError) Unwrap() error { return e.error }
-func (e *commError) Is(target error) bool {
+func (e commError) Status() int   { return e.status }
+func (e commError) Code() int     { return e.code }
+func (e commError) Unwrap() error { return e.error }
+func (e commError) Is(target error) bool {
 	if err, _ := target.(Error); err != nil && e.Code() == err.Code() {
 		return true
 	}
@@ -164,12 +207,12 @@ type detailsError struct {
 	details []string
 }
 
-func (e *detailsError) Error() string     { return e.err.Error() }
-func (e *detailsError) Status() int       { return e.err.Status() }
-func (e *detailsError) Code() int         { return e.err.Code() }
-func (e *detailsError) Details() []string { return e.details }
-func (e *detailsError) Unwrap() error     { return e.err }
-func (e *detailsError) Is(target error) bool {
+func (e detailsError) Error() string     { return e.err.Error() }
+func (e detailsError) Status() int       { return e.err.Status() }
+func (e detailsError) Code() int         { return e.err.Code() }
+func (e detailsError) Details() []string { return e.details }
+func (e detailsError) Unwrap() error     { return e.err }
+func (e detailsError) Is(target error) bool {
 	if err, _ := target.(Error); err != nil && e.Code() == err.Code() {
 		return true
 	}
