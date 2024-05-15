@@ -128,31 +128,11 @@ func WithDetail(err error, details ...string) ErrorWithDetails {
 }
 
 func WithDetails(err error, details []string) ErrorWithDetails {
-	var d []string
-	switch v := err.(type) {
-	case commError:
-		if len(details) == 0 {
-			return v
-		}
+	t := GetDetails(err)
 
-		t := v.Details()
-		d = make([]string, 0, len(details)+len(t))
-		d = append(d, t...)
-		d = append(d, details...)
-
-	case ErrorWithDetails:
-		if len(details) == 0 {
-			return v
-		}
-
-		t := v.Details()
-		d = make([]string, 0, len(details)+len(t))
-		d = append(d, t...)
-		d = append(d, details...)
-
-	default:
-		d = details
-	}
+	d := make([]string, 0, len(details)+len(t))
+	d = append(d, t...)
+	d = append(d, details...)
 
 	return commError{
 		error:   err,
