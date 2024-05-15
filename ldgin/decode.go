@@ -7,6 +7,7 @@ package ldgin
 import (
 	"reflect"
 
+	"github.com/distroy/ldgo/v2/ldctx"
 	"github.com/distroy/ldgo/v2/lderr"
 	"go.uber.org/zap"
 )
@@ -15,7 +16,7 @@ import (
 func shouldBind(c *Context, req interface{}) Error {
 	reqVal := reflect.ValueOf(req)
 	if reqVal.Kind() != reflect.Ptr || reqVal.Elem().Kind() != reflect.Struct {
-		c.LogE("input request type must be pointer to struct", zap.Stringer("type", reqVal.Kind()))
+		ldctx.LogE(c, "input request type must be pointer to struct", zap.Stringer("type", reqVal.Kind()))
 		return lderr.ErrInvalidRequestType
 	}
 

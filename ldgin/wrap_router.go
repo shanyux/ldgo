@@ -9,6 +9,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/distroy/ldgo/v2/ldctx"
 	"go.uber.org/zap"
 )
 
@@ -116,7 +117,7 @@ func (w Router) createStaticHandler(relativePath string, fs http.FileSystem) fun
 
 	return func(c *Context) {
 		file := c.Param("filepath")
-		c.LogI("static fs", zap.String("filepath", file))
+		ldctx.LogI(c, "static fs", zap.String("filepath", file))
 
 		if _, noListing := fs.(onlyFilesFS); noListing {
 			c.Writer.WriteHeader(http.StatusNotFound)
@@ -125,7 +126,7 @@ func (w Router) createStaticHandler(relativePath string, fs http.FileSystem) fun
 		// Check if file exists and/or if we have permission to access it
 		f, err := fs.Open(file)
 		if err != nil {
-			c.LogE("filepath is not exists", zap.String("filepath", file))
+			ldctx.LogE(c, "filepath is not exists", zap.String("filepath", file))
 			c.Writer.WriteHeader(http.StatusNotFound)
 			return
 		}

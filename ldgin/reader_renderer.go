@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/distroy/ldgo/v2/ldctx"
 	"github.com/distroy/ldgo/v2/lderr"
 	"go.uber.org/zap"
 )
@@ -38,7 +39,7 @@ func (r ReaderRenderer) Render(c *Context) {
 		return
 	}
 
-	c.LogE("[ldgin] render from reader fail", zap.Error(err))
+	ldctx.LogE(c, "[ldgin] render from reader fail", zap.Error(err))
 	e := lderr.WithDetail(lderr.ErrHttpRenderBody, err.Error())
 	c.setError(e)
 

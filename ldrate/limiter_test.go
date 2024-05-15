@@ -61,8 +61,8 @@ func TestLimiter_Wait(t *testing.T) {
 		})
 
 		c.Convey("context has cancelled", func() {
-			ctx := ldctx.WithCancel(ctx)
-			ldctx.TryCancel(ctx)
+			ctx, cancel := ldctx.WithCancel(ctx)
+			cancel()
 
 			err := l.Wait(ctx)
 
@@ -70,7 +70,7 @@ func TestLimiter_Wait(t *testing.T) {
 		})
 
 		c.Convey("deedline not enough", func() {
-			ctx := ldctx.WithTimeout(ctx, interval/2)
+			ctx, _ := ldctx.WithTimeout(ctx, interval/2)
 
 			err := l.Wait(ctx)
 

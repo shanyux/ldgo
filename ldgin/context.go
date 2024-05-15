@@ -113,7 +113,7 @@ func newContext(g *gin.Context) *Context {
 	now := time.Now()
 	seq := newSequence(g)
 
-	ctx := ldctx.New(g, zap.String(ldlog.GetSequenceKey(), seq))
+	ctx := ldctx.WithLogger(g, nil, zap.String(ldlog.GetSequenceKey(), seq))
 
 	c := &Context{
 		ginCtx:    g,
