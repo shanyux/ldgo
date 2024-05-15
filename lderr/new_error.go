@@ -84,30 +84,34 @@ func Wrap(err error, def ...Error) Error {
 	}
 
 	return commError{
-		error:  err,
-		status: d.Status(),
-		code:   d.Code(),
+		error:   err,
+		status:  d.Status(),
+		code:    d.Code(),
+		details: GetDetails(err),
 	}
 }
 
-func Override(err Error, message string) Error {
+func Override(err error, message string) Error {
 	return &commError{
-		error:  strError(message),
-		status: err.Status(),
-		code:   err.Code(),
+		error:   strError(message),
+		status:  GetStatus(err),
+		code:    GetCode(err),
+		details: GetDetails(err),
 	}
 }
 
 type commError struct {
 	error
 
-	status int
-	code   int
+	status  int
+	code    int
+	details []string
 }
 
-func (e commError) Status() int   { return e.status }
-func (e commError) Code() int     { return e.code }
-func (e commError) Unwrap() error { return e.error }
+func (e commError) Status() int       { return e.status }
+func (e commError) Code() int         { return e.code }
+func (e commError) Details() []string { return e.details }
+func (e commError) Unwrap() error     { return e.error }
 func (e commError) Is(target error) bool {
 	if err, _ := target.(Error); err != nil && e.Code() == err.Code() {
 		return true
@@ -119,19 +123,18 @@ type strError string
 
 func (e strError) Error() string { return string(e) }
 
-func WithDetail(err Error, details ...string) ErrorWithDetails {
+func WithDetail(err error, details ...string) ErrorWithDetails {
 	return WithDetails(err, details)
 }
 
-func WithDetails(err Error, details []string) ErrorWithDetails {
+func WithDetails(err error, details []string) ErrorWithDetails {
 	var d []string
 	switch v := err.(type) {
-	case *detailsError:
+	case commError:
 		if len(details) == 0 {
 			return v
 		}
 
-		err = v.err
 		t := v.Details()
 		d = make([]string, 0, len(details)+len(t))
 		d = append(d, t...)
@@ -151,26 +154,10 @@ func WithDetails(err Error, details []string) ErrorWithDetails {
 		d = details
 	}
 
-	return &detailsError{
-		err:     err,
+	return commError{
+		error:   err,
+		status:  GetStatus(err),
+		code:    GetCode(err),
 		details: d,
 	}
-}
-
-type detailsError struct {
-	err Error
-
-	details []string
-}
-
-func (e detailsError) Error() string     { return e.err.Error() }
-func (e detailsError) Status() int       { return e.err.Status() }
-func (e detailsError) Code() int         { return e.err.Code() }
-func (e detailsError) Details() []string { return e.details }
-func (e detailsError) Unwrap() error     { return e.err }
-func (e detailsError) Is(target error) bool {
-	if err, _ := target.(Error); err != nil && e.Code() == err.Code() {
-		return true
-	}
-	return Is(e.err, target)
 }
