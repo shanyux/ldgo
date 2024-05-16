@@ -38,6 +38,11 @@ var (
 	ErrInvalidConvertType    = New(http.StatusOK, -33, "invalid convert type")
 	ErrInvalidTemplateSyntax = New(http.StatusOK, -34, "invalid template syntax")
 
+	ErrReadFile = New(http.StatusOK, -41, "read file fail")
+
+	ErrMarshal   = New(http.StatusOK, -51, "marshal error")
+	ErrUnmarshal = New(http.StatusOK, -52, "unmarshal error")
+
 	ErrNonAuthoritativeInfo = New(http.StatusNonAuthoritativeInfo, -101, "http non authoritative info")
 	ErrUnauthorized         = New(http.StatusUnauthorized, -102, "http unauthorized")
 	ErrInternalServerError  = New(http.StatusInternalServerError, -103, "http internal server error")
