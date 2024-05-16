@@ -183,9 +183,7 @@ func (c *Context) AbortWithErrorData(err error, data interface{}) {
 		Data:     data,
 	}
 
-	if e, ok := err.(lderr.ErrorWithDetails); ok {
-		response.ErrDetails = e.Details()
-	}
+	response.ErrDetails = lderr.GetDetails(err)
 
 	c.setError(err)
 	c.setResponce(response)

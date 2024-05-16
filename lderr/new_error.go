@@ -13,11 +13,6 @@ type Error interface {
 
 	Status() int
 	Code() int
-}
-
-type ErrorWithDetails interface {
-	Error
-
 	Details() []string
 }
 
@@ -125,7 +120,7 @@ func (e commError) Code() int         { return e.code }
 func (e commError) Unwrap() error     { return e.error }
 func (e commError) Details() []string { return nil }
 func (e commError) Is(target error) bool {
-	if err, _ := target.(Error); err != nil && e.Code() == err.Code() {
+	if err, _ := target.(interface{ Code() int }); err != nil && e.Code() == err.Code() {
 		return true
 	}
 	return Is(e.error, target)
@@ -135,12 +130,16 @@ type strError string
 
 func (e strError) Error() string { return string(e) }
 
-func WithDetail(err error, details ...string) ErrorWithDetails {
+func WithDetail(err error, details ...string) Error {
 	return WithDetails(err, details)
 }
 
-func WithDetails(err error, details []string) ErrorWithDetails {
+func WithDetails(err error, details []string) Error {
 	t := GetDetails(err)
+
+	if len(details)+len(t) == 0 {
+		return Wrap(err)
+	}
 
 	if len(details) == 0 {
 		return &detailsError{
@@ -187,7 +186,7 @@ type detailsError struct {
 func (e *detailsError) Details() []string { return e.details }
 func (e *detailsError) Unwrap() error     { return e.commError }
 func (e *detailsError) Is(target error) bool {
-	if err, _ := target.(Error); err != nil && e.Code() == err.Code() {
+	if err, _ := target.(interface{ Code() int }); err != nil && e.Code() == err.Code() {
 		return true
 	}
 	return Is(e.commError, target)
