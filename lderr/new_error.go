@@ -57,12 +57,11 @@ func New(status, code int, message string) Error {
 }
 
 func newByError(status, code int, err error) Error {
-	var e Error = commError{
+	return commError{
 		error:  err,
 		status: status,
 		code:   code,
 	}
-	return e
 }
 
 func Wrap(err error, def ...Error) Error {
@@ -83,18 +82,40 @@ func Wrap(err error, def ...Error) Error {
 		d = def[0]
 	}
 
-	return commError{
-		error:  err,
-		status: d.Status(),
-		code:   d.Code(),
+	details := GetDetails(err)
+	if len(details) == 0 {
+		return commError{
+			error:  err,
+			status: d.Status(),
+			code:   d.Code(),
+		}
+	}
+	return &detailsError{
+		error: commError{
+			error:  err,
+			status: GetStatus(err),
+			code:   GetCode(err),
+		},
+		details: details,
 	}
 }
 
-func Override(err Error, message string) Error {
-	return &commError{
-		error:  strError(message),
-		status: err.Status(),
-		code:   err.Code(),
+func Override(err error, message string) Error {
+	details := GetDetails(err)
+	if len(details) == 0 {
+		return commError{
+			error:  strError(message),
+			status: GetStatus(err),
+			code:   GetCode(err),
+		}
+	}
+	return &detailsError{
+		error: commError{
+			error:  strError(message),
+			status: GetStatus(err),
+			code:   GetCode(err),
+		},
+		details: details,
 	}
 }
 
@@ -119,58 +140,50 @@ type strError string
 
 func (e strError) Error() string { return string(e) }
 
-func WithDetail(err Error, details ...string) ErrorWithDetails {
+func WithDetail(err error, details ...string) ErrorWithDetails {
 	return WithDetails(err, details)
 }
 
-func WithDetails(err Error, details []string) ErrorWithDetails {
-	var d []string
-	switch v := err.(type) {
-	case *detailsError:
-		if len(details) == 0 {
-			return v
+func WithDetails(err error, details []string) ErrorWithDetails {
+	t := GetDetails(err)
+
+	if len(details) == 0 {
+		return &detailsError{
+			error:   err,
+			details: t,
 		}
-
-		err = v.err
-		t := v.Details()
-		d = make([]string, 0, len(details)+len(t))
-		d = append(d, t...)
-		d = append(d, details...)
-
-	case ErrorWithDetails:
-		if len(details) == 0 {
-			return v
-		}
-
-		t := v.Details()
-		d = make([]string, 0, len(details)+len(t))
-		d = append(d, t...)
-		d = append(d, details...)
-
-	default:
-		d = details
 	}
 
+	if len(t) == 0 {
+		return &detailsError{
+			error:   err,
+			details: details,
+		}
+	}
+
+	d := make([]string, 0, len(details)+len(t))
+	d = append(d, t...)
+	d = append(d, details...)
+
 	return &detailsError{
-		err:     err,
+		error:   err,
 		details: d,
 	}
 }
 
 type detailsError struct {
-	err Error
+	error
 
 	details []string
 }
 
-func (e detailsError) Error() string     { return e.err.Error() }
-func (e detailsError) Status() int       { return e.err.Status() }
-func (e detailsError) Code() int         { return e.err.Code() }
+func (e detailsError) Status() int       { return GetStatus(e.error) }
+func (e detailsError) Code() int         { return GetCode(e.error) }
 func (e detailsError) Details() []string { return e.details }
-func (e detailsError) Unwrap() error     { return e.err }
+func (e detailsError) Unwrap() error     { return e.error }
 func (e detailsError) Is(target error) bool {
 	if err, _ := target.(Error); err != nil && e.Code() == err.Code() {
 		return true
 	}
-	return Is(e.err, target)
+	return Is(e.error, target)
 }
