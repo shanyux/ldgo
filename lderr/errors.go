@@ -21,7 +21,8 @@ var (
 	ErrSuccess          = New(http.StatusOK, 0, "success")
 	ErrUnkown           = New(http.StatusOK, -1, "unknown error")
 	ErrServicePanic     = New(http.StatusServiceUnavailable, -2, "service panic")
-	ErrInvalidParameter = New(http.StatusOK, -3, "invalid parameter")
+	ErrClientPanic      = New(http.StatusServiceUnavailable, -3, "client panic")
+	ErrInvalidParameter = New(http.StatusOK, -4, "invalid parameter")
 
 	ErrCtxCanceled          = newByError(http.StatusOK, -11, context.Canceled)
 	ErrCtxDeadlineExceeded  = newByError(http.StatusOK, -12, context.DeadlineExceeded)
@@ -36,6 +37,11 @@ var (
 	ErrInvalidNumberSyntax   = New(http.StatusOK, -32, "invalid number syntax")
 	ErrInvalidConvertType    = New(http.StatusOK, -33, "invalid convert type")
 	ErrInvalidTemplateSyntax = New(http.StatusOK, -34, "invalid template syntax")
+
+	ErrReadFile = New(http.StatusOK, -41, "read file fail")
+
+	ErrMarshal   = New(http.StatusOK, -51, "marshal error")
+	ErrUnmarshal = New(http.StatusOK, -52, "unmarshal error")
 
 	ErrNonAuthoritativeInfo = New(http.StatusNonAuthoritativeInfo, -101, "http non authoritative info")
 	ErrUnauthorized         = New(http.StatusUnauthorized, -102, "http unauthorized")
@@ -56,6 +62,7 @@ var (
 	ErrRpcCall      = New(http.StatusOK, -311, "rpc call error")
 	ErrRpcTimeout   = New(http.StatusOK, -312, "rpc timeout")
 	ErrRpcBokenPipe = New(http.StatusOK, -313, "rpc boken pip")
+	ErrRpcBizError  = New(http.StatusOK, -314, "rpc call with biz error")
 
 	ErrDataNotFound  = New(http.StatusOK, -801, "data not found")
 	ErrDuplicateData = New(http.StatusOK, -802, "duplicate data")
