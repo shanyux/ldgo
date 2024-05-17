@@ -18,7 +18,7 @@ import (
 )
 
 func init() {
-	log := ldlog.NewLogger(ldlog.Level("debug"))
+	log := ldlog.New(ldlog.Level("debug"))
 	ldlog.SetDefault(log)
 }
 

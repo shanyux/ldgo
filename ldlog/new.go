@@ -17,7 +17,11 @@ func GetLogger(log *zap.Logger, fields ...zap.Field) *Logger {
 	return newLogger(newWrapper(log, log.Sugar()))
 }
 
-func NewLogger(opts ...Option) *Logger {
+func NewByWapper(w *Wrapper) *Logger {
+	return newLogger(*w)
+}
+
+func New(opts ...Option) *Logger {
 	options := newOptions()
 	for _, opt := range opts {
 		opt(options)
