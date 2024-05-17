@@ -47,6 +47,19 @@ func (l *Logger) With(fields ...zap.Field) *Logger {
 	return l
 }
 
+func (l *Logger) GetSequence() string { return l.wrapper.sequence }
+func (l *Logger) WithSequence(seq string) *Logger {
+	if seq == "" {
+		return l
+	}
+	log := l.Core().With(zap.String(sequenceKey, seq))
+	l = l.clone()
+	l.wrapper.log = log
+	l.wrapper.sugar = log.Sugar()
+	l.wrapper.sequence = seq
+	return l
+}
+
 func (l *Logger) Wrapper() *Wrapper {
 	return &l.wrapper
 }

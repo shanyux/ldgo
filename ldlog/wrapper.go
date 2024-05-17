@@ -17,9 +17,10 @@ func newWrapper(log *zap.Logger, sugar *zap.SugaredLogger) Wrapper {
 }
 
 type Wrapper struct {
-	log   *zap.Logger
-	sugar *zap.SugaredLogger
-	rate  rateConfig
+	log      *zap.Logger
+	sugar    *zap.SugaredLogger
+	sequence string
+	rate     rateConfig
 }
 
 func (l *Wrapper) Sync() { l.log.Sync() }
