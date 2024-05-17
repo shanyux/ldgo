@@ -76,15 +76,15 @@ func (l *Wrapper) Warning(args ...interface{})              { l.zSugar(1).Warn(p
 func (l *Wrapper) Warningln(args ...interface{})            { l.zSugar(1).Warn(pw(args)) }
 func (l *Wrapper) Warningz(fmt string, fields ...zap.Field) { l.zCore(1).Warn(fmt, fields...) }
 
-func (l *Wrapper) Errorf(fmt string, args ...interface{}) { l.zSugar(1).Errorf(fmt, args...) }
-func (l *Wrapper) Error(args ...interface{})              { l.zSugar(1).Error(pw(args)) }
-func (l *Wrapper) Errorln(args ...interface{})            { l.zSugar(1).Error(pw(args)) }
-func (l *Wrapper) Errorz(fmt string, fields ...zap.Field) { l.zCore(1).Error(fmt, fields...) }
+func (l *Wrapper) Errorf(fmt string, args ...interface{}) { l.Sugar().Errorf(fmt, args...) }
+func (l *Wrapper) Error(args ...interface{})              { l.Sugar().Error(pw(args)) }
+func (l *Wrapper) Errorln(args ...interface{})            { l.Sugar().Error(pw(args)) }
+func (l *Wrapper) Errorz(fmt string, fields ...zap.Field) { l.Core().Error(fmt, fields...) }
 
-func (l *Wrapper) Fatalf(fmt string, args ...interface{}) { l.zSugar(1).Fatalf(fmt, args...) }
-func (l *Wrapper) Fatal(args ...interface{})              { l.zSugar(1).Fatal(pw(args)) }
-func (l *Wrapper) Fatalln(args ...interface{})            { l.zSugar(1).Fatal(pw(args)) }
-func (l *Wrapper) Fatalz(fmt string, fields ...zap.Field) { l.zCore(1).Fatal(fmt, fields...) }
+func (l *Wrapper) Fatalf(fmt string, args ...interface{}) { l.Sugar().Fatalf(fmt, args...) }
+func (l *Wrapper) Fatal(args ...interface{})              { l.Sugar().Fatal(pw(args)) }
+func (l *Wrapper) Fatalln(args ...interface{})            { l.Sugar().Fatal(pw(args)) }
+func (l *Wrapper) Fatalz(fmt string, fields ...zap.Field) { l.Core().Fatal(fmt, fields...) }
 
 func (l *Wrapper) V(v int) bool {
 	if v <= 0 {
