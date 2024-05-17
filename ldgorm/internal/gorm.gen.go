@@ -201,8 +201,8 @@ func (w *GormDb) UseSlaver(key ...interface{}) *GormDb {
 func (w *GormDb) initAfterUseNewGormDb() {
 	db := w.gormDb
 
-	db = w.withLogger(db, w.log)
 	db = w.withContext(w.ctx, db)
+	db = w.withLogger(db, w.log)
 
 	w.gormDb = db
 }
