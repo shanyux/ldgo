@@ -31,14 +31,14 @@ type stringer interface {
 
 func zCore(c context.Context, skip int) *zap.Logger {
 	l := GetLogger(c)
-	if !l.CheckOrInterval(skip + 1) {
+	if !l.CheckRateOrInterval(skip + 1) {
 		l = ldlog.Discard()
 	}
 	return l.Core()
 }
 func zSugar(c context.Context, skip int) *zap.SugaredLogger {
 	l := GetLogger(c)
-	if !l.CheckOrInterval(skip + 1) {
+	if !l.CheckRateOrInterval(skip + 1) {
 		l = ldlog.Discard()
 	}
 	return l.Sugar()
