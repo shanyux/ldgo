@@ -32,7 +32,7 @@ func TestLogger(t *testing.T) {
 		}
 
 		writer := bytes.NewBuffer(nil)
-		l := NewLogger(Writer(writer))
+		l := New(Writer(writer))
 		l = l.With(zap.String("abc", "xxx"))
 
 		convey.Convey("error", func() {

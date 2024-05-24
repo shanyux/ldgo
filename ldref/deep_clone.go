@@ -101,6 +101,9 @@ func deepCloneArray(x0 reflect.Value) reflect.Value {
 }
 
 func deepCloneSlice(x0 reflect.Value) reflect.Value {
+	if x0.IsNil() {
+		return x0
+	}
 	l0 := x0.Len()
 	x1 := reflect.MakeSlice(reflect.SliceOf(x0.Type().Elem()), l0, l0)
 	for i := 0; i < l0; i++ {

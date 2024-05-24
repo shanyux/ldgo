@@ -58,7 +58,7 @@ func TestWrapHandler(t *testing.T) {
 			})
 
 			handler(g)
-			convey.So(GetError(g), convey.ShouldEqual, lderr.ErrUnauthorized)
+			convey.So(GetError(g), convey.ShouldResemble, lderr.ErrUnauthorized)
 			convey.So(w.Code, convey.ShouldEqual, lderr.ErrUnauthorized.Status())
 
 			rsp := response
@@ -74,7 +74,7 @@ func TestWrapHandler(t *testing.T) {
 			handler(g)
 
 			convey.So(w.Code, convey.ShouldEqual, lderr.ErrHttpInvalidStatus.Status())
-			convey.So(GetError(g), convey.ShouldEqual, lderr.ErrHttpInvalidStatus)
+			convey.So(GetError(g), convey.ShouldResemble, lderr.ErrHttpInvalidStatus)
 
 			// rsp := GetResponse(g)
 			// convey.So(rsp, convey.ShouldBeNil)
@@ -137,7 +137,7 @@ func TestWrapHandler(t *testing.T) {
 					handler(g)
 
 					convey.So(w.Code, convey.ShouldEqual, lderr.ErrHttpReadBody.Status())
-					convey.So(GetError(g), convey.ShouldEqual, lderr.ErrHttpReadBody)
+					convey.So(GetError(g), convey.ShouldResemble, lderr.ErrHttpReadBody)
 					// convey.So(GetResponse(g), convey.ShouldBeNil)
 				})
 				convey.Convey("Request --> GinParser: succ", func() {
@@ -180,7 +180,7 @@ func TestWrapHandler(t *testing.T) {
 			})
 
 			handler(g)
-			convey.So(GetError(g), convey.ShouldEqual, lderr.ErrServicePanic)
+			convey.So(GetError(g), convey.ShouldResemble, lderr.ErrServicePanic)
 			convey.So(w.Code, convey.ShouldEqual, lderr.ErrServicePanic.Status())
 
 			rsp := response
@@ -196,7 +196,7 @@ func TestWrapHandler(t *testing.T) {
 			handler(g)
 
 			convey.So(w.Code, convey.ShouldEqual, lderr.ErrHttpInvalidStatus.Status())
-			convey.So(GetError(g), convey.ShouldEqual, lderr.ErrHttpInvalidStatus)
+			convey.So(GetError(g), convey.ShouldResemble, lderr.ErrHttpInvalidStatus)
 
 			// rsp := GetResponse(g)
 			// convey.So(rsp, convey.ShouldBeNil)
@@ -211,7 +211,7 @@ func TestWrapHandler(t *testing.T) {
 				handler(g)
 
 				convey.So(w.Code, convey.ShouldEqual, lderr.ErrHttpReadBody.Status())
-				convey.So(GetError(g), convey.ShouldEqual, lderr.ErrHttpReadBody)
+				convey.So(GetError(g), convey.ShouldResemble, lderr.ErrHttpReadBody)
 
 				// convey.So(GetResponse(g), convey.ShouldBeNil)
 			})
@@ -265,7 +265,7 @@ func TestWrapHandler(t *testing.T) {
 					handler(g)
 
 					convey.So(w.Code, convey.ShouldEqual, lderr.ErrHttpReadBody.Status())
-					convey.So(GetError(g), convey.ShouldEqual, lderr.ErrHttpReadBody)
+					convey.So(GetError(g), convey.ShouldResemble, lderr.ErrHttpReadBody)
 				})
 			})
 			convey.Convey("Request --> ParseValidator: succ", func() {

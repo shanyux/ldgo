@@ -45,7 +45,7 @@ func TestCopy(t *testing.T) {
 			)
 
 			err := Copy(target, source)
-			c.So(err, convey.ShouldEqual, lderr.ErrReflectTargetNotPtr)
+			c.So(err, convey.ShouldResemble, lderr.ErrReflectTargetNotPtr)
 			c.So(target, convey.ShouldEqual, 0)
 		})
 
@@ -57,7 +57,7 @@ func TestCopy(t *testing.T) {
 				)
 
 				err := Copy(target, source)
-				c.So(err, convey.ShouldEqual, lderr.ErrReflectTargetNotPtr)
+				c.So(err, convey.ShouldResemble, lderr.ErrReflectTargetNotPtr)
 				c.So(target.Interface(), convey.ShouldEqual, 0)
 			})
 
@@ -83,7 +83,7 @@ func TestCopy(t *testing.T) {
 				err := Copy(target, source)
 				// c.So(err, convey.ShouldBeNil)
 				// c.So(target.Interface(), convey.ShouldEqual, 100)
-				c.So(err, convey.ShouldEqual, lderr.ErrReflectTargetNilPtr)
+				c.So(err, convey.ShouldResemble, lderr.ErrReflectTargetNilPtr)
 				c.So(target.Interface(), convey.ShouldBeNil)
 			})
 

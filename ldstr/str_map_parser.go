@@ -78,7 +78,7 @@ func (p *StrMapParser) Done() {
 	p.before = ""
 }
 
-func (p *StrMapParser) Init(tmpl string, splits ...string) lderr.Error {
+func (p *StrMapParser) Init(tmpl string, splits ...string) error {
 	l, r := getReplaceSplits(splits)
 
 	p.Done()
@@ -102,7 +102,7 @@ func (p *StrMapParser) Init(tmpl string, splits ...string) lderr.Error {
 	return nil
 }
 
-func (p *StrMapParser) initFieldsByTemplate() lderr.Error {
+func (p *StrMapParser) initFieldsByTemplate() error {
 	tmpl := p.template
 	l, r := p.left, p.right
 
@@ -148,13 +148,13 @@ func (p *StrMapParser) initFieldsByTemplate() lderr.Error {
 	return nil
 }
 
-func (p *StrMapParser) initFieldsDuplicate() lderr.Error {
+func (p *StrMapParser) initFieldsDuplicate() error {
 	if len(p.fields) <= 32 {
 		return p.initFieldsDuplicateSmall()
 	}
 	return p.initFieldsDuplicateBig()
 }
-func (p *StrMapParser) initFieldsDuplicateBig() lderr.Error {
+func (p *StrMapParser) initFieldsDuplicateBig() error {
 	fieldKeys := make(map[string]int)
 	for i := range p.fields {
 		v := &p.fields[i]
@@ -174,7 +174,7 @@ func (p *StrMapParser) initFieldsDuplicateBig() lderr.Error {
 	}
 	return nil
 }
-func (p *StrMapParser) initFieldsDuplicateSmall() lderr.Error {
+func (p *StrMapParser) initFieldsDuplicateSmall() error {
 	for i := 1; i < len(p.fields); i++ {
 		vi := &p.fields[i]
 		vi.DupIndex = -1
@@ -196,7 +196,7 @@ func (p *StrMapParser) initFieldsDuplicateSmall() lderr.Error {
 	return nil
 }
 
-func (p *StrMapParser) initFieldsPrevIndex() lderr.Error {
+func (p *StrMapParser) initFieldsPrevIndex() error {
 	for i := 1; i < len(p.fields); i++ {
 		vi := &p.fields[i]
 		prev := &p.fields[i-1]
@@ -260,7 +260,7 @@ func (p *StrMapParser) indexFieldNext(pos int) int {
 	return i + 1
 }
 
-func (p *StrMapParser) Parse(text string) (map[string]string, lderr.Error) {
+func (p *StrMapParser) Parse(text string) (map[string]string, error) {
 	if len(p.fields) == 0 {
 		if p.before != text {
 			return nil, lderr.ErrInvalidTemplateSyntax

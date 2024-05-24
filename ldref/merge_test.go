@@ -28,11 +28,11 @@ func TestMerge(t *testing.T) {
 		c.Convey("fail", func(c convey.C) {
 			c.Convey("to invalid type", func(c convey.C) {
 				err := Merge(1, 2)
-				c.So(err, convey.ShouldEqual, lderr.ErrReflectTargetNotPtr)
+				c.So(err, convey.ShouldResemble, lderr.ErrReflectTargetNotPtr)
 			})
 			c.Convey("to nil ptr", func(c convey.C) {
 				err := Merge((*int)(nil), 2)
-				c.So(err, convey.ShouldEqual, lderr.ErrReflectTargetNilPtr)
+				c.So(err, convey.ShouldResemble, lderr.ErrReflectTargetNilPtr)
 			})
 		})
 

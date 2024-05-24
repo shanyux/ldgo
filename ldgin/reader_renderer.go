@@ -90,7 +90,7 @@ func (r ReaderRenderer) writeHeaders(c *Context) {
 	}
 }
 
-func writeError(c *Context, err lderr.Error) {
+func writeError(c *Context, err error) {
 	g := c.Gin()
 	writer := g.Writer
 	defer writer.Flush()
@@ -99,14 +99,10 @@ func writeError(c *Context, err lderr.Error) {
 	fmt.Fprint(writer, crlf)
 
 	fmt.Fprintf(writer, "server happened some errors%s", crlf)
-	fmt.Fprintf(writer, "code: %d%s", err.Code(), crlf)
-	fmt.Fprintf(writer, "message: %s%s", err.Error(), crlf)
+	fmt.Fprintf(writer, "code: %d%s", lderr.GetCode(err), crlf)
+	fmt.Fprintf(writer, "message: %s%s", lderr.GetMessage(err), crlf)
 
-	var details []string
-	if e, _ := err.(lderr.ErrorWithDetails); e != nil {
-		details = e.Details()
-	}
-
+	details := lderr.GetDetails(err)
 	if len(details) == 0 {
 		return
 	}

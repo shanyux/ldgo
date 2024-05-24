@@ -43,7 +43,7 @@ func (c *context) Reset() {
 	c.errors = c.errors[:0]
 }
 
-func (c *context) Error() lderr.Error {
+func (c *context) Error() error {
 	if len(c.errors) == 0 {
 		return nil
 	}
