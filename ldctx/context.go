@@ -50,15 +50,35 @@ func GetError(c context.Context) lderr.Error {
 	return lderr.Wrap(e)
 }
 
-func WithLogger(parent context.Context, log *ldlog.Logger, fields ...zap.Field) context.Context {
-	if log == nil && len(fields) == 0 {
-		return parent
-	}
+func WithLogger(c context.Context, log *ldlog.Logger, fields ...zap.Field) context.Context {
 	if log == nil {
-		log = GetLogger(parent)
+		return WithLogField(c, fields...)
 	}
 	log = log.With(fields...)
-	return WithValue(parent, ctxKeyLogger, log)
+	return WithValue(c, ctxKeyLogger, log)
+}
+
+func WithLogField(c context.Context, fields ...zap.Field) context.Context {
+	if len(fields) == 0 {
+		return c
+	}
+	log := GetLogger(c)
+	log = log.With(fields...)
+	return WithValue(c, ctxKeyLogger, log)
+}
+
+// log based on probability(rate). rate should be in [0, 1.0]
+func WithLogRate(c context.Context, rate float64) context.Context {
+	log := GetLogger(c)
+	log = log.WithRate(rate)
+	return WithValue(c, ctxKeyLogger, log)
+}
+
+// log at intervals
+func WithLogInterval(c context.Context, interval time.Duration) context.Context {
+	log := GetLogger(c)
+	log = log.WithInterval(interval)
+	return WithValue(c, ctxKeyLogger, log)
 }
 
 func GetLogger(c context.Context) *ldlog.Logger {
