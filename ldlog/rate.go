@@ -39,20 +39,18 @@ type ctxCallerInfo struct {
 
 func (l *Logger) WithRate(rate float64) *Logger {
 	l = l.clone()
-	l.wrapper.rate = rateConfig{Rate: rate + 1}
+	l.rate = rateConfig{Rate: rate + 1}
 	return l
 }
 
 func (l *Logger) WithInterval(d time.Duration) *Logger {
 	l = l.clone()
-	l.wrapper.rate = rateConfig{Interval: d}
+	l.rate = rateConfig{Interval: d}
 	return l
 }
 
-func (l *Logger) CheckOrInterval(skip int) bool { return l.wrapper.checkRateOrInterval(skip + 1) }
-
-func (l *Wrapper) CheckOrInterval(skip int) bool { return l.checkRateOrInterval(skip + 1) }
-func (l *Wrapper) checkRateOrInterval(skip int) bool {
+func (l *core) CheckOrInterval(skip int) bool { return l.checkRateOrInterval(skip + 1) }
+func (l *core) checkRateOrInterval(skip int) bool {
 	c := l
 	if d := c.rate.Interval; d > 0 {
 		return hitInterval(d, skip+1)

@@ -9,42 +9,11 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-func newWrapper(log *zap.Logger, sugar *zap.SugaredLogger) Wrapper {
-	return Wrapper{
-		log:   log,
-		sugar: sugar,
-	}
-}
-
 type Wrapper struct {
-	log      *zap.Logger
-	sugar    *zap.SugaredLogger
-	sequence string
-	rate     rateConfig
+	core
 }
 
-func (l *Wrapper) Sync() { l.log.Sync() }
-
-func (l *Wrapper) Enabled(lvl zapcore.Level) bool { return l.enabled(lvl) }
-
-func (l *Wrapper) Logger() *Logger           { return newLogger(*l) }
-func (l *Wrapper) Core() *zap.Logger         { return l.log }
-func (l *Wrapper) Sugar() *zap.SugaredLogger { return l.sugar }
-
-func (l *Wrapper) zCore(skip int) *zap.Logger {
-	if !l.checkRateOrInterval(skip + 1) {
-		return Discard().Core()
-	}
-	return l.log
-}
-func (l *Wrapper) zSugar(skip int) *zap.SugaredLogger {
-	if !l.checkRateOrInterval(skip + 1) {
-		return Discard().Sugar()
-	}
-	return l.sugar
-}
-
-func (l *Wrapper) enabled(lvl zapcore.Level) bool { return l.log.Core().Enabled(lvl) }
+func (l *Wrapper) Logger() *Logger { return (*Logger)(l) }
 
 func (l *Wrapper) Debugf(fmt string, args ...interface{}) { l.zSugar(1).Debugf(fmt, args...) }
 func (l *Wrapper) Debug(args ...interface{})              { l.zSugar(1).Debug(pw(args)) }
