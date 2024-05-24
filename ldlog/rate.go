@@ -37,12 +37,14 @@ type ctxCallerInfo struct {
 	LastLogTime ldatomic.Time // for log at intervals
 }
 
+// log based on probability(rate). rate should be in [0, 1.0]
 func (l *Logger) WithRate(rate float64) *Logger {
 	l = l.clone()
 	l.wrapper.rate = rateConfig{Rate: rate + 1}
 	return l
 }
 
+// log at intervals
 func (l *Logger) WithInterval(d time.Duration) *Logger {
 	l = l.clone()
 	l.wrapper.rate = rateConfig{Interval: d}
