@@ -49,7 +49,7 @@ func (l *Logger) WithInterval(d time.Duration) *Logger {
 	return l
 }
 
-func (l *core) CheckOrInterval(skip int) bool { return l.checkRateOrInterval(skip + 1) }
+func (l *core) CheckRateOrInterval(skip int) bool { return l.checkRateOrInterval(skip + 1) }
 func (l *core) checkRateOrInterval(skip int) bool {
 	c := l
 	if d := c.rate.Interval; d > 0 {

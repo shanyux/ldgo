@@ -9,6 +9,7 @@ import (
 	"mime/multipart"
 	"reflect"
 
+	"github.com/distroy/ldgo/v2/ldctx"
 	"github.com/distroy/ldgo/v2/lderr"
 	"go.uber.org/zap"
 )
@@ -17,18 +18,18 @@ const (
 	contentTypeMultipart = "multipart/form-data"
 )
 
-func parseMultipart(c *Context, reqType *requestType, reqBind *requestBind, reqVal reflect.Value) Error {
+func parseMultipart(c *Context, reqType *requestType, reqBind *requestBind, reqVal reflect.Value) error {
 	g := c.Gin()
 
 	contentType := g.ContentType()
 	if contentType != contentTypeMultipart {
-		c.LogW("the content type should be `multipart/form-data`", zap.String("contentType", contentType))
+		ldctx.LogW(c, "the content type should be `multipart/form-data`", zap.String("contentType", contentType))
 		return nil
 	}
 
 	form, err := g.MultipartForm()
 	if err != nil {
-		c.LogE("ShouldBind() fail", zap.String("tag", reqBind.Tag), zap.Error(err))
+		ldctx.LogE(c, "ShouldBind() fail", zap.String("tag", reqBind.Tag), zap.Error(err))
 		return lderr.ErrParseRequest
 	}
 
@@ -44,7 +45,7 @@ func parseMultipart(c *Context, reqType *requestType, reqBind *requestBind, reqV
 
 		_, err := setByMultipartFormFile(value, field.StructField, files)
 		if err != nil {
-			c.LogE("ShouldBind() fail", zap.String("tag", reqBind.Tag), zap.Error(err))
+			ldctx.LogE(c, "ShouldBind() fail", zap.String("tag", reqBind.Tag), zap.Error(err))
 			return lderr.ErrParseRequest
 		}
 

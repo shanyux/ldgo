@@ -17,6 +17,8 @@ import (
 	"github.com/smartystreets/goconvey/convey"
 )
 
+type Error = lderr.Error
+
 type testReaderForChunked struct {
 	Error error
 	Lines []string
@@ -171,7 +173,7 @@ func TestReaderRenderer_Render(t *testing.T) {
 				handler(g)
 				c.So(w.Code, convey.ShouldEqual, http.StatusOK)
 				c.So(GetError(g), convey.ShouldNotBeNil)
-				c.So(GetError(g).Code(), convey.ShouldEqual, lderr.ErrHttpRenderBody.Code())
+				c.So(lderr.GetCode(GetError(g)), convey.ShouldEqual, lderr.ErrHttpRenderBody.Code())
 
 				c.So(w.Header().Get(chunkedHeaderKey), convey.ShouldEqual, chunkedHeaderValue)
 

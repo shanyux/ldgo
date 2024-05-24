@@ -33,13 +33,13 @@ var (
 	ErrTestDataError = lderr.New(http.StatusOK, 2, "test data error 1")
 )
 
-func testOneError(c *ldgin.Context) ldgin.Error {
-	c.LogI("", zap.String("method", c.GetMethod()), zap.String("path", c.GetPath()),
+func testOneError(c *ldgin.Context) lderr.Error {
+	ldctx.LogI(c, "", zap.String("method", c.GetMethod()), zap.String("path", c.GetPath()),
 		zap.String("handler", c.GetHandler()))
 	return ErrTestOneError
 }
 
-func testDataError(c *ldgin.Context) (string, ldgin.Error) {
+func testDataError(c *ldgin.Context) (string, lderr.Error) {
 	return "abc", ErrTestDataError
 }
 
@@ -50,10 +50,10 @@ type testBindReq struct {
 	Language string `header:"accept-language"`
 }
 
-func testBind(ctx StdContext, req *testBindReq) (*testBindReq, ldgin.Error) {
+func testBind(ctx StdContext, req *testBindReq) (*testBindReq, lderr.Error) {
 	g := ldgin.GetGin(ctx)
 	c := ldgin.GetContext(g)
-	c.LogI("", zap.String("method", c.GetMethod()), zap.String("path", c.GetPath()),
+	ldctx.LogI(c, "", zap.String("method", c.GetMethod()), zap.String("path", c.GetPath()),
 		zap.String("handler", c.GetHandler()))
 	return req, nil
 }
@@ -64,7 +64,7 @@ func (_ *testRenderer) Render(c *gin.Context) {
 	c.JSON(http.StatusOK, "abc")
 }
 
-func testRender(c *ldgin.Context) (*testRenderer, ldgin.Error) {
+func testRender(c *ldgin.Context) (*testRenderer, lderr.Error) {
 	return &testRenderer{}, nil
 }
 
@@ -72,14 +72,14 @@ type testValidateReq struct {
 	Valid int64 `form:"valid"`
 }
 
-func (req *testValidateReq) Validate(c StdContext) ldgin.Error {
+func (req *testValidateReq) Validate(c StdContext) lderr.Error {
 	if req.Valid != 0 {
 		return lderr.New(http.StatusOK, 111, fmt.Sprintf("invalid requet. valid=%v", req.Valid))
 	}
 	return nil
 }
 
-func testValidate(c *ldgin.Context, req *testValidateReq) ldgin.Error {
+func testValidate(c *ldgin.Context, req *testValidateReq) lderr.Error {
 	return nil
 }
 
@@ -93,7 +93,7 @@ type testMultipartRsp struct {
 	Name string `json:"name"`
 }
 
-func testMultipart(c *ldgin.Context, req *testMultipartReq) (*testMultipartRsp, ldgin.Error) {
+func testMultipart(c *ldgin.Context, req *testMultipartReq) (*testMultipartRsp, lderr.Error) {
 	name := req.Name
 
 	file := req.File
@@ -129,24 +129,24 @@ type testParseReq struct {
 	Query2 int64  `form:"query2"`
 }
 
-func (req *testParseReq) Parse(c *ldgin.Context) ldgin.Error {
+func (req *testParseReq) Parse(c *ldgin.Context) lderr.Error {
 	if err := c.ShouldBindQuery(req); err != nil {
-		c.LogE("ShouldBindQuery() fail", zap.Error(err))
+		ldctx.LogE(c, "ShouldBindQuery() fail", zap.Error(err))
 		return lderr.ErrParseRequest
 	}
 	return nil
 }
 
-func testParse(c *ldgin.Context, req *testParseReq) (*testParseReq, ldgin.Error) {
+func testParse(c *ldgin.Context, req *testParseReq) (*testParseReq, lderr.Error) {
 	return req, nil
 }
 
-func testSucc(c *ldgin.Context) ldgin.Error {
+func testSucc(c *ldgin.Context) lderr.Error {
 	return nil
 }
 
-func testPanic(c *ldgin.Context) ldgin.Error {
-	c.LogI("", zap.String("method", c.GetMethod()), zap.String("path", c.GetPath()),
+func testPanic(c *ldgin.Context) lderr.Error {
+	ldctx.LogI(c, "", zap.String("method", c.GetMethod()), zap.String("path", c.GetPath()),
 		zap.String("handler", c.GetHandler()))
 
 	var p *int
@@ -176,7 +176,7 @@ func (r *testReaderForChunked) Read(buff []byte) (int, error) {
 	return 0, io.EOF
 }
 
-func testChunked(c *ldgin.Context) (ldgin.ReaderRenderer, ldgin.Error) {
+func testChunked(c *ldgin.Context) (ldgin.ReaderRenderer, lderr.Error) {
 	if ldconv.AsBool(c.Query("download")) {
 		c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", "chunked.text"))
 	}

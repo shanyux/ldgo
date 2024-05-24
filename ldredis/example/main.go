@@ -48,10 +48,10 @@ func pipeline(ctx ldctx.Context) {
 	p.Get(ctx, keys[1])
 	p.Get(ctx, keys[2])
 	cmds, err := p.Exec(ctx)
-	ctx.LogI("pipeline return", zap.Error(err))
+	ldctx.LogI(ctx, "pipeline return", zap.Error(err))
 	for _, v := range cmds {
 		cmd, _ := v.(*ldredis.StringCmd)
-		ctx.LogI("pipeline res", zap.Reflect("cmd", cmd.Args()), zap.String("val", cmd.Val()), zap.Error(cmd.Err()))
+		ldctx.LogI(ctx, "pipeline res", zap.Reflect("cmd", cmd.Args()), zap.String("val", cmd.Val()), zap.Error(cmd.Err()))
 	}
 }
 
@@ -65,9 +65,9 @@ func slice(ctx ldctx.Context) {
 	rds.HSet(ctx, key, "3", 128.1)
 
 	cmd := rds.HMGet(ctx, key, "1", "2", "3", "4")
-	ctx.LogI("", zap.Stringer("type", reflect.TypeOf(cmd.Val())), zap.Reflect("value", cmd.Val()))
+	ldctx.LogI(ctx, "", zap.Stringer("type", reflect.TypeOf(cmd.Val())), zap.Reflect("value", cmd.Val()))
 	for i, v := range cmd.Val() {
-		ctx.LogIf("idx:%d, type:%T, value:%v", i, v, v)
+		ldctx.LogIf(ctx, "idx:%d, type:%T, value:%v", i, v, v)
 	}
 }
 
@@ -89,13 +89,13 @@ func codecStruct(ctx ldctx.Context) {
 		Int1: 111,
 		Int2: 222,
 	}, time.Minute)
-	ctx.LogI("cmd", zap.Reflect("cmd", sCmd.Args()))
+	ldctx.LogI(ctx, "cmd", zap.Reflect("cmd", sCmd.Args()))
 
 	gCmd0 := ldrediscodec.New[*codecStruct](rds, ldrediscodec.JsonCodec[*codecStruct]{}).Get(ctx, key)
-	ctx.LogIf("type:%T, value:%v", gCmd0.Val(), gCmd0.Val())
+	ldctx.LogIf(ctx, "type:%T, value:%v", gCmd0.Val(), gCmd0.Val())
 
 	gCmd1 := ldrediscodec.New[any](rds, ldrediscodec.JsonCodec[any]{}).Get(ctx, key)
-	ctx.LogIf("type:%T, value:%v", gCmd1.Val(), gCmd1.Val())
+	ldctx.LogIf(ctx, "type:%T, value:%v", gCmd1.Val(), gCmd1.Val())
 }
 
 func codecBaseType(ctx ldctx.Context) {
@@ -115,7 +115,7 @@ func codecBaseType(ctx ldctx.Context) {
 	})
 
 	cmd := cli.HGetAll(ctx, key)
-	ctx.LogI("", zap.Reflect("cmd", cmd.Args()), zap.Stringer("type", reflect.TypeOf(cmd.Val())), zap.Reflect("val", cmd.Val()))
+	ldctx.LogI(ctx, "", zap.Reflect("cmd", cmd.Args()), zap.Stringer("type", reflect.TypeOf(cmd.Val())), zap.Reflect("val", cmd.Val()))
 }
 
 func main() {

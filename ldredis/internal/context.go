@@ -21,8 +21,6 @@ func InProcess(c context.Context) bool {
 	return b
 }
 
-func NewContext(c context.Context) ldctx.Context {
-	ctx := ldctx.New(c)
-	ctx = ldctx.WithValue(ctx, ctxKeyInProcess, true)
-	return ctx
+func NewContext(c context.Context) context.Context {
+	return ldctx.WithValue(c, ctxKeyInProcess, true)
 }

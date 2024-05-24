@@ -6,21 +6,13 @@ package lderr
 
 import (
 	"errors"
-	"sync"
 )
-
-var errMap = &sync.Map{}
 
 type Error interface {
 	error
 
 	Status() int
 	Code() int
-}
-
-type ErrorWithDetails interface {
-	Error
-
 	Details() []string
 }
 
@@ -45,25 +37,43 @@ func Is(err, target error) bool {
 	return errors.Is(err, target)
 }
 
+func IsSuccess(err error) bool {
+	if err == nil {
+		return true
+	}
+	if GetCode(err) == 0 {
+		return true
+	}
+	return false
+}
+
 func New(status, code int, message string) Error {
-	return newByError(status, code, strError(message))
+	return commError{
+		error:  strError(message),
+		status: status,
+		code:   code,
+	}
 }
 
 func newByError(status, code int, err error) Error {
-	var e Error = &commError{
+	return commError{
 		error:  err,
 		status: status,
 		code:   code,
 	}
-
-	// errMap.Store(err.Code(), err)
-	errMap.LoadOrStore(e.Code(), err)
-	return e
 }
 
 func Wrap(err error, def ...Error) Error {
+	if err == nil {
+		return nil
+	}
+
 	if v, ok := err.(Error); ok {
 		return v
+	}
+
+	if e := getMatchError(err); e != nil {
+		return e
 	}
 
 	d := ErrUnkown
@@ -71,32 +81,31 @@ func Wrap(err error, def ...Error) Error {
 		d = def[0]
 	}
 
-	return &commError{
+	e := commError{
 		error:  err,
 		status: d.Status(),
 		code:   d.Code(),
 	}
+	return newWithDetails(e, GetDetails(err))
 }
 
-func Override(err Error, message string) Error {
-	return &commError{
+func Override(err error, message string) Error {
+	e := commError{
 		error:  strError(message),
-		status: err.Status(),
-		code:   err.Code(),
+		status: GetStatus(err),
+		code:   GetCode(err),
 	}
+	return newWithDetails(e, GetDetails(err))
 }
 
-func GetByCode(code int) Error {
-	v, _ := errMap.Load(code)
-	if v == nil {
-		return nil
+func newWithDetails(err commError, details []string) Error {
+	if len(details) == 0 {
+		return err
 	}
-
-	err, ok := v.(Error)
-	if !ok {
-		return nil
+	return &detailsError{
+		commError: err,
+		details:   details,
 	}
-	return err
 }
 
 type commError struct {
@@ -106,11 +115,12 @@ type commError struct {
 	code   int
 }
 
-func (e *commError) Status() int   { return e.status }
-func (e *commError) Code() int     { return e.code }
-func (e *commError) Unwrap() error { return e.error }
-func (e *commError) Is(target error) bool {
-	if err, _ := target.(Error); err != nil && e.Code() == err.Code() {
+func (e commError) Status() int       { return e.status }
+func (e commError) Code() int         { return e.code }
+func (e commError) Unwrap() error     { return e.error }
+func (e commError) Details() []string { return nil }
+func (e commError) Is(target error) bool {
+	if err, _ := target.(interface{ Code() int }); err != nil && e.Code() == err.Code() {
 		return true
 	}
 	return Is(e.error, target)
@@ -120,58 +130,64 @@ type strError string
 
 func (e strError) Error() string { return string(e) }
 
-func WithDetail(err Error, details ...string) ErrorWithDetails {
+func WithDetail(err error, details ...string) Error {
 	return WithDetails(err, details)
 }
 
-func WithDetails(err Error, details []string) ErrorWithDetails {
-	var d []string
-	switch v := err.(type) {
-	case *detailsError:
-		if len(details) == 0 {
-			return v
-		}
+func WithDetails(err error, details []string) Error {
+	t := GetDetails(err)
 
-		err = v.err
-		t := v.Details()
-		d = make([]string, 0, len(details)+len(t))
-		d = append(d, t...)
-		d = append(d, details...)
-
-	case ErrorWithDetails:
-		if len(details) == 0 {
-			return v
-		}
-
-		t := v.Details()
-		d = make([]string, 0, len(details)+len(t))
-		d = append(d, t...)
-		d = append(d, details...)
-
-	default:
-		d = details
+	if len(details)+len(t) == 0 {
+		return Wrap(err)
 	}
 
+	if len(details) == 0 {
+		return &detailsError{
+			commError: commError{
+				error:  err,
+				status: GetStatus(err),
+				code:   GetCode(err),
+			},
+			details: t,
+		}
+	}
+
+	if len(t) == 0 {
+		return &detailsError{
+			commError: commError{
+				error:  err,
+				status: GetStatus(err),
+				code:   GetCode(err),
+			},
+			details: details,
+		}
+	}
+
+	d := make([]string, 0, len(details)+len(t))
+	d = append(d, t...)
+	d = append(d, details...)
+
 	return &detailsError{
-		err:     err,
+		commError: commError{
+			error:  err,
+			status: GetStatus(err),
+			code:   GetCode(err),
+		},
 		details: d,
 	}
 }
 
 type detailsError struct {
-	err Error
+	commError
 
 	details []string
 }
 
-func (e *detailsError) Error() string     { return e.err.Error() }
-func (e *detailsError) Status() int       { return e.err.Status() }
-func (e *detailsError) Code() int         { return e.err.Code() }
 func (e *detailsError) Details() []string { return e.details }
-func (e *detailsError) Unwrap() error     { return e.err }
+func (e *detailsError) Unwrap() error     { return e.commError }
 func (e *detailsError) Is(target error) bool {
-	if err, _ := target.(Error); err != nil && e.Code() == err.Code() {
+	if err, _ := target.(interface{ Code() int }); err != nil && e.Code() == err.Code() {
 		return true
 	}
-	return Is(e.err, target)
+	return Is(e.commError, target)
 }

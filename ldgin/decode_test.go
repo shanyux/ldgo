@@ -70,7 +70,7 @@ func Test_shoudBind(t *testing.T) {
 			g.Request = httptest.NewRequest("GET", "http://github.com/?page=301", nil)
 
 			req := &Request{}
-			convey.So(shouldBind(ctx, req), convey.ShouldEqual, lderr.ErrParseRequest)
+			convey.So(shouldBind(ctx, req), convey.ShouldResemble, lderr.ErrParseRequest)
 		})
 	})
 }
