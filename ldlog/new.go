@@ -14,11 +14,7 @@ func GetLogger(log *zap.Logger, fields ...zap.Field) *Logger {
 	if len(fields) > 0 {
 		log = log.With(fields...)
 	}
-	return newLogger(newWrapper(log, log.Sugar()))
-}
-
-func NewByWapper(w *Wrapper) *Logger {
-	return newLogger(*w)
+	return newLogger(newCore(log, log.Sugar()))
 }
 
 func New(opts ...Option) *Logger {
@@ -64,5 +60,5 @@ func New(opts ...Option) *Logger {
 	core := zapcore.NewTee(zapCores...)
 	zlog := zap.New(core, defaultOptions...)
 
-	return newLogger(newWrapper(zlog, zlog.Sugar()))
+	return newLogger(newCore(zlog, zlog.Sugar()))
 }
