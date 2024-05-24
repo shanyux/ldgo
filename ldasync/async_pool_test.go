@@ -39,10 +39,40 @@ func TestAsyncPool(t *testing.T) {
 			}
 
 			p := NewAsyncPool(10)
+			p.Reset(5)
 			p.Async() <- fn
 
 			p.Close()
 			p.Wait()
+		})
+
+		c.Convey("size", func(c convey.C) {
+			// var seq int32
+			fn := func() {
+				// id := atomic.AddInt32(&seq, 1)
+				// t.Logf("go[%d] begin", id)
+				time.Sleep(time.Second * 1)
+				// t.Logf("go[%d] end", id)
+			}
+			p := &AsyncPool{}
+			c.So(p.Capacity(), convey.ShouldEqual, 0)
+
+			p.Async() <- fn
+			c.So(p.Capacity(), convey.ShouldEqual, 1)
+
+			p.Async() <- fn
+			c.So(p.Capacity(), convey.ShouldEqual, 1)
+			c.So(p.Running(), convey.ShouldEqual, 1)
+
+			p.Reset(2)
+			time.Sleep(time.Millisecond)
+			c.So(p.Capacity(), convey.ShouldEqual, 2)
+			c.So(p.Running(), convey.ShouldEqual, 2)
+
+			p.Close()
+			p.Wait()
+
+			c.So(p.Running(), convey.ShouldEqual, 0)
 		})
 	})
 }
