@@ -92,7 +92,7 @@ func (p *AsyncPool) incrNodesTo(to int) {
 
 	p.wg.Add(delta)
 	for i := 0; i < delta; i++ {
-		node := &asyncNode{ch: make(chan struct{})}
+		node := getAsyncNode()
 
 		node.next = p.nodes
 		p.nodes = node
@@ -111,6 +111,7 @@ func (p *AsyncPool) decrNodesTo(to int) {
 			return
 		}
 		p.nodes = node.next
+		node.next = nil
 		close(node.ch)
 	}
 }
@@ -141,12 +142,16 @@ func (p *AsyncPool) main(node *asyncNode) {
 	for {
 		select {
 		case <-node.ch:
+			putAsyncNode(node)
 			return
+
 		case fn, ok := <-p.ch:
 			if !ok {
+				putAsyncNode(node)
 				return
 			}
 			atomic.AddInt32(&p.count, 1)
+			// fn()
 			p.doWithRecover(fn)
 			atomic.AddInt32(&p.count, -1)
 		}
@@ -164,7 +169,36 @@ func (p *AsyncPool) doWithRecover(fn func()) {
 	fn()
 }
 
+var (
+	asyncNodePool = &sync.Pool{}
+)
+
 type asyncNode struct {
 	ch   chan struct{}
 	next *asyncNode
+}
+
+func getAsyncNode() *asyncNode {
+	p := asyncNodePool
+
+	i := p.Get()
+	if i == nil {
+		return &asyncNode{
+			ch:   make(chan struct{}),
+			next: nil,
+		}
+	}
+
+	n := i.(*asyncNode)
+	n.ch = make(chan struct{})
+	n.next = nil
+	return n
+}
+
+func putAsyncNode(n *asyncNode) {
+	p := asyncNodePool
+	if n == nil {
+		return
+	}
+	p.Put(n)
 }

@@ -55,6 +55,7 @@ func TestAsyncPool(t *testing.T) {
 				// t.Logf("go[%d] end", id)
 			}
 			p := &AsyncPool{}
+			// p.Start(1)
 			c.So(p.Capacity(), convey.ShouldEqual, 0)
 
 			p.Async() <- fn
@@ -67,6 +68,10 @@ func TestAsyncPool(t *testing.T) {
 			p.Reset(2)
 			time.Sleep(time.Millisecond)
 			c.So(p.Capacity(), convey.ShouldEqual, 2)
+			c.So(p.Running(), convey.ShouldEqual, 2)
+
+			p.Reset(1)
+			c.So(p.Capacity(), convey.ShouldEqual, 1)
 			c.So(p.Running(), convey.ShouldEqual, 2)
 
 			p.Close()
