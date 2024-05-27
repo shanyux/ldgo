@@ -51,7 +51,7 @@ func WithLogger(c context.Context, log *ldlog.Logger, fields ...zap.Field) conte
 		return WithLogField(c, fields...)
 	}
 	log = log.With(fields...)
-	return WithValue(c, ctxKeyLogger, log)
+	return ctxWithLogger(c, log)
 }
 
 func WithLogField(c context.Context, fields ...zap.Field) context.Context {
@@ -60,20 +60,38 @@ func WithLogField(c context.Context, fields ...zap.Field) context.Context {
 	}
 	log := GetLogger(c)
 	log = log.With(fields...)
-	return WithValue(c, ctxKeyLogger, log)
+	return ctxWithLogger(c, log)
 }
 
 // log based on probability(rate). rate should be in [0, 1.0]
 func WithLogRate(c context.Context, rate float64) context.Context {
 	log := GetLogger(c)
 	log = log.WithRate(rate)
-	return WithValue(c, ctxKeyLogger, log)
+	return ctxWithLogger(c, log)
 }
 
 // log at intervals
 func WithLogInterval(c context.Context, interval time.Duration) context.Context {
 	log := GetLogger(c)
 	log = log.WithInterval(interval)
+	return ctxWithLogger(c, log)
+}
+
+func WithSequence(c context.Context, seq string) context.Context {
+	if seq == "" {
+		return c
+	}
+	log := GetLogger(c)
+	if log.GetSequence() == seq {
+		return c
+	}
+	log = log.WithSequence(seq)
+	return ctxWithLogger(c, log)
+}
+
+func GetSequence(c context.Context) string { return GetLogger(c).GetSequence() }
+
+func ctxWithLogger(c context.Context, log *ldlog.Logger) context.Context {
 	return WithValue(c, ctxKeyLogger, log)
 }
 
