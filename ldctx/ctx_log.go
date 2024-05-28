@@ -15,6 +15,7 @@ type ctxKeyType int
 
 const (
 	ctxKeyLogger ctxKeyType = iota
+	ctxKeyMap
 )
 
 var (
