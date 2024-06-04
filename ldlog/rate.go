@@ -40,25 +40,29 @@ type ctxCallerInfo struct {
 // log based on probability(rate). rate should be in [0, 1.0]
 func (l *Logger) WithRate(rate float64) *Logger {
 	l = l.clone()
-	l.rate = rateConfig{Rate: rate + 1}
+	l.setRate(rate)
 	return l
 }
 
 // log at intervals
 func (l *Logger) WithInterval(d time.Duration) *Logger {
 	l = l.clone()
-	l.rate = rateConfig{Interval: d}
+	l.setInterval(d)
 	return l
 }
 
+func (l *core) setRate(rate float64)        { l.rate = rateConfig{Rate: rate + 1} }
+func (l *core) setInterval(d time.Duration) { l.rate = rateConfig{Interval: d} }
+
 func (l *core) CheckRateOrInterval(skip int) bool { return l.checkRateOrInterval(skip + 1) }
-func (l *core) checkRateOrInterval(skip int) bool {
-	c := l
-	if d := c.rate.Interval; d > 0 {
-		return hitInterval(d, skip+1)
-	}
-	if rate := c.rate.Rate - 1; rate >= 0 {
+func (l *core) checkRateOrInterval(skip int) bool { return checkRateOrInterval(&l.rate, skip+1) }
+
+func checkRateOrInterval(cfg *rateConfig, skip int) bool {
+	if rate := cfg.Rate - 1; rate >= 0 {
 		return hitRate(rate)
+	}
+	if d := cfg.Interval; d > 0 {
+		return hitInterval(d, skip+1)
 	}
 	return true
 }
