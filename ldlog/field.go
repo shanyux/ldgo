@@ -8,12 +8,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/distroy/ldgo/v2/ldlog/internal/field"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
 type (
-	Field = zap.Field
+	Field = zapcore.Field
 
 	ObjectMarshaler = zapcore.ObjectMarshaler
 	ArrayMarshaler  = zapcore.ArrayMarshaler
@@ -129,3 +130,14 @@ func Integer[Int integer](key string, val Int) Field {
 	}
 	return Int64(key, int64(val))
 }
+
+func BriefString(key string, val string) Field         { return field.BriefString(key, val) }
+func BriefByteString(key string, val []byte) Field     { return field.BriefByteString(key, val) }
+func BriefStringer(key string, val fmt.Stringer) Field { return field.BriefStringer(key, val) }
+
+func BriefStringp(key string, val *string) Field               { return field.BriefStringp(key, val) }
+func BriefStrings(key string, val []string) Field              { return field.BriefStrings(key, val) }
+func BriefByteStrings(key string, val [][]byte) Field          { return field.BriefByteStrings(key, val) }
+func BriefStringers[T fmt.Stringer](key string, val []T) Field { return field.BriefStringers(key, val) }
+
+func BriefReflect(key string, val interface{}) Field { return field.BriefReflect(key, val) }
