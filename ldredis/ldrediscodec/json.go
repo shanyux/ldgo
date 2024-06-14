@@ -23,7 +23,7 @@ func (c codecBase[T]) fillIfPointer(v *T) (ptrOfT interface{}) {
 	return p.Interface()
 }
 
-func Json[T any](d T) JsonCodec[T] { return JsonCodec[T]{} }
+func Json[T any](d ...T) Codec[T] { return JsonCodec[T]{} }
 
 type JsonCodec[T any] struct {
 	codecBase[T]

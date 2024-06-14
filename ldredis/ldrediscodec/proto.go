@@ -9,9 +9,9 @@ import (
 	protov2 "google.golang.org/protobuf/proto"
 )
 
-func Proto[T proto.Message](d T) ProtoCodec[T]              { return ProtoCodec[T]{} }
-func ProtoV1[T proto.Message](d T) ProtoV1Codec[T]          { return ProtoV1Codec[T]{} }
-func ProtoV2[T proto.GeneratedMessage](d T) ProtoV2Codec[T] { return ProtoV2Codec[T]{} }
+func Proto[T proto.Message](d ...T) Codec[T]            { return ProtoCodec[T]{} }
+func ProtoV1[T proto.Message](d ...T) Codec[T]          { return ProtoV1Codec[T]{} }
+func ProtoV2[T proto.GeneratedMessage](d ...T) Codec[T] { return ProtoV2Codec[T]{} }
 
 type ProtoCodec[T proto.Message] struct {
 	ProtoV1Codec[T]
