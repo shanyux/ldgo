@@ -26,7 +26,7 @@ func TestJsonCodec(t *testing.T) {
 		c.Convey("int64", func(c convey.C) {
 			val := int64(100)
 
-			set := New[any](rds, JsonCodec[any]{}).Set(ctx, key, val, expiration)
+			set := New(rds, Json[any]()).Set(ctx, key, val, expiration)
 			c.So(set.Err(), convey.ShouldBeNil)
 
 			c.Convey("get-str", func(c convey.C) {
@@ -35,17 +35,17 @@ func TestJsonCodec(t *testing.T) {
 				c.So(get.Val(), convey.ShouldResemble, "100")
 			})
 			c.Convey("get-i64", func(c convey.C) {
-				get := New[int64](rds, JsonCodec[int64]{}).Get(ctx, key)
+				get := New(rds, Json[int64]()).Get(ctx, key)
 				c.So(get.Err(), convey.ShouldBeNil)
 				c.So(get.Val(), convey.ShouldResemble, int64(100))
 			})
 			c.Convey("get-pi64", func(c convey.C) {
-				get := New[*int64](rds, JsonCodec[*int64]{}).Get(ctx, key)
+				get := New[*int64](rds, Json[*int64]()).Get(ctx, key)
 				c.So(get.Err(), convey.ShouldBeNil)
 				c.So(get.Val(), convey.ShouldResemble, ldptr.NewInt64(100))
 			})
 			c.Convey("get-nil", func(c convey.C) {
-				get := New[any](rds, JsonCodec[any]{}).Get(ctx, key)
+				get := New[any](rds, Json[any]()).Get(ctx, key)
 				c.So(get.Err(), convey.ShouldBeNil)
 				c.So(get.Val(), convey.ShouldResemble, float64(100))
 			})
@@ -65,7 +65,7 @@ func TestJsonCodec(t *testing.T) {
 				PI64: ldptr.NewInt64(234),
 			}
 
-			set := New[any](rds, JsonCodec[any]{}).Set(ctx, key, val, expiration)
+			set := New[any](rds, Json[any]()).Set(ctx, key, val, expiration)
 			c.So(set.Err(), convey.ShouldBeNil)
 
 			c.Convey("get-str", func(c convey.C) {
@@ -74,7 +74,7 @@ func TestJsonCodec(t *testing.T) {
 				c.So(get.Val(), convey.ShouldResemble, `{"s":"abc","ps":"xyz","i64":123,"pi64":234}`)
 			})
 			c.Convey("get-obj", func(c convey.C) {
-				get := New[Object](rds, JsonCodec[Object]{}).Get(ctx, key)
+				get := New[Object](rds, Json[Object]()).Get(ctx, key)
 				c.So(get.Err(), convey.ShouldBeNil)
 				c.So(get.Val(), convey.ShouldResemble, Object{
 					S:    "abc",
@@ -84,7 +84,7 @@ func TestJsonCodec(t *testing.T) {
 				})
 			})
 			c.Convey("get-ptr", func(c convey.C) {
-				get := New[*Object](rds, JsonCodec[*Object]{}).Get(ctx, key)
+				get := New[*Object](rds, Json[*Object]()).Get(ctx, key)
 				c.So(get.Err(), convey.ShouldBeNil)
 				c.So(get.Val(), convey.ShouldResemble, &Object{
 					S:    "abc",
@@ -94,7 +94,7 @@ func TestJsonCodec(t *testing.T) {
 				})
 			})
 			c.Convey("get-nil", func(c convey.C) {
-				get := New[any](rds, JsonCodec[any]{}).Get(ctx, key)
+				get := New[any](rds, Json[any]()).Get(ctx, key)
 				c.So(get.Err(), convey.ShouldBeNil)
 				c.So(get.Val(), convey.ShouldResemble, map[string]interface{}{
 					"s":    "abc",
