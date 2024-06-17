@@ -92,7 +92,7 @@ func TestProtoV2Codec(t *testing.T) {
 			F64: ldptr.NewFloat64(100.234),
 		})
 
-		set := New[protov2.Message](rds, ProtoV2Codec[protov2.Message]{}).Set(ctx, key, val, expiration)
+		set := New(rds, ProtoV2[protov2.Message]()).Set(ctx, key, val, expiration)
 		c.So(set.Err(), convey.ShouldBeNil)
 
 		c.Convey("get-str", func(c convey.C) {
@@ -101,7 +101,7 @@ func TestProtoV2Codec(t *testing.T) {
 			c.So(get.Val(), convey.ShouldResemble, testMustProtoV2Marsha(val))
 		})
 		c.Convey("get-obj", func(c convey.C) {
-			get := New[*ldtestproto.TestProto](rds, ProtoV2Codec[*ldtestproto.TestProto]{}).Get(ctx, key)
+			get := New(rds, ProtoV2[*ldtestproto.TestProto]()).Get(ctx, key)
 			c.So(get.Err(), convey.ShouldBeNil)
 
 			message := proto.MessageV2(get.Val())
