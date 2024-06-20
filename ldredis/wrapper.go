@@ -16,38 +16,36 @@ import (
 func getOptions(c *Redis) *internal.Options     { return &c.opts }
 func getOptionsPointer(c *Redis) unsafe.Pointer { return unsafe.Pointer(&c.opts) }
 
-type cmdable interface {
-	Cmdable
-
-	AddHook(hook redis.Hook)
-	Clone() cmdable
-}
-
-func newRedisClient(cfg *Config) cmdable {
+func newRedisClient(cfg *Config) wrapper {
 	cli := redis.NewClient(cfg.toClient())
 	return newWrapper(cli)
 }
 
-func newRedisCluster(cfg *Config) cmdable {
+func newRedisCluster(cfg *Config) wrapper {
 	cli := redis.NewClusterClient(cfg.toCluster())
 	return newWrapper(cli)
 }
 
-type cmdableInWrapper interface {
+type cmdable interface {
 	Cmdable
 
 	AddHook(hook redis.Hook)
 }
 
-func newWrapper(c cmdableInWrapper) wrapper { return wrapper{cmdableInWrapper: c} }
+func newWrapper(c cmdable) wrapper { return wrapper{cmdable: c} }
 
 type wrapper struct {
-	cmdableInWrapper
+	cmdable
 }
 
-func (c wrapper) Clone() cmdable {
-	c.cmdableInWrapper = ldref.Clone(c.cmdableInWrapper)
-	v := reflect.ValueOf(&c.cmdableInWrapper).Elem().Elem()
+func (c wrapper) Clone() wrapper {
+	if v, _ := c.cmdable.(interface{ Clone() cmdable }); v != nil {
+		c.cmdable = v.Clone()
+		return c
+	}
+
+	c.cmdable = ldref.Clone(c.cmdable)
+	v := reflect.ValueOf(&c.cmdable).Elem().Elem()
 	v0 := v
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()

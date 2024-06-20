@@ -132,7 +132,7 @@ func main() {
 type LogReporter struct{}
 
 func (_ LogReporter) Report(cmd ldredis.Cmder, d time.Duration) {
-	ldctx.LogI(nil, "report redis cmd")
+	ldctx.LogI(nil, "report redis cmd", zap.Reflect("cmd", cmd.Args()))
 }
 
 func (_ LogReporter) ReportPipeline(cmds []ldredis.Cmder, d time.Duration) {

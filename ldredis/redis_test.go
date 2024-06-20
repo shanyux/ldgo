@@ -82,6 +82,7 @@ func TestRedis_WithReport(t *testing.T) {
 
 		reporter := &testReporter{}
 		rdb1 := rdb.WithReport(reporter)
+		rdb1.wrapper.AddHook(newHook(rdb1))
 
 		const (
 			key = "test-key"

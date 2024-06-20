@@ -31,13 +31,16 @@ func New(cli redis.Cmdable) *Redis {
 	case *Redis:
 		return v
 
-	case cmdable:
+	case wrapper:
 		return newRedis(v)
 
 	case *redis.Client:
 		return newRedis(newWrapper(v))
 
 	case *redis.ClusterClient:
+		return newRedis(newWrapper(v))
+
+	case cmdable:
 		return newRedis(newWrapper(v))
 	}
 
@@ -52,7 +55,7 @@ func NewByConfig(cfg *Config) *Redis {
 	return newRedis(newRedisClient(cfg))
 }
 
-func newRedis(cli cmdable) *Redis {
+func newRedis(cli wrapper) *Redis {
 	c := &Redis{
 		origin: cli,
 		opts: internal.Options{
@@ -61,27 +64,27 @@ func newRedis(cli cmdable) *Redis {
 		},
 	}
 
-	c.cmdable = c.origin.Clone()
-	c.cmdable.AddHook(newHook(c))
+	c.wrapper = c.origin.Clone()
+	c.wrapper.AddHook(newHook(c))
 	return c
 }
 
 // Redis struct
 type Redis struct {
-	cmdable
+	wrapper
 
-	origin cmdable
+	origin wrapper
 	opts   internal.Options
 }
 
-func (c *Redis) Client() Cmdable { return c.origin }
+func (c *Redis) Client() Cmdable { return c.origin.cmdable }
 func (c *Redis) Clone() *Redis   { return c.clone() }
 
 func (c *Redis) clone() *Redis {
 	cp := *c
 	c = &cp
-	c.cmdable = c.origin.Clone()
-	c.cmdable.AddHook(newHook(c))
+	c.wrapper = c.origin.Clone()
+	c.wrapper.AddHook(newHook(c))
 	return c
 }
 

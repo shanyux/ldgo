@@ -22,7 +22,7 @@ func NewTestRedis() (*Redis, error) {
 	})
 
 	return New(&testRedisWrapper{
-		cmdable: newWrapper(client),
+		wrapper: newWrapper(client),
 		closer:  server,
 	}), nil
 }
@@ -40,13 +40,18 @@ type closer interface {
 }
 
 type testRedisWrapper struct {
-	cmdable
+	wrapper
 
 	closer closer
 }
 
 func (r testRedisWrapper) Close() error {
-	err := r.cmdable.Close()
+	err := r.wrapper.Close()
 	r.closer.Close()
 	return err
+}
+
+func (r testRedisWrapper) Clone() cmdable {
+	r.wrapper = r.wrapper.Clone()
+	return r
 }
