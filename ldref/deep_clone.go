@@ -63,6 +63,10 @@ func deepClonePtr(x0 reflect.Value) reflect.Value {
 	}
 
 	x1 := reflect.New(x0.Type().Elem())
+	if isSyncType(x0.Interface()) {
+		return x1
+	}
+
 	x1.Elem().Set(deepClone(x0.Elem()))
 	return x1
 }

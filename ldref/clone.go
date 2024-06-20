@@ -4,7 +4,10 @@
 
 package ldref
 
-import "reflect"
+import (
+	"reflect"
+	"sync"
+)
 
 func Clone[T any](d T) T {
 	var i interface{} = d
@@ -58,9 +61,22 @@ func clonePtr(x0 reflect.Value) reflect.Value {
 	if x0.IsNil() {
 		return x0
 	}
+
 	x1 := reflect.New(x0.Type().Elem())
+	if isSyncType(x0.Interface()) {
+		return x1
+	}
+
 	x1.Elem().Set(x0.Elem())
 	return x1
+}
+
+func isSyncType(i interface{}) bool {
+	switch i.(type) {
+	case *sync.Mutex, *sync.RWMutex, *sync.Cond:
+		return true
+	}
+	return false
 }
 
 func cloneArray(x0 reflect.Value) reflect.Value {
