@@ -5,6 +5,7 @@
 package ldrate
 
 import (
+	"context"
 	"time"
 
 	"github.com/distroy/ldgo/v2/ldatomic"
@@ -54,7 +55,7 @@ func (l *Limiter) Limit() int64            { return l.config.Limit.Load() }
 func (l *Limiter) Interval() time.Duration { return l.config.Interval.Load() }
 func (l *Limiter) NodeCount() int64        { return l.config.NodeCount.Load() }
 
-func (l *Limiter) refresh(ctx ldctx.Context, now time.Time) lderr.Error {
+func (l *Limiter) refresh(ctx context.Context, now time.Time) error {
 	cfg := &l.config
 
 	burst := cfg.Burst.Load()
@@ -64,7 +65,7 @@ func (l *Limiter) refresh(ctx ldctx.Context, now time.Time) lderr.Error {
 	if burst != l.lastBurst.Load() {
 		l.lastBurst.Store(burst)
 		l.limiter.SetBurstAt(now, int(burst))
-		ctx.LogI("[limiter] refresh the burst succ", zap.String("name", l.Name()),
+		ldctx.LogI(ctx, "[limiter] refresh the burst succ", zap.String("name", l.Name()),
 			zap.Int64("burst", burst))
 	}
 
@@ -83,7 +84,7 @@ func (l *Limiter) refresh(ctx ldctx.Context, now time.Time) lderr.Error {
 	}
 
 	// if interval < 0 || limit <= 0 || nodeCount <= 0 {
-	// 	ctx.LogE("[limiter] invalid rate every parameters", zap.Int64("limit", limit),
+	// 	ldctx.LogE(ctx, "[limiter] invalid rate every parameters", zap.Int64("limit", limit),
 	// 		zap.Stringer("interval", interval), zap.Int64("nodeCount", nodeCount))
 	// 	return lderr.ErrInternalServerError
 	// }
@@ -94,7 +95,7 @@ func (l *Limiter) refresh(ctx ldctx.Context, now time.Time) lderr.Error {
 
 	every := interval * time.Duration(nodeCount) / time.Duration(limit)
 	// if every < 0 {
-	// 	ctx.LogE("[limiter] invalid rate every", zap.Int64("limit", limit),
+	// 	ldctx.LogE(ctx, "[limiter] invalid rate every", zap.Int64("limit", limit),
 	// 		zap.Stringer("interval", interval), zap.Int64("serviceCount", nodeCount))
 	// 	return lderr.ErrInternalServerError
 	// }
@@ -104,17 +105,17 @@ func (l *Limiter) refresh(ctx ldctx.Context, now time.Time) lderr.Error {
 	l.lastInterval.Store(interval)
 	l.lastNodeCount.Store(nodeCount)
 
-	ctx.LogI("[limiter] refresh rate every succ", zap.String("name", l.Name()),
+	ldctx.LogI(ctx, "[limiter] refresh rate every succ", zap.String("name", l.Name()),
 		zap.Int64("limit", limit), zap.Stringer("interval", interval),
 		zap.Int64("serviceCount", nodeCount), zap.Stringer("every", every))
 	return nil
 }
 
-func (l *Limiter) Wait(ctx ldctx.Context) lderr.Error {
+func (l *Limiter) Wait(ctx context.Context) error {
 	return l.WaitN(ctx, 1)
 }
 
-func (l *Limiter) WaitN(ctx ldctx.Context, n int) lderr.Error {
+func (l *Limiter) WaitN(ctx context.Context, n int) error {
 	now := time.Now()
 
 	if err := l.refresh(ctx, now); err != nil {
@@ -122,7 +123,7 @@ func (l *Limiter) WaitN(ctx ldctx.Context, n int) lderr.Error {
 	}
 
 	// if err := l.limiter.WaitN(ctx, n); err != nil {
-	// 	ctx.LogE("[limiter] wait fail", zap.Int("n", n), zap.Error(err))
+	// 	ldctx.LogE(ctx, "[limiter] wait fail", zap.Int("n", n), zap.Error(err))
 	// 	if e := ldctx.GetError(ctx); e != nil {
 	// 		return e
 	// 	}
@@ -130,17 +131,17 @@ func (l *Limiter) WaitN(ctx ldctx.Context, n int) lderr.Error {
 	// }
 
 	if err := wait(ctx, l, n); err != nil {
-		ctx.LogE("[limiter] wait fail", zap.String("name", l.Name()), zap.Int("n", n), zap.Error(err))
+		ldctx.LogE(ctx, "[limiter] wait fail", zap.String("name", l.Name()), zap.Int("n", n), zap.Error(err))
 		return err
 	}
 	return nil
 }
 
-func (l *Limiter) Reserve(ctx ldctx.Context) (*Reservation, lderr.Error) {
+func (l *Limiter) Reserve(ctx context.Context) (*Reservation, error) {
 	return l.ReserveN(ctx, 1)
 }
 
-func (l *Limiter) ReserveN(ctx ldctx.Context, n int) (*Reservation, lderr.Error) {
+func (l *Limiter) ReserveN(ctx context.Context, n int) (*Reservation, error) {
 	now := time.Now()
 	if err := l.refresh(ctx, now); err != nil {
 		return nil, err
@@ -149,7 +150,7 @@ func (l *Limiter) ReserveN(ctx ldctx.Context, n int) (*Reservation, lderr.Error)
 	reservation := l.limiter.ReserveN(now, n)
 	if !reservation.OK() {
 		err := lderr.ErrCtxDeadlineNotEnough
-		ctx.LogE("[limiter] reserve fail", zap.String("name", l.Name()), zap.Int("n", n), zap.Error(err))
+		ldctx.LogE(ctx, "[limiter] reserve fail", zap.String("name", l.Name()), zap.Int("n", n), zap.Error(err))
 		return nil, err
 	}
 

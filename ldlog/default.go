@@ -7,9 +7,9 @@ package ldlog
 import "github.com/distroy/ldgo/v2/ldio"
 
 var (
-	defLogger = NewLogger()
-	console   = NewLogger()
-	discard   = NewLogger(Writer(ldio.Discard()))
+	defLogger = New()
+	console   = New()
+	discard   = New(Writer(ldio.Discard()), Level("dpanic"))
 )
 
 func SetDefault(l *Logger) { defLogger = l }

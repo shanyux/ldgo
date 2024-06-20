@@ -88,7 +88,8 @@ func TestClone(t *testing.T) {
 			c.So(v1, convey.ShouldResemble, v0)
 		})
 		c.Convey("error", func(c convey.C) {
-			v0 := lderr.ErrUnkown
+			err := lderr.ErrUnkown
+			v0 := lderr.New(err.Status(), err.Code(), err.Error())
 			v1 := Clone(v0)
 			c.So(v1, convey.ShouldNotEqual, v0)
 			c.So(v1, convey.ShouldResemble, v0)

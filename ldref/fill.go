@@ -42,7 +42,7 @@ type fillContext struct {
 	*FillConfig
 }
 
-func fillWithContext(c *fillContext, v interface{}) lderr.Error {
+func fillWithContext(c *fillContext, v interface{}) error {
 	vv := valueOf(v)
 	if vv.Kind() == reflect.Ptr {
 		if vv.IsNil() {

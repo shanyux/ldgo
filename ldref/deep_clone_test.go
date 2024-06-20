@@ -111,7 +111,8 @@ func TestDeepClone(t *testing.T) {
 		})
 
 		c.Convey("error", func(c convey.C) {
-			v0 := lderr.ErrUnkown
+			err := lderr.ErrUnkown
+			v0 := lderr.New(err.Status(), err.Code(), err.Error())
 			v1 := DeepClone(v0)
 			c.So(v1, convey.ShouldNotEqual, v0)
 			c.So(v1, convey.ShouldResemble, v0)

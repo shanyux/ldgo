@@ -25,7 +25,7 @@ func TestMutex_Lock(t *testing.T) {
 		lockKey := "test-key"
 		timeout := 1 * time.Second
 
-		ctx := ldctx.WithTimeout(ldctx.Discard(), timeout)
+		ctx, _ := ldctx.WithTimeout(ldctx.Discard(), timeout)
 
 		m0 := NewMutex(rds)
 		m1 := NewMutex(rds)
@@ -43,7 +43,7 @@ func TestMutex_Unlock(t *testing.T) {
 
 		lockKey := "test-key"
 		timeout := 1 * time.Second
-		ctx := ldctx.WithTimeout(ldctx.Discard(), timeout)
+		ctx, _ := ldctx.WithTimeout(ldctx.Discard(), timeout)
 
 		convey.Convey("unlock after context not timeout", func() {
 			m := NewMutex(rds)

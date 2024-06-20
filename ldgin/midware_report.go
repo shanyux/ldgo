@@ -16,7 +16,7 @@ import (
 func emptyMidwareFunc(g *gin.Context) {}
 
 type Reporter interface {
-	Report(g *gin.Context, cost time.Duration, url string, err lderr.Error)
+	Report(g *gin.Context, cost time.Duration, url string, err error)
 }
 
 func ReportMidware(r Reporter) func(g *gin.Context) {
@@ -65,9 +65,9 @@ func (m reportMidware) do(g *gin.Context) {
 		errMsg = rsp.ErrMsg
 	}
 
-	if err := c.GetError(); err != nil && err.Code() != lderr.ErrSuccess.Code() {
-		bizCode = err.Code()
-		errMsg = err.Error()
+	if err := c.GetError(); lderr.IsSuccess(err) {
+		bizCode = lderr.GetCode(err)
+		errMsg = lderr.GetMessage(err)
 	}
 
 	if bizCode == 0 && httpCode != http.StatusOK {
