@@ -35,10 +35,10 @@ func New(cli redis.Cmdable) *Redis {
 		return newRedis(v)
 
 	case *redis.Client:
-		return newRedis(v)
+		return newRedis(newWrapper(v))
 
 	case *redis.ClusterClient:
-		return newRedis(v)
+		return newRedis(newWrapper(v))
 	}
 
 	panic("redis client type must be `*ldredis.Redis` or `*redis.Client` or `*redis.ClusterClient`")
@@ -54,13 +54,14 @@ func NewByConfig(cfg *Config) *Redis {
 
 func newRedis(cli cmdable) *Redis {
 	c := &Redis{
-		cmdable: cli,
+		origin: cli,
 		opts: internal.Options{
 			Reporter: internal.DiscardReporter{},
 			Caller:   true,
 		},
 	}
 
+	c.cmdable = c.origin.Clone()
 	c.cmdable.AddHook(newHook(c))
 	return c
 }
@@ -69,15 +70,18 @@ func newRedis(cli cmdable) *Redis {
 type Redis struct {
 	cmdable
 
-	opts internal.Options
+	origin cmdable
+	opts   internal.Options
 }
 
-func (c *Redis) Client() Cmdable { return c.cmdable }
+func (c *Redis) Client() Cmdable { return c.origin }
+func (c *Redis) Clone() *Redis   { return c.clone() }
 
 func (c *Redis) clone() *Redis {
 	cp := *c
 	c = &cp
-
+	c.cmdable = c.origin.Clone()
+	c.cmdable.AddHook(newHook(c))
 	return c
 }
 

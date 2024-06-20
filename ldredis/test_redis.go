@@ -22,7 +22,7 @@ func NewTestRedis() (*Redis, error) {
 	})
 
 	return New(&testRedisWrapper{
-		cmdable: client,
+		cmdable: newWrapper(client),
 		closer:  server,
 	}), nil
 }

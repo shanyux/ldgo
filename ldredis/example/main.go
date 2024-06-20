@@ -60,7 +60,9 @@ func slice(ctx ldctx.Context) {
 	key := "test:hash:hmget"
 	defer rds.Close()
 
-	rds.HSet(ctx, key, "1", 1)
+	rds1 := rds.WithReport(LogReporter{})
+
+	rds1.HSet(ctx, key, "1", 1)
 	rds.HSet(ctx, key, "2", "abc")
 	rds.HSet(ctx, key, "3", 128.1)
 
@@ -128,4 +130,17 @@ func main() {
 	fmt.Fprintln(os.Stderr)
 	codecBaseType(ctx)
 	fmt.Fprintln(os.Stderr)
+}
+
+type LogReporter struct{}
+
+func (_ LogReporter) Report(cmd ldredis.Cmder, d time.Duration) {
+	ldctx.LogI(nil, "report redis cmd")
+}
+
+func (_ LogReporter) ReportPipeline(cmds []ldredis.Cmder, d time.Duration) {
+	ldctx.LogI(nil, "report redis pipline cmd")
+	for i, cmd := range cmds {
+		ldctx.LogI(nil, "report redis pipline cmd", zap.Int("idx", i), zap.Reflect("cmd", cmd.Args()))
+	}
 }
