@@ -39,11 +39,12 @@ func TestLimiter_Wait(t *testing.T) {
 		interval := time.Second
 
 		l := NewLimiter()
+		l.SetName("wait")
 		l.SetBurst(1)
 		l.SetLimit(1)
 		l.SetInterval(interval)
 
-		c.Convey("wait 10 times", func() {
+		c.Convey("wait times", func() {
 			sleep := interval / 10
 
 			for i := 0; i < 3; i++ {
@@ -87,5 +88,34 @@ func TestLimiter_Wait(t *testing.T) {
 			c.So(end, convey.ShouldHappenBefore, begin.Add(interval))
 			c.So(end, convey.ShouldHappenBefore, begin.Add(1*time.Millisecond))
 		})
+	})
+}
+
+func TestLimiter_Allow(t *testing.T) {
+	convey.Convey(t.Name(), t, func(c convey.C) {
+		ctx := ldctx.Default()
+		ctx, cancel := ldctx.WithCancel(ctx)
+		cancel()
+
+		interval := time.Second
+
+		l := NewLimiter()
+		l.SetName("allow")
+		l.SetBurst(1)
+		l.SetLimit(1)
+		l.SetInterval(interval)
+		c.So(l.Allow(ctx), convey.ShouldBeFalse)
+
+		time.Sleep(interval * 2)
+		c.So(l.Allow(ctx), convey.ShouldBeTrue)
+		c.So(l.Allow(ctx), convey.ShouldBeFalse)
+
+		time.Sleep(interval)
+		c.So(l.Allow(ctx), convey.ShouldBeTrue)
+		c.So(l.Allow(ctx), convey.ShouldBeFalse)
+
+		time.Sleep(interval)
+		c.So(l.Allow(ctx), convey.ShouldBeTrue)
+		c.So(l.Allow(ctx), convey.ShouldBeFalse)
 	})
 }

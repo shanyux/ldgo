@@ -58,7 +58,7 @@ func wait(ctx context.Context, l reserver, n int) error {
 	}
 
 	if delay >= waitLimit {
-		r.Cancel()
+		r.CancelAt(now)
 		return lderr.ErrCtxDeadlineNotEnough
 	}
 
@@ -71,10 +71,28 @@ func wait(ctx context.Context, l reserver, n int) error {
 	case <-ctx.Done():
 		// Context was canceled before we could proceed.  Cancel the
 		// reservation, which may permit other events to proceed sooner.
-		r.Cancel()
+		r.CancelAt(now)
 		return ldctx.GetError(ctx)
 	}
 
 	// We can proceed.
 	return nil
+}
+
+func allow(ctx context.Context, l reserver, n int) bool {
+	r, err := l.ReserveN(ctx, n)
+	if err != nil {
+		return false
+	}
+
+	// Wait if necessary
+	now := time.Now()
+	delay := r.DelayFrom(now)
+	// ldctx.LogI(ctx, " ** allow delay", zap.Duration("delay", delay))
+	if delay <= 0 {
+		return true
+	}
+
+	r.CancelAt(now)
+	return false
 }

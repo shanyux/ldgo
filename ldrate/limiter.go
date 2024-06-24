@@ -116,25 +116,19 @@ func (l *Limiter) Wait(ctx context.Context) error {
 }
 
 func (l *Limiter) WaitN(ctx context.Context, n int) error {
-	now := time.Now()
-
-	if err := l.refresh(ctx, now); err != nil {
-		return err
-	}
-
-	// if err := l.limiter.WaitN(ctx, n); err != nil {
-	// 	ldctx.LogE(ctx, "[limiter] wait fail", zap.Int("n", n), zap.Error(err))
-	// 	if e := ldctx.GetError(ctx); e != nil {
-	// 		return e
-	// 	}
-	// 	return lderr.ErrCtxCanceled
-	// }
-
 	if err := wait(ctx, l, n); err != nil {
 		ldctx.LogE(ctx, "[limiter] wait fail", zap.String("name", l.Name()), zap.Int("n", n), zap.Error(err))
 		return err
 	}
 	return nil
+}
+
+func (l *Limiter) Allow(ctx context.Context) bool {
+	return l.AllowN(ctx, 1)
+}
+
+func (l *Limiter) AllowN(ctx context.Context, n int) bool {
+	return allow(ctx, l, n)
 }
 
 func (l *Limiter) Reserve(ctx context.Context) (*Reservation, error) {
@@ -149,9 +143,7 @@ func (l *Limiter) ReserveN(ctx context.Context, n int) (*Reservation, error) {
 
 	reservation := l.limiter.ReserveN(now, n)
 	if !reservation.OK() {
-		err := lderr.ErrCtxDeadlineNotEnough
-		ldctx.LogE(ctx, "[limiter] reserve fail", zap.String("name", l.Name()), zap.Int("n", n), zap.Error(err))
-		return nil, err
+		return nil, lderr.ErrCtxDeadlineNotEnough
 	}
 
 	r := &Reservation{

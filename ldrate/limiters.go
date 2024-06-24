@@ -6,6 +6,7 @@ package ldrate
 
 import (
 	"context"
+	"time"
 
 	"golang.org/x/time/rate"
 )
@@ -55,12 +56,17 @@ func (l *Limiters) WaitN(ctx context.Context, n int) error {
 	return wait(ctx, l, n)
 }
 
+func (l *Limiters) Allow(ctx context.Context) bool         { return l.AllowN(ctx, 1) }
+func (l *Limiters) AllowN(ctx context.Context, n int) bool { return allow(ctx, l, n) }
+
 func (l *Limiters) Reserve(ctx context.Context) (*Reservation, error) {
 	return l.ReserveN(ctx, 1)
 }
 
 func (l *Limiters) ReserveN(ctx context.Context, n int) (*Reservation, error) {
 	limiters := l.limiters
+
+	now := time.Now()
 	r := &Reservation{
 		reservations: make([]*rate.Reservation, 0, len(limiters)),
 	}
@@ -68,7 +74,7 @@ func (l *Limiters) ReserveN(ctx context.Context, n int) (*Reservation, error) {
 	for _, l := range limiters {
 		v, err := l.ReserveN(ctx, n)
 		if err != nil {
-			r.Cancel()
+			r.CancelAt(now)
 			return nil, err
 		}
 
