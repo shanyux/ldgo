@@ -16,6 +16,12 @@ type Once struct {
 
 func (o *Once) Done() bool { return atomic.LoadUint32(&o.done) != 0 }
 
+func (o *Once) Reset() {
+	o.mutex.Lock()
+	atomic.StoreUint32(&o.done, 0)
+	o.mutex.Unlock()
+}
+
 func (o *Once) Do(fn func()) {
 	if o.Done() {
 		return
