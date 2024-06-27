@@ -18,12 +18,25 @@ type Enabler interface {
 // Enable based on probability(rate).
 //   - Rate should be in [0, 1.0].
 //   - Always enable log levels higher than error.
-func RateEnabler(rate float64) Enabler { return rateEnabler{rate: rate} }
+func RateEnabler(rate float64) Enabler {
+	if rate <= 0 {
+		return falseEnabler{}
+	}
+	if rate >= 1 {
+		return defaultEnabler{}
+	}
+	return rateEnabler{rate: rate}
+}
 
 // Enable based on time interval.
 //   - Calculate the time interval separately at each invocation location.
 //   - Always enable log levels higher than error.
-func IntervalEnabler(dur time.Duration) Enabler { return intervalEnabler{interval: dur} }
+func IntervalEnabler(dur time.Duration) Enabler {
+	if dur <= 0 {
+		return defaultEnabler{}
+	}
+	return intervalEnabler{interval: dur}
+}
 
 type defaultEnabler struct{}
 
