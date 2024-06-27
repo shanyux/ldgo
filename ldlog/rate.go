@@ -10,14 +10,8 @@ import (
 	"time"
 
 	"github.com/distroy/ldgo/v2/ldatomic"
-	"github.com/distroy/ldgo/v2/ldrand"
 	"go.uber.org/zap"
 )
-
-type rateConfig struct {
-	Rate     float64
-	Interval time.Duration
-}
 
 const (
 	ctxCallerCacheSizeMax = 100 * 10000
@@ -35,44 +29,6 @@ type caller struct {
 
 type ctxCallerInfo struct {
 	LastLogTime ldatomic.Time // for log at intervals
-}
-
-// log based on probability(rate). rate should be in [0, 1.0]
-func (l *Logger) WithRate(rate float64) *Logger {
-	l = l.clone()
-	l.wrapper.rate = rateConfig{Rate: rate + 1}
-	return l
-}
-
-// log at intervals
-func (l *Logger) WithInterval(d time.Duration) *Logger {
-	l = l.clone()
-	l.wrapper.rate = rateConfig{Interval: d}
-	return l
-}
-
-func (l *Logger) CheckRateOrInterval(skip int) bool { return l.wrapper.checkRateOrInterval(skip + 1) }
-
-func (l *Wrapper) CheckRateOrInterval(skip int) bool { return l.checkRateOrInterval(skip + 1) }
-func (l *Wrapper) checkRateOrInterval(skip int) bool {
-	c := l
-	if d := c.rate.Interval; d > 0 {
-		return hitInterval(d, skip+1)
-	}
-	if rate := c.rate.Rate - 1; rate >= 0 {
-		return hitRate(rate)
-	}
-	return true
-}
-
-func hitRate(rate float64) bool {
-	if rate >= 1 {
-		return true
-	}
-	if rate <= 0 {
-		return false
-	}
-	return ldrand.Float64() < rate
 }
 
 func hitInterval(dur time.Duration, skip int) bool {
@@ -95,13 +51,14 @@ func hitInterval(dur time.Duration, skip int) bool {
 }
 
 func getCaller(skip int) *ctxCallerInfo {
+	cache := ctxCallerCache
 	_, file, line, _ := runtime.Caller(skip + 1)
 	key := caller{
 		File: file,
 		Line: line,
 	}
 
-	i, _ := ctxCallerCache.Load(key)
+	i, _ := cache.Load(key)
 	v, _ := i.(*ctxCallerInfo)
 	if v != nil {
 		return v
@@ -115,7 +72,7 @@ func getCaller(skip int) *ctxCallerInfo {
 
 	v = &ctxCallerInfo{}
 	v.LastLogTime.Store(time.Time{})
-	i, loaded := ctxCallerCache.LoadOrStore(key, v)
+	i, loaded := cache.LoadOrStore(key, v)
 	if loaded {
 		v, _ = i.(*ctxCallerInfo)
 		return v
@@ -126,7 +83,7 @@ func getCaller(skip int) *ctxCallerInfo {
 		return v
 	}
 
-	ctxCallerCache.Delete(key)
+	cache.Delete(key)
 	Default().Error("reached the limit of interval callers, drop it",
 		zap.String("file", file), zap.Int("line", line))
 	return nil

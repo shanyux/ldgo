@@ -31,7 +31,7 @@ func deepClone(x0 reflect.Value) reflect.Value {
 			return x0
 		}
 
-		x0 = reflect.ValueOf(x0.Interface())
+		x0 = x0.Elem()
 	}
 
 	switch x0.Kind() {
