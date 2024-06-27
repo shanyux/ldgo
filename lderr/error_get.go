@@ -50,7 +50,7 @@ func GetStatus(err error, def ...int) int {
 	return errStatusUnkonw
 }
 
-func GetMessage(err error, def ...string) string {
+func GetMessage(err error) string {
 	if err == nil {
 		return errMessageSucess
 	}
