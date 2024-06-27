@@ -11,7 +11,6 @@ import (
 
 	"github.com/distroy/ldgo/v2/lderr"
 	"github.com/distroy/ldgo/v2/ldlog"
-	"go.uber.org/zap"
 )
 
 type (
@@ -46,7 +45,7 @@ func GetError(c context.Context) error {
 	return e
 }
 
-func WithLogger(c context.Context, log *ldlog.Logger, fields ...zap.Field) context.Context {
+func WithLogger(c context.Context, log *ldlog.Logger, fields ...ldlog.Field) context.Context {
 	if log == nil {
 		return WithLogField(c, fields...)
 	}
@@ -54,7 +53,7 @@ func WithLogger(c context.Context, log *ldlog.Logger, fields ...zap.Field) conte
 	return ctxWithLogger(c, log)
 }
 
-func WithLogField(c context.Context, fields ...zap.Field) context.Context {
+func WithLogField(c context.Context, fields ...ldlog.Field) context.Context {
 	if len(fields) == 0 {
 		return c
 	}
@@ -63,14 +62,27 @@ func WithLogField(c context.Context, fields ...zap.Field) context.Context {
 	return ctxWithLogger(c, log)
 }
 
-// log based on probability(rate). rate should be in [0, 1.0]
+func WithLogEnabler(c context.Context, enabler ldlog.Enabler) context.Context {
+	log := GetLogger(c)
+	if enabler == log.Enabler() {
+		return c
+	}
+	log = log.WithEnabler(enabler)
+	return ctxWithLogger(c, log)
+}
+
+// Log based on probability(rate). rate should be in [0, 1.0]
+//
+// Deprecated: use `WithLogEnabler` instead.
 func WithLogRate(c context.Context, rate float64) context.Context {
 	log := GetLogger(c)
 	log = log.WithRate(rate)
 	return ctxWithLogger(c, log)
 }
 
-// log at intervals
+// Log based on time interval.
+//
+// Deprecated: use `WithLogEnabler` instead.
 func WithLogInterval(c context.Context, interval time.Duration) context.Context {
 	log := GetLogger(c)
 	log = log.WithInterval(interval)

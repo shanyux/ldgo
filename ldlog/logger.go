@@ -68,10 +68,14 @@ func (l *Logger) WithSequence(seq string) *Logger {
 	return l
 }
 
-// log based on probability(rate). rate should be in [0, 1.0]
+// Log based on probability(rate). rate should be in [0, 1.0]
+//
+// Deprecated: use `WithLogEnabler` instead.
 func (l *Logger) WithRate(rate float64) *Logger { return l.WithEnabler(RateEnabler(rate)) }
 
-// log at intervals
+// Log based on time interval.
+//
+// Deprecated: use `WithLogEnabler` instead.
 func (l *Logger) WithInterval(d time.Duration) *Logger { return l.WithEnabler(IntervalEnabler(d)) }
 
 func (l *Logger) WithEnabler(p Enabler) *Logger {

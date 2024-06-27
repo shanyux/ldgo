@@ -15,19 +15,21 @@ import (
 func TestRateEnabler_Enable(t *testing.T) {
 	convey.Convey(t.Name(), t, func(c convey.C) {
 		l := &rateEnabler{}
-		lvl := zapcore.InfoLevel
+		info := zapcore.InfoLevel
+		err := zapcore.ErrorLevel
 
 		c.Convey("1", func(c convey.C) {
 			l.rate = 1
 			for i := 0; i < 100; i++ {
-				c.So(l.Enable(lvl), convey.ShouldBeTrue)
+				c.So(l.Enable(info), convey.ShouldBeTrue)
 			}
 		})
 		c.Convey("0", func(c convey.C) {
 			l.rate = 0
 			for i := 0; i < 100; i++ {
-				c.So(l.Enable(lvl), convey.ShouldBeFalse)
+				c.So(l.Enable(info), convey.ShouldBeFalse)
 			}
+			c.So(l.Enable(err), convey.ShouldBeTrue)
 		})
 		c.Convey("0.5", func(c convey.C) {
 			l.rate = 0.5
@@ -37,9 +39,10 @@ func TestRateEnabler_Enable(t *testing.T) {
 			)
 			trueCnt := 0
 			for i := 0; i < totalCnt; i++ {
-				if l.Enable(lvl) {
+				if l.Enable(info) {
 					trueCnt++
 				}
+				c.So(l.Enable(err), convey.ShouldBeTrue)
 			}
 			half := totalCnt / 2
 			c.So(trueCnt, convey.ShouldBeBetweenOrEqual, half-diff, half+diff)
@@ -50,12 +53,14 @@ func TestRateEnabler_Enable(t *testing.T) {
 func TestIntervalEnabler_Enable(t *testing.T) {
 	convey.Convey(t.Name(), t, func(c convey.C) {
 		l := &intervalEnabler{}
-		lvl := zapcore.InfoLevel
+		info := zapcore.InfoLevel
+		err := zapcore.ErrorLevel
 
 		c.Convey("0", func(c convey.C) {
 			l.interval = 0
 			for i := 0; i < 100; i++ {
-				c.So(l.Enable(lvl, 0), convey.ShouldBeTrue)
+				c.So(l.Enable(info, 0), convey.ShouldBeTrue)
+				c.So(l.Enable(err, 0), convey.ShouldBeTrue)
 			}
 		})
 		c.Convey("1s", func(c convey.C) {
@@ -63,13 +68,16 @@ func TestIntervalEnabler_Enable(t *testing.T) {
 			l.interval = interval
 
 			time.Sleep(interval)
-			c.So(l.Enable(lvl, 1), convey.ShouldBeTrue)
+			c.So(l.Enable(info, 1), convey.ShouldBeTrue)
+			c.So(l.Enable(err, 1), convey.ShouldBeTrue)
 			for i := 0; i < 100; i++ {
-				c.So(l.Enable(lvl, 1), convey.ShouldBeFalse)
+				c.So(l.Enable(info, 1), convey.ShouldBeFalse)
+				c.So(l.Enable(err, 1), convey.ShouldBeTrue)
 			}
 			time.Sleep(interval)
-			c.So(l.Enable(lvl, 1), convey.ShouldBeTrue)
-			c.So(l.Enable(lvl, 1), convey.ShouldBeFalse)
+			c.So(l.Enable(err, 1), convey.ShouldBeTrue)
+			c.So(l.Enable(info, 1), convey.ShouldBeTrue)
+			c.So(l.Enable(info, 1), convey.ShouldBeFalse)
 		})
 	})
 }
