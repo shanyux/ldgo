@@ -6,7 +6,6 @@ package ldatomic
 
 import (
 	"reflect"
-	"unsafe"
 )
 
 func equal(a, b reflect.Value) bool {
@@ -50,14 +49,14 @@ func equal(a, b reflect.Value) bool {
 	case reflect.Chan, reflect.Pointer, reflect.UnsafePointer:
 		return a.Pointer() == b.Pointer()
 
+	case reflect.Func:
+		return a.Pointer() == b.Pointer()
+
 	case reflect.Array:
 		return equalArray(a, b)
 
 	case reflect.Struct:
 		return equalStruct(a, b)
-
-	case reflect.Func:
-		return a.Pointer() == b.Pointer()
 
 	case reflect.Map:
 		return equalMap(a, b)
@@ -108,7 +107,8 @@ func equalSlice(a, b reflect.Value) bool {
 		return true
 	}
 
-	return a.Index(0).Addr() == b.Index(0).Addr()
+	// If v's Kind is Slice, the returned pointer is to the first element of the slice
+	return a.Pointer() == b.Pointer()
 }
 
 func equalMap(a, b reflect.Value) bool {
@@ -125,19 +125,21 @@ func equalMap(a, b reflect.Value) bool {
 		return true
 	}
 
-	ai := a.Interface()
-	bi := b.Interface()
+	return a.Pointer() == b.Pointer()
 
-	// log.Printf(" *** ai: %#v", ai)
-	// log.Printf(" *** bi: %#v", bi)
-
-	ap := (*efaceWords)(unsafe.Pointer(&ai))
-	bp := (*efaceWords)(unsafe.Pointer(&bi))
-
-	// log.Printf(" *** ap: %#v", ap)
-	// log.Printf(" *** bp: %#v", bp)
-
-	return *ap == *bp
+	// ai := a.Interface()
+	// bi := b.Interface()
+	//
+	// // log.Printf(" *** ai: %#v", ai)
+	// // log.Printf(" *** bi: %#v", bi)
+	//
+	// ap := (*efaceWords)(unsafe.Pointer(&ai))
+	// bp := (*efaceWords)(unsafe.Pointer(&bi))
+	//
+	// // log.Printf(" *** ap: %#v", ap)
+	// // log.Printf(" *** bp: %#v", bp)
+	//
+	// return *ap == *bp
 
 	// return a.Index(0).Addr() == b.Index(0).Addr()
 }
