@@ -6,7 +6,6 @@ require (
 	github.com/agiledragon/gomonkey/v2 v2.11.0
 	github.com/alicebob/miniredis/v2 v2.11.1
 	github.com/gin-gonic/gin v1.9.1
-	github.com/golang/protobuf v1.5.2
 	github.com/redis/go-redis/v9 v9.4.0
 	github.com/shopspring/decimal v1.3.1
 	github.com/smartystreets/goconvey v1.6.4
@@ -30,7 +29,9 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.14.0 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
+	github.com/golang/protobuf v1.5.0 // indirect
 	github.com/gomodule/redigo v1.7.1-0.20190322064113-39e2c31b7ca3 // indirect
+	github.com/google/go-cmp v0.5.5 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
