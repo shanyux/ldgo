@@ -39,6 +39,9 @@ func clone(x0 reflect.Value) reflect.Value {
 		return reflect.Value{}
 
 	case reflect.Struct:
+		if isSyncType(x0) {
+			return reflect.Zero(x0.Type())
+		}
 		return x0
 
 	case reflect.Ptr:
@@ -63,17 +66,17 @@ func clonePtr(x0 reflect.Value) reflect.Value {
 	}
 
 	x1 := reflect.New(x0.Type().Elem())
-	if isSyncType(x0.Interface()) {
-		return x1
-	}
 
 	x1.Elem().Set(x0.Elem())
 	return x1
 }
 
-func isSyncType(i interface{}) bool {
-	switch i.(type) {
-	case *sync.Mutex, *sync.RWMutex, *sync.Cond:
+func isSyncType(v reflect.Value) bool {
+	if v.Kind() != reflect.Struct {
+		return false
+	}
+	switch v.Interface().(type) {
+	case sync.Mutex, sync.RWMutex, sync.Cond, sync.WaitGroup:
 		return true
 	}
 	return false
