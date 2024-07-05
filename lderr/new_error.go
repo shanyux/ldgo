@@ -43,6 +43,15 @@ func Is(err, target error) bool {
 	return errors.Is(err, target)
 }
 
+func In(err error, targets ...error) bool {
+	for _, target := range targets {
+		if Is(err, target) {
+			return true
+		}
+	}
+	return false
+}
+
 func IsSuccess(err error) bool {
 	if err == nil {
 		return true
