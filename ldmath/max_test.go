@@ -6,12 +6,15 @@ package ldmath
 
 import (
 	"testing"
+	"time"
 
 	"github.com/smartystreets/goconvey/convey"
 )
 
 func TestMax(t *testing.T) {
-	convey.Convey("", t, func() {
+	convey.Convey(t.Name(), t, func(c convey.C) {
+		c.So(Max(0, time.Second, time.Millisecond), convey.ShouldEqual, time.Second)
+
 		convey.So(MaxInt(3, 4), convey.ShouldEqual, 4)
 		convey.So(MaxInt8(3, 4), convey.ShouldEqual, int8(4))
 		convey.So(MaxInt16(3, 4), convey.ShouldEqual, int16(4))
@@ -30,7 +33,9 @@ func TestMax(t *testing.T) {
 }
 
 func TestMin(t *testing.T) {
-	convey.Convey("", t, func() {
+	convey.Convey(t.Name(), t, func(c convey.C) {
+		c.So(Min(time.Second, time.Millisecond, 10), convey.ShouldEqual, 10)
+
 		convey.So(MinInt(4, 3), convey.ShouldEqual, 3)
 		convey.So(MinInt8(4, 3), convey.ShouldEqual, int8(3))
 		convey.So(MinInt16(4, 3), convey.ShouldEqual, int16(3))
