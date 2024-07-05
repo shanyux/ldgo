@@ -69,25 +69,22 @@ func (v *Any[T]) swap(new anyData[T]) (old anyData[T]) {
 	np := (*efaceWords)(unsafe.Pointer(&ni))
 
 	vp := (*efaceWords)(unsafe.Pointer(v))
-	for {
-		typ := atomic.LoadPointer(&vp.typ)
-		if typ == nil {
-			runtime_procPin()
-			if !atomic.CompareAndSwapPointer(&vp.data, nil, np.data) {
-				runtime_procUnpin()
-				continue
-			}
+	typ := atomic.LoadPointer(&vp.typ)
+	if typ == nil {
+		runtime_procPin()
+		if atomic.CompareAndSwapPointer(&vp.data, nil, np.data) {
 			// Complete first store.
 			atomic.StorePointer(&vp.typ, np.typ)
 			runtime_procUnpin()
 			return anyData[T]{}
 		}
-
-		var oi interface{}
-		op := (*efaceWords)(unsafe.Pointer(&oi))
-		op.typ, op.data = np.typ, atomic.SwapPointer(&vp.data, np.data)
-		return oi.(anyData[T])
+		runtime_procUnpin()
 	}
+
+	var oi interface{}
+	op := (*efaceWords)(unsafe.Pointer(&oi))
+	op.typ, op.data = np.typ, atomic.SwapPointer(&vp.data, np.data)
+	return oi.(anyData[T])
 }
 
 func (v *Any[T]) compareAndSwap(old, new anyData[T]) (swapped bool) {
