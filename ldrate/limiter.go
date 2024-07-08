@@ -55,17 +55,17 @@ func (l *Limiter) Limit() int64            { return l.config.Limit.Load() }
 func (l *Limiter) Interval() time.Duration { return l.config.Interval.Load() }
 func (l *Limiter) NodeCount() int64        { return l.config.NodeCount.Load() }
 
-func (l *Limiter) refresh(ctx context.Context, now time.Time) error {
+func (l *Limiter) refresh(c context.Context, now time.Time) error {
 	cfg := &l.config
 
 	burst := cfg.Burst.Load()
 	if burst <= 0 {
-		burst = ldmath.MaxInt64(l.lastBurst.Load(), 1)
+		burst = ldmath.Max(l.lastBurst.Load(), 1)
 	}
 	if burst != l.lastBurst.Load() {
 		l.lastBurst.Store(burst)
 		l.limiter.SetBurstAt(now, int(burst))
-		ldctx.LogI(ctx, "[limiter] refresh the burst succ", zap.String("name", l.Name()),
+		ldctx.LogI(c, "[limiter] refresh the burst succ", zap.String("name", l.Name()),
 			zap.Int64("burst", burst))
 	}
 
@@ -74,17 +74,17 @@ func (l *Limiter) refresh(ctx context.Context, now time.Time) error {
 	nodeCount := cfg.NodeCount.Load()
 
 	if limit <= 0 {
-		limit = ldmath.MaxInt64(l.lastLimit.Load(), 1)
+		limit = ldmath.Max(l.lastLimit.Load(), 1)
 	}
 	if interval < 0 {
 		interval = 0
 	}
 	if nodeCount <= 0 {
-		nodeCount = ldmath.MaxInt64(l.lastNodeCount.Load(), 1)
+		nodeCount = ldmath.Max(l.lastNodeCount.Load(), 1)
 	}
 
 	// if interval < 0 || limit <= 0 || nodeCount <= 0 {
-	// 	ldctx.LogE(ctx, "[limiter] invalid rate every parameters", zap.Int64("limit", limit),
+	// 	ldctx.LogE(c, "[limiter] invalid rate every parameters", zap.Int64("limit", limit),
 	// 		zap.Stringer("interval", interval), zap.Int64("nodeCount", nodeCount))
 	// 	return lderr.ErrInternalServerError
 	// }
@@ -95,7 +95,7 @@ func (l *Limiter) refresh(ctx context.Context, now time.Time) error {
 
 	every := interval * time.Duration(nodeCount) / time.Duration(limit)
 	// if every < 0 {
-	// 	ldctx.LogE(ctx, "[limiter] invalid rate every", zap.Int64("limit", limit),
+	// 	ldctx.LogE(c, "[limiter] invalid rate every", zap.Int64("limit", limit),
 	// 		zap.Stringer("interval", interval), zap.Int64("serviceCount", nodeCount))
 	// 	return lderr.ErrInternalServerError
 	// }
@@ -105,39 +105,39 @@ func (l *Limiter) refresh(ctx context.Context, now time.Time) error {
 	l.lastInterval.Store(interval)
 	l.lastNodeCount.Store(nodeCount)
 
-	ldctx.LogI(ctx, "[limiter] refresh rate every succ", zap.String("name", l.Name()),
+	ldctx.LogI(c, "[limiter] refresh rate every succ", zap.String("name", l.Name()),
 		zap.Int64("limit", limit), zap.Stringer("interval", interval),
 		zap.Int64("serviceCount", nodeCount), zap.Stringer("every", every))
 	return nil
 }
 
-func (l *Limiter) Wait(ctx context.Context) error {
-	return l.WaitN(ctx, 1)
+func (l *Limiter) Wait(c context.Context) error {
+	return l.WaitN(c, 1)
 }
 
-func (l *Limiter) WaitN(ctx context.Context, n int) error {
-	if err := wait(ctx, l, n); err != nil {
-		ldctx.LogE(ctx, "[limiter] wait fail", zap.String("name", l.Name()), zap.Int("n", n), zap.Error(err))
+func (l *Limiter) WaitN(c context.Context, n int) error {
+	if err := wait(c, l, n); err != nil {
+		ldctx.LogE(c, "[limiter] wait fail", zap.String("name", l.Name()), zap.Int("n", n), zap.Error(err))
 		return err
 	}
 	return nil
 }
 
-func (l *Limiter) Allow(ctx context.Context) bool {
-	return l.AllowN(ctx, 1)
+func (l *Limiter) Allow(c context.Context) bool {
+	return l.AllowN(c, 1)
 }
 
-func (l *Limiter) AllowN(ctx context.Context, n int) bool {
-	return allow(ctx, l, n)
+func (l *Limiter) AllowN(c context.Context, n int) bool {
+	return allow(c, l, n)
 }
 
-func (l *Limiter) Reserve(ctx context.Context) (*Reservation, error) {
-	return l.ReserveN(ctx, 1)
+func (l *Limiter) Reserve(c context.Context) (*Reservation, error) {
+	return l.ReserveN(c, 1)
 }
 
-func (l *Limiter) ReserveN(ctx context.Context, n int) (*Reservation, error) {
+func (l *Limiter) ReserveN(c context.Context, n int) (*Reservation, error) {
 	now := time.Now()
-	if err := l.refresh(ctx, now); err != nil {
+	if err := l.refresh(c, now); err != nil {
 		return nil, err
 	}
 
