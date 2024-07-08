@@ -19,22 +19,25 @@ var (
 )
 
 type ILimiter interface {
-	Wait(ctx context.Context) error
-	WaitN(ctx context.Context, n int) error
+	Wait(c context.Context) error
+	WaitN(c context.Context, n int) error
 
-	Reserve(ctx context.Context) (*Reservation, error)
-	ReserveN(ctx context.Context, n int) (*Reservation, error)
+	Allow(c context.Context) bool
+	AllowN(c context.Context, n int) bool
+
+	Reserve(c context.Context) (*Reservation, error)
+	ReserveN(c context.Context, n int) (*Reservation, error)
 }
 
 type reserver interface {
-	ReserveN(ctx context.Context, n int) (*Reservation, error)
+	ReserveN(c context.Context, n int) (*Reservation, error)
 }
 
-func wait(ctx context.Context, l reserver, n int) error {
+func wait(c context.Context, l reserver, n int) error {
 	select {
-	case <-ctx.Done():
+	case <-c.Done():
 		// return lderr.ErrCtxCanceled
-		return ldctx.GetError(ctx)
+		return ldctx.GetError(c)
 	default:
 	}
 
@@ -42,11 +45,11 @@ func wait(ctx context.Context, l reserver, n int) error {
 
 	// Determine wait limit
 	waitLimit := rate.InfDuration
-	if deadline, ok := ctx.Deadline(); ok {
+	if deadline, ok := c.Deadline(); ok {
 		waitLimit = deadline.Sub(now)
 	}
 
-	r, err := l.ReserveN(ctx, n)
+	r, err := l.ReserveN(c, n)
 	if err != nil {
 		return err
 	}
@@ -68,19 +71,19 @@ func wait(ctx context.Context, l reserver, n int) error {
 	case <-t.C:
 		break
 
-	case <-ctx.Done():
+	case <-c.Done():
 		// Context was canceled before we could proceed.  Cancel the
 		// reservation, which may permit other events to proceed sooner.
 		r.CancelAt(now)
-		return ldctx.GetError(ctx)
+		return ldctx.GetError(c)
 	}
 
 	// We can proceed.
 	return nil
 }
 
-func allow(ctx context.Context, l reserver, n int) bool {
-	r, err := l.ReserveN(ctx, n)
+func allow(c context.Context, l reserver, n int) bool {
+	r, err := l.ReserveN(c, n)
 	if err != nil {
 		return false
 	}
@@ -88,7 +91,7 @@ func allow(ctx context.Context, l reserver, n int) bool {
 	// Wait if necessary
 	now := time.Now()
 	delay := r.DelayFrom(now)
-	// ldctx.LogI(ctx, " ** allow delay", zap.Duration("delay", delay))
+	// ldctx.LogI(c, " ** allow delay", zap.Duration("delay", delay))
 	if delay <= 0 {
 		return true
 	}
