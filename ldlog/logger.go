@@ -96,11 +96,26 @@ func (l *Logger) Warn(msg string, fields ...zap.Field)  { l.zCore(lvlW, 1).Warn(
 func (l *Logger) Error(msg string, fields ...zap.Field) { l.zCore(lvlE, 1).Error(msg, fields...) }
 func (l *Logger) Fatal(msg string, fields ...zap.Field) { l.zCore(lvlF, 1).Fatal(msg, fields...) }
 
-func (l *Logger) Debugf(fmt string, args ...interface{}) { l.zSugar(lvlD, 1).Debugf(fmt, args...) }
-func (l *Logger) Infof(fmt string, args ...interface{})  { l.zSugar(lvlI, 1).Infof(fmt, args...) }
-func (l *Logger) Warnf(fmt string, args ...interface{})  { l.zSugar(lvlW, 1).Warnf(fmt, args...) }
-func (l *Logger) Errorf(fmt string, args ...interface{}) { l.zSugar(lvlE, 1).Errorf(fmt, args...) }
-func (l *Logger) Fatalf(fmt string, args ...interface{}) { l.zSugar(lvlF, 1).Fatalf(fmt, args...) }
+func (l *Logger) Debugf(fmt string, args ...interface{}) {
+	l.format(fmt, args...)
+	l.zSugar(lvlD, 1).Debugf(fmt, args...)
+}
+func (l *Logger) Infof(fmt string, args ...interface{}) {
+	l.format(fmt, args...)
+	l.zSugar(lvlI, 1).Infof(fmt, args...)
+}
+func (l *Logger) Warnf(fmt string, args ...interface{}) {
+	l.format(fmt, args...)
+	l.zSugar(lvlW, 1).Warnf(fmt, args...)
+}
+func (l *Logger) Errorf(fmt string, args ...interface{}) {
+	l.format(fmt, args...)
+	l.zSugar(lvlE, 1).Errorf(fmt, args...)
+}
+func (l *Logger) Fatalf(fmt string, args ...interface{}) {
+	l.format(fmt, args...)
+	l.zSugar(lvlF, 1).Fatalf(fmt, args...)
+}
 
 func (l *Logger) Debugln(args ...interface{}) { l.zSugar(lvlD, 1).Debug(pw(args)) }
 func (l *Logger) Infoln(args ...interface{})  { l.zSugar(lvlI, 1).Info(pw(args)) }
