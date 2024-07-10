@@ -42,7 +42,7 @@ func TestJsonCodec(t *testing.T) {
 			c.Convey("get-pi64", func(c convey.C) {
 				get := New(rds, Json[*int64]()).Get(ctx, key)
 				c.So(get.Err(), convey.ShouldBeNil)
-				c.So(get.Val(), convey.ShouldResemble, ldptr.NewInt64(100))
+				c.So(get.Val(), convey.ShouldResemble, ldptr.New[int64](100))
 			})
 			c.Convey("get-nil", func(c convey.C) {
 				get := New(rds, Json[any]()).Get(ctx, key)
@@ -60,9 +60,9 @@ func TestJsonCodec(t *testing.T) {
 
 			val := Object{
 				S:    "abc",
-				PS:   ldptr.NewString("xyz"),
+				PS:   ldptr.New("xyz"),
 				I64:  123,
-				PI64: ldptr.NewInt64(234),
+				PI64: ldptr.New[int64](234),
 			}
 
 			set := New(rds, Json[any]()).Set(ctx, key, val, expiration)
@@ -78,9 +78,9 @@ func TestJsonCodec(t *testing.T) {
 				c.So(get.Err(), convey.ShouldBeNil)
 				c.So(get.Val(), convey.ShouldResemble, Object{
 					S:    "abc",
-					PS:   ldptr.NewString("xyz"),
+					PS:   ldptr.New("xyz"),
 					I64:  123,
-					PI64: ldptr.NewInt64(234),
+					PI64: ldptr.New[int64](234),
 				})
 			})
 			c.Convey("get-ptr", func(c convey.C) {
@@ -88,9 +88,9 @@ func TestJsonCodec(t *testing.T) {
 				c.So(get.Err(), convey.ShouldBeNil)
 				c.So(get.Val(), convey.ShouldResemble, &Object{
 					S:    "abc",
-					PS:   ldptr.NewString("xyz"),
+					PS:   ldptr.New("xyz"),
 					I64:  123,
-					PI64: ldptr.NewInt64(234),
+					PI64: ldptr.New[int64](234),
 				})
 			})
 			c.Convey("get-nil", func(c convey.C) {

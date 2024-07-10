@@ -34,7 +34,7 @@ func (p durationPtrValue) Set(s string) error {
 type stringPtrValue struct{ V **string }
 
 func newStringPtrValue(p **string) stringPtrValue { return stringPtrValue{V: p} }
-func (p stringPtrValue) String() string           { return ldptr.GetString(*p.V) }
+func (p stringPtrValue) String() string           { return ldptr.Get(*p.V) }
 func (p stringPtrValue) Set(s string) error {
 	*p.V = &s
 	return nil
@@ -44,7 +44,7 @@ func (p stringPtrValue) Set(s string) error {
 type boolPtrValue struct{ V **bool }
 
 func newBoolPtrValue(p **bool) boolPtrValue { return boolPtrValue{V: p} }
-func (p boolPtrValue) String() string       { return strconv.FormatBool(ldptr.GetBool(*p.V)) }
+func (p boolPtrValue) String() string       { return strconv.FormatBool(ldptr.Get(*p.V)) }
 func (p boolPtrValue) Set(s string) error {
 	v, err := strconv.ParseBool(s)
 	// log.Printf(" === %v, %v, %v", *p, v, err)
@@ -69,7 +69,7 @@ func (p boolPtrFlag) IsBoolFlag() bool          { return true }
 type intPtrValue struct{ V **int }
 
 func newIntPtrValue(p **int) intPtrValue { return intPtrValue{V: p} }
-func (p intPtrValue) String() string     { return strconv.Itoa(ldptr.GetInt(*p.V)) }
+func (p intPtrValue) String() string     { return strconv.Itoa(ldptr.Get(*p.V)) }
 func (p intPtrValue) Set(s string) error {
 	v, err := strconv.Atoi(s)
 	if err != nil {
@@ -82,7 +82,7 @@ func (p intPtrValue) Set(s string) error {
 type int64PtrValue struct{ V **int64 }
 
 func newInt64PtrValue(p **int64) int64PtrValue { return int64PtrValue{V: p} }
-func (p int64PtrValue) String() string         { return strconv.FormatInt(ldptr.GetInt64(*p.V), 10) }
+func (p int64PtrValue) String() string         { return strconv.FormatInt(ldptr.Get(*p.V), 10) }
 func (p int64PtrValue) Set(s string) error {
 	v, err := strconv.ParseInt(s, 0, 64)
 	if err != nil {
@@ -96,7 +96,7 @@ func (p int64PtrValue) Set(s string) error {
 type uintPtrValue struct{ V **uint }
 
 func newUintPtrValue(p **uint) uintPtrValue { return uintPtrValue{V: p} }
-func (p uintPtrValue) String() string       { return strconv.FormatUint(uint64(ldptr.GetUint(*p.V)), 10) }
+func (p uintPtrValue) String() string       { return strconv.FormatUint(uint64(ldptr.Get(*p.V)), 10) }
 func (p uintPtrValue) Set(s string) error {
 	u64, err := strconv.ParseUint(s, 0, strconv.IntSize)
 	if err != nil {
@@ -110,7 +110,7 @@ func (p uintPtrValue) Set(s string) error {
 type uint64PtrValue struct{ V **uint64 }
 
 func newUint64PtrValue(p **uint64) uint64PtrValue { return uint64PtrValue{V: p} }
-func (p uint64PtrValue) String() string           { return strconv.FormatUint(ldptr.GetUint64(*p.V), 10) }
+func (p uint64PtrValue) String() string           { return strconv.FormatUint(ldptr.Get(*p.V), 10) }
 func (p uint64PtrValue) Set(s string) error {
 	v, err := strconv.ParseUint(s, 0, 64)
 	if err != nil {
@@ -125,7 +125,7 @@ type float32PtrValue struct{ V **float32 }
 
 func newFloat32PtrValue(p **float32) float32PtrValue { return float32PtrValue{V: p} }
 func (p float32PtrValue) String() string {
-	return strconv.FormatFloat(float64(ldptr.GetFloat32(*p.V)), 'g', -1, 64)
+	return strconv.FormatFloat(float64(ldptr.Get(*p.V)), 'g', -1, 64)
 }
 func (p float32PtrValue) Set(s string) error {
 	f64, err := strconv.ParseFloat(s, 32)
@@ -140,9 +140,7 @@ func (p float32PtrValue) Set(s string) error {
 type float64PtrValue struct{ V **float64 }
 
 func newFloat64PtrValue(p **float64) float64PtrValue { return float64PtrValue{V: p} }
-func (p float64PtrValue) String() string {
-	return strconv.FormatFloat(ldptr.GetFloat64(*p.V), 'g', -1, 64)
-}
+func (p float64PtrValue) String() string             { return strconv.FormatFloat(ldptr.Get(*p.V), 'g', -1, 64) }
 func (p float64PtrValue) Set(s string) error {
 	v, err := strconv.ParseFloat(s, 64)
 	if err != nil {
