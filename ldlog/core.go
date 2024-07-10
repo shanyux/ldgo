@@ -5,8 +5,14 @@
 package ldlog
 
 import (
+	"fmt"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+)
+
+const (
+	formatFlag = false
 )
 
 func newCore(log *zap.Logger, sugar *zap.SugaredLogger) core {
@@ -51,4 +57,10 @@ func (l *core) enable(lvl zapcore.Level, skip int) bool {
 	}
 
 	return l.enabler.Enable(lvl, skip+1)
+}
+
+func (l *core) format(format string, args ...interface{}) {
+	if formatFlag {
+		_ = fmt.Sprintf(format, args...)
+	}
 }
