@@ -29,18 +29,18 @@ var (
 )
 
 var (
-	typeDurationPtr = reflect.TypeOf(ldptr.NewDuration(0))
+	typeDurationPtr = reflect.TypeOf(ldptr.New(time.Duration(0)))
 
-	typeBoolPtr   = reflect.TypeOf(ldptr.NewBool(false))
-	typeStringPtr = reflect.TypeOf(ldptr.NewString(""))
+	typeBoolPtr   = reflect.TypeOf(ldptr.New(false))
+	typeStringPtr = reflect.TypeOf(ldptr.New(""))
 
-	typeIntPtr    = reflect.TypeOf(ldptr.NewInt(0))
-	typeInt64Ptr  = reflect.TypeOf(ldptr.NewInt64(0))
-	typeUintPtr   = reflect.TypeOf(ldptr.NewUint(0))
-	typeUint64Ptr = reflect.TypeOf(ldptr.NewUint64(0))
+	typeIntPtr    = reflect.TypeOf(ldptr.New(int(0)))
+	typeInt64Ptr  = reflect.TypeOf(ldptr.New(int64(0)))
+	typeUintPtr   = reflect.TypeOf(ldptr.New(uint(0)))
+	typeUint64Ptr = reflect.TypeOf(ldptr.New(uint64(0)))
 
-	typeFloat32Ptr = reflect.TypeOf(ldptr.NewFloat32(0))
-	typeFloat64Ptr = reflect.TypeOf(ldptr.NewFloat64(0))
+	typeFloat32Ptr = reflect.TypeOf(ldptr.New(float32(0)))
+	typeFloat64Ptr = reflect.TypeOf(ldptr.New(float64(0)))
 )
 
 var (

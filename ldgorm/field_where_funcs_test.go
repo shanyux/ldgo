@@ -37,7 +37,7 @@ func TestBetween(t *testing.T) {
 			})
 		})
 		convey.Convey("Between(*int, nil)", func() {
-			cond := Between(ldptr.NewInt32(0), nil)
+			cond := Between(ldptr.New[int32](0), nil)
 			res := cond.buildWhere(field)
 			convey.So(res, convey.ShouldResemble, whereResult{
 				Query: fmt.Sprintf("%s%s", field, " >= ?"), Args: []interface{}{int32(0)},
@@ -49,7 +49,7 @@ func TestBetween(t *testing.T) {
 			convey.So(res, convey.ShouldBeZeroValue)
 		})
 		convey.Convey("Between(*string, nil)", func() {
-			cond := Between(ldptr.NewString("abc"), nil)
+			cond := Between(ldptr.New("abc"), nil)
 			res := cond.buildWhere(field)
 			convey.So(res, convey.ShouldResemble, whereResult{
 				Query: fmt.Sprintf("%s%s", field, " >= ?"), Args: []interface{}{"abc"},
@@ -76,7 +76,7 @@ func TestBetween(t *testing.T) {
 			})
 		})
 		convey.Convey("Between(nil, *int)", func() {
-			cond := Between(nil, ldptr.NewInt32(0))
+			cond := Between(nil, ldptr.New[int32](0))
 			res := cond.buildWhere(field)
 			convey.So(res, convey.ShouldResemble, whereResult{
 				Query: fmt.Sprintf("%s%s", field, " <= ?"), Args: []interface{}{int32(0)},
@@ -88,7 +88,7 @@ func TestBetween(t *testing.T) {
 			convey.So(res, convey.ShouldBeZeroValue)
 		})
 		convey.Convey("Between(nil, *string)", func() {
-			cond := Between(nil, ldptr.NewString("abc"))
+			cond := Between(nil, ldptr.New("abc"))
 			res := cond.buildWhere(field)
 			convey.So(res, convey.ShouldResemble, whereResult{
 				Query: fmt.Sprintf("%s%s", field, " <= ?"), Args: []interface{}{"abc"},
@@ -115,28 +115,28 @@ func TestBetween(t *testing.T) {
 			})
 		})
 		convey.Convey("Between(*int, *int)", func() {
-			cond := Between(ldptr.NewInt32(0), ldptr.NewInt32(10))
+			cond := Between(ldptr.New[int32](0), ldptr.New[int32](10))
 			res := cond.buildWhere(field)
 			convey.So(res, convey.ShouldResemble, whereResult{
 				Query: fmt.Sprintf("%s%s", field, " BETWEEN ? AND ?"), Args: []interface{}{int32(0), int32(10)},
 			})
 		})
 		convey.Convey("Between(*int, *int) && min == max", func() {
-			cond := Between(ldptr.NewInt32(3), ldptr.NewInt32(3))
+			cond := Between(ldptr.New[int32](3), ldptr.New[int32](3))
 			res := cond.buildWhere(field)
 			convey.So(res, convey.ShouldResemble, whereResult{
 				Query: fmt.Sprintf("%s%s", field, " = ?"), Args: []interface{}{int32(3)},
 			})
 		})
 		convey.Convey("Between(*int(nil), *int)", func() {
-			cond := Between((*int)(nil), ldptr.NewInt32(10))
+			cond := Between((*int)(nil), ldptr.New[int32](10))
 			res := cond.buildWhere(field)
 			convey.So(res, convey.ShouldResemble, whereResult{
 				Query: fmt.Sprintf("%s%s", field, " <= ?"), Args: []interface{}{int32(10)},
 			})
 		})
 		convey.Convey("Between(*int, *int(nil))", func() {
-			cond := Between(ldptr.NewInt32(0), (*int)(nil))
+			cond := Between(ldptr.New[int32](0), (*int)(nil))
 			res := cond.buildWhere(field)
 			convey.So(res, convey.ShouldResemble, whereResult{
 				Query: fmt.Sprintf("%s%s", field, " >= ?"), Args: []interface{}{int32(0)},
@@ -176,7 +176,7 @@ func TestGt(t *testing.T) {
 			})
 		})
 		convey.Convey("Gt(*int)", func() {
-			cond := Gt(ldptr.NewInt32(0))
+			cond := Gt(ldptr.New[int32](0))
 			res := cond.buildWhere(field)
 			convey.So(res, convey.ShouldResemble, whereResult{
 				Query: fmt.Sprintf("%s%s", field, " > ?"), Args: []interface{}{int32(0)},
@@ -188,7 +188,7 @@ func TestGt(t *testing.T) {
 			convey.So(res, convey.ShouldBeZeroValue)
 		})
 		convey.Convey("Gt(*string)", func() {
-			cond := Gt(ldptr.NewString("abc"))
+			cond := Gt(ldptr.New("abc"))
 			res := cond.buildWhere(field)
 			convey.So(res, convey.ShouldResemble, whereResult{
 				Query: fmt.Sprintf("%s%s", field, " > ?"), Args: []interface{}{"abc"},
@@ -227,7 +227,7 @@ func TestLt(t *testing.T) {
 			})
 		})
 		convey.Convey("Lt(*int)", func() {
-			cond := Lt(ldptr.NewInt32(0))
+			cond := Lt(ldptr.New[int32](0))
 			res := cond.buildWhere(field)
 			convey.So(res, convey.ShouldResemble, whereResult{
 				Query: fmt.Sprintf("%s%s", field, " < ?"), Args: []interface{}{int32(0)},
@@ -239,7 +239,7 @@ func TestLt(t *testing.T) {
 			convey.So(res, convey.ShouldBeZeroValue)
 		})
 		convey.Convey("Lt(*string)", func() {
-			cond := Lt(ldptr.NewString("abc"))
+			cond := Lt(ldptr.New("abc"))
 			res := cond.buildWhere(field)
 			convey.So(res, convey.ShouldResemble, whereResult{
 				Query: fmt.Sprintf("%s%s", field, " < ?"), Args: []interface{}{"abc"},
@@ -278,7 +278,7 @@ func TestGte(t *testing.T) {
 			})
 		})
 		convey.Convey("Gte(*int)", func() {
-			cond := Gte(ldptr.NewInt32(0))
+			cond := Gte(ldptr.New[int32](0))
 			res := cond.buildWhere(field)
 			convey.So(res, convey.ShouldResemble, whereResult{
 				Query: fmt.Sprintf("%s%s", field, " >= ?"), Args: []interface{}{int32(0)},
@@ -290,7 +290,7 @@ func TestGte(t *testing.T) {
 			convey.So(res, convey.ShouldBeZeroValue)
 		})
 		convey.Convey("Gte(*string)", func() {
-			cond := Gte(ldptr.NewString("abc"))
+			cond := Gte(ldptr.New("abc"))
 			res := cond.buildWhere(field)
 			convey.So(res, convey.ShouldResemble, whereResult{
 				Query: fmt.Sprintf("%s%s", field, " >= ?"), Args: []interface{}{"abc"},
@@ -329,7 +329,7 @@ func TestLte(t *testing.T) {
 			})
 		})
 		convey.Convey("Lte(*int)", func() {
-			cond := Lte(ldptr.NewInt32(0))
+			cond := Lte(ldptr.New[int32](0))
 			res := cond.buildWhere(field)
 			convey.So(res, convey.ShouldResemble, whereResult{
 				Query: fmt.Sprintf("%s%s", field, " <= ?"), Args: []interface{}{int32(0)},
@@ -341,7 +341,7 @@ func TestLte(t *testing.T) {
 			convey.So(res, convey.ShouldBeZeroValue)
 		})
 		convey.Convey("Lte(*string)", func() {
-			cond := Lte(ldptr.NewString("abc"))
+			cond := Lte(ldptr.New("abc"))
 			res := cond.buildWhere(field)
 			convey.So(res, convey.ShouldResemble, whereResult{
 				Query: fmt.Sprintf("%s%s", field, " <= ?"), Args: []interface{}{"abc"},
@@ -380,7 +380,7 @@ func TestEqual(t *testing.T) {
 			})
 		})
 		convey.Convey("Equal(*int)", func() {
-			cond := Equal(ldptr.NewInt32(0))
+			cond := Equal(ldptr.New[int32](0))
 			res := cond.buildWhere(field)
 			convey.So(res, convey.ShouldResemble, whereResult{
 				Query: fmt.Sprintf("%s%s", field, " = ?"), Args: []interface{}{int32(0)},
@@ -392,7 +392,7 @@ func TestEqual(t *testing.T) {
 			convey.So(res, convey.ShouldBeZeroValue)
 		})
 		convey.Convey("Equal(*string)", func() {
-			cond := Equal(ldptr.NewString("abc"))
+			cond := Equal(ldptr.New("abc"))
 			res := cond.buildWhere(field)
 			convey.So(res, convey.ShouldResemble, whereResult{
 				Query: fmt.Sprintf("%s%s", field, " = ?"), Args: []interface{}{"abc"},
