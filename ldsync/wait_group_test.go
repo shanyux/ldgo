@@ -29,5 +29,6 @@ func TestWaitGroup(t *testing.T) {
 		wg.Wait()
 		t1 := time.Now()
 		c.So(t1, convey.ShouldHappenAfter, t0)
+		wg.Wait()
 	})
 }
