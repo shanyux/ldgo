@@ -101,6 +101,10 @@ func (wg *WaitGroup) Wait() {
 	for {
 		ok := wg.waitOnce()
 		if ok {
+			if race.Enabled {
+				race.Enable()
+				race.Acquire(unsafe.Pointer(wg))
+			}
 			return
 		}
 	}
@@ -112,10 +116,6 @@ func (wg *WaitGroup) waitOnce() bool {
 	w := uint32(state)
 	if v == 0 {
 		// Counter is 0, no need to wait.
-		if race.Enabled {
-			race.Enable()
-			race.Acquire(unsafe.Pointer(wg))
-		}
 		return true
 	}
 	// Increment waiters count.
@@ -130,10 +130,6 @@ func (wg *WaitGroup) waitOnce() bool {
 		runtime_Semacquire(&wg.sema)
 		if atomic.LoadUint64(&wg.state) != 0 {
 			panic("ldsync: WaitGroup is reused before previous Wait has returned")
-		}
-		if race.Enabled {
-			race.Enable()
-			race.Acquire(unsafe.Pointer(wg))
 		}
 		return true
 	}
