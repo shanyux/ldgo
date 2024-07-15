@@ -22,8 +22,20 @@ type noCopy struct{}
 func (*noCopy) Lock()   {}
 func (*noCopy) Unlock() {}
 
+// Semacquire waits until *s > 0 and then atomically decrements it.
+// It is intended as a simple sleep primitive for use by the synchronization
+// library and should not be used directly.
+//
 //go:linkname runtime_Semacquire sync.runtime_Semacquire
 func runtime_Semacquire(s *uint32)
 
+// Semrelease atomically increments *s and notifies a waiting goroutine
+// if one is blocked in Semacquire.
+// It is intended as a simple wakeup primitive for use by the synchronization
+// library and should not be used directly.
+// If handoff is true, pass count directly to the first waiter.
+// skipframes is the number of frames to omit during tracing, counting from
+// runtime_Semrelease's caller.
+//
 //go:linkname runtime_Semrelease sync.runtime_Semrelease
 func runtime_Semrelease(s *uint32, handoff bool, skipframes int)
