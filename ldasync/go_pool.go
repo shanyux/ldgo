@@ -7,7 +7,8 @@ package ldasync
 import (
 	"log"
 	"runtime/debug"
-	"sync"
+
+	"github.com/distroy/ldgo/v2/ldsync"
 )
 
 func Go(fn func()) *GoPool { return GoN(1, fn) }
@@ -18,11 +19,11 @@ func GoN(n int, fn func()) *GoPool {
 }
 
 type GoPool struct {
-	wg sync.WaitGroup
+	wg ldsync.WaitGroup
 }
 
-func (p *GoPool) Wait() { p.wg.Wait() }
-
+func (p *GoPool) Wait()        { p.wg.Wait() }
+func (p *GoPool) Count() int   { return p.wg.Count() }
 func (p *GoPool) Go(fn func()) { p.GoN(1, fn) }
 func (p *GoPool) GoN(n int, fn func()) {
 	if n <= 0 {
