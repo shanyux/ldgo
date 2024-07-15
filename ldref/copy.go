@@ -161,7 +161,7 @@ func copyReflectWithIndirect(c *copyContext, target, source reflect.Value) bool 
 
 		switch source.Kind() {
 		case reflect.Interface:
-			source = reflect.ValueOf(source.Interface())
+			source = source.Elem()
 			continue
 
 		case reflect.Ptr:

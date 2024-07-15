@@ -5,7 +5,18 @@
 package ldlog
 
 import (
+	"time"
+
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+)
+
+const (
+	lvlD = zapcore.DebugLevel
+	lvlI = zapcore.InfoLevel
+	lvlW = zapcore.WarnLevel
+	lvlE = zapcore.ErrorLevel
+	lvlF = zapcore.FatalLevel
 )
 
 func newLogger(log core) *Logger {
@@ -57,20 +68,57 @@ func (l *Logger) WithSequence(seq string) *Logger {
 	return l
 }
 
-func (l *Logger) Debug(msg string, fields ...zap.Field) { l.zCore(1).Debug(msg, fields...) }
-func (l *Logger) Info(msg string, fields ...zap.Field)  { l.zCore(1).Info(msg, fields...) }
-func (l *Logger) Warn(msg string, fields ...zap.Field)  { l.zCore(1).Warn(msg, fields...) }
-func (l *Logger) Error(msg string, fields ...zap.Field) { l.Core().Error(msg, fields...) }
-func (l *Logger) Fatal(msg string, fields ...zap.Field) { l.Core().Fatal(msg, fields...) }
+// Log based on probability(rate). rate should be in [0, 1.0]
+//
+// Deprecated: use `WithEnabler` instead.
+func (l *Logger) WithRate(rate float64) *Logger { return l.WithEnabler(RateEnabler(rate)) }
 
-func (l *Logger) Debugf(fmt string, args ...interface{}) { l.zSugar(1).Debugf(fmt, args...) }
-func (l *Logger) Infof(fmt string, args ...interface{})  { l.zSugar(1).Infof(fmt, args...) }
-func (l *Logger) Warnf(fmt string, args ...interface{})  { l.zSugar(1).Warnf(fmt, args...) }
-func (l *Logger) Errorf(fmt string, args ...interface{}) { l.Sugar().Errorf(fmt, args...) }
-func (l *Logger) Fatalf(fmt string, args ...interface{}) { l.Sugar().Fatalf(fmt, args...) }
+// Log based on time interval.
+//
+// Deprecated: use `WithEnabler` instead.
+func (l *Logger) WithInterval(d time.Duration) *Logger { return l.WithEnabler(IntervalEnabler(d)) }
 
-func (l *Logger) Debugln(args ...interface{}) { l.zSugar(1).Debug(pw(args)) }
-func (l *Logger) Infoln(args ...interface{})  { l.zSugar(1).Info(pw(args)) }
-func (l *Logger) Warnln(args ...interface{})  { l.zSugar(1).Warn(pw(args)) }
-func (l *Logger) Errorln(args ...interface{}) { l.Sugar().Error(pw(args)) }
-func (l *Logger) Fatalln(args ...interface{}) { l.Sugar().Fatal(pw(args)) }
+func (l *Logger) WithEnabler(p Enabler) *Logger {
+	if p == nil {
+		p = defaultEnabler{}
+	}
+	if p == l.enabler {
+		return l
+	}
+	l = l.clone()
+	l.enabler = p
+	return l
+}
+
+func (l *Logger) Debug(msg string, fields ...zap.Field) { l.zCore(lvlD, 1).Debug(msg, fields...) }
+func (l *Logger) Info(msg string, fields ...zap.Field)  { l.zCore(lvlI, 1).Info(msg, fields...) }
+func (l *Logger) Warn(msg string, fields ...zap.Field)  { l.zCore(lvlW, 1).Warn(msg, fields...) }
+func (l *Logger) Error(msg string, fields ...zap.Field) { l.zCore(lvlE, 1).Error(msg, fields...) }
+func (l *Logger) Fatal(msg string, fields ...zap.Field) { l.zCore(lvlF, 1).Fatal(msg, fields...) }
+
+func (l *Logger) Debugf(fmt string, args ...interface{}) {
+	l.format(fmt, args...)
+	l.zSugar(lvlD, 1).Debugf(fmt, args...)
+}
+func (l *Logger) Infof(fmt string, args ...interface{}) {
+	l.format(fmt, args...)
+	l.zSugar(lvlI, 1).Infof(fmt, args...)
+}
+func (l *Logger) Warnf(fmt string, args ...interface{}) {
+	l.format(fmt, args...)
+	l.zSugar(lvlW, 1).Warnf(fmt, args...)
+}
+func (l *Logger) Errorf(fmt string, args ...interface{}) {
+	l.format(fmt, args...)
+	l.zSugar(lvlE, 1).Errorf(fmt, args...)
+}
+func (l *Logger) Fatalf(fmt string, args ...interface{}) {
+	l.format(fmt, args...)
+	l.zSugar(lvlF, 1).Fatalf(fmt, args...)
+}
+
+func (l *Logger) Debugln(args ...interface{}) { l.zSugar(lvlD, 1).Debug(pw(args)) }
+func (l *Logger) Infoln(args ...interface{})  { l.zSugar(lvlI, 1).Info(pw(args)) }
+func (l *Logger) Warnln(args ...interface{})  { l.zSugar(lvlW, 1).Warn(pw(args)) }
+func (l *Logger) Errorln(args ...interface{}) { l.zSugar(lvlE, 1).Error(pw(args)) }
+func (l *Logger) Fatalln(args ...interface{}) { l.zSugar(lvlF, 1).Fatal(pw(args)) }

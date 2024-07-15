@@ -5,7 +5,6 @@
 package field
 
 import (
-	"fmt"
 	"reflect"
 	"strconv"
 	"time"
@@ -110,9 +109,9 @@ func AppendRef2Log(enc ArrayEncoder, v reflect.Value) error {
 		enc.AppendDuration(vv)
 		return nil
 
-	case fmt.Stringer:
-		AppendStr2Log(enc, vv.String())
-		return nil
+	// case fmt.Stringer:
+	// 	AppendStr2Log(enc, vv.String())
+	// 	return nil
 
 	case error:
 		enc.AppendString(vv.Error())
@@ -125,11 +124,7 @@ func AppendRef2Log(enc ArrayEncoder, v reflect.Value) error {
 			return nil
 		}
 
-		if v.Kind() == reflect.Ptr {
-			v = v.Elem()
-		} else if v.Kind() == reflect.Interface {
-			v = reflect.ValueOf(v.Interface())
-		}
+		v = v.Elem()
 	}
 
 	switch v.Kind() {

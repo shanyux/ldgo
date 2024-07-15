@@ -34,7 +34,22 @@ type Error interface {
 // an example in the standard library. An Is method should only shallowly
 // compare err and the target and not call Unwrap on either.
 func Is(err, target error) bool {
+	if err == nil {
+		return IsSuccess(target)
+	}
+	if target == nil {
+		return IsSuccess(err)
+	}
 	return errors.Is(err, target)
+}
+
+func In(err error, targets ...error) bool {
+	for _, target := range targets {
+		if Is(err, target) {
+			return true
+		}
+	}
+	return false
 }
 
 func IsSuccess(err error) bool {
@@ -50,14 +65,6 @@ func IsSuccess(err error) bool {
 func New(status, code int, message string) Error {
 	return commError{
 		error:  strError(message),
-		status: status,
-		code:   code,
-	}
-}
-
-func newByError(status, code int, err error) Error {
-	return commError{
-		error:  err,
 		status: status,
 		code:   code,
 	}

@@ -14,9 +14,9 @@ type Reservation struct {
 	reservations []*rate.Reservation
 }
 
-func (r *Reservation) Cancel() {
+func (r *Reservation) CancelAt(t time.Time) {
 	for _, v := range r.reservations {
-		v.Cancel()
+		v.CancelAt(t)
 	}
 }
 

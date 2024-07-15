@@ -368,9 +368,9 @@ func TestFlagSet_Parse(t *testing.T) {
 				c.So(err, convey.ShouldBeNil)
 				c.So(flags, convey.ShouldResemble, &Flags{
 					Over:     nil,
-					Top:      ldptr.NewInt(5),
-					Avg:      ldptr.NewBool(true),
-					DebugLog: ldptr.NewBool(true),
+					Top:      ldptr.New(5),
+					Avg:      ldptr.New(true),
+					DebugLog: ldptr.New(true),
 					Rate:     nil,
 					Branch:   nil,
 					Pathes:   []string{},
@@ -389,11 +389,11 @@ func TestFlagSet_Parse(t *testing.T) {
 				})
 				c.So(err, convey.ShouldBeNil)
 				c.So(flags, convey.ShouldResemble, &Flags{
-					Over:     ldptr.NewInt(15),
-					Top:      ldptr.NewInt(5),
-					Avg:      ldptr.NewBool(true),
-					DebugLog: ldptr.NewBool(true),
-					Rate:     ldptr.NewFloat64(0.65),
+					Over:     ldptr.New(15),
+					Top:      ldptr.New(5),
+					Avg:      ldptr.New(true),
+					DebugLog: ldptr.New(true),
+					Rate:     ldptr.New(0.65),
 					Branch:   nil,
 					Pathes:   []string{"."},
 				})

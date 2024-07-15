@@ -9,6 +9,8 @@ import (
 	"runtime/debug"
 	"sync"
 	"sync/atomic"
+
+	"github.com/distroy/ldgo/v2/ldsync"
 )
 
 const (
@@ -170,7 +172,7 @@ func (p *AsyncPool) doWithRecover(fn func()) {
 }
 
 var (
-	asyncNodePool = &sync.Pool{}
+	asyncNodePool = &ldsync.Pool[*asyncNode]{}
 )
 
 type asyncNode struct {
@@ -181,15 +183,11 @@ type asyncNode struct {
 func getAsyncNode() *asyncNode {
 	p := asyncNodePool
 
-	i := p.Get()
-	if i == nil {
-		return &asyncNode{
-			ch:   make(chan struct{}),
-			next: nil,
-		}
+	n := p.Get()
+	if n == nil {
+		n = &asyncNode{}
 	}
 
-	n := i.(*asyncNode)
 	n.ch = make(chan struct{})
 	n.next = nil
 	return n
