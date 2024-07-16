@@ -17,7 +17,7 @@ func TestAsyncPool(t *testing.T) {
 		c.Convey("nomarl", func(c convey.C) {
 			n := int32(0)
 			fn := func() {
-				time.Sleep(time.Millisecond)
+				time.Sleep(time.Millisecond * 10)
 				atomic.AddInt32(&n, 1)
 			}
 
