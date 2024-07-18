@@ -57,7 +57,7 @@ func (l *Logger) With(fields ...zap.Field) *Logger {
 
 func (l *Logger) GetSequence() string { return l.sequence }
 func (l *Logger) WithSequence(seq string) *Logger {
-	if seq == "" {
+	if seq == "" || l.sequence == seq {
 		return l
 	}
 	log := l.Core().With(zap.String(sequenceKey, seq))
