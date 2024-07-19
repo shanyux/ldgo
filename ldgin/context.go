@@ -12,10 +12,8 @@ import (
 
 	"github.com/distroy/ldgo/v2/ldctx"
 	"github.com/distroy/ldgo/v2/lderr"
-	"github.com/distroy/ldgo/v2/ldlog"
 	"github.com/distroy/ldgo/v2/ldrand"
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 )
 
 var (
@@ -109,7 +107,7 @@ func newContext(g *gin.Context) *Context {
 	now := time.Now()
 	seq := newSequence(g)
 
-	ctx := ldctx.WithLogger(g, nil, zap.String(ldlog.GetSequenceKey(), seq))
+	ctx := ldctx.WithSequence(g, seq)
 
 	c := &Context{
 		ginCtx:    g,
