@@ -80,7 +80,7 @@ func splitStringWord(s string, sep rune) string {
 		}
 
 		if i > 0 {
-			res = append(res, '-')
+			res = append(res, sep)
 		}
 
 		last := curr
@@ -94,7 +94,7 @@ func splitStringWord(s string, sep rune) string {
 			}
 
 			if j > i+1 {
-				res = append(res, '-')
+				res = append(res, sep)
 			}
 			res = append(res, last)
 			last = curr
