@@ -10,7 +10,6 @@ import (
 	"io"
 	"os"
 	"reflect"
-	"slices"
 	"sort"
 	"strings"
 
@@ -30,6 +29,15 @@ type Flag struct {
 	IsArgs  bool
 	Bool    bool
 	Options []string
+}
+
+func (f *Flag) inOptions(s string) bool {
+	for _, v := range f.Options {
+		if v == s {
+			return true
+		}
+	}
+	return false
 }
 
 type FlagSet struct {
@@ -228,7 +236,7 @@ func (s *FlagSet) parse(args []string) error {
 			continue
 		}
 		value := f.Value.String()
-		if value != f.Default && slices.Contains(f.Options, value) {
+		if value != f.Default && f.inOptions(value) {
 			continue
 		}
 		msg := fmt.Sprintf("invalid value %q for flag -%s", value, f.Name)
