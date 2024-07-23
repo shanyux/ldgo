@@ -22,6 +22,14 @@ var (
 	defaultOptions = ([]func(s *FlagSet))(nil)
 )
 
+func Default() *FlagSet {
+	s := defaultFlagSet
+	if s == nil {
+		s = newDefaultFlagSet()
+	}
+	return s
+}
+
 func init() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 }

@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 
@@ -28,6 +29,7 @@ type Flag struct {
 	Usage   string
 	IsArgs  bool
 	Bool    bool
+	Options []string
 }
 
 type FlagSet struct {
@@ -57,6 +59,11 @@ func (s *FlagSet) init() {
 	s.flagMap = make(map[string]*Flag)
 	s.command.Usage = s.printUsage
 	s.noDefault = false
+}
+
+func (s *FlagSet) Args() []string {
+	s.init()
+	return s.command.Args()
 }
 
 func (s *FlagSet) EnableDefault(on bool) {
@@ -216,6 +223,20 @@ func (s *FlagSet) parse(args []string) error {
 		return err
 	}
 
+	for _, f := range s.flagSlice {
+		if len(f.Options) == 0 {
+			continue
+		}
+		value := f.Value.String()
+		if value != f.Default && slices.Contains(f.Options, value) {
+			continue
+		}
+		msg := fmt.Sprintf("invalid value %q for flag -%s", value, f.Name)
+		fmt.Fprintln(s.command.Output(), msg)
+		s.printUsage()
+		return fmt.Errorf("%s", msg)
+	}
+
 	// log.Printf(" === %#v", s.args)
 	if s.args != nil {
 		args := s.command.Args()
@@ -352,6 +373,10 @@ func (s *FlagSet) parseFieldFlag(lvl int, val reflect.Value, field reflect.Struc
 		return
 	}
 
+	if tag == "-" {
+		return
+	}
+
 	tags := ldtagmap.Parse(tag)
 	// if tags.Has("-") {
 	// 	return
@@ -368,6 +393,7 @@ func (s *FlagSet) parseFieldFlag(lvl int, val reflect.Value, field reflect.Struc
 		Default: tags.Get("default"),
 		IsArgs:  tags.Has("args"),
 		Bool:    tags.Has("bool"),
+		Options: s.parseOptions(tags.Get("options")),
 	}
 
 	if len(f.Name) == 0 {
@@ -377,6 +403,21 @@ func (s *FlagSet) parseFieldFlag(lvl int, val reflect.Value, field reflect.Struc
 
 	s.addFlag(f)
 	return
+}
+
+func (s *FlagSet) parseOptions(str string) []string {
+	if str == "" {
+		return nil
+	}
+	slice := strings.Split(str, ",")
+	opts := make([]string, 0, len(slice))
+	for _, v := range slice {
+		v = strings.TrimSpace(v)
+		if v != "" {
+			opts = append(opts, v)
+		}
+	}
+	return opts
 }
 
 func (s *FlagSet) parseStructField(lvl int, fVal reflect.Value, field reflect.StructField) {
