@@ -5,8 +5,8 @@
 package ldstr
 
 import (
-	"bytes"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/distroy/ldgo/v2/ldconv"
 	"github.com/distroy/ldgo/v2/ldsort"
@@ -16,24 +16,23 @@ func ToSnakeCase(s string, sep ...rune) string {
 	if s == "" {
 		return s
 	}
+	c := rune('_')
 	if len(sep) > 0 && sep[0] != 0 {
-		return toSnakeCase(s, sep[0])
+		c = sep[0]
 	}
-	return toSnakeCase(s, '_')
+	return ldconv.BytesToStrUnsafe(toSnakeCase(ldconv.StrToBytesUnsafe(s), c))
 }
 
-func toSnakeCase(s string, sep rune) string {
-	reader := bytes.NewBuffer(ldconv.StrToBytesUnsafe(s))
-
-	writer := bytes.NewBuffer(nil)
-	writer.Grow(len(s) * 2)
+func toSnakeCase(s []byte, sep rune) []byte {
+	reader := &buffer{buf: s}
+	writer := make([]byte, 0, len(s)*2)
 
 	lastSep := true
 	writeSep := func() {
 		if lastSep {
 			return
 		}
-		writer.WriteRune(sep)
+		writer = utf8.AppendRune(writer, sep)
 		lastSep = true
 	}
 	writeRune := func(c rune) {
@@ -41,7 +40,7 @@ func toSnakeCase(s string, sep rune) string {
 			writeSep()
 			return
 		}
-		writer.WriteRune(c)
+		writer = utf8.AppendRune(writer, c)
 		lastSep = false
 	}
 
@@ -82,28 +81,30 @@ func toSnakeCase(s string, sep rune) string {
 		return true
 	})
 
-	raw := writer.Bytes()
+	raw := writer
 	if l := len(raw); rune(raw[l-1]) == sep {
 		raw = raw[:l-1]
 	}
-	return ldconv.BytesToStrUnsafe(raw)
+	return raw
 }
 
 func ToCamelCase(s string, seps ...[]rune) string {
 	if s == "" {
 		return s
 	}
+	sep := []rune{'-', '_'}
 	if len(seps) > 0 && len(seps[0]) > 0 {
-		ldsort.SortInt32s(seps[0])
-		return toCamelCase(s, seps[0])
+		// ldsort.SortInt32s(seps[0])
+		// return toCamelCase(s, seps[0])
+		sep = seps[0]
+		ldsort.SortInt32s(sep)
 	}
-	return toCamelCase(s, []rune{'-', '_'})
+	return ldconv.BytesToStrUnsafe(toCamelCase(ldconv.StrToBytesUnsafe(s), sep))
 }
 
-func toCamelCase(s string, seps []rune) string {
-	reader := bytes.NewBuffer(ldconv.StrToBytesUnsafe(s))
-	writer := bytes.NewBuffer(nil)
-	writer.Grow(len(s))
+func toCamelCase(s []byte, seps []rune) []byte {
+	reader := &buffer{buf: s}
+	writer := make([]byte, 0, len(s))
 
 	lastSep := true
 	loopReadRunes(reader, func(i, size int, curr rune) bool {
@@ -113,30 +114,34 @@ func toCamelCase(s string, seps []rune) string {
 
 		} else if unicode.IsUpper(curr) {
 			lastSep = false
-			writer.WriteRune(curr)
+			writer = utf8.AppendRune(writer, curr)
 			return true
 
 		} else if lastSep {
 			lastSep = false
-			writer.WriteRune(unicode.ToUpper(curr))
+			curr = unicode.ToUpper(curr)
+			writer = utf8.AppendRune(writer, curr)
 			return true
 		}
 
 		lastSep = false
-		writer.WriteRune(curr)
+		writer = utf8.AppendRune(writer, curr)
 		return true
 	})
 
-	raw := writer.Bytes()
-	return ldconv.BytesToStrUnsafe(raw)
+	return writer
 }
 
-func loopReadRunes(r *bytes.Buffer, fBody func(i int, size int, c rune) bool) {
-	for i := 0; ; i++ {
-		c, size, err := r.ReadRune()
-		if err != nil {
-			break
-		}
+type buffer struct {
+	buf []byte
+	idx int
+}
+
+func loopReadRunes(buf *buffer, fBody func(i int, size int, c rune) bool) {
+	l := len(buf.buf)
+	for i := 0; buf.idx < l; i++ {
+		c, size := utf8.DecodeRune(buf.buf[buf.idx:])
+		buf.idx += size
 		if ok := fBody(i, size, c); !ok {
 			break
 		}
