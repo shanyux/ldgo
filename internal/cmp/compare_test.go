@@ -107,8 +107,11 @@ func TestCompareInterface(t *testing.T) {
 			c.So(CompareInterface(map[int]int{0: 0}, map[interface{}]int{0: 0}), convey.ShouldEqual, -1)
 			c.So(CompareInterface(map[int]int{0: 0}, map[int]int{0: 0}), convey.ShouldEqual, 0)
 			c.So(CompareInterface(map[int]int{0: 0}, map[int]int{}), convey.ShouldEqual, 1)
-			c.So(CompareInterface(map[int]int{0: 0}, map[int]int{1: 0}), convey.ShouldEqual, -1)
+			c.So(CompareInterface(map[int]int{0: 0}, map[int]int{1: 0}), convey.ShouldEqual, 1)
 			c.So(CompareInterface(map[int]int{1: 1}, map[int]int{1: 0}), convey.ShouldEqual, 1)
+			c.So(CompareInterface(map[int]int{1: 1}, map[int]int{0: 0, 1: 0}), convey.ShouldEqual, -1)
+			c.So(CompareInterface(map[int]int{1: 1}, map[int]int{1: 1, 2: 0}), convey.ShouldEqual, -1)
+			c.So(CompareInterface(map[int]int{0: 0, 1: 0}, map[int]int{0: 0}), convey.ShouldEqual, 1)
 		})
 
 		c.Convey("slice", func(c convey.C) {
