@@ -8,7 +8,17 @@ import (
 	"math"
 	"reflect"
 	"sort"
+	"sync"
 )
+
+var (
+	comparerTypes = &sync.Map{}
+)
+
+type typeInfo struct {
+	IsComparer bool
+	Compare    reflect.Value
+}
 
 type kind int
 
@@ -18,7 +28,7 @@ const (
 	kindNumber
 	kindComplex
 	kindString
-	kindInvalid
+	kindOrthers
 )
 
 func reflectValueOf(v interface{}) reflect.Value {
@@ -32,6 +42,10 @@ func reflectValueOf(v interface{}) reflect.Value {
 
 func CompareReflect(a, b reflect.Value) int {
 	if r := compareReflectType(a, b); r != 0 {
+		return r
+	}
+
+	if r, ok := compareReflectComparer(a, b); ok {
 		return r
 	}
 
@@ -63,22 +77,25 @@ func CompareReflect(a, b reflect.Value) int {
 	case reflect.Complex64, reflect.Complex128:
 		aa := a.Complex()
 		bb := b.Complex()
-		return CompareComplex128(aa, bb)
+		return CompareComplex(aa, bb)
 
 	case reflect.Bool:
 		aa := a.Bool()
 		bb := b.Bool()
 		return CompareBool(aa, bb)
 
-	case reflect.Ptr, reflect.UnsafePointer:
+	case reflect.Ptr:
+		return compareReflectPointer(a, b)
+
+	case reflect.UnsafePointer:
 		aa := a.Pointer()
 		bb := b.Pointer()
-		return CompareUintptr(aa, bb)
+		return CompareOrderable(aa, bb)
 
 	case reflect.Chan, reflect.Func:
 		aa := a.Pointer()
 		bb := b.Pointer()
-		return CompareUintptr(aa, bb)
+		return CompareOrderable(aa, bb)
 
 	case reflect.Map:
 		return compareReflectMap(a, b)
@@ -121,30 +138,34 @@ func convertKind(k reflect.Kind) kind {
 		return kindString
 
 	default:
-		return kindInvalid
+		return kindOrthers
 	}
 }
 
 func compareReflectType(a, b reflect.Value) int {
 	aKind := convertKind(a.Kind())
 	bKind := convertKind(b.Kind())
-	if aKind != kindInvalid && aKind == bKind {
+	if aKind != kindOrthers && aKind == bKind {
 		return 0
 	}
 
-	if aKind != kindInvalid || bKind != kindInvalid {
-		return CompareInt(int(aKind), int(bKind))
+	if aKind != kindOrthers || bKind != kindOrthers {
+		return CompareOrderable(aKind, bKind)
 	}
 
-	if a.Type() == b.Type() {
+	aType := a.Type()
+	bType := b.Type()
+
+	if aType == bType {
 		return 0
 	}
 
-	aName := a.String()
-	bName := b.String()
-	if r := CompareInt(len(aName), len(bName)); r != 0 {
+	aName := aType.String()
+	bName := bType.String()
+	if r := CompareOrderable(len(aName), len(bName)); r != 0 {
 		return r
 	}
+
 	if aName < bName {
 		return -1
 	}
@@ -152,16 +173,72 @@ func compareReflectType(a, b reflect.Value) int {
 }
 
 func compareNilReflect(a, b reflect.Value) (int, bool) {
-	if a.IsNil() {
-		if b.IsNil() {
-			return 0, true
-		}
+	aNil := a.IsNil()
+	bNil := b.IsNil()
+	if aNil && bNil {
+		return 0, true
+	}
+	if aNil {
 		return -1, true
 	}
-	if b.IsNil() {
+	if bNil {
 		return 1, true
 	}
 	return 0, false
+}
+
+func compareReflectComparer(a, b reflect.Value) (int, bool) {
+	aType := a.Type()
+	bType := b.Type()
+	if aType != bType {
+		return 0, false
+	}
+	typ := getComparerTypeInfo(aType)
+	if !typ.IsComparer {
+		return 0, false
+	}
+	ins := [...]reflect.Value{a, b}
+	r := typ.Compare.Call(ins[:])[0].Int()
+	return int(r), true
+}
+
+func getComparerTypeInfo(typ reflect.Type) typeInfo {
+	if i, ok := comparerTypes.Load(typ); ok {
+		p, _ := i.(typeInfo)
+		return p
+	}
+
+	res := typeInfo{}
+
+	method, ok := typ.MethodByName("Compare")
+	if !ok {
+		comparerTypes.Store(typ, res)
+		return res
+	}
+
+	mType := method.Type
+	if mType.NumIn() != 2 || mType.In(1) != typ {
+		comparerTypes.Store(typ, res)
+		return res
+	}
+	if mType.NumOut() != 1 || mType.Out(0).Kind() != reflect.Int {
+		comparerTypes.Store(typ, res)
+		return res
+	}
+
+	res.IsComparer = true
+	res.Compare = method.Func
+	comparerTypes.Store(typ, res)
+	return res
+}
+
+func compareReflectPointer(a, b reflect.Value) int {
+	aa := a.Pointer()
+	bb := b.Pointer()
+	if r := CompareOrderable(aa, bb); r == 0 || aa == 0 || bb == 0 {
+		return r
+	}
+	return CompareReflect(a.Elem(), b.Elem())
 }
 
 func compareReflectStruct(a, b reflect.Value) int {
@@ -188,19 +265,26 @@ func compareReflectArray(a, b reflect.Value) int {
 }
 
 func compareReflectMap(a, b reflect.Value) int {
-	if r := CompareInt(a.Len(), b.Len()); r != 0 {
-		return r
-	}
+	// if r := CompareOrderable(a.Len(), b.Len()); r != 0 {
+	// 	return r
+	// }
 
 	aKeys := a.MapKeys()
 	bKeys := b.MapKeys()
 	sort.Sort(sortedReflects(aKeys))
 	sort.Sort(sortedReflects(bKeys))
 
-	for i := range aKeys {
+	al := a.Len()
+	bl := b.Len()
+	l := al
+	if l > bl {
+		l = bl
+	}
+
+	for i := 0; i < l; i++ {
 		aKey, bKey := aKeys[i], bKeys[i]
 		if r := CompareReflect(aKey, bKey); r != 0 {
-			return r
+			return -r
 		}
 
 		aVal, bVal := a.MapIndex(aKey), b.MapIndex(bKey)
@@ -209,7 +293,8 @@ func compareReflectMap(a, b reflect.Value) int {
 		}
 	}
 
-	return 0
+	// return 0
+	return CompareOrderable(al, bl)
 }
 
 func compareReflectSlice(a, b reflect.Value) int {
@@ -225,7 +310,7 @@ func compareReflectSlice(a, b reflect.Value) int {
 			return r
 		}
 	}
-	return CompareInt(al, bl)
+	return CompareOrderable(al, bl)
 }
 
 func compareReflectIface(a, b reflect.Value) int {
@@ -247,7 +332,7 @@ func compareReflectNumberLeftInt(aa int64, b reflect.Value) int {
 	}
 
 	bb := b.Int()
-	return CompareInt64(aa, bb)
+	return CompareOrderable(aa, bb)
 }
 
 func compareReflectNumberLeftUint(aa uint64, b reflect.Value) int {
@@ -262,7 +347,7 @@ func compareReflectNumberLeftUint(aa uint64, b reflect.Value) int {
 	}
 
 	bb := b.Uint()
-	return CompareUint64(aa, bb)
+	return CompareOrderable(aa, bb)
 }
 
 func compareReflectNumberLeftFloat(aa float64, b reflect.Value) int {
@@ -277,7 +362,7 @@ func compareReflectNumberLeftFloat(aa float64, b reflect.Value) int {
 	}
 
 	bb := b.Float()
-	return CompareFloat64(aa, bb)
+	return CompareOrderable(aa, bb)
 }
 
 func compareIntAndFloat(a int64, b float64) int {
@@ -288,7 +373,7 @@ func compareIntAndFloat(a int64, b float64) int {
 	}
 
 	bb := int64(b)
-	r := CompareInt64(a, bb)
+	r := CompareOrderable(a, bb)
 	if r != 0 {
 		return r
 	}
@@ -306,7 +391,7 @@ func compareIntAndUint(a int64, b uint64) int {
 	if a < 0 {
 		return -1
 	}
-	return CompareUint64(uint64(a), b)
+	return CompareOrderable(uint64(a), b)
 }
 
 func compareUintAndFloat(a uint64, b float64) int {
@@ -317,7 +402,7 @@ func compareUintAndFloat(a uint64, b float64) int {
 	}
 
 	bb := uint64(b)
-	r := CompareUint64(a, bb)
+	r := CompareOrderable(a, bb)
 	if r != 0 {
 		return r
 	}
