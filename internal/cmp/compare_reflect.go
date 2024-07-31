@@ -209,26 +209,28 @@ func getComparerTypeInfo(typ reflect.Type) typeInfo {
 	}
 
 	res := typeInfo{}
+	defer func() {
+		comparerTypes.Store(typ, res)
+	}()
 
 	method, ok := typ.MethodByName("Compare")
 	if !ok {
-		comparerTypes.Store(typ, res)
 		return res
 	}
 
 	mType := method.Type
-	if mType.NumIn() != 2 || mType.In(1) != typ {
-		comparerTypes.Store(typ, res)
+	if mType.NumIn() != 2 {
+		return res
+	}
+	if in := mType.In(1); in != typ && (in.Kind() != reflect.Interface || !typ.Implements(in)) {
 		return res
 	}
 	if mType.NumOut() != 1 || mType.Out(0).Kind() != reflect.Int {
-		comparerTypes.Store(typ, res)
 		return res
 	}
 
 	res.IsComparer = true
 	res.Compare = method.Func
-	comparerTypes.Store(typ, res)
 	return res
 }
 
