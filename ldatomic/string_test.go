@@ -5,10 +5,17 @@
 package ldatomic
 
 import (
+	"log"
+	"os"
 	"testing"
 
 	"github.com/smartystreets/goconvey/convey"
 )
+
+func TestMain(m *testing.M) {
+	log.SetFlags(log.Flags() | log.Lshortfile)
+	os.Exit(m.Run())
+}
 
 func TestString(t *testing.T) {
 	convey.Convey(t.Name(), t, func() {

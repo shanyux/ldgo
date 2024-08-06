@@ -23,7 +23,7 @@ type CopyConfig struct {
 //   - Copy(*structA, *structB)
 //   - Copy(*structA, map)
 //   - Copy(*map, structA)
-func Copy(target, source interface{}, cfg ...*CopyConfig) lderr.Error {
+func Copy(target, source interface{}, cfg ...*CopyConfig) error {
 	c := &copyContext{
 		context:    getContext(),
 		CopyConfig: &CopyConfig{},
@@ -37,7 +37,7 @@ func Copy(target, source interface{}, cfg ...*CopyConfig) lderr.Error {
 	return copyWithCheckTarget(c, target, source)
 }
 
-func DeepCopy(target, source interface{}, cfg ...*CopyConfig) lderr.Error {
+func DeepCopy(target, source interface{}, cfg ...*CopyConfig) error {
 	c := &CopyConfig{
 		Clone: true,
 	}
@@ -53,7 +53,7 @@ type copyContext struct {
 	*CopyConfig
 }
 
-func copyWithCheckTarget(c *copyContext, target, source interface{}) lderr.Error {
+func copyWithCheckTarget(c *copyContext, target, source interface{}) error {
 	sVal := valueOf(source)
 	// sVal, _ = valueElment(sVal)
 
@@ -161,7 +161,7 @@ func copyReflectWithIndirect(c *copyContext, target, source reflect.Value) bool 
 
 		switch source.Kind() {
 		case reflect.Interface:
-			source = reflect.ValueOf(source.Interface())
+			source = source.Elem()
 			continue
 
 		case reflect.Ptr:

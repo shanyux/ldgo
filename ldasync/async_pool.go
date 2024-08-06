@@ -7,14 +7,10 @@ package ldasync
 import (
 	"log"
 	"runtime/debug"
-	"sync"
 )
 
 type AsyncPool struct {
-	wg      sync.WaitGroup
-	started sync.Once
-	closed  sync.Once
-	ch      chan func()
+	asyncBase[func()]
 }
 
 func NewAsyncPool(concurrency int) *AsyncPool {
@@ -24,47 +20,32 @@ func NewAsyncPool(concurrency int) *AsyncPool {
 }
 
 func (p *AsyncPool) Start(concurrency int) {
-	if concurrency <= 0 {
-		concurrency = 1
-	}
-
-	p.started.Do(func() { p.start(concurrency) })
+	p.asyncBase.start(concurrency, p.doWithRecover)
 }
 
-func (p *AsyncPool) Wait()  { p.wg.Wait() }
-func (p *AsyncPool) Close() { p.closed.Do(p.close) }
-
-func (p *AsyncPool) Async() chan<- func() { return p.ch }
-
-func (p *AsyncPool) start(concurrency int) {
-	if p.ch == nil {
-		p.ch = make(chan func(), 1)
-	}
-
-	p.wg.Add(concurrency)
-	for i := 0; i < concurrency; i++ {
-		go p.main()
-	}
+func (p *AsyncPool) Reset(concurrency int) {
+	p.asyncBase.reset(concurrency, p.doWithRecover)
 }
 
-func (p *AsyncPool) main() {
-	defer p.wg.Done()
+func (p *AsyncPool) Capacity() int { return p.asyncBase.getCap() }
+func (p *AsyncPool) Running() int  { return p.asyncBase.getLen() }
 
-	for fn := range p.ch {
-		p.doWithRecover(fn)
-	}
+func (p *AsyncPool) init() {
+	p.asyncBase.init(p.doWithRecover)
 }
 
-func (p *AsyncPool) close() {
-	close(p.ch)
+func (p *AsyncPool) Wait()  { p.asyncBase.wait() }
+func (p *AsyncPool) Close() { p.asyncBase.close() }
+
+func (p *AsyncPool) Async() chan<- func() {
+	p.init()
+	return p.asyncBase.async()
 }
 
 func (p *AsyncPool) doWithRecover(fn func()) {
 	defer func() {
 		if err := recover(); err != nil {
 			buf := debug.Stack()
-
-			// log.Println(err, ldconv.BytesToStrUnsafe(buf))
 			log.Printf("[async pool] do async func panic. err:%v, stack:\n%s", err, buf)
 		}
 	}()

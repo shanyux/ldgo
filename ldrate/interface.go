@@ -5,6 +5,7 @@
 package ldrate
 
 import (
+	"context"
 	"time"
 
 	"github.com/distroy/ldgo/v2/ldctx"
@@ -18,22 +19,25 @@ var (
 )
 
 type ILimiter interface {
-	Wait(ctx ldctx.Context) lderr.Error
-	WaitN(ctx ldctx.Context, n int) lderr.Error
+	Wait(c context.Context) error
+	WaitN(c context.Context, n int) error
 
-	Reserve(ctx ldctx.Context) (*Reservation, lderr.Error)
-	ReserveN(ctx ldctx.Context, n int) (*Reservation, lderr.Error)
+	Allow(c context.Context) bool
+	AllowN(c context.Context, n int) bool
+
+	Reserve(c context.Context) (*Reservation, error)
+	ReserveN(c context.Context, n int) (*Reservation, error)
 }
 
 type reserver interface {
-	ReserveN(ctx ldctx.Context, n int) (*Reservation, lderr.Error)
+	ReserveN(c context.Context, n int) (*Reservation, error)
 }
 
-func wait(ctx ldctx.Context, l reserver, n int) lderr.Error {
+func wait(c context.Context, l reserver, n int) error {
 	select {
-	case <-ctx.Done():
+	case <-c.Done():
 		// return lderr.ErrCtxCanceled
-		return ldctx.GetError(ctx)
+		return ldctx.GetError(c)
 	default:
 	}
 
@@ -41,11 +45,11 @@ func wait(ctx ldctx.Context, l reserver, n int) lderr.Error {
 
 	// Determine wait limit
 	waitLimit := rate.InfDuration
-	if deadline, ok := ctx.Deadline(); ok {
+	if deadline, ok := c.Deadline(); ok {
 		waitLimit = deadline.Sub(now)
 	}
 
-	r, err := l.ReserveN(ctx, n)
+	r, err := l.ReserveN(c, n)
 	if err != nil {
 		return err
 	}
@@ -57,7 +61,7 @@ func wait(ctx ldctx.Context, l reserver, n int) lderr.Error {
 	}
 
 	if delay >= waitLimit {
-		r.Cancel()
+		r.CancelAt(now)
 		return lderr.ErrCtxDeadlineNotEnough
 	}
 
@@ -67,13 +71,31 @@ func wait(ctx ldctx.Context, l reserver, n int) lderr.Error {
 	case <-t.C:
 		break
 
-	case <-ctx.Done():
+	case <-c.Done():
 		// Context was canceled before we could proceed.  Cancel the
 		// reservation, which may permit other events to proceed sooner.
-		r.Cancel()
-		return ldctx.GetError(ctx)
+		r.CancelAt(now)
+		return ldctx.GetError(c)
 	}
 
 	// We can proceed.
 	return nil
+}
+
+func allow(c context.Context, l reserver, n int) bool {
+	r, err := l.ReserveN(c, n)
+	if err != nil {
+		return false
+	}
+
+	// Wait if necessary
+	now := time.Now()
+	delay := r.DelayFrom(now)
+	// ldctx.LogI(c, " ** allow delay", zap.Duration("delay", delay))
+	if delay <= 0 {
+		return true
+	}
+
+	r.CancelAt(now)
+	return false
 }

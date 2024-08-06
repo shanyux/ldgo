@@ -23,9 +23,11 @@ func TestGoPool(t *testing.T) {
 			})
 
 			c.So(atomic.LoadInt32(&n), convey.ShouldEqual, 0)
+			c.So(p.Count(), convey.ShouldEqual, 10)
 
 			p.Wait()
 			c.So(atomic.LoadInt32(&n), convey.ShouldEqual, 10)
+			c.So(p.Count(), convey.ShouldEqual, 0)
 		})
 
 		c.Convey("panic", func(c convey.C) {

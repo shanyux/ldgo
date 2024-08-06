@@ -5,6 +5,8 @@
 syntax = "proto2";
 package ldtestproto;
 
+option go_package = ".;ldtestproto";
+
 message TestProto {
     optional string str = 1;
     optional int64  i64 = 2;

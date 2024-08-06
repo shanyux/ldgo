@@ -22,7 +22,7 @@ func TestRBTree_Range(t *testing.T) {
 			it := rbtree.Range()
 			for _, n := range _nums {
 				convey.So(it.HasNext(), convey.ShouldBeTrue)
-				convey.So(it.Data(), convey.ShouldEqual, n)
+				convey.So(it.Get(), convey.ShouldEqual, n)
 				it.Next()
 			}
 			convey.So(it.HasNext(), convey.ShouldBeFalse)
@@ -41,15 +41,15 @@ func TestRBTree_Range(t *testing.T) {
 				it := rbtree.SearchRange(d)
 
 				convey.So(it.HasNext(), convey.ShouldBeTrue)
-				convey.So(it.Data(), convey.ShouldEqual, d)
+				convey.So(it.Get(), convey.ShouldEqual, d)
 				convey.So(func() { it.Next() }, convey.ShouldNotPanic)
 
 				convey.So(it.HasNext(), convey.ShouldBeTrue)
-				convey.So(it.Data(), convey.ShouldEqual, d)
+				convey.So(it.Get(), convey.ShouldEqual, d)
 				convey.So(func() { it.Next() }, convey.ShouldNotPanic)
 
 				convey.So(it.HasNext(), convey.ShouldBeTrue)
-				convey.So(it.Data(), convey.ShouldEqual, d)
+				convey.So(it.Get(), convey.ShouldEqual, d)
 				convey.So(func() { it.Next() }, convey.ShouldNotPanic)
 
 				convey.So(it.HasNext(), convey.ShouldBeFalse)
@@ -70,7 +70,7 @@ func TestRBTree_ReverseRange(t *testing.T) {
 			for i := len(_nums) - 1; i >= 0; i-- {
 				n := _nums[i]
 				convey.So(it.HasNext(), convey.ShouldBeTrue)
-				convey.So(it.Data(), convey.ShouldEqual, n)
+				convey.So(it.Get(), convey.ShouldEqual, n)
 				it.Next()
 			}
 			convey.So(it.HasNext(), convey.ShouldBeFalse)
@@ -89,15 +89,15 @@ func TestRBTree_ReverseRange(t *testing.T) {
 				it := rbtree.RSearchRange(d)
 
 				convey.So(it.HasNext(), convey.ShouldBeTrue)
-				convey.So(it.Data(), convey.ShouldEqual, d)
+				convey.So(it.Get(), convey.ShouldEqual, d)
 				convey.So(func() { it.Next() }, convey.ShouldNotPanic)
 
 				convey.So(it.HasNext(), convey.ShouldBeTrue)
-				convey.So(it.Data(), convey.ShouldEqual, d)
+				convey.So(it.Get(), convey.ShouldEqual, d)
 				convey.So(func() { it.Next() }, convey.ShouldNotPanic)
 
 				convey.So(it.HasNext(), convey.ShouldBeTrue)
-				convey.So(it.Data(), convey.ShouldEqual, d)
+				convey.So(it.Get(), convey.ShouldEqual, d)
 				convey.So(func() { it.Next() }, convey.ShouldNotPanic)
 
 				convey.So(it.HasNext(), convey.ShouldBeFalse)

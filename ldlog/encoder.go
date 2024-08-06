@@ -137,15 +137,27 @@ func (enc *loggerEncoder) resetReflectBuf() {
 	}
 }
 
-func (enc *loggerEncoder) AddReflected(key string, obj interface{}) error {
+var nullLiteralBytes = []byte("null")
+
+func (enc *loggerEncoder) encodeReflected(obj interface{}) ([]byte, error) {
+	if obj == nil {
+		return nullLiteralBytes, nil
+	}
 	enc.resetReflectBuf()
-	err := enc.reflectEnc.Encode(obj)
+	if err := enc.reflectEnc.Encode(obj); err != nil {
+		return nil, err
+	}
+	enc.reflectBuf.TrimNewline()
+	return enc.reflectBuf.Bytes(), nil
+}
+
+func (enc *loggerEncoder) AddReflected(key string, obj interface{}) error {
+	val, err := enc.encodeReflected(obj)
 	if err != nil {
 		return err
 	}
-	enc.reflectBuf.TrimNewline()
 	enc.addKey(key)
-	_, err = enc.buf.Write(enc.reflectBuf.Bytes())
+	_, err = enc.buf.Write(val)
 	return err
 }
 
@@ -232,15 +244,13 @@ func (enc *loggerEncoder) AppendInt64(val int64) {
 	enc.buf.AppendInt(val)
 }
 
-func (enc *loggerEncoder) AppendReflected(val interface{}) error {
-	enc.resetReflectBuf()
-	err := enc.reflectEnc.Encode(val)
+func (enc *loggerEncoder) AppendReflected(obj interface{}) error {
+	val, err := enc.encodeReflected(obj)
 	if err != nil {
 		return err
 	}
-	enc.reflectBuf.TrimNewline()
 	enc.addElementSeparator()
-	_, err = enc.buf.Write(enc.reflectBuf.Bytes())
+	_, err = enc.buf.Write(val)
 	return err
 }
 

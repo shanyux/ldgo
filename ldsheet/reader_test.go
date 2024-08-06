@@ -91,7 +91,7 @@ func Test_Reader(t *testing.T) {
 					ShopId:  1100,
 					Name:    "aaa",
 					Prefix:  "xxxx",
-					HttpUrl: ldptr.NewString("http://a"),
+					HttpUrl: ldptr.New("http://a"),
 					Int:     0x100,
 				})
 
@@ -101,8 +101,8 @@ func Test_Reader(t *testing.T) {
 					ShopId:  1200,
 					Name:    "bbb",
 					Prefix:  "yyyy",
-					HttpUrl: ldptr.NewString("http://b"),
-					Uint:    ldptr.NewUint(0x200),
+					HttpUrl: ldptr.New("http://b"),
+					Uint:    ldptr.New[uint](0x200),
 				})
 
 				convey.So(r.Read(p), convey.ShouldBeNil)
@@ -133,14 +133,14 @@ func Test_Reader(t *testing.T) {
 						ID:      100,
 						Name:    "aaa",
 						Prefix:  "xxxx",
-						HttpUrl: ldptr.NewString("http://a"),
+						HttpUrl: ldptr.New("http://a"),
 						Int:     0x100,
 					}, {
 						ID:      200,
 						Name:    "bbb",
 						Prefix:  "yyyy",
-						HttpUrl: ldptr.NewString("http://b"),
-						Uint:    ldptr.NewUint(0x200),
+						HttpUrl: ldptr.New("http://b"),
+						Uint:    ldptr.New[uint](0x200),
 					}, {
 						ID:   300,
 						Name: "ccc",
@@ -156,14 +156,14 @@ func Test_Reader(t *testing.T) {
 						ID:      100,
 						Name:    "aaa",
 						Prefix:  "xxxx",
-						HttpUrl: ldptr.NewString("http://a"),
+						HttpUrl: ldptr.New("http://a"),
 						Int:     0x100,
 					}, {
 						ID:      200,
 						Name:    "bbb",
 						Prefix:  "yyyy",
-						HttpUrl: ldptr.NewString("http://b"),
-						Uint:    ldptr.NewUint(0x200),
+						HttpUrl: ldptr.New("http://b"),
+						Uint:    ldptr.New[uint](0x200),
 					}, {
 						ID:   300,
 						Name: "ccc",

@@ -12,14 +12,8 @@ import (
 
 	"github.com/distroy/ldgo/v2/ldctx"
 	"github.com/distroy/ldgo/v2/lderr"
-	"github.com/distroy/ldgo/v2/ldlog"
 	"github.com/distroy/ldgo/v2/ldrand"
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
-)
-
-type (
-	StdContext = context.Context
 )
 
 var (
@@ -66,8 +60,8 @@ func GetSequence(c context.Context) string {
 func GetRequest(c context.Context) interface{}  { return c.Value(GinKeyRequest) }
 func GetRenderer(c context.Context) interface{} { return c.Value(GinKeyRenderer) }
 
-func GetError(c StdContext) Error {
-	r, _ := c.Value(GinKeyError).(Error)
+func GetError(c context.Context) error {
+	r, _ := c.Value(GinKeyError).(error)
 	return r
 }
 
@@ -113,7 +107,7 @@ func newContext(g *gin.Context) *Context {
 	now := time.Now()
 	seq := newSequence(g)
 
-	ctx := ldctx.New(g, zap.String(ldlog.GetSequenceKey(), seq))
+	ctx := ldctx.WithSequence(g, seq)
 
 	c := &Context{
 		ginCtx:    g,
@@ -170,34 +164,28 @@ func (c *Context) AbortWithData(data interface{}) {
 	c.AbortWithErrorData(lderr.ErrSuccess, data)
 }
 
-func (c *Context) AbortWithError(err Error) {
+func (c *Context) AbortWithError(err error) {
 	c.AbortWithErrorData(err, struct{}{})
 }
 
-func (c *Context) AbortWithErrorData(err Error, data interface{}) {
+func (c *Context) AbortWithErrorData(err error, data interface{}) {
 	if data == nil {
 		data = struct{}{}
-	}
-
-	if err == nil {
-		err = lderr.ErrSuccess
 	}
 
 	response := &CommResponse{
 		Sequence: c.sequence,
 		Cost:     time.Since(c.beginTime).String(),
-		ErrCode:  err.Code(),
-		ErrMsg:   err.Error(),
+		ErrCode:  lderr.GetCode(err),
+		ErrMsg:   lderr.GetMessage(err),
 		Data:     data,
 	}
 
-	if e, ok := err.(lderr.ErrorWithDetails); ok {
-		response.ErrDetails = e.Details()
-	}
+	response.ErrDetails = lderr.GetDetails(err)
 
 	c.setError(err)
 	c.setResponce(response)
-	c.AbortWithStatusJSON(err.Status(), response)
+	c.AbortWithStatusJSON(lderr.GetStatus(err), response)
 }
 
 func (c *Context) setHandler(h string) { c.handler = h }
@@ -212,13 +200,13 @@ func (c *Context) GetMethod() string  { return c.method }
 func (c *Context) GetBeginTime() time.Time { return c.beginTime }
 func (c *Context) GetSequence() string     { return c.sequence }
 
-func (c *Context) GetError() Error            { return GetError(c.Gin()) }
+func (c *Context) GetError() error            { return GetError(c.Gin()) }
 func (c *Context) GetResponse() *CommResponse { return GetResponse(c.Gin()) }
 func (c *Context) GetRequest() interface{}    { return GetRequest(c.Gin()) }
 func (c *Context) GetRenderer() interface{}   { return GetRenderer(c.Gin()) }
 
-func (c Context) setError(err Error) {
-	if err != nil && err.Code() != lderr.ErrSuccess.Code() {
+func (c Context) setError(err error) {
+	if err != nil && lderr.GetCode(err) != 0 {
 		c.Gin().Set(GinKeyError, err)
 	}
 }

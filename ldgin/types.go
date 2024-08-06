@@ -6,18 +6,15 @@ package ldgin
 
 import (
 	"github.com/distroy/ldgo/v2/ldctx"
-	"github.com/distroy/ldgo/v2/lderr"
 	"github.com/gin-gonic/gin"
 )
 
-type Error = lderr.Error
-
 type Parser interface {
-	Parse(Context) Error
+	Parse(*Context) error
 }
 
 type Validator interface {
-	Validate(Context) Error
+	Validate(*Context) error
 }
 
 type ParseValidator interface {
@@ -26,15 +23,15 @@ type ParseValidator interface {
 }
 
 type Renderer interface {
-	Render(Context)
+	Render(*Context)
 }
 
 type GinParser interface {
-	Parse(*gin.Context) Error
+	Parse(*gin.Context) error
 }
 
 type GinValidator interface {
-	Validate(*gin.Context) Error
+	Validate(*gin.Context) error
 }
 
 type GinParseValidator interface {
@@ -64,22 +61,22 @@ type Response interface{}
 
 // Handler must be:
 // func (*gin.Context)
-// func (*gin.Context) Error
-// func (*gin.Context, Request) Error
-// func (*gin.Context) (Response, Error)
-// func (*gin.Context, Request) (Response, Error)
+// func (*gin.Context) error
+// func (*gin.Context, Request) error
+// func (*gin.Context) (Response, error)
+// func (*gin.Context, Request) (Response, error)
 // func (*Context)
-// func (*Context) Error
-// func (*Context, Request) Error
-// func (*Context) (Response, Error)
-// func (*Context, Request) (Response, Error)
+// func (*Context) error
+// func (*Context, Request) error
+// func (*Context) (Response, error)
+// func (*Context, Request) (Response, error)
 type Handler interface{}
 
 // Midware must be:
 // func (*gin.Context)
-// func (*gin.Context, Request) Error
+// func (*gin.Context, Request) error
 // func (*Context)
-// func (*Context, Request) Error
+// func (*Context, Request) error
 type Midware interface{}
 
 type CommResponse struct {
@@ -104,4 +101,7 @@ type routerAdapter interface {
 	BasePath() string
 
 	Handle(method, path string, handler Handler, midwares ...Midware) routerAdapter
+
+	// calculateAbsolutePath(relativePath string) string
+	calculateFullPath(relativePath string) string
 }

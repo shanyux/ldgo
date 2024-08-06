@@ -43,24 +43,24 @@ func newTestFlagSet() *FlagSet {
 }
 
 func TestFlagSet_wrigeUsageHeader(t *testing.T) {
-	convey.Convey(t.Name(), t, func() {
-		convey.Convey(`name == "" && no args`, func() {
+	convey.Convey(t.Name(), t, func(c convey.C) {
+		c.Convey(`name == "" && no args`, func(c convey.C) {
 			s := &FlagSet{
 				name: "",
 				args: nil,
 			}
 			b := &strings.Builder{}
 			s.writeUsageHeader(b)
-			convey.So(b.String(), convey.ShouldEqual, "Usage of <command>:\nFlags:\n")
+			c.So(b.String(), convey.ShouldEqual, "Usage of <command>:\nFlags:\n")
 		})
-		convey.Convey(`name == "abc" && args.meta == ""`, func() {
+		c.Convey(`name == "abc" && args.meta == ""`, func(c convey.C) {
 			s := &FlagSet{
 				name: "abc",
 				args: &Flag{Meta: ""},
 			}
 			b := &strings.Builder{}
 			s.writeUsageHeader(b)
-			convey.So(b.String(), convey.ShouldEqual, "Usage: abc [<flags>] [<arg>...]\n\nFlags:\n")
+			c.So(b.String(), convey.ShouldEqual, "Usage: abc [<flags>] [<arg>...]\n\nFlags:\n")
 		})
 	})
 }
@@ -70,7 +70,7 @@ func TestFlagSet_wrigeUsage(t *testing.T) {
 		b := &strings.Builder{}
 		s := newTestFlagSet()
 
-		convey.Convey("normal value", func() {
+		c.Convey("normal value", func(c convey.C) {
 			type Flags struct {
 				Top      int      `ldflag:"name:top; meta:N; usage:show the top <N>"`
 				Avg      bool     `ldflag:"usage:show the average complexity"`
@@ -91,7 +91,7 @@ func TestFlagSet_wrigeUsage(t *testing.T) {
 			s.Model(flags)
 			s.writeUsage(b)
 
-			convey.So(b.String(), convey.ShouldEqual, `Usage: unittest [<flags>] [path...]
+			c.So(b.String(), convey.ShouldEqual, `Usage: unittest [<flags>] [path...]
 
 Flags:
         -top <N>
@@ -113,7 +113,7 @@ Flags:
 `)
 		})
 
-		convey.Convey("pointer value", func() {
+		c.Convey("pointer value", func(c convey.C) {
 			type Flags struct {
 				Top      *int     `ldflag:"name:top; meta:N; usage:show the top <N>"`
 				Avg      *bool    `ldflag:"usage:show the average complexity"`
@@ -134,7 +134,7 @@ Flags:
 			s.Model(flags)
 			s.writeUsage(b)
 
-			convey.So(b.String(), convey.ShouldEqual, `Usage: unittest [<flags>] [path...]
+			c.So(b.String(), convey.ShouldEqual, `Usage: unittest [<flags>] [path...]
 
 Flags:
         -top <N>
@@ -155,7 +155,7 @@ Flags:
                         "\\.pb\\.go$"
 `)
 		})
-		convey.Convey("value with default", func() {
+		c.Convey("value with default", func(c convey.C) {
 			type Flags struct {
 				Includes testIncludes `ldflag:"name:include; meta:regexp; usage:include file regexps"`
 				Excludes testExcludes `ldflag:"name:exclude; meta:regexp; usage:exclude file regexps"`
@@ -165,7 +165,7 @@ Flags:
 			s.Model(flags)
 			s.writeUsage(b)
 
-			convey.So(b.String(), convey.ShouldEqual, `Usage of unittest:
+			c.So(b.String(), convey.ShouldEqual, `Usage of unittest:
 Flags:
         -include <regexp>
                 include file regexps
@@ -187,7 +187,7 @@ Flags:
 			s.Model(flags)
 			s.writeUsage(b)
 
-			convey.So(b.String(), convey.ShouldEqual, `Usage of unittest:
+			c.So(b.String(), convey.ShouldEqual, `Usage of unittest:
 Flags:
         -csv
 `)
@@ -210,23 +210,24 @@ func TestFlagSet_Model(t *testing.T) {
 	}
 
 	type Flags struct {
-		Top      int      `ldflag:"name:top; meta:N; usage:show the top <N>"`
-		Avg      bool     `ldflag:"usage:show the average complexity"`
-		DebugLog bool     `ldflag:"usage:print debug log; bool"`
-		Rate     float64  `ldflag:"default:0.65; usage:"`
-		Branch   string   `ldflag:"meta:branch; usage:git branch name"`
-		Pathes   []string `ldflag:"args; meta:path; default:."`
+		Top      int          `ldflag:"name:top; meta:N; usage:show the top <N>"`
+		Avg      bool         `ldflag:"usage:show the average complexity"`
+		DebugLog bool         `ldflag:"usage:print debug log; bool"`
+		Rate     float64      `ldflag:"default:0.65; usage:"`
+		Branch   string       `ldflag:"meta:branch; usage:git branch name"`
+		Pathes   []string     `ldflag:"args; meta:path; default:."`
+		Includes testExcludes `ldflag:"-"`
 	}
 
-	convey.Convey(t.Name(), t, func() {
-		convey.Convey("", func() {
+	convey.Convey(t.Name(), t, func(c convey.C) {
+		c.Convey("", func(c convey.C) {
 			flags := &Flags{}
 
 			s := NewFlagSet()
 			s.Model(flags)
 			testClearFlagSet(s)
 
-			convey.So(s.flagSlice, convey.ShouldResemble, []*Flag{
+			c.So(s.flagSlice, convey.ShouldResemble, []*Flag{
 				{
 					lvl:     0,
 					Name:    "top",
@@ -273,7 +274,7 @@ func TestFlagSet_Model(t *testing.T) {
 					Bool:    false,
 				},
 			})
-			convey.So(s.args, convey.ShouldResemble, &Flag{
+			c.So(s.args, convey.ShouldResemble, &Flag{
 				lvl:     0,
 				Name:    "pathes",
 				Meta:    "path",
@@ -287,10 +288,10 @@ func TestFlagSet_Model(t *testing.T) {
 }
 
 func TestFlagSet_Parse(t *testing.T) {
-	convey.Convey(t.Name(), t, func() {
+	convey.Convey(t.Name(), t, func(c convey.C) {
 		s := newTestFlagSet()
 
-		convey.Convey("normal value", func() {
+		c.Convey("normal value", func(c convey.C) {
 			type Flags struct {
 				Top      int      `ldflag:"name:top; meta:N; usage:show the top <N>"`
 				Avg      bool     `ldflag:"usage:show the average complexity"`
@@ -300,7 +301,7 @@ func TestFlagSet_Parse(t *testing.T) {
 				Pathes   []string `ldflag:"args; meta:path; default:."`
 			}
 
-			convey.Convey("no set default", func() {
+			c.Convey("no set default", func(c convey.C) {
 				flags := &Flags{}
 				s.EnableDefault(false)
 				s.Model(flags)
@@ -310,8 +311,8 @@ func TestFlagSet_Parse(t *testing.T) {
 					"-avg", "1",
 					"-debug-log",
 				})
-				convey.So(err, convey.ShouldBeNil)
-				convey.So(flags, convey.ShouldResemble, &Flags{
+				c.So(err, convey.ShouldBeNil)
+				c.So(flags, convey.ShouldResemble, &Flags{
 					Top:      5,
 					Avg:      true,
 					DebugLog: true,
@@ -321,7 +322,7 @@ func TestFlagSet_Parse(t *testing.T) {
 				})
 			})
 
-			convey.Convey("set default", func() {
+			c.Convey("set default", func(c convey.C) {
 				flags := &Flags{}
 				s.EnableDefault(true)
 				s.Model(flags)
@@ -331,8 +332,8 @@ func TestFlagSet_Parse(t *testing.T) {
 					"-avg", "1",
 					"-debug-log",
 				})
-				convey.So(err, convey.ShouldBeNil)
-				convey.So(flags, convey.ShouldResemble, &Flags{
+				c.So(err, convey.ShouldBeNil)
+				c.So(flags, convey.ShouldResemble, &Flags{
 					Top:      5,
 					Avg:      true,
 					DebugLog: true,
@@ -343,7 +344,7 @@ func TestFlagSet_Parse(t *testing.T) {
 			})
 		})
 
-		convey.Convey("ptr value", func() {
+		c.Convey("ptr value", func(c convey.C) {
 			type Flags struct {
 				Over     *int     `ldflag:"name:over; meta:N; default:15; usage:show functions with complexity <N>"`
 				Top      *int     `ldflag:"name:top; meta:N; usage:show the top <N>"`
@@ -354,7 +355,7 @@ func TestFlagSet_Parse(t *testing.T) {
 				Pathes   []string `ldflag:"args; meta:path; default:."`
 			}
 
-			convey.Convey("no set default", func() {
+			c.Convey("no set default", func(c convey.C) {
 				flags := &Flags{}
 				s.EnableDefault(false)
 				s.Model(flags)
@@ -364,19 +365,19 @@ func TestFlagSet_Parse(t *testing.T) {
 					"-avg", "1",
 					"-debug-log",
 				})
-				convey.So(err, convey.ShouldBeNil)
-				convey.So(flags, convey.ShouldResemble, &Flags{
+				c.So(err, convey.ShouldBeNil)
+				c.So(flags, convey.ShouldResemble, &Flags{
 					Over:     nil,
-					Top:      ldptr.NewInt(5),
-					Avg:      ldptr.NewBool(true),
-					DebugLog: ldptr.NewBool(true),
+					Top:      ldptr.New(5),
+					Avg:      ldptr.New(true),
+					DebugLog: ldptr.New(true),
 					Rate:     nil,
 					Branch:   nil,
 					Pathes:   []string{},
 				})
 			})
 
-			convey.Convey("set default", func() {
+			c.Convey("set default", func(c convey.C) {
 				flags := &Flags{}
 				s.EnableDefault(true)
 				s.Model(flags)
@@ -386,16 +387,47 @@ func TestFlagSet_Parse(t *testing.T) {
 					"-avg", "1",
 					"-debug-log",
 				})
-				convey.So(err, convey.ShouldBeNil)
-				convey.So(flags, convey.ShouldResemble, &Flags{
-					Over:     ldptr.NewInt(15),
-					Top:      ldptr.NewInt(5),
-					Avg:      ldptr.NewBool(true),
-					DebugLog: ldptr.NewBool(true),
-					Rate:     ldptr.NewFloat64(0.65),
+				c.So(err, convey.ShouldBeNil)
+				c.So(flags, convey.ShouldResemble, &Flags{
+					Over:     ldptr.New(15),
+					Top:      ldptr.New(5),
+					Avg:      ldptr.New(true),
+					DebugLog: ldptr.New(true),
+					Rate:     ldptr.New(0.65),
 					Branch:   nil,
 					Pathes:   []string{"."},
 				})
+			})
+		})
+
+		c.Convey("options", func(c convey.C) {
+			type Flags struct {
+				Method *string `ldflag:"name:method; options: a, b, c"`
+			}
+
+			c.Convey("succ", func(c convey.C) {
+				flags := &Flags{}
+				s.EnableDefault(false)
+				s.Model(flags)
+
+				err := s.Parse([]string{
+					"-method", "a",
+				})
+				c.So(err, convey.ShouldBeNil)
+				c.So(flags, convey.ShouldResemble, &Flags{
+					Method: ldptr.New("a"),
+				})
+			})
+
+			c.Convey("fail", func(c convey.C) {
+				flags := &Flags{}
+				s.EnableDefault(true)
+				s.Model(flags)
+
+				err := s.Parse([]string{
+					"-method", "d",
+				})
+				c.So(err, convey.ShouldNotBeNil)
 			})
 		})
 	})

@@ -9,5 +9,5 @@ type (
 	Bytes   = Any[[]byte]
 )
 
-func NewStrings(d []string) *Strings { return NewAny[[]string](d) }
-func NewBytes(d []byte) *Bytes       { return NewAny[[]byte](d) }
+func NewStrings(d []string) *Strings { return NewAny(d) }
+func NewBytes(d []byte) *Bytes       { return NewAny(d) }

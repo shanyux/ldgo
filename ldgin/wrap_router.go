@@ -4,7 +4,14 @@
 
 package ldgin
 
-import "net/http"
+import (
+	"net/http"
+	"path"
+	"strings"
+
+	"github.com/distroy/ldgo/v2/ldctx"
+	"go.uber.org/zap"
+)
 
 // Router is http router
 type Router struct {
@@ -37,7 +44,7 @@ func (w Router) BasePath() string {
 }
 
 func (w Router) Handle(method, path string, h Handler, ms ...Midware) {
-	w.router = w.router.Handle(method, path, h, ms...)
+	w.router.Handle(method, path, h, ms...)
 }
 
 func (w Router) GET(p string, h Handler, ms ...Midware)    { w.Handle(http.MethodGet, p, h, ms...) }
@@ -63,4 +70,68 @@ func (w Router) Any(p string, h Handler, ms ...Midware) {
 		http.MethodTrace,
 	}
 	w.Match(anyMethods, p, h, ms...)
+}
+
+// StaticFile registers a single route in order to serve a single file of the local filesystem.
+// router.StaticFile("favicon.ico", "./resources/favicon.ico")
+func (w Router) StaticFile(relativePath, filepath string) {
+	if strings.Contains(relativePath, ":") || strings.Contains(relativePath, "*") {
+		panic("URL parameters can not be used when serving a static file")
+	}
+	handler := func(c *Context) {
+		c.File(filepath)
+	}
+	w.Handle(http.MethodGet, relativePath, handler)
+	w.Handle(http.MethodHead, relativePath, handler)
+}
+
+// Static serves files from the given file system root.
+// Internally a http.FileServer is used, therefore http.NotFound is used instead
+// of the Router's NotFound handler.
+// To use the operating system's file system implementation,
+// use :
+//
+//	router.Static("/static", "/var/www")
+func (w Router) Static(relativePath, root string) {
+	w.StaticFS(relativePath, Dir(root, false))
+}
+
+// StaticFS works just like `Static()` but a custom `http.FileSystem` can be used instead.
+// GinUtil by default user: Dir()
+func (w Router) StaticFS(relativePath string, fs http.FileSystem) {
+	if strings.Contains(relativePath, ":") || strings.Contains(relativePath, "*") {
+		panic("URL parameters can not be used when serving a static folder")
+	}
+	handler := w.createStaticHandler(relativePath, fs)
+	urlPattern := path.Join(relativePath, "/*filepath")
+
+	// Register GET and HEAD handlers
+	w.Handle(http.MethodGet, urlPattern, handler)
+	w.Handle(http.MethodHead, urlPattern, handler)
+	// return w
+}
+
+func (w Router) createStaticHandler(relativePath string, fs http.FileSystem) func(c *Context) {
+	fullPath := w.router.calculateFullPath(relativePath)
+	fileServer := http.StripPrefix(fullPath, http.FileServer(fs))
+
+	return func(c *Context) {
+		file := c.Param("filepath")
+		ldctx.LogI(c, "static fs", zap.String("filepath", file))
+
+		if _, noListing := fs.(onlyFilesFS); noListing {
+			c.Writer.WriteHeader(http.StatusNotFound)
+		}
+
+		// Check if file exists and/or if we have permission to access it
+		f, err := fs.Open(file)
+		if err != nil {
+			ldctx.LogE(c, "filepath is not exists", zap.String("filepath", file))
+			c.Writer.WriteHeader(http.StatusNotFound)
+			return
+		}
+		f.Close()
+
+		fileServer.ServeHTTP(c.Writer, c.Request)
+	}
 }

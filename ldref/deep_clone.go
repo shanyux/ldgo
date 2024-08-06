@@ -31,7 +31,7 @@ func deepClone(x0 reflect.Value) reflect.Value {
 			return x0
 		}
 
-		x0 = reflect.ValueOf(x0.Interface())
+		x0 = x0.Elem()
 	}
 
 	switch x0.Kind() {
@@ -63,11 +63,16 @@ func deepClonePtr(x0 reflect.Value) reflect.Value {
 	}
 
 	x1 := reflect.New(x0.Type().Elem())
+
 	x1.Elem().Set(deepClone(x0.Elem()))
 	return x1
 }
 
 func deepCloneStruct(x0 reflect.Value) reflect.Value {
+	if isSyncType(x0) {
+		return reflect.Zero(x0.Type())
+	}
+
 	x1 := reflect.New(x0.Type()).Elem()
 	if !x0.CanAddr() {
 		x1.Set(x0)
@@ -101,6 +106,9 @@ func deepCloneArray(x0 reflect.Value) reflect.Value {
 }
 
 func deepCloneSlice(x0 reflect.Value) reflect.Value {
+	if x0.IsNil() {
+		return x0
+	}
 	l0 := x0.Len()
 	x1 := reflect.MakeSlice(reflect.SliceOf(x0.Type().Elem()), l0, l0)
 	for i := 0; i < l0; i++ {

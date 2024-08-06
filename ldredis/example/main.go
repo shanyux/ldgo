@@ -18,15 +18,12 @@ import (
 )
 
 func init() {
-	log := ldlog.NewLogger(ldlog.Level("debug"))
+	log := ldlog.New(ldlog.Level("debug"))
 	ldlog.SetDefault(log)
 }
 
 func newRedis(ctx ldctx.Context) *ldredis.Redis {
-	rds := ldredis.NewByConfig(&ldredis.Config{
-		Addr: "proxy.codis-toc.test.shopeemobile.com:9000",
-	})
-	return rds
+	return ldredis.MustNewTestRedis()
 }
 
 func pipeline(ctx ldctx.Context) {
@@ -48,10 +45,10 @@ func pipeline(ctx ldctx.Context) {
 	p.Get(ctx, keys[1])
 	p.Get(ctx, keys[2])
 	cmds, err := p.Exec(ctx)
-	ctx.LogI("pipeline return", zap.Error(err))
+	ldctx.LogI(ctx, "pipeline return", zap.Error(err))
 	for _, v := range cmds {
 		cmd, _ := v.(*ldredis.StringCmd)
-		ctx.LogI("pipeline res", zap.Reflect("cmd", cmd.Args()), zap.String("val", cmd.Val()), zap.Error(cmd.Err()))
+		ldctx.LogI(ctx, "pipeline res", zap.Reflect("cmd", cmd.Args()), zap.String("val", cmd.Val()), zap.Error(cmd.Err()))
 	}
 }
 
@@ -60,14 +57,16 @@ func slice(ctx ldctx.Context) {
 	key := "test:hash:hmget"
 	defer rds.Close()
 
-	rds.HSet(ctx, key, "1", 1)
+	rds1 := rds.WithReport(LogReporter{})
+
+	rds1.HSet(ctx, key, "1", 1)
 	rds.HSet(ctx, key, "2", "abc")
 	rds.HSet(ctx, key, "3", 128.1)
 
 	cmd := rds.HMGet(ctx, key, "1", "2", "3", "4")
-	ctx.LogI("", zap.Stringer("type", reflect.TypeOf(cmd.Val())), zap.Reflect("value", cmd.Val()))
+	ldctx.LogI(ctx, "", zap.Stringer("type", reflect.TypeOf(cmd.Val())), zap.Reflect("value", cmd.Val()))
 	for i, v := range cmd.Val() {
-		ctx.LogIf("idx:%d, type:%T, value:%v", i, v, v)
+		ldctx.LogIf(ctx, "idx:%d, type:%T, value:%v", i, v, v)
 	}
 }
 
@@ -83,19 +82,19 @@ func codecStruct(ctx ldctx.Context) {
 	defer rds.Close()
 	key := "test:codec:struct"
 
-	sCmd := ldrediscodec.New[any](rds, ldrediscodec.JsonCodec[any]{}).Set(ctx, key, &codecStruct{
+	sCmd := ldrediscodec.New(rds, ldrediscodec.Json[any]()).Set(ctx, key, &codecStruct{
 		Str1: "aaa",
 		Str2: "bbb",
 		Int1: 111,
 		Int2: 222,
 	}, time.Minute)
-	ctx.LogI("cmd", zap.Reflect("cmd", sCmd.Args()))
+	ldctx.LogI(ctx, "cmd", zap.Reflect("cmd", sCmd.Args()))
 
-	gCmd0 := ldrediscodec.New[*codecStruct](rds, ldrediscodec.JsonCodec[*codecStruct]{}).Get(ctx, key)
-	ctx.LogIf("type:%T, value:%v", gCmd0.Val(), gCmd0.Val())
+	gCmd0 := ldrediscodec.New(rds, ldrediscodec.Json[*codecStruct]()).Get(ctx, key)
+	ldctx.LogIf(ctx, "type:%T, value:%v", gCmd0.Val(), gCmd0.Val())
 
-	gCmd1 := ldrediscodec.New[any](rds, ldrediscodec.JsonCodec[any]{}).Get(ctx, key)
-	ctx.LogIf("type:%T, value:%v", gCmd1.Val(), gCmd1.Val())
+	gCmd1 := ldrediscodec.New(rds, ldrediscodec.Json[any]()).Get(ctx, key)
+	ldctx.LogIf(ctx, "type:%T, value:%v", gCmd1.Val(), gCmd1.Val())
 }
 
 func codecBaseType(ctx ldctx.Context) {
@@ -103,7 +102,7 @@ func codecBaseType(ctx ldctx.Context) {
 	defer rds.Close()
 
 	key := "test:codec:basetype"
-	cli := ldrediscodec.New[any](rds, ldrediscodec.JsonCodec[any]{})
+	cli := ldrediscodec.New(rds, ldrediscodec.Json[any]())
 	cli.HMSetMap(ctx, key, map[string]interface{}{
 		"i1": 1234,
 		"s1": "abc",
@@ -115,7 +114,7 @@ func codecBaseType(ctx ldctx.Context) {
 	})
 
 	cmd := cli.HGetAll(ctx, key)
-	ctx.LogI("", zap.Reflect("cmd", cmd.Args()), zap.Stringer("type", reflect.TypeOf(cmd.Val())), zap.Reflect("val", cmd.Val()))
+	ldctx.LogI(ctx, "", zap.Reflect("cmd", cmd.Args()), zap.Stringer("type", reflect.TypeOf(cmd.Val())), zap.Reflect("val", cmd.Val()))
 }
 
 func main() {
@@ -128,4 +127,17 @@ func main() {
 	fmt.Fprintln(os.Stderr)
 	codecBaseType(ctx)
 	fmt.Fprintln(os.Stderr)
+}
+
+type LogReporter struct{}
+
+func (_ LogReporter) Report(cmd ldredis.Cmder, d time.Duration) {
+	ldctx.LogI(nil, "report redis cmd", zap.Reflect("cmd", cmd.Args()))
+}
+
+func (_ LogReporter) ReportPipeline(cmds []ldredis.Cmder, d time.Duration) {
+	ldctx.LogI(nil, "report redis pipline cmd")
+	for i, cmd := range cmds {
+		ldctx.LogI(nil, "report redis pipline cmd", zap.Int("idx", i), zap.Reflect("cmd", cmd.Args()))
+	}
 }

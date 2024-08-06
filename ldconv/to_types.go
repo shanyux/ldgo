@@ -222,6 +222,11 @@ func ToUint64(v interface{}) (uint64, error) {
 	return 0, _ERR_INVALID_TYPE
 }
 
+func ToUintptr(v interface{}) (uintptr, error) {
+	n, err := ToUint64(v)
+	return uintptr(n), err
+}
+
 func ToFloat32(v interface{}) (float32, error) {
 	switch vv := v.(type) {
 	case bool:

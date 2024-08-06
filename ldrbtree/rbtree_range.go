@@ -17,8 +17,8 @@ func (p *RBTreeRange[T]) Next() {
 	p.Begin = p.Begin.Next()
 }
 
-func (p *RBTreeRange[T]) Data() T {
-	return p.Begin.Data()
+func (p *RBTreeRange[T]) Get() T {
+	return p.Begin.Get()
 }
 
 type RBTreeReverseRange[T any] struct {
@@ -34,6 +34,6 @@ func (p *RBTreeReverseRange[T]) Next() {
 	p.Begin = p.Begin.Next()
 }
 
-func (p *RBTreeReverseRange[T]) Data() T {
-	return p.Begin.Data()
+func (p *RBTreeReverseRange[T]) Get() T {
+	return p.Begin.Get()
 }
