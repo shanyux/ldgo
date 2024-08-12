@@ -77,6 +77,7 @@ func (s *FlagSet) Args() []string {
 	return s.command.Args()
 }
 
+// Deprecated
 func (s *FlagSet) EnableDefault(on bool) {
 	s.init()
 	s.noDefault = !on
@@ -402,10 +403,14 @@ func (s *FlagSet) parseFieldFlag(lvl int, val reflect.Value, field reflect.Struc
 		Name:    tags.Get("name"),
 		Meta:    tags.Get("meta"),
 		Usage:   tags.Get("usage"),
-		Default: tags.Get("default"),
+		Default: strings.TrimSpace(tags.Get("default")),
 		IsArgs:  tags.Has("args"),
 		Bool:    tags.Has("bool"),
 		Options: s.parseOptions(tags.Get("options")),
+	}
+
+	if f.Default == "" && len(f.Options) > 0 {
+		f.Default = f.Options[0]
 	}
 
 	if len(f.Name) == 0 {
@@ -418,6 +423,7 @@ func (s *FlagSet) parseFieldFlag(lvl int, val reflect.Value, field reflect.Struc
 }
 
 func (s *FlagSet) parseOptions(str string) []string {
+	str = strings.TrimSpace(str)
 	if str == "" {
 		return nil
 	}
