@@ -32,6 +32,9 @@ type Flag struct {
 }
 
 func (f *Flag) inOptions(s string) bool {
+	if f.Default != "" && s == f.Default {
+		return true
+	}
 	for _, v := range f.Options {
 		if v == s {
 			return true
@@ -236,11 +239,11 @@ func (s *FlagSet) parse(args []string) error {
 			continue
 		}
 		value := f.Value.String()
-		if value == f.Default || f.inOptions(value) {
+		if f.inOptions(value) {
 			continue
 		}
 		// msg := fmt.Sprintf("invalid value %q for flag -%s", value, f.Name)
-		msg := fmt.Sprintf("the value of flag -%s should be %s", f.Name, strings.Join(f.Options, "/"))
+		msg := fmt.Sprintf("the value of flag -%s should be %v", f.Name, f.Options)
 		fmt.Fprintln(s.command.Output(), msg)
 		s.printUsage()
 		return fmt.Errorf("%s", msg)
