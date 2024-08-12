@@ -430,5 +430,34 @@ func TestFlagSet_Parse(t *testing.T) {
 				c.So(err, convey.ShouldNotBeNil)
 			})
 		})
+
+		c.Convey("options with default", func(c convey.C) {
+			type Flags struct {
+				Method *string `ldflag:"name:method; default: a; options: a, b, c"`
+			}
+
+			c.Convey("succ", func(c convey.C) {
+				flags := &Flags{}
+				s.EnableDefault(true)
+				s.Model(flags)
+
+				err := s.Parse([]string{})
+				c.So(err, convey.ShouldBeNil)
+				c.So(flags, convey.ShouldResemble, &Flags{
+					Method: ldptr.New("a"),
+				})
+			})
+
+			c.Convey("fail", func(c convey.C) {
+				flags := &Flags{}
+				s.EnableDefault(true)
+				s.Model(flags)
+
+				err := s.Parse([]string{
+					"-method", "d",
+				})
+				c.So(err, convey.ShouldNotBeNil)
+			})
+		})
 	})
 }

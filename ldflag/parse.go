@@ -45,6 +45,7 @@ func newDefaultFlagSet() *FlagSet {
 	return s
 }
 
+// Deprecated
 func EnableDefault(on bool) {
 	defaultOptions = append(defaultOptions, func(s *FlagSet) {
 		s.EnableDefault(on)
