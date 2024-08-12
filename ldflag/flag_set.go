@@ -236,10 +236,11 @@ func (s *FlagSet) parse(args []string) error {
 			continue
 		}
 		value := f.Value.String()
-		if value != f.Default && f.inOptions(value) {
+		if value == f.Default || f.inOptions(value) {
 			continue
 		}
-		msg := fmt.Sprintf("invalid value %q for flag -%s", value, f.Name)
+		// msg := fmt.Sprintf("invalid value %q for flag -%s", value, f.Name)
+		msg := fmt.Sprintf("the value of flag -%s should be %s", f.Name, strings.Join(f.Options, "/"))
 		fmt.Fprintln(s.command.Output(), msg)
 		s.printUsage()
 		return fmt.Errorf("%s", msg)
