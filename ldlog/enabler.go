@@ -38,6 +38,17 @@ func IntervalEnabler(dur time.Duration) Enabler {
 	return intervalEnabler{interval: dur}
 }
 
+// Get enabler by interval.
+//   - Calculate the time interval separately at the get timing.
+//   - Always enable log levels higher than error.
+func EnablerByInterval(dur time.Duration, skip int) Enabler {
+	enabler := IntervalEnabler(dur)
+	if enabler.Enable(LevelInfo, skip+1) {
+		return defaultEnabler{}
+	}
+	return falseEnabler{}
+}
+
 type defaultEnabler struct{}
 
 func (p defaultEnabler) Enable(lvl zapcore.Level, skips ...int) bool { return true }
