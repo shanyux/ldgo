@@ -23,10 +23,7 @@ func init() {
 }
 
 func newRedis(ctx ldctx.Context) *ldredis.Redis {
-	rds := ldredis.NewByConfig(&ldredis.Config{
-		Addr: "proxy.codis-toc.test.shopeemobile.com:9000",
-	})
-	return rds
+	return ldredis.MustNewTestRedis()
 }
 
 func pipeline(ctx ldctx.Context) {
@@ -60,7 +57,9 @@ func slice(ctx ldctx.Context) {
 	key := "test:hash:hmget"
 	defer rds.Close()
 
-	rds.HSet(ctx, key, "1", 1)
+	rds1 := rds.WithReport(LogReporter{})
+
+	rds1.HSet(ctx, key, "1", 1)
 	rds.HSet(ctx, key, "2", "abc")
 	rds.HSet(ctx, key, "3", 128.1)
 
@@ -83,7 +82,7 @@ func codecStruct(ctx ldctx.Context) {
 	defer rds.Close()
 	key := "test:codec:struct"
 
-	sCmd := ldrediscodec.New[any](rds, ldrediscodec.JsonCodec[any]{}).Set(ctx, key, &codecStruct{
+	sCmd := ldrediscodec.New(rds, ldrediscodec.Json[any]()).Set(ctx, key, &codecStruct{
 		Str1: "aaa",
 		Str2: "bbb",
 		Int1: 111,
@@ -91,10 +90,10 @@ func codecStruct(ctx ldctx.Context) {
 	}, time.Minute)
 	ldctx.LogI(ctx, "cmd", zap.Reflect("cmd", sCmd.Args()))
 
-	gCmd0 := ldrediscodec.New[*codecStruct](rds, ldrediscodec.JsonCodec[*codecStruct]{}).Get(ctx, key)
+	gCmd0 := ldrediscodec.New(rds, ldrediscodec.Json[*codecStruct]()).Get(ctx, key)
 	ldctx.LogIf(ctx, "type:%T, value:%v", gCmd0.Val(), gCmd0.Val())
 
-	gCmd1 := ldrediscodec.New[any](rds, ldrediscodec.JsonCodec[any]{}).Get(ctx, key)
+	gCmd1 := ldrediscodec.New(rds, ldrediscodec.Json[any]()).Get(ctx, key)
 	ldctx.LogIf(ctx, "type:%T, value:%v", gCmd1.Val(), gCmd1.Val())
 }
 
@@ -103,7 +102,7 @@ func codecBaseType(ctx ldctx.Context) {
 	defer rds.Close()
 
 	key := "test:codec:basetype"
-	cli := ldrediscodec.New[any](rds, ldrediscodec.JsonCodec[any]{})
+	cli := ldrediscodec.New(rds, ldrediscodec.Json[any]())
 	cli.HMSetMap(ctx, key, map[string]interface{}{
 		"i1": 1234,
 		"s1": "abc",
@@ -128,4 +127,17 @@ func main() {
 	fmt.Fprintln(os.Stderr)
 	codecBaseType(ctx)
 	fmt.Fprintln(os.Stderr)
+}
+
+type LogReporter struct{}
+
+func (_ LogReporter) Report(cmd ldredis.Cmder, d time.Duration) {
+	ldctx.LogI(nil, "report redis cmd", zap.Reflect("cmd", cmd.Args()))
+}
+
+func (_ LogReporter) ReportPipeline(cmds []ldredis.Cmder, d time.Duration) {
+	ldctx.LogI(nil, "report redis pipline cmd")
+	for i, cmd := range cmds {
+		ldctx.LogI(nil, "report redis pipline cmd", zap.Int("idx", i), zap.Reflect("cmd", cmd.Args()))
+	}
 }

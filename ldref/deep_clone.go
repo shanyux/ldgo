@@ -63,11 +63,16 @@ func deepClonePtr(x0 reflect.Value) reflect.Value {
 	}
 
 	x1 := reflect.New(x0.Type().Elem())
+
 	x1.Elem().Set(deepClone(x0.Elem()))
 	return x1
 }
 
 func deepCloneStruct(x0 reflect.Value) reflect.Value {
+	if isSyncType(x0) {
+		return reflect.Zero(x0.Type())
+	}
+
 	x1 := reflect.New(x0.Type()).Elem()
 	if !x0.CanAddr() {
 		x1.Set(x0)

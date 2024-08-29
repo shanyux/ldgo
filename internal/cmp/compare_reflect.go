@@ -18,7 +18,7 @@ const (
 	kindNumber
 	kindComplex
 	kindString
-	kindInvalid
+	kindOrthers
 )
 
 func reflectValueOf(v interface{}) reflect.Value {
@@ -70,7 +70,10 @@ func CompareReflect(a, b reflect.Value) int {
 		bb := b.Bool()
 		return CompareBool(aa, bb)
 
-	case reflect.Ptr, reflect.UnsafePointer:
+	case reflect.Ptr:
+		return comparePointer(a, b)
+
+	case reflect.UnsafePointer:
 		aa := a.Pointer()
 		bb := b.Pointer()
 		return CompareUintptr(aa, bb)
@@ -121,19 +124,19 @@ func convertKind(k reflect.Kind) kind {
 		return kindString
 
 	default:
-		return kindInvalid
+		return kindOrthers
 	}
 }
 
 func compareReflectType(a, b reflect.Value) int {
 	aKind := convertKind(a.Kind())
 	bKind := convertKind(b.Kind())
-	if aKind != kindInvalid && aKind == bKind {
+	if aKind != kindOrthers && aKind == bKind {
 		return 0
 	}
 
-	if aKind != kindInvalid || bKind != kindInvalid {
-		return CompareInt(int(aKind), int(bKind))
+	if aKind != kindOrthers || bKind != kindOrthers {
+		return CompareOrderable(aKind, bKind)
 	}
 
 	if a.Type() == b.Type() {
@@ -164,6 +167,19 @@ func compareNilReflect(a, b reflect.Value) (int, bool) {
 	return 0, false
 }
 
+func comparePointer(a, b reflect.Value) int {
+	if a.IsNil() {
+		if b.IsNil() {
+			return 0
+		}
+		return -1
+	}
+	if b.IsNil() {
+		return +1
+	}
+	return CompareReflect(a.Elem(), b.Elem())
+}
+
 func compareReflectStruct(a, b reflect.Value) int {
 	for i := 0; i < a.NumField(); i++ {
 		aa := a.Field(i)
@@ -188,19 +204,26 @@ func compareReflectArray(a, b reflect.Value) int {
 }
 
 func compareReflectMap(a, b reflect.Value) int {
-	if r := CompareInt(a.Len(), b.Len()); r != 0 {
-		return r
-	}
+	// if r := CompareInt(a.Len(), b.Len()); r != 0 {
+	// 	return r
+	// }
 
 	aKeys := a.MapKeys()
 	bKeys := b.MapKeys()
 	sort.Sort(sortedReflects(aKeys))
 	sort.Sort(sortedReflects(bKeys))
 
-	for i := range aKeys {
+	al := a.Len()
+	bl := b.Len()
+	l := al
+	if l > bl {
+		l = bl
+	}
+
+	for i := 0; i < l; i++ {
 		aKey, bKey := aKeys[i], bKeys[i]
 		if r := CompareReflect(aKey, bKey); r != 0 {
-			return r
+			return -r
 		}
 
 		aVal, bVal := a.MapIndex(aKey), b.MapIndex(bKey)
@@ -209,7 +232,8 @@ func compareReflectMap(a, b reflect.Value) int {
 		}
 	}
 
-	return 0
+	// return 0
+	return CompareOrderable(al, bl)
 }
 
 func compareReflectSlice(a, b reflect.Value) int {

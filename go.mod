@@ -6,7 +6,6 @@ require (
 	github.com/agiledragon/gomonkey/v2 v2.11.0
 	github.com/alicebob/miniredis/v2 v2.11.1
 	github.com/gin-gonic/gin v1.9.1
-	github.com/golang/protobuf v1.5.2
 	github.com/redis/go-redis/v9 v9.4.0
 	github.com/shopspring/decimal v1.3.1
 	github.com/smartystreets/goconvey v1.6.4

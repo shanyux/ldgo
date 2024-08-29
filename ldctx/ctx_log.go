@@ -6,10 +6,15 @@ package ldctx
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/distroy/ldgo/v2/ldlog"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+)
+
+const (
+	formatFlag = false
 )
 
 type ctxKeyType int
@@ -54,14 +59,35 @@ const (
 	lvlF = zapcore.FatalLevel
 )
 
+func format(format string, args ...interface{}) {
+	if formatFlag {
+		_ = fmt.Sprintf(format, args...)
+	}
+}
+
 func LogD(c Context, msg string, fields ...zap.Field) { zCore(c, lvlD, 1).Debug(msg, fields...) }
 func LogI(c Context, msg string, fields ...zap.Field) { zCore(c, lvlI, 1).Info(msg, fields...) }
 func LogW(c Context, msg string, fields ...zap.Field) { zCore(c, lvlW, 1).Warn(msg, fields...) }
 func LogE(c Context, msg string, fields ...zap.Field) { zCore(c, lvlE, 1).Error(msg, fields...) }
 func LogF(c Context, msg string, fields ...zap.Field) { zCore(c, lvlF, 1).Fatal(msg, fields...) }
 
-func LogDf(c Context, fmt string, args ...interface{}) { zSugar(c, lvlD, 1).Debugf(fmt, args...) }
-func LogIf(c Context, fmt string, args ...interface{}) { zSugar(c, lvlI, 1).Infof(fmt, args...) }
-func LogWf(c Context, fmt string, args ...interface{}) { zSugar(c, lvlW, 1).Warnf(fmt, args...) }
-func LogEf(c Context, fmt string, args ...interface{}) { zSugar(c, lvlE, 1).Errorf(fmt, args...) }
-func LogFf(c Context, fmt string, args ...interface{}) { zSugar(c, lvlF, 1).Fatalf(fmt, args...) }
+func LogDf(c Context, fmt string, args ...interface{}) {
+	format(fmt, args...)
+	zSugar(c, lvlD, 1).Debugf(fmt, args...)
+}
+func LogIf(c Context, fmt string, args ...interface{}) {
+	format(fmt, args...)
+	zSugar(c, lvlI, 1).Infof(fmt, args...)
+}
+func LogWf(c Context, fmt string, args ...interface{}) {
+	format(fmt, args...)
+	zSugar(c, lvlW, 1).Warnf(fmt, args...)
+}
+func LogEf(c Context, fmt string, args ...interface{}) {
+	format(fmt, args...)
+	zSugar(c, lvlE, 1).Errorf(fmt, args...)
+}
+func LogFf(c Context, fmt string, args ...interface{}) {
+	format(fmt, args...)
+	zSugar(c, lvlF, 1).Fatalf(fmt, args...)
+}

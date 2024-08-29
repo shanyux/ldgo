@@ -5,44 +5,46 @@
 package ldrediscodec
 
 import (
-	"github.com/golang/protobuf/proto"
-	protov2 "google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/protoadapt"
 )
 
-func Proto[T proto.Message](d T) ProtoCodec[T]              { return ProtoCodec[T]{} }
-func ProtoV1[T proto.Message](d T) ProtoV1Codec[T]          { return ProtoV1Codec[T]{} }
-func ProtoV2[T proto.GeneratedMessage](d T) ProtoV2Codec[T] { return ProtoV2Codec[T]{} }
+func Proto[T protoadapt.MessageV1](d ...T) Codec[T]   { return ProtoCodec[T]{} }
+func ProtoV1[T protoadapt.MessageV1](d ...T) Codec[T] { return ProtoV1Codec[T]{} }
+func ProtoV2[T protoadapt.MessageV2](d ...T) Codec[T] { return ProtoV2Codec[T]{} }
 
-type ProtoCodec[T proto.Message] struct {
+type ProtoCodec[T protoadapt.MessageV1] struct {
 	ProtoV1Codec[T]
 }
 
-type ProtoV1Codec[T proto.Message] struct {
+type ProtoV1Codec[T protoadapt.MessageV1] struct {
 	codecBase[T]
 }
 
 func (c ProtoV1Codec[T]) Marshal(v T) ([]byte, error) {
-	return proto.Marshal(v)
+	vv := protoadapt.MessageV2Of(v)
+	return proto.Marshal(vv)
 }
 
 func (c ProtoV1Codec[T]) Unmarshal(b []byte) (T, error) {
 	var v T
 	c.fillIfPointer(&v)
-	return v, proto.Unmarshal(b, v)
+	vv := protoadapt.MessageV2Of(v)
+	return v, proto.Unmarshal(b, vv)
 }
 
-type ProtoV2Codec[T proto.GeneratedMessage] struct {
+type ProtoV2Codec[T protoadapt.MessageV2] struct {
 	codecBase[T]
 }
 
 func (c ProtoV2Codec[T]) Marshal(v T) ([]byte, error) {
-	vv := proto.MessageV2(v)
-	return protov2.Marshal(vv)
+	vv := v
+	return proto.Marshal(vv)
 }
 
 func (c ProtoV2Codec[T]) Unmarshal(b []byte) (T, error) {
 	var v T
 	c.fillIfPointer(&v)
-	vv := proto.MessageV2(v)
-	return v, protov2.Unmarshal(b, vv)
+	vv := v
+	return v, proto.Unmarshal(b, vv)
 }

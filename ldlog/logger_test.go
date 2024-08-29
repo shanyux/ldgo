@@ -54,13 +54,13 @@ func TestLogger(t *testing.T) {
 		})
 
 		c.Convey("warnln", func(c convey.C) {
-			l.Warnln("warnln message", ldptr.NewInt(1234), map[string]string{"a": "b"})
+			l.Warnln("warnln message", ldptr.New(1234), map[string]string{"a": "b"})
 			c.So(writer.String(), convey.ShouldEqual,
 				"2021-08-22T13:30:58.000+0800|WARN|-|ldlog/logger_test.go:57|warnln message 1234 map[a:b],abc=xxx\n")
 		})
 
 		c.Convey("infoln", func(c convey.C) {
-			l.Infoln("infoln message", &LoggerValue{Name: "abc"}, []interface{}{ldptr.NewInt(1234), (*int)(nil)})
+			l.Infoln("infoln message", &LoggerValue{Name: "abc"}, []interface{}{ldptr.New(1234), (*int)(nil)})
 			c.So(writer.String(), convey.ShouldEqual,
 				"2021-08-22T13:30:58.000+0800|INFO|-|ldlog/logger_test.go:63|infoln message {Name:abc} [1234, (*int)(nil)],abc=xxx\n")
 		})
@@ -72,13 +72,19 @@ func TestLogger(t *testing.T) {
 		})
 
 		c.Convey("map", func(c convey.C) {
-			l.Warnln("warnln message", ldptr.NewInt(1234), map[interface{}]interface{}{
+			l.Warnln("warnln message", ldptr.New(1234), map[interface{}]interface{}{
 				"a":       "b",
 				100:       124,
 				int64(10): 234,
 			})
 			c.So(writer.String(), convey.ShouldEqual,
 				"2021-08-22T13:30:58.000+0800|WARN|-|ldlog/logger_test.go:75|warnln message 1234 map[10:234,100:124,a:b],abc=xxx\n")
+		})
+
+		c.Convey("errorf", func(c convey.C) {
+			l.Errorf("errorf message. int:%d", 1234)
+			c.So(writer.String(), convey.ShouldEqual,
+				"2021-08-22T13:30:58.000+0800|ERROR|-|ldlog/logger_test.go:85|errorf message. int:1234,abc=xxx\n")
 		})
 	})
 }

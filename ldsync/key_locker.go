@@ -10,16 +10,8 @@ var keyLockerDataPool = &Pool[*keyLockerData]{
 	New: func() *keyLockerData { return &keyLockerData{} },
 }
 
-type KeyLocker interface {
-	Lock(key interface{})
-	TryLock(key interface{}) bool
-	Unlock(key interface{})
-}
-
-func NewKeyLocker() KeyLocker {
-	return &keyLocker{
-		keys: make(map[interface{}]*keyLockerData),
-	}
+func NewKeyLocker() *KeyLocker {
+	return &KeyLocker{}
 }
 
 type keyLockerData struct {
@@ -27,12 +19,18 @@ type keyLockerData struct {
 	count  int64
 }
 
-type keyLocker struct {
+type KeyLocker struct {
 	locker sync.Mutex
 	keys   map[interface{}]*keyLockerData
 }
 
-func (kl *keyLocker) Lock(key interface{}) {
+func (kl *KeyLocker) init() {
+	if kl.keys == nil {
+		kl.keys = make(map[interface{}]*keyLockerData, 1)
+	}
+}
+
+func (kl *KeyLocker) Lock(key interface{}) {
 	kl.locker.Lock()
 	d := kl.getAndAdd(key)
 	kl.locker.Unlock()
@@ -40,7 +38,7 @@ func (kl *keyLocker) Lock(key interface{}) {
 	d.locker.Lock()
 }
 
-func (kl *keyLocker) Unlock(key interface{}) {
+func (kl *KeyLocker) Unlock(key interface{}) {
 	kl.locker.Lock()
 	d := kl.getAndSub(key)
 	kl.locker.Unlock()
@@ -52,7 +50,7 @@ func (kl *keyLocker) Unlock(key interface{}) {
 	d.locker.Unlock()
 }
 
-func (kl *keyLocker) TryLock(key interface{}) bool {
+func (kl *KeyLocker) TryLock(key interface{}) bool {
 	kl.locker.Lock()
 
 	if d := kl.get(key); d != nil {
@@ -64,26 +62,22 @@ func (kl *keyLocker) TryLock(key interface{}) bool {
 	d.count++
 	kl.locker.Unlock()
 
-	d.locker.Lock()
-	return true
+	return d.locker.TryLock()
 }
 
-func (kl *keyLocker) get(key interface{}) *keyLockerData {
-	if kl.keys == nil {
-		kl.keys = make(map[interface{}]*keyLockerData, 1)
-	}
-
+func (kl *KeyLocker) get(key interface{}) *keyLockerData {
+	kl.init()
 	return kl.keys[key]
 }
 
-func (kl *keyLocker) new(key interface{}) *keyLockerData {
+func (kl *KeyLocker) new(key interface{}) *keyLockerData {
 	d := keyLockerDataPool.Get()
 	d.count = 0
 	kl.keys[key] = d
 	return d
 }
 
-func (kl *keyLocker) getAndAdd(key interface{}) *keyLockerData {
+func (kl *KeyLocker) getAndAdd(key interface{}) *keyLockerData {
 	d := kl.get(key)
 	if d == nil {
 		d = kl.new(key)
@@ -93,7 +87,7 @@ func (kl *keyLocker) getAndAdd(key interface{}) *keyLockerData {
 	return d
 }
 
-func (kl *keyLocker) getAndSub(key interface{}) *keyLockerData {
+func (kl *KeyLocker) getAndSub(key interface{}) *keyLockerData {
 	d := kl.get(key)
 	if d == nil {
 		return nil

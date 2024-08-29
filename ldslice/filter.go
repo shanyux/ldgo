@@ -5,9 +5,9 @@
 package ldslice
 
 // Filter returns the slice with filter(v) == true
-func Filter[T any](slice []T, filter func(v T) bool) []T {
+func Filter[T any](slice []T, filter func(v T) bool) (trueSlice, falseSlice []T) {
 	n := filterSlice(slice, filter)
-	return slice[:n]
+	return slice[:n], slice[n:]
 }
 
 func filterSlice[T any](slice []T, filter func(v T) bool) int {

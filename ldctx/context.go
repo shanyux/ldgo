@@ -108,6 +108,9 @@ func ctxWithLogger(c context.Context, log *ldlog.Logger) context.Context {
 }
 
 func GetLogger(c context.Context) *ldlog.Logger {
+	if c == nil {
+		return defaultLogger()
+	}
 	log, ok := c.Value(ctxKeyLogger).(*ldlog.Logger)
 	if !ok {
 		log = defaultLogger()

@@ -26,6 +26,15 @@ func TestRBTree_Insert(t *testing.T) {
 				c.So(rbtree.Len(), convey.ShouldEqual, len(_nums))
 			})
 
+			for _, n := range _numsUnordered {
+				rbtree.Insert(n)
+				c.So(rbtree.root.checkParent(rbtree.sentinel), convey.ShouldBeTrue)
+				c.So(rbtree.root.checkColor(rbtree.sentinel), convey.ShouldBeTrue)
+			}
+			c.Convey("twice len", func(c convey.C) {
+				c.So(rbtree.Len(), convey.ShouldEqual, len(_nums)*2)
+			})
+
 			c.Convey("check parent", func(c convey.C) {
 				c.So(rbtree.root.checkParent(rbtree.sentinel), convey.ShouldBeTrue)
 			})
