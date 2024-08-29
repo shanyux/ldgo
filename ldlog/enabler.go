@@ -15,7 +15,7 @@ type Enabler interface {
 	Enable(lvl zapcore.Level, skip ...int) bool
 }
 
-// Enable based on probability(rate).
+// RateEnabler: enable based on probability(rate).
 //   - Rate should be in [0, 1.0].
 //   - Always enable log levels higher than error.
 func RateEnabler(rate float64) Enabler {
@@ -28,7 +28,7 @@ func RateEnabler(rate float64) Enabler {
 	return rateEnabler{rate: rate}
 }
 
-// Enable based on time interval.
+// IntervalEnabler: enable based on time interval.
 //   - Calculate the time interval separately at each invocation location.
 //   - Always enable log levels higher than error.
 func IntervalEnabler(dur time.Duration) Enabler {
@@ -38,7 +38,7 @@ func IntervalEnabler(dur time.Duration) Enabler {
 	return intervalEnabler{interval: dur}
 }
 
-// Get enabler by interval.
+// EnablerByInterval: get enabler by interval.
 //   - Calculate the time interval separately at the get timing.
 //   - Always enable log levels higher than error.
 func EnablerByInterval(dur time.Duration, skip int) Enabler {
@@ -47,6 +47,20 @@ func EnablerByInterval(dur time.Duration, skip int) Enabler {
 		return defaultEnabler{}
 	}
 	return falseEnabler{}
+}
+
+// EnablerByNameAndInterval: get enabler by name and interval.
+//   - Calculate the time interval separately at the get timing.
+//   - Always enable log levels higher than error.
+func EnablerByNameAndInterval(name string, dur time.Duration) Enabler {
+	if dur <= 0 {
+		return defaultEnabler{}
+	}
+	i := getIntervalerByKey(name)
+	if i == nil || !i.hit(dur) {
+		return falseEnabler{}
+	}
+	return defaultEnabler{}
 }
 
 type defaultEnabler struct{}
