@@ -31,7 +31,7 @@ func (l *AutoLocker) Lock() {
 }
 
 func (l *AutoLocker) Unlock() {
-	if !l.locked {
+	if !l.locked || l.Locker == nil {
 		return
 	}
 	l.Locker.Unlock()
