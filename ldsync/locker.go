@@ -16,6 +16,22 @@ type Locker interface {
 	TryLock() bool
 }
 
+func DiscardLocker() Locker { return discardLocker{} }
+
+type discardLocker struct{}
+
+func (_ discardLocker) Lock()         {}
+func (_ discardLocker) Unlock()       {}
+func (_ discardLocker) TryLock() bool { return false }
+
+func AutoLock(l sync.Locker) *AutoLocker {
+	switch v := l.(type) {
+	case *AutoLocker:
+		return v
+	}
+	return &AutoLocker{Locker: l}
+}
+
 type AutoLocker struct {
 	Locker sync.Locker
 

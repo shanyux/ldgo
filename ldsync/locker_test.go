@@ -15,7 +15,7 @@ func TestAutoLocker(t *testing.T) {
 	convey.Convey(t.Name(), t, func(c convey.C) {
 		mu := &sync.Mutex{}
 
-		l := &AutoLocker{Locker: mu}
+		l := AutoLock(mu)
 		c.So(l.locked, convey.ShouldEqual, false)
 
 		l.Unlock()
