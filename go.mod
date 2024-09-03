@@ -1,3 +1,4 @@
+// Deprecated: Use the "github.com/distroy/ldgo/v2" module instead.
 module github.com/distroy/ldgo
 
 go 1.17
