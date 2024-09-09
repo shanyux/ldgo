@@ -302,6 +302,13 @@ func compareReflectMap(a, b reflect.Value) int {
 func compareReflectSlice(a, b reflect.Value) int {
 	al := a.Len()
 	bl := b.Len()
+	if al == 0 || bl == 0 || a.Index(0).UnsafeAddr() == b.Index(0).UnsafeAddr() {
+		return CompareOrderable(al, bl)
+	}
+	if a.Kind() == reflect.Uint8 {
+		return CompareBytes(a.Bytes(), b.Bytes())
+	}
+
 	l := al
 	if l > bl {
 		l = bl
