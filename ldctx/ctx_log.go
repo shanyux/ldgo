@@ -7,6 +7,7 @@ package ldctx
 import (
 	"context"
 	"fmt"
+	_ "unsafe"
 
 	"github.com/distroy/ldgo/v2/ldlog"
 	"go.uber.org/zap"
@@ -36,19 +37,17 @@ type stringer interface {
 	String() string
 }
 
+//go:linkname zCoreByLogger github.com/distroy/ldgo/v2/ldlog.zCoreByLogger
+func zCoreByLogger(l *ldlog.Logger, lvl zapcore.Level, skip int) *zap.Logger
+
+//go:linkname zSugarByLogger github.com/distroy/ldgo/v2/ldlog.zSugarByLogger
+func zSugarByLogger(l *ldlog.Logger, lvl zapcore.Level, skip int) *zap.SugaredLogger
+
 func zCore(c context.Context, lvl zapcore.Level, skip int) *zap.Logger {
-	l := GetLogger(c)
-	if !l.Enabler().Enable(lvl, skip+1) {
-		l = ldlog.Discard()
-	}
-	return l.Core()
+	return zCoreByLogger(GetLogger(c), lvl, skip+1)
 }
 func zSugar(c context.Context, lvl zapcore.Level, skip int) *zap.SugaredLogger {
-	l := GetLogger(c)
-	if !l.Enabler().Enable(lvl, skip+1) {
-		l = ldlog.Discard()
-	}
-	return l.Sugar()
+	return zSugarByLogger(GetLogger(c), lvl, skip+1)
 }
 
 const (
