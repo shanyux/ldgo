@@ -69,6 +69,7 @@ func LogD(c Context, msg string, fields ...zap.Field) { zCore(c, lvlD, 1).Debug(
 func LogI(c Context, msg string, fields ...zap.Field) { zCore(c, lvlI, 1).Info(msg, fields...) }
 func LogW(c Context, msg string, fields ...zap.Field) { zCore(c, lvlW, 1).Warn(msg, fields...) }
 func LogE(c Context, msg string, fields ...zap.Field) { zCore(c, lvlE, 1).Error(msg, fields...) }
+func LogP(c Context, msg string, fields ...zap.Field) { zCore(c, lvlF, 1).Panic(msg, fields...) }
 func LogF(c Context, msg string, fields ...zap.Field) { zCore(c, lvlF, 1).Fatal(msg, fields...) }
 
 func LogDf(c Context, fmt string, args ...interface{}) {
@@ -86,6 +87,10 @@ func LogWf(c Context, fmt string, args ...interface{}) {
 func LogEf(c Context, fmt string, args ...interface{}) {
 	format(fmt, args...)
 	zSugar(c, lvlE, 1).Errorf(fmt, args...)
+}
+func LogPf(c Context, fmt string, args ...interface{}) {
+	format(fmt, args...)
+	zSugar(c, lvlF, 1).Panicf(fmt, args...)
 }
 func LogFf(c Context, fmt string, args ...interface{}) {
 	format(fmt, args...)
