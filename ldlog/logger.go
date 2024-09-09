@@ -95,7 +95,7 @@ func (l *Logger) Debug(msg string, fields ...zap.Field) { l.zCore(lvlD, 1).Debug
 func (l *Logger) Info(msg string, fields ...zap.Field)  { l.zCore(lvlI, 1).Info(msg, fields...) }
 func (l *Logger) Warn(msg string, fields ...zap.Field)  { l.zCore(lvlW, 1).Warn(msg, fields...) }
 func (l *Logger) Error(msg string, fields ...zap.Field) { l.zCore(lvlE, 1).Error(msg, fields...) }
-func (l *Logger) Panic(msg string, fields ...zap.Field) { l.zCore(lvlF, 1).Panic(msg, fields...) }
+func (l *Logger) Panic(msg string, fields ...zap.Field) { l.zCore(lvlP, 1).Panic(msg, fields...) }
 func (l *Logger) Fatal(msg string, fields ...zap.Field) { l.zCore(lvlF, 1).Fatal(msg, fields...) }
 
 func (l *Logger) Debugf(fmt string, args ...interface{}) {
@@ -116,7 +116,7 @@ func (l *Logger) Errorf(fmt string, args ...interface{}) {
 }
 func (l *Logger) Panicf(fmt string, args ...interface{}) {
 	l.format(fmt, args...)
-	l.zSugar(lvlF, 1).Panicf(fmt, args...)
+	l.zSugar(lvlP, 1).Panicf(fmt, args...)
 }
 func (l *Logger) Fatalf(fmt string, args ...interface{}) {
 	l.format(fmt, args...)

@@ -73,11 +73,11 @@ func (l *Wrapper) Errorz(fmt string, fields ...zap.Field) { l.zCore(lvlE, 1).Err
 
 func (l *Wrapper) Panicf(fmt string, args ...interface{}) {
 	l.format(fmt, args...)
-	l.zSugar(lvlE, 1).Panicf(fmt, args...)
+	l.zSugar(lvlP, 1).Panicf(fmt, args...)
 }
-func (l *Wrapper) Panic(args ...interface{})              { l.zSugar(lvlE, 1).Panic(pw(args)) }
-func (l *Wrapper) Panicln(args ...interface{})            { l.zSugar(lvlE, 1).Panic(pw(args)) }
-func (l *Wrapper) Panicz(fmt string, fields ...zap.Field) { l.zCore(lvlE, 1).Panic(fmt, fields...) }
+func (l *Wrapper) Panic(args ...interface{})              { l.zSugar(lvlP, 1).Panic(pw(args)) }
+func (l *Wrapper) Panicln(args ...interface{})            { l.zSugar(lvlP, 1).Panic(pw(args)) }
+func (l *Wrapper) Panicz(fmt string, fields ...zap.Field) { l.zCore(lvlP, 1).Panic(fmt, fields...) }
 
 func (l *Wrapper) Fatalf(fmt string, args ...interface{}) {
 	l.format(fmt, args...)
