@@ -5,7 +5,9 @@
 package cmp
 
 import (
-	"strings"
+	"bytes"
+
+	"github.com/distroy/ldgo/v2/ldconv"
 )
 
 func CompareInterface(a, b interface{}) int {
@@ -34,8 +36,19 @@ func CompareComplex[T ~complex64 | ~complex128](aa, bb T) int {
 }
 
 func CompareString[T ~string](a, b T) int {
-	return strings.Compare(string(a), string(b))
-	// return bytes.Compare(ldconv.StrToBytesUnsafe(a), ldconv.StrToBytesUnsafe(b))
+	// aa := *(*string)((unsafe.Pointer)(&a))
+	// bb := *(*string)((unsafe.Pointer)(&b))
+	aa := string(a)
+	bb := string(b)
+	return bytes.Compare(ldconv.StrToBytesUnsafe(aa), ldconv.StrToBytesUnsafe(bb))
+}
+
+func CompareBytes[T ~[]byte](a, b T) int {
+	// aa := *(*[]byte)((unsafe.Pointer)(&a))
+	// bb := *(*[]byte)((unsafe.Pointer)(&b))
+	aa := []byte(a)
+	bb := []byte(b)
+	return bytes.Compare(aa, bb)
 }
 
 func CompareComparer[T Comparer[T]](a, b T) int { return a.Compare(b) }
