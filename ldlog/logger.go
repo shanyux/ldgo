@@ -49,7 +49,7 @@ func (l *Logger) With(fields ...zap.Field) *Logger {
 	if len(fields) == 0 {
 		return l
 	}
-	log := l.Core().With(fields...)
+	log := l.Core().WithLazy(fields...)
 	l = l.clone()
 	l.log = log
 	l.sugar = log.Sugar()
