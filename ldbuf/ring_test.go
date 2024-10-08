@@ -22,6 +22,7 @@ func TestNewRing(t *testing.T) {
 		b.Put(3)
 		b.Put(4)
 		b.Put(5)
+		c.So(b.Size(), convey.ShouldEqual, 4)
 
 		c.So(b.Pop(), convey.ShouldEqual, 1)
 		c.So(b.Pop(), convey.ShouldEqual, 2)
@@ -29,6 +30,8 @@ func TestNewRing(t *testing.T) {
 
 		b.Put(6)
 		b.Put(7)
+		c.So(b.Size(), convey.ShouldEqual, 4)
+
 		c.So(b.Pop(), convey.ShouldEqual, 3)
 		c.So(b.Pop(), convey.ShouldEqual, 4)
 		c.So(b.Pop(), convey.ShouldEqual, 6)
